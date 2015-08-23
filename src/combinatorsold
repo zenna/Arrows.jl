@@ -1,0 +1,35 @@
+## Combinators
+## ==========
+"Lifts a primitive function to an arrow"
+immutable Lift{A,B} <: Arrow{A,B}
+  primfunc::PrimitiveFunc{A,B}
+end
+
+Lift{A,B}(f::PrimitiveFunc{A,B}) = Lift{A,B}(f)
+
+">>> Arrow composition"
+immutable Compose{B,C,D} <: Arrow{B,D}
+  arr1::Arrow{B,C}
+  arr2::Arrow{C,D}
+end
+
+function Compose{B,C,D}(x::Arrow{B, C}, y::Arrow{C, D})
+  Compose{B,C,D}(x,y)
+end
+
+## FIXME: Maybe this type is redundant, we could just have a function to convert
+## Normal compose
+"<<< Reverse Arrow composition"
+immutable ReverseCompose{B,C,D} <: Arrow{B,D}
+  arr2::Arrow{C,D}
+  arr1::Arrow{B,C}
+end
+
+function Compose{B,C,D}(x::Arrow{C, D}, y::Arrow{B, C})
+  Compose{B,C,D}(x,y)
+end
+
+"Extracts First Element of Vector"
+immutable First{A,1} <: Arrow{A,1}
+  arr::Arrow{A,B}
+end
