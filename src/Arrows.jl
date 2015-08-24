@@ -2,13 +2,13 @@ module Arrows
 using Compat
 # using Distributions
 
-import Base: call, convert, union, first, second
+import Base: call, convert, union, first
 
 include("util.jl")
 include("types.jl")
 include("primitive.jl")
-include("arrowtypes2.jl")
-# include("combinators.jl")
+include("arrowtypes.jl")
+include("combinators.jl")
 # include("call.jl")
 
 end
