@@ -114,12 +114,14 @@ end
 "Is this arrow well formed? Are all its ports (and no others) connected?"
 function iswellformed{I,O}(c::CompositeArrow{I,O})
   alltheports = Set{Port}(allports(c))
+  @show alltheports
   for (p1, p2) in edges(c)
     if (p1 in alltheports) && (p2 in alltheports)
       delete!(alltheports, p1)
       delete!(alltheports, p2)
     else
       # error("arrow not well formed")
+      println("not well formed $p1 - $(p1 in alltheports) \n $p2 - $(p2 in alltheports)")
       return false
     end
   end
@@ -127,7 +129,7 @@ function iswellformed{I,O}(c::CompositeArrow{I,O})
   if isempty(alltheports)
     return true
   else
-    # end"some unconnected ports"
+    println("some unconnected ports")
     return false
   end
 end

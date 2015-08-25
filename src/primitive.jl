@@ -19,22 +19,24 @@ end
 
 # Unary Functions
 # These unary funtions take in vectors of length 1 and return vectors of length 1
-dummytyp = ArrowType{1,1}([TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Bool}()])
 # unaryfunctyp = PrimFuncType([],:1, :1, [])
-unaryfunctyp = dummytyp
+unaryfunctyp =  ArrowType{1,1}([TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Bool}()])
 cosfunc = PrimFunc(unaryfunctyp, :cos)
 sinfunc = PrimFunc(unaryfunctyp, :sin)
 tanfunc = PrimFunc(unaryfunctyp, :tan)
 
 # Binary Functions
 # binaryfunctyp = PrimFuncType([],:2, :1, [])
-binaryfunctyp = dummytyp
+
+## I=2, O=1
+binaryfunctyp =  ArrowType{2,1}([TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Bool}()])
 addfunc = PrimFunc(binaryfunctyp, :+)
 minusfunc = PrimFunc(binaryfunctyp, :-)
 
-clonefunc = PrimFunc(unaryfunctyp, :clone)
-
 # Concat
 # concatfunctyp = PrimFuncType([:n, :m], (:n,:m), :(n+m), [:(n>1), :(m>1)])
-concatfunctyp = dummytyp
-concatfunc = PrimFunc(concatfunctyp, :concat)
+concatfunc = PrimFunc(binaryfunctyp, :concat)
+
+# I=1, O=2
+binrangefunctyp = ArrowType{1,2}([TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Bool}()])
+clonefunc = PrimFunc(binrangefunctyp, :clone)
