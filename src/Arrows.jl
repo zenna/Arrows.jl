@@ -9,6 +9,6 @@ include("types.jl")
 include("primitive.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
-# include("call.jl")
+include("call.jl")
 
 end

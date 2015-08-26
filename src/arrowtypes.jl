@@ -15,6 +15,19 @@ immutable Port
   pin::PinId
 end
 
+# abstract PPort
+#
+# abstract InPort <: PPort
+#   arrow::ArrowId
+#   pin::PinId
+# end
+#
+# abstract OutPort <: PPort
+#   arrow::ArrowId
+#   pin::PinId
+# end
+
+
 "Is this an input port, ports are ordered with input pins taking first integers"
 isinputport{I,O}(p::Port, a::Arrow{I,O}) = p.pin <= I
 
@@ -40,12 +53,17 @@ immutable PrimArrow{I, O} <: Arrow{I, O}
   func::PrimFunc
 end
 
+name(a::PrimArrow) = a.func.s
+
 "number of arrows"
 nnodes(a::PrimArrow) = 1
 nodes(a::PrimArrow) = Arrow[a]
 
 # Primitive arrows have no edges
 edges(a::PrimArrow) = Dict{Port, Port}()
+
+## Composite Arrows
+## ================
 
 "An arrow with `I` input ports and `O` output ports"
 immutable CompositeArrow{I, O} <: Arrow{I,O}
@@ -54,6 +72,7 @@ immutable CompositeArrow{I, O} <: Arrow{I,O}
   CompositeArrow() = new{I,O}(Dict{Port, Port}(), Arrow[])
 end
 
+name(a::CompositeArrow) = (warn("FIXME: name composite arrow"); gensym())
 addnodes!{T<:Arrow}(c::CompositeArrow, nodes::Vector{T}) = push!(c.nodes, nodes...)
 nodes(a::CompositeArrow) = a.nodes
 nnodes(a::CompositeArrow) = length(nodes(a))
@@ -102,6 +121,16 @@ function subarrowports(a::CompositeArrow, arrid::ArrowId)
   end
 end
 
+function subinports(a::CompositeArrow, arrid::ArrowId)
+  @assert arrid != 1
+  [Port(arrid, i) for i = 1:Arrows.ninports(Arrows.nodes(a)[arrid-1])]
+end
+
+function suboutports(a::CompositeArrow, arrid::ArrowId)
+  @assert arrid != 1
+  [Port(arrid, i + ninports(a)) for i = 1:Arrows.noutports(Arrows.nodes(a)[arrid-1])]
+end
+
 "Return all the ports of a composite arrow, including subarrows"
 function allports(a::CompositeArrow)
   theports = Port[]
@@ -132,4 +161,13 @@ function iswellformed{I,O}(c::CompositeArrow{I,O})
     println("some unconnected ports")
     return false
   end
+end
+
+## Named Arrow
+## ===========
+
+"A named arrow is like a named function"
+immutable NamedArrow{I,O} <: Arrow{I,O}
+  name::Symbol
+  arrow::CompositeArrow{I, O}
 end
