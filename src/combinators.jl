@@ -1,38 +1,60 @@
 "Lifts a primitive function to an arrow"
 lift{I,O}(a::PrimFunc{I,O}) = PrimArrow{I,O}(a.typ, a)
 
+"Wrap primitive arrow in composite arrow - behaves identically to original arrow"
+function encapsulate{I,O}(a::PrimArrow{I,O})
+  c = CompositeArrow{I,O}()
+  addnodes!(c, [a])
+  for i = 1:I
+    addedge!(c, OutPort(1, i), InPort(2, i))
+  end
+
+  for i = 1:O
+    addedge!(c, OutPort(2, i), InPort(1, i))
+  end
+  @assert iswellformed(c)
+  c
+end
+
+"Increment the arrowid of a port by `offset`. Usful when combining arrows, where some arrowids need to be offset"
+offsetarrowid{P <: Port}(p::P, offset::ArrowId) = P(p.arrowid + offset, p.pinid)
+
+"Offset only if it is a boundary port"
+safeoffsetarrowid(p::Port, offset::ArrowId) =
+  isboundary(p) ? p : offsetarrowid(p, offset)
+
 "Wire outputs of `a` to inputs of `b`, i.e. a_out_1 --> b_in_1, a_out_2 --> b_in_1"
 function compose{I1, O1I2, O2}(a::CompositeArrow{I1,O1I2}, b::CompositeArrow{O1I2,O2})
   c = CompositeArrow{I1,O2}()
   addnodes!(c, nodes(a))
   addnodes!(c, nodes(b))
 
-  new_edges = Dict{Port, Port}()
-  idshift = nnodes(a)
+  arrowidoffset = nnodes(a)
 
-  for (p1, p2) in edges(a)
-    @show p1, p2
+  for (outp, inp) in Arrows.edges(a)
+    @show outp, inp
     # if p2 is an output boundary and p1 not input boundary
     # if p1 is an input boundary and p2 is output |---------------|
     # |     |*****|-----------|
-    if isboundary(p2)
-      p3 = b.edges[Port(1,relativepinid(a, p2.pin))]
-      addedge!(c, p1, isboundary(p3) ? Port(1, I1 + relativepinid(b, p3.pin)) : Port(p3.arrow + idshift, p3.pin))
+    if Arrows.isboundary(inp)
+      p3 = b.edges[Arrows.nthoutport(b, inp.pinid)]
+      p3shifted = safeoffsetarrowid(p3, arrowidoffset)
+      @show p3, p3shifted
+      Arrows.addedge!(c, outp, p3shifted)
 
     # inner edge
     # |------|*****|        |
     # |        |*****|------|*****|        |
     else
-      addedge!(c, p1, p2)
+      Arrows.addedge!(c, outp, inp)
     end
   end
 
-  for (p1, p2) in edges(b)
-
-
-    if !isboundary(p1)
-      addedge!(c, Port(p1.arrow + idshift, p1.pin),
-                  isboundary(p2) ? Port(1, I1 + relativepinid(b, p2.pin)) : Port(p2.arrow + idshift, p2.pin))
+  for (outp, inp) in Arrows.edges(b)
+    # @show outp, inp
+    # inputs will already be connected from loop above
+    if !Arrows.isboundary(outp)
+      Arrows.addedge!(c, Arrows.safeoffsetarrowid(outp, arrowidoffset), Arrows.safeoffsetarrowid(inp, arrowidoffset))
     end
   end
   @assert iswellformed(c)
@@ -50,17 +72,8 @@ compose(a::PrimArrow, b::PrimArrow) = compose(encapsulate(a), encapsulate(b))
 function first(a::CompositeArrow{1,1})
   c = CompositeArrow{2, 2}()
   addnodes!(c, nodes(a))
-
-  for (p1, p2) in edges(a)
-    # If the edge is going to output, then readjust for new inputs/outputs
-    if isboundary(p2)
-      addedge!(c, p1, Port(1,3))
-    else
-      addedge!(c, p1, p2)
-    end
-  end
-
-  addedge!(c, Port(1,2), Port(1,4))
+  addedges!(c, edges(a))
+  addedge!(c, OutPort(1,2), InPort(1,2))
   @assert iswellformed(c)
   c
 end
@@ -68,25 +81,21 @@ end
 "Union two composite arrows into the same arrow"
 function stack{I1, O1, I2, O2}(a::CompositeArrow{I1,O1}, b::CompositeArrow{I2,O2})
   c = CompositeArrow{I1 + I2, O1 + O2}()
+  # A can be added pretty much unchanged
   addnodes!(c, nodes(a))
+  addedges!(c, edges(a))
+
   addnodes!(c, nodes(b))
-  for (p1, p2) in edges(a)
-    if isboundary(p2)
-      addedge!(c, p1, Port(1, I2 + p2.pin))
-    else
-      addedge!(c, p1, p2)
-    end
-  end
+  arrowidoffset = nnodes(a)
 
-  idshift = nnodes(a)
-  for (p1, p2) in edges(b)
-    addedge!(c, isboundary(p1) ? Port(1, p1.pin + I1) : Port(p1.arrow + idshift, p1.pin),
-                isboundary(p2) ? Port(1, p2.pin + I1 + O1) : Port(p2.arrow + idshift, p2.pin))
-
+  for (outp, inp) in edges(a)
+    newoutp = isboundary(outp) ? OutPort(1, outp.pinid + I1) : OutPort(outp.arrowid + arrowidoffset, outp.pinid)
+    newinp = isboundary(inp) ? InPort(1, inp.pinid + O1) : InPort(inp.arrowid + arrowidoffset, inp.pinid)
+    addedge!(c, newoutp, newinp)
   end
   @assert iswellformed(c)
   c
 end
 
 first(a::PrimArrow) = first(encapsulate(a))
-multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clonefunc) >>> stack(a,b)
+multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)

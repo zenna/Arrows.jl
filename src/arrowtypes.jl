@@ -7,39 +7,32 @@ abstract Arrow{I, O}
 typealias ArrowId Int
 typealias PinId Int
 
+nthinport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= I; InPort(1, n))
+nthoutport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= O; OutPort(1, n))
+
 """A port is uniquely determined by the arrow it belongs to and a pin.
   By convention, a port which is on the parnt arrow will have `arrow = 1.
   Pin ids are contingous from `1:I+O`, with the input taking the first `1:I`"""
-immutable Port
-  arrow::ArrowId
-  pin::PinId
+abstract Port
+
+immutable InPort <: Port
+  arrowid::ArrowId
+  pinid::PinId
 end
 
-# abstract PPort
-#
-# abstract InPort <: PPort
-#   arrow::ArrowId
-#   pin::PinId
-# end
-#
-# abstract OutPort <: PPort
-#   arrow::ArrowId
-#   pin::PinId
-# end
-
-
-"Is this an input port, ports are ordered with input pins taking first integers"
-isinputport{I,O}(p::Port, a::Arrow{I,O}) = p.pin <= I
+immutable OutPort <: Port
+  arrowid::ArrowId
+  pinid::PinId
+end
 
 "Is this port on the boundary"
-isboundary(p::Port) = p.arrow == 1
+isboundary(p::Port) = p.arrowid == 1
 
 ## Generic Arrow
 ## ==============
 
-inports{I,O}(a::Arrow{I, O}) = Port[Port(1, i) for i = 1:I]
-outports{I,O}(a::Arrow{I, O}) = Port[Port(1, i) for i = I+1:I+O]
-ports(a::Arrow) = vcat(inports(a), outports(a))::Vector{Port}
+inports{I,O}(a::Arrow{I, O}) = InPort[InPort(1, i) for i = 1:I]
+outports{I,O}(a::Arrow{I, O}) = OutPort[OutPort(1, i) for i = 1:O]
 
 ninports{I,O}(a::Arrow{I,O}) = I
 noutports{I,O}(a::Arrow{I,O}) = O
@@ -53,109 +46,114 @@ immutable PrimArrow{I, O} <: Arrow{I, O}
   func::PrimFunc
 end
 
-name(a::PrimArrow) = a.func.s
+name(a::PrimArrow) = a.func.name
 
 "number of arrows"
 nnodes(a::PrimArrow) = 1
 nodes(a::PrimArrow) = Arrow[a]
 
-# Primitive arrows have no edges
-edges(a::PrimArrow) = Dict{Port, Port}()
+inppintype(x::PrimArrow, pinid::PinId) = x.typ.inptypes[pinid]
+outpintype(x::PrimArrow, pinid::PinId) = x.typ.outtypes[pinid]
 
 ## Composite Arrows
 ## ================
 
+# Edges should go from outports to inports.
+# Edges with the boundary need special care, because an outport on the boundary is
+# (or at least is connected to) an inport of the arrow from the outside world
+
 "An arrow with `I` input ports and `O` output ports"
 immutable CompositeArrow{I, O} <: Arrow{I,O}
-  edges::Dict{Port, Port}
-  nodes::Vector{Arrow}
+  edges::Dict{OutPort, InPort}
+  nodes::Vector{PrimArrow}
   CompositeArrow() = new{I,O}(Dict{Port, Port}(), Arrow[])
 end
 
-name(a::CompositeArrow) = (warn("FIXME: name composite arrow"); gensym())
 addnodes!{T<:Arrow}(c::CompositeArrow, nodes::Vector{T}) = push!(c.nodes, nodes...)
 nodes(a::CompositeArrow) = a.nodes
 nnodes(a::CompositeArrow) = length(nodes(a))
 
 edges(a::CompositeArrow) = a.edges
-addedges!(a::CompositeArrow, e::Dict{Port, Port}) = merge!(a.edges, e)
+addedges!(a::CompositeArrow, e::Dict{OutPort, InPort}) = merge!(a.edges, e)
 addedge!(a::CompositeArrow, p1::Port, p2::Port) = a.edges[p1] = p2
 
-"Pinid w.r.t first input (output) pin, e.g. return 1 if first input (output) pin"
-relativepinid{I,O}(a::Arrow{I,O}, pin::PinId) = pin > I ? pin - I : pin
-
-function shift{I,O}(p::Port, a::CompositeArrow{I,O})
-  # if it's a boundary pin shift it depending on whether its an input or output
-  #FIXME< this is a weird function
-  if isboundary(p)
-    # @show p.pin
-    # @show iopinid(a, p.pin)
-    isinputport(p, a) ? Port(p.arrow,p.pin + I) : Port(p.arrow, relativepinid(a, p.pin)+I)
+function inppintype(x::CompositeArrow, pinid::PinId)
+  inport = edges(x)[OutPort(1,pinid)]
+  # This means edge is passing all the way through to output and therefore
+  # is Top (Any) type
+  if isboundary(inport)
+    CoolType(:Any)
   else
-    Port(p.arrow + nnodes(a), p.pin)
+    inppintype(subarrow(x, inport.arrowid), inport.pinid)
   end
 end
 
-"Wrap primitive arrow in composite arrow - behaves identically to original arrow"
-function encapsulate{I,O}(a::PrimArrow{I,O})
-  c = CompositeArrow{I,O}()
-  addnodes!(c, [a])
-  for i = 1:I
-    addedge!(c, Port(1, i), Port(2, i))
+"All the inports contained by subarrows in `a`"
+function subarrowinports(a::CompositeArrow)
+  ports = InPort[]
+  for i = 1:nnodes(a)
+    push!(ports, subinports(a, i+1)...)
   end
-
-  for i = I+1:I+O
-    addedge!(c, Port(2, i), Port(1, i))
-  end
-  c
+  ports
 end
 
-"Return the ports of the arrow with `arrid` inside `a`"
-function subarrowports(a::CompositeArrow, arrid::ArrowId)
-  # The self arrow
-  if arrid == 1
-    @show ports(a)
-  else
-    subarr = nodes(a)[arrid-1]
-    @show [Port(arrid, p) for p = 1:nports(subarr)]
+"All the outports contained by subarrows in `a`"
+function subarrowoutports(a::CompositeArrow)
+  ports = OutPort[]
+  for i = 1:nnodes(a)
+    push!(ports, suboutports(a, i+1)...)
   end
+  ports
 end
 
-function subinports(a::CompositeArrow, arrid::ArrowId)
-  @assert arrid != 1
-  [Port(arrid, i) for i = 1:Arrows.ninports(Arrows.nodes(a)[arrid-1])]
+outasinports{I,O}(a::CompositeArrow{I,O}) = [InPort(1, i) for i = 1:O]
+inasoutports{I,O}(a::CompositeArrow{I,O}) = [OutPort(1, i) for i = 1:I]
+
+"All inports, both nested and boundary"
+allinports(a::CompositeArrow) = vcat(outasinports(a), subarrowinports(a))::Vector{InPort}
+
+"All outports, both nested and boundary"
+alloutports(a::CompositeArrow) = vcat(inasoutports(a), subarrowoutports(a))::Vector{OutPort}
+
+subarrow(a::CompositeArrow, arrowid::ArrowId) = a.nodes[arrowid-1]
+
+function subinports(a::CompositeArrow, arrowid::ArrowId)
+  @assert arrowid != 1
+  arr = subarrow(a, arrowid)
+  [InPort(arrowid, i) for i = 1:ninports(arr)]
 end
 
-function suboutports(a::CompositeArrow, arrid::ArrowId)
-  @assert arrid != 1
-  [Port(arrid, i + ninports(a)) for i = 1:Arrows.noutports(Arrows.nodes(a)[arrid-1])]
-end
-
-"Return all the ports of a composite arrow, including subarrows"
-function allports(a::CompositeArrow)
-  theports = Port[]
-  for i = 1:nnodes(a)+1
-    push!(theports, subarrowports(a, i)...)
-  end
-  @show theports
+function suboutports(a::CompositeArrow, arrowid::ArrowId)
+  @assert arrowid != 1
+  arr = subarrow(a, arrowid)
+  [OutPort(arrowid, i) for i = 1:noutports(arr)]
 end
 
 "Is this arrow well formed? Are all its ports (and no others) connected?"
 function iswellformed{I,O}(c::CompositeArrow{I,O})
-  alltheports = Set{Port}(allports(c))
-  @show alltheports
-  for (p1, p2) in edges(c)
-    if (p1 in alltheports) && (p2 in alltheports)
-      delete!(alltheports, p1)
-      delete!(alltheports, p2)
+  # println("Checking")
+  inpset = Set{InPort}(allinports(c))
+  outpset = Set{OutPort}(alloutports(c))
+
+  @show inpset
+  @show outpset
+
+  @show edges(c)
+
+  for (outp, inp) in edges(c)
+    if (outp in outpset) && (inp in inpset)
+      println("removing $outp")
+      println("removing $inp")
+      delete!(outpset, outp)
+      delete!(inpset, inp)
     else
       # error("arrow not well formed")
-      println("not well formed $p1 - $(p1 in alltheports) \n $p2 - $(p2 in alltheports)")
+      println("not well formed $outp - $(outp in outpset) \n $inp - $(inp in inpset)")
       return false
     end
   end
 
-  if isempty(alltheports)
+  if isempty(inpset) && isempty(outpset)
     return true
   else
     println("some unconnected ports")

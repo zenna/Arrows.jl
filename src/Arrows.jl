@@ -10,5 +10,13 @@ include("primitive.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("call.jl")
+include("stan.jl")
+
+export
+  compose,
+  first,
+  lift,
+  multiplex,
+  name
 
 end
