@@ -7,7 +7,7 @@
 # end
 module RayTrace
   # Global Defs
-  const MAX_RAY_DEPTH = 5
+  const MAX_RAY_DEPTH = 7
 
   # Utility Functions
   "Linearly interpolate between `a` and `b`"
@@ -40,8 +40,6 @@ module RayTrace
 
   "Compute a ray-sphere intersection using the geometric solution"
   function rayintersect(r::Ray, s::Sphere)
-    # println("Corrupted here?")
-    # @show r
     l = s.center - r.orig
     tca = dot(l, r.dir)
     if (tca < 0)
@@ -51,8 +49,6 @@ module RayTrace
     if (d2 > s.radius^2)
       return (false, -Inf, -Inf)
     end
-    # println("What about here?")
-    # @show r
 
     thc = sqrt(s.radius^2 - d2)
     t0 = tca - thc
@@ -69,9 +65,7 @@ module RayTrace
     areintersections = false
     tnear = Inf
     sphere = spheres[1]
-    # println("NEWSPHERES\n\n\n\n")
     for s in spheres
-      # @show depth
       doesintersect, t0, t1 = rayintersect(r, s)
       areintersections = areintersections || doesintersect
       !doesintersect && continue
@@ -84,13 +78,7 @@ module RayTrace
       end
     end
 
-    # @show depth
-    # @show areintersections
-    # @show sphere
-
-    !areintersections && return Vec3(0.0)
-
-    # println("Go!")
+    !areintersections && return Vec3(0.9)
 
     surface_color = Vec3(0.0)        # color of the ray/surfaceof the object intersected by the ray
     phit = r.orig + r.dir * tnear # point of intersection
@@ -131,12 +119,6 @@ module RayTrace
       # end
 
       # the result is a mix of reflection and refraction (if the sphere is transparent)
-      @assert !any(isnan, sphere.surface_color)
-      @assert !any(isnan, reflection)
-      @assert !any(isnan, refraction)
-      @assert !isnan(fresneleffect)
-      @assert !isnan(sphere.transparency)
-
       surface_color = (reflection * fresneleffect +
         refraction * (1 - fresneleffect) * sphere.transparency) .* sphere.surface_color
     else
@@ -158,21 +140,12 @@ module RayTrace
               end
             end
           end
-          @assert !any(isnan, sphere.surface_color)
-          @assert !any(isnan, transmission)
-          @assert !any(isnan, max(0.0, dot(nhit, lightDirection)))
-          @assert !any(isnan, spheres[i].emission_color)
 
           surface_color += sphere.surface_color * transmission *
             max(0.0, dot(nhit, lightDirection)) .* spheres[i].emission_color
-          @assert !any(isnan, surface_color)
-
         end
       end
     end
-    @assert !any(isnan, sphere.emission_color)
-    @assert !any(isnan, surface_color)
-
 
     # check(surface_color)
     # check(sphere.emission_color)
@@ -204,32 +177,22 @@ module RayTrace
     image
   end
 
-  #     // Save result to a PPM image (keep these flags if you compile under Windows)
-  #     std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
-  #     ofs << "P6\n" << width << " " << height << "\n255\n";
-  #     for (unsigned i = 0; i < width * height; ++i) {
-  #         ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
-  #                (unsigned char)(std::min(float(1), image[i].y) * 255) <<
-  #                (unsigned char)(std::min(float(1), image[i].z) * 255);
-  #     }
-  #     ofs.close();
-  #     delete [] image;
-  # }
-
   function main()
     spheres = Sphere[]
     # position, radius, surface color, reflectivity, transparency, emission color
-    push!(spheres,Sphere(Vec3( 0.0, -10004., -20.), 10000., Vec3(0.20, 0.20, 0.20), 0., 0.0, Vec3(0.0)))
+    # push!(spheres,Sphere(Vec3( 0.0, -10004., -20.), 10000., Vec3(0.20, 0.20, 0.20), 0., 0.0, Vec3(0.0)))
     push!(spheres,Sphere(Vec3( 0.0,      0., -20.),     4., Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)))
     push!(spheres,Sphere(Vec3( 5.0,     -1., -15.),     2., Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)))
     push!(spheres,Sphere(Vec3( 5.0,      0., -25.),     3., Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)))
     push!(spheres,Sphere(Vec3(-5.5,      0., -15.),     3., Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)))
     # light
-    push!(spheres,Sphere(Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(3.)))
+    push!(spheres,Sphere(Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(20.)))
     render(spheres)
   end
 end
 
 using ImageView
 op  = RayTrace.main()
-view(map(sum, op))
+
+toimg(x) = map(col->Colors.RGB{Float64}(col...), x)
+view(toimg(op))
