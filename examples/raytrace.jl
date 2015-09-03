@@ -62,9 +62,12 @@ module RayTrace
       spheres::Vector{Sphere},
       depth::Int)
 
+    # println("ray:", r.dir, ",", r.orig)
+
     areintersections = false
     tnear = Inf
     sphere = spheres[1]
+    i = 0
     for s in spheres
       doesintersect, t0, t1 = rayintersect(r, s)
       areintersections = areintersections || doesintersect
@@ -75,7 +78,9 @@ module RayTrace
       if t0 < tnear
         tnear = t0
         sphere = s
+        # println("best is", i)
       end
+      i += 1
     end
 
     !areintersections && return Vec3(0.9)
@@ -92,6 +97,7 @@ module RayTrace
     # positive.
     bias = 1e-4; # add some bias to the point from which we will be tracing
     inside = false
+    # println("dot", dot(r.dir, nhit))
     if dot(r.dir, nhit) > 0
       nhit = -nhit
       inside = true
@@ -169,7 +175,7 @@ module RayTrace
       yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle
       raydir = Vec3(xx, yy, -1.0)
       raydir = normalize(raydir)
-      @show y, x
+      # println(x, ",", y)
       primaryray = Ray(Vec3(0.0), raydir)
       image[x,y] = trace(primaryray, spheres, 0)
     end
@@ -179,14 +185,23 @@ module RayTrace
 
   function main()
     spheres = Sphere[]
+    push!(spheres, Sphere(Vec3( 0.0, -10004., -20.), 10000, Vec3(0.20, 0.20, 0.20), 0., 0.0, Vec3(0.0)));
+    push!(spheres, Sphere(Vec3( 0.0,      0., -20.),     4, Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)));
+    push!(spheres, Sphere(Vec3( 5.0,     -1., -15.),     2, Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)));
+    push!(spheres, Sphere(Vec3( 5.0,      0., -25.),     3, Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)));
+    push!(spheres, Sphere(Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)));
+      # // light
+    push!(spheres, Sphere(Vec3( 0.0,     20., -30.),     3, Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(3.0)));
+
+
     # position, radius, surface color, reflectivity, transparency, emission color
     # push!(spheres,Sphere(Vec3( 0.0, -10004., -20.), 10000., Vec3(0.20, 0.20, 0.20), 0., 0.0, Vec3(0.0)))
-    push!(spheres,Sphere(Vec3( 0.0,      0., -20.),     4., Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)))
-    push!(spheres,Sphere(Vec3( 5.0,     -1., -15.),     2., Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)))
-    push!(spheres,Sphere(Vec3( 5.0,      0., -25.),     3., Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)))
-    push!(spheres,Sphere(Vec3(-5.5,      0., -15.),     3., Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)))
-    # light
-    push!(spheres,Sphere(Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(20.)))
+    # push!(spheres,Sphere(Vec3( 0.0,      0., -20.),     2., Vec3(1.00, 0.02, 0.99), 1., 0.5, Vec3(0.5)))
+    # push!(spheres,Sphere(Vec3( 5.0,     -1., -15.),     2., Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)))
+    # push!(spheres,Sphere(Vec3( 5.0,      0., -25.),     3., Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)))
+    # push!(spheres,Sphere(Vec3(-5.5,      0., -15.),     3., Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)))
+    # # light
+    # push!(spheres,Sphere(Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(20.)))
     render(spheres)
   end
 end
