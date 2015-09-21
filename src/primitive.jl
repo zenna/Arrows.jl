@@ -71,3 +71,9 @@ clone1d  = ArrowType{1,2}([ArrayType(:N)],
                           [])
 
 clone1dfunc = PrimFunc(clone1d, :clone)
+
+## Primitive Arrows
+## ================
+const plusarr = lift(addfunc)
+const minusarr = lift(minusfunc)
+const binconcatarr = lift(binconcat)

@@ -6,6 +6,7 @@
 #   z::Float64
 # end
 module RayTrace
+  using Compat
   # Global Defs
   const MAX_RAY_DEPTH = 7
 
@@ -163,10 +164,10 @@ module RayTrace
     width = 640
     height = 480
     image = Array(Vec, width, height)
-    invWidth = 1 / Float64(width)
-    invHeight = 1 / Float64(height)
+    @compat invWidth = 1 / Float64(width)
+    @compat invHeight = 1 / Float64(height)
     fov = 30.0
-    aspectratio = width / Float64(height)
+    @compat aspectratio = width / Float64(height)
     angle = tan(pi * 0.5 * fov / 180.)
 
     # Trace rays

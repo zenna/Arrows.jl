@@ -1,5 +1,6 @@
 module Arrows
 using Compat
+using PyCall
 # using Distributions
 
 import Base: call, convert, union, first
