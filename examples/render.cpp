@@ -10,10 +10,10 @@ using Eigen::Dynamic;
 int main() {
   std::vector<RT::Vec<double>> imgdata = RT::gen_img();
   std::vector<RT::Sphere<double>> init_spheres = RT::gen_spheres2();
-  RT::drawtofile("initial.ppm", imgdata, 640,480);
+  RT::drawtofile("initial.ppm", imgdata, 480,320);
 
   RT::optimize(imgdata, init_spheres);
-}
+} 
 
   //
   // int main() {

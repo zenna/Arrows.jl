@@ -11,7 +11,10 @@ include("primitive.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("call.jl")
-include("stan.jl")
+include("compile/stan.jl")
+include("primfuncs.jl")
+include("primarrows.jl")
+
 
 export
   compose,

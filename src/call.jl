@@ -13,6 +13,8 @@ immutable CallExpr
   outputtypes::Vector{ArrayType}
 end
 
+"""Represents an imperative function definition: a typed funtion declaration
+  and a sqeuence of imperative calls (CallExprs)"""
 immutable FuncDef
   name::Symbol
   inputsymbs::Vector{Symbol}
@@ -134,7 +136,6 @@ function compile{I,O}(na::NamedArrow{I,O})
   to_visit = Set{NamedArrow}([na])
   seen_arrows = Set{ArrowName}()
   funcdefs = FuncDef[]
-  @show "Got here 1"
 
   # While compiling a namedarrow may encounter other named arrows, add these to
   # list and keep compiling until none left

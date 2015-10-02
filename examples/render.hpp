@@ -211,8 +211,8 @@ Vec<typename boost::math::tools::promote_args<T, T2>::type> trace(
 // Render an image
 template <typename T>
 std::vector<Vec<T>> render(const std::vector<Sphere<T>> &spheres) {
-  int width = 640;
-  int height = 480;
+  int width = 480;
+  int height = 320;
   std::vector<Vec<T>> image(width * height);
   double inv_width = 1/double(width);
   double inv_height = 1/double(height);
@@ -256,18 +256,33 @@ std::vector<Sphere<double>> gen_spheres() {
   return spheres;
 }
 
+// Point<T> center;              // position of the sphere
+// T radius;                     // radius
+// Vec<T> surface_color;         // surfae colour
+// T reflection;
+// T transparency;
+// Vec<T> emission_co
+
 std::vector<Sphere<double>> gen_spheres2() {
   std::vector<Sphere<double>> spheres;
-  spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -18.),     2.3, Vec3(0.5, 0.12, 0.16), 1., 0.5, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -10.),     3, Vec3(0.10, 0.30, 0.90), 1., 0.0, Vec3(0.0)});
 
+  spheres.push_back(Sphere<double>{Vec3( 5.0,      -1., -15.),     4, Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)});
+  spheres.push_back(Sphere<double>{Vec3( 0.0,     1., -20.),     2, Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)});
+  spheres.push_back(Sphere<double>{Vec3( -5.0,      0., -25.),     3, Vec3(0.15, 0.27, 0.37), 1., 0.0, Vec3(0.0)});
+  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
+    // light
+  spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3, Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(3.0)});
 
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     3.5, Vec3(1.00, 0.11, 0.12), 1., 0.5, Vec3(0.0)});
-  // // # light
-  spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(5.)});
+  // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -18.),     2.3, Vec3(0.5, 0.12, 0.16), 1., 0.5, Vec3(0.0)});
+  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
+  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -10.),     3, Vec3(0.10, 0.30, 0.90), 1., 0.0, Vec3(0.0)});
+  //
+  //
+  // // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     3.5, Vec3(1.00, 0.11, 0.12), 1., 0.5, Vec3(0.0)});
+  // // // # light
+  // spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(5.)});
   return spheres;
-}
+} 
 
 
 std::vector<Vec<double>> gen_img() {

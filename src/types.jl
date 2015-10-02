@@ -1,24 +1,24 @@
-"An expression for type variales"
+"An expression for type variables"
 abstract TypeExpr{T}
 
 "A type variable, e.g. `T`"
-immutable TypeVar <: TypeExpr{Int}
-  s::Symbol
+immutable TypeVar <: TypeExpr{Int}  # Size of array dimension represents a integer
+  expr::Symbol
 end
 
 "A type after transformation, e.g. `2T`"
 immutable TypeExprComposite <: TypeExpr{Int}
-  s::Expr
+  expr::Expr
 end
 
+convert(::Type{TypeExpr}, x::Symbol) = TypeVar(x)
+convert(::Type{TypeExpr}, x::Expr) = TypeExprComposite(x)
+
+"Type of an nd-array, each element of `s` corresponds to a dimension of the array"
 immutable ArrayType
-  s::Tuple{Vararg{TypeExpr}}
+  @compat dimtypes::Tuple{Vararg{TypeExpr}}
 end
 
-ndims(a::ArrayType) = length(a.s)
-
-CoolType(x::Symbol) = TypeVar(x)
-CoolType(x::Expr) = TypeExprComposite(x)
-
-ArrayType(xs...) = ArrayType((TypeExpr[CoolType(x) for x in xs]...))
-ArrayType(x) = ArrayType((CoolType(x),))
+ndims(a::ArrayType) = length(a.expr)
+ArrayType(xs...) = ArrayType(tuple(TypeExpr[convert(TypeExpr,x) for x in xs]...))
+ArrayType(x) = ArrayType((convert(TypeExpr,x),))
