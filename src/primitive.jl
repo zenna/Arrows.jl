@@ -24,7 +24,7 @@ end
 # These unary funtions take in vectors of length 1 and return vectors of length 1
 # unaryfunctyp = PrimFuncType([],:1, :1, [])
 
-# unaryfunctyp =  ArrowType{1,1}([TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Int}()], [TypeVar{Bool}()])
+# unaryfunctyp =  ArrowType{1,1}([TypeVariable{Int}()], [TypeVariable{Int}()], [TypeVariable{Int}()], [TypeVariable{Bool}()])
 # This is for a type which takes in one input vector of arbitrary length and
 # returns a vector of the same length
 

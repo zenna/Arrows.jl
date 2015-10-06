@@ -1,4 +1,3 @@
-
 ## Primitive Arrows
 ## ================
 const plusarr = lift(addfunc)

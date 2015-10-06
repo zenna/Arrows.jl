@@ -2,7 +2,7 @@
 abstract TypeExpr{T}
 
 "A type variable, e.g. `T`"
-immutable TypeVar <: TypeExpr{Int}  # Size of array dimension represents a integer
+immutable TypeVariable <: TypeExpr{Int}  # Size of array dimension represents a integer
   expr::Symbol
 end
 
@@ -11,7 +11,7 @@ immutable TypeExprComposite <: TypeExpr{Int}
   expr::Expr
 end
 
-convert(::Type{TypeExpr}, x::Symbol) = TypeVar(x)
+convert(::Type{TypeExpr}, x::Symbol) = TypeVariable(x)
 convert(::Type{TypeExpr}, x::Expr) = TypeExprComposite(x)
 
 "Type of an nd-array, each element of `s` corresponds to a dimension of the array"

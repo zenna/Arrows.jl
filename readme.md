@@ -22,14 +22,11 @@ This means cosarr is a primitive arrow which takes 2 input and 1 output.  As you
 More complex arrows are made by combining simpler arrows.  We can __wire__ these two arrows together using `>>>`.
 
 ```julia
-plusarr >>> cosarr
+a = Arrows.lift(Arrows.sin1dfunc)
+b = Arrows.compose(a,a)
+c = Arrows.encapsulate(b)
+stacked = Arrows.stack(c,c)
+d = Arrows.multiplex(c,c)
+e = Arrows.first(Arrows.lift(Arrows.cos1dfunc))
+f = d >>> e
 ```
-
-
-
-TODO
-====
-
-- Do Layout
-- Compile to theanofollow
-- Compile to stan

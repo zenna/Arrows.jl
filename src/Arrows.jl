@@ -4,7 +4,9 @@ using PyCall
 # using Distributions
 
 
-import Base: call, convert, union, first, ndims, print, println, string, show, showcompact
+import Base: call, convert, union, first, ndims, print, println, string, show,
+  showcompact, >>>
+
 
 include("util.jl")
 include("types.jl")
