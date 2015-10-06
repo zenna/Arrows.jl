@@ -55,6 +55,12 @@ nodes(a::PrimArrow) = Arrow[a]
 inppintype(x::PrimArrow, pinid::PinId) = x.typ.inptypes[pinid]
 outpintype(x::PrimArrow, pinid::PinId) = x.typ.outtypes[pinid]
 
+string{I,O}(x::PrimArrow{I,O}) = "PrimArrow{$I,$O} - $(x.func.name)"
+print(io::IO, x::PrimArrow) = print(io, string(x))
+println(io::IO, x::PrimArrow) = println(io, string(x))
+show(io::IO, x::PrimArrow) = show(io, string(x))
+showcompact(io::IO, x::PrimArrow) = showcompact(io, string(x))
+
 ## Composite Arrows
 ## ================
 

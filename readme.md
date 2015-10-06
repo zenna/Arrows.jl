@@ -3,6 +3,8 @@ Smooth Arrows
 
 Smooth Arrows are a representation of differentiable programs based on the [Arrow formalism](Arrows) from functional programming.  Their intended use is for learning and probabilistic inference.
 
+[![Build Status](https://travis-ci.org/zenna/Arrows.jl.svg?branch=master)](https://travis-ci.org/zenna/Arrows.jl)
+
 ## Tutorial
 
 Arrows are a bit like functions, except we can wire their input and outputs in more interesting ways than simple function composition.
