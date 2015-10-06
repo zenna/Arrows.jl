@@ -1,3 +1,6 @@
+## Fundamental Types for different kinds of Arrows: Primitive and Composite
+## =======================================================================
+
 "A functional unit which transforms `I` input to `O` outputs"
 abstract Arrow{I, O}
 
@@ -10,27 +13,30 @@ typealias PinId Int
 nthinport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= I; InPort(1, n))
 nthoutport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= O; OutPort(1, n))
 
-"""A port is uniquely determined by the arrow it belongs to and a pin.
-  By convention, a port which is on the parnt arrow will have `arrow = 1.
-  Pin ids are contingous from `1:I+O`, with the input taking the first `1:I`"""
+"""An entry or exit to an Arrow, analogous to argument position of multivariate function.
+
+  A port is uniquely determined by the arrow it belongs to and a pin.
+  By convention, a port which is on the parent arrow will have `arrowid = 1`.
+  `pinid`s are contingous from `1:I` or `1:O` for inputs and outputs respectively"""
 abstract Port
 
+"A Port which *accepts* input from the output of other arrows (i.e. `OutPort`s)"
 immutable InPort <: Port
   arrowid::ArrowId
   pinid::PinId
 end
 
+"A Port which *projects* output to the inputs of other arrows (i.e. `InPort`s)"
 immutable OutPort <: Port
   arrowid::ArrowId
   pinid::PinId
 end
 
-"Is this port on the boundary"
+"Is this port on the boundary?"
 isboundary(p::Port) = p.arrowid == 1
 
 ## Generic Arrow
 ## ==============
-
 inports{I,O}(a::Arrow{I, O}) = InPort[InPort(1, i) for i = 1:I]
 outports{I,O}(a::Arrow{I, O}) = OutPort[OutPort(1, i) for i = 1:O]
 
