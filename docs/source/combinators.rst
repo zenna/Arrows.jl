@@ -14,7 +14,7 @@ Lift
 
 This turns a pure function into an arrow
 
-.. _compose:
+.. _asetcompose:
 
 Compose
 -------

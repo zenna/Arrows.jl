@@ -1,10 +1,12 @@
 Arrows.jl's documentation
 =========================
 
-Arrows is a probabilistic programming environment implemented in Julia.
-In it, you can specify probabilistic models as normal programs, and perform inference.
+Arrows.jl is a differentiable programming environment implemented in Julia.
+The goal is to combine the benefits of deep neural networks - namely, that they are differentiable, -  with the benefits of modern programming languages - recursion, modularity, higher-orderness, types.
+To do this, we build upon the formalism of Arrows.
 
-Arrows is built on top of Julia but not yet in the official Julia Package repository.  You can still easily install it from a Julia repl with:
+Arrows is built on top of Julia but not yet in the official Julia Package repository.
+You can still easily install it from a Julia repl with:
 
 .. code-block:: julia
 
@@ -24,11 +26,11 @@ Contents:
    starting
    modeling
    types
+   arrowsets
    primarrows
    combinators
 
    license
-
 
 
 Indices and tables
