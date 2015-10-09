@@ -90,6 +90,13 @@ edges(a::CompositeArrow) = a.edges
 addedges!(a::CompositeArrow, e::Dict{OutPort, InPort}) = merge!(a.edges, e)
 addedge!(a::CompositeArrow, p1::Port, p2::Port) = a.edges[p1] = p2
 
+# Printing
+string{I,O}(x::CompositeArrow{I,O}) = "CompositeArrow{$I,$O} - $nnodes(x) subarrows"
+print(io::IO, x::CompositeArrow) = print(io, string(x))
+println(io::IO, x::CompositeArrow) = println(io, string(x))
+show(io::IO, x::CompositeArrow) = print(io, string(x))
+showcompact(io::IO, x::CompositeArrow) = print(io, string(x))
+
 function inppintype(x::CompositeArrow, pinid::PinId)
   inport = edges(x)[OutPort(1,pinid)]
   # This means edge is passing all the way through to output and therefore
@@ -176,9 +183,22 @@ end
 
 ## Named Arrow
 ## ===========
+"""An arrow with a symbolic name.
 
-"A named arrow is like a named function"
+  Named arrows enhance composition/reus, since they can be used in another arrow
+  without duplication."""
 immutable NamedArrow{I,O} <: Arrow{I,O}
   name::Symbol
   arrow::CompositeArrow{I, O}
+end
+
+## ArrowSet
+## =======
+
+"""An ArrowSet represents a set of possible Arrows.
+
+  It is formalised as a function from a vector of real values to an arrow.
+  This formalism is constructive, in the sense we can
+"""
+immutable ArrowSet{I,O} <: Arrow{I,O}
 end

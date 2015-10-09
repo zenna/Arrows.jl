@@ -19,6 +19,6 @@ immutable ArrayType
   @compat dimtypes::Tuple{Vararg{TypeExpr}}
 end
 
-ndims(a::ArrayType) = length(a.expr)
+ndims(a::ArrayType) = length(a.dimtypes)
 ArrayType(xs...) = ArrayType(tuple(TypeExpr[convert(TypeExpr,x) for x in xs]...))
 ArrayType(x) = ArrayType((convert(TypeExpr,x),))

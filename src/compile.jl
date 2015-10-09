@@ -131,7 +131,10 @@ end
 # been defined.  The only subarrows without any dependencies are those connected
 # to the input.  Pull any subarrow with no dependencies, construct
 """Compile to an imperative program so that it can be evaluated efficiently,
- and autodifferentiated."""
+ and autodifferentiated.
+
+ Returns Vector{FuncDef} where the name of arrow `na` will be name of one of
+ returned `funcdefs and all other funcdefs correspond to subarrows of `na`."""
 function compile{I,O}(na::NamedArrow{I,O})
   to_visit = Set{NamedArrow}([na])
   seen_arrows = Set{ArrowName}()
