@@ -1,13 +1,24 @@
+Arrows
+======
+
+Arrows represent computations that are ‘function-like’, in that they take inputs and produce
+some output.
+Arrows have more structure than functions, and and can be composed in more exotic
+ways than simple function composition.
+Building complex programs using arrows involves wiring simpler arrows together, hence arrows appeal to a circuit analogy and bear resemblance to data-flow
+languages, hardware description languages, and even neural networks.
+Other than in Arrows.jl have been used almost solely within the Haskell programming language, where they are formalised as the a type class Arrow.
+
+.. function:: >>> :: (ArrowSet [A] -> [B] [P1]) -> (ArrowSet [B] -> [C] [P2]) -> Arrow [P0] -> [P1 + p2] -> (ArrowSet [A] -> [C] [P0])
+
 Arrow Types
-===========
+-----------
 
 Types serve two purposes.
 First, they ensure that the arrows you attempt to construct are well-formed.
 Second, types allow us to write very abstract code.
 Here we will show what information is kept in a type and the syntax we use to describe them.
 
-Arrow Types
------------
 
 The type of an arrow represents a set of possible concrete arrows.
 An `ArrowType` contains the following information:
@@ -18,6 +29,7 @@ An `ArrowType` contains the following information:
 .. function:: Arrow iptype1 ..., iptype_n -> optype1, ..., optype_m | constraint
 
 Each exp iptype_i
+
 Array Types
 -----------
 The type of an array (`ArrayType`) contains the following information

@@ -13,6 +13,11 @@ The benefit of this approach (as opposed to say )
 It is formalised as a function from a vector of real values to an arrow.
 This formalism is constructive, in the sense we can
 
+Types
+-----
+
+
+
 ArrowSet Combinators
 --------------------
 
@@ -41,6 +46,11 @@ ArrowSet Combinators
 .. _compose:
 
 .. function:: >>> :: (ArrowSet [A] -> [B] [P1]) -> (ArrowSet [B] -> [C] [P2]) -> Arrow [P0] -> [P1 + p2] -> (ArrowSet [A] -> [C] [P0])
+
+.. code-block:: haskell
+
+    >>> :: ([A] >> [B] [P1]) -> ([B] >> [C] [P2]) -> ([P0] >> [P1 + P2]) -> ([A] >> [C] [P0])
+
 
 Composition of ArrowSets is similar but slightly more complex than composition of normal Arrows.
 

@@ -25,7 +25,7 @@ Contents:
 
    starting
    modeling
-   types
+   arrows
    arrowsets
    primarrows
    combinators
