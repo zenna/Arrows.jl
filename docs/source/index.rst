@@ -23,6 +23,7 @@ Contents:
 
    starting
    modeling
+   types
    primarrows
    combinators
 
