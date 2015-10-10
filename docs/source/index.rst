@@ -29,6 +29,7 @@ Contents:
    arrowsets
    primarrows
    combinators
+   library
 
    license
 
