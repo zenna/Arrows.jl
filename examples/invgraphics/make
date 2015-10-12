@@ -1,0 +1,1 @@
+clang++-3.6 -std=c++14 -I ../../math/ render.cpp -I ../../math/lib/eigen_3.2.4/ -lnlopt
