@@ -32,7 +32,7 @@ using Arrows
 ```
 ## Usage
 
-[Read the docsumentation](http://arrowsjl.readthedocs.org/en/latest/) or check out the quick start below
+[Read the documentation](http://arrowsjl.readthedocs.org/en/latest/) or check out the quick start below
 
 ## Quick Start
 
