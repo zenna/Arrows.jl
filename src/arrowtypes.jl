@@ -62,7 +62,8 @@ inppintype(x::PrimArrow, pinid::PinId) = x.typ.inptypes[pinid]
 outpintype(x::PrimArrow, pinid::PinId) = x.typ.outtypes[pinid]
 
 # Printing
-string{I,O}(x::PrimArrow{I,O}) = "PrimArrow{$I,$O} - $(x.func.name)"
+string{I,O}(x::PrimArrow{I,O}) =
+  "$(x.func.name) :: PrimArrow{$I,$O}\n$(x.func.name) :: $(string(x.typ))"
 print(io::IO, x::PrimArrow) = print(io, string(x))
 println(io::IO, x::PrimArrow) = println(io, string(x))
 show(io::IO, x::PrimArrow) = print(io, string(x))
@@ -91,7 +92,7 @@ addedges!(a::CompositeArrow, e::Dict{OutPort, InPort}) = merge!(a.edges, e)
 addedge!(a::CompositeArrow, p1::Port, p2::Port) = a.edges[p1] = p2
 
 # Printing
-string{I,O}(x::CompositeArrow{I,O}) = "CompositeArrow{$I,$O} - $nnodes(x) subarrows"
+string{I,O}(x::CompositeArrow{I,O}) = "CompositeArrow{$I,$O} - $(nnodes(x)) subarrows"
 print(io::IO, x::CompositeArrow) = print(io, string(x))
 println(io::IO, x::CompositeArrow) = println(io, string(x))
 show(io::IO, x::CompositeArrow) = print(io, string(x))

@@ -22,3 +22,9 @@ end
 ndims(a::ArrayType) = length(a.dimtypes)
 ArrayType(xs...) = ArrayType(tuple(TypeExpr[convert(TypeExpr,x) for x in xs]...))
 ArrayType(x) = ArrayType((convert(TypeExpr,x),))
+
+string(x::TypeExpr) = string(x.expr)
+string(a::ArrayType) = string("{", join(map(string, a.dimtypes),", "), "}")
+print(io::IO, a::ArrayType) = print(io, string(a))
+println(io::IO, a::ArrayType) = println(io, string(a))
+show(io::IO, a::ArrayType) = print(io, a)

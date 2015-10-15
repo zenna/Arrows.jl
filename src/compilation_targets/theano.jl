@@ -9,27 +9,40 @@
 # Arrows.CallExpr(:sin,[:x3],[:x5],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
 # Arrows.CallExpr(:sin,[:x4],[:x6],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
 # Arrows.CallExpr(:cos,[:x5],[:x7],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
+#
+# thfunction = f.zfunction
+#
+# x = pycall(T.dscalar, PyAny, "x")
+# y = pycall(T.dscalar, PyAny, "y")
+# z = x[:__add__](y)
+#
+# op = thfunction([x,y], z)
 
 
 module Theano
   using PyCall
   using Arrows
-  import Base:convert
-  @pyimport theano.compile.function as f
+  import Base:convert, call
+  @pyimport theano.compile.function as theano_func
   @pyimport theano.tensor as T
-  #
-  # thfunction = f.zfunction
-  #
-  # x = pycall(T.dscalar, PyAny, "x")
-  # y = pycall(T.dscalar, PyAny, "y")
-  # z = x[:__add__](y)
-  #
-  # op = thfunction([x,y], z)
+
+  "convert between symbols used for funciton names and theano PyObject functions"
+  const name2theanofunc =
+    Dict{Symbol, PyObject}(:cos => T.cos,
+     :sin => T.sin,
+     :(+) => T.add,
+     :(-) => T.sub,
+     :dot => T.dot)
+
+  "Return a set of values from a dictionary from a vector of keys"
+  extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]
 
   "A Theano Function.  Represents a compiled arrow"
   immutable TheanoFunc
     func::PyObject
   end
+
+  call(t::TheanoFunc, x...) = call(t.func, x...)
 
   "A Theano Tensor Type - i.e. n-dimensional array type"
   immutable TheanoTensorType
@@ -44,6 +57,7 @@ module Theano
     TheanoTensorType(typ)
   end
 
+  "Return vector of theano input variables which correspond to funcdef"
   function th_inputs(funcdef::Arrows.FuncDef)
     ninputs = length(funcdef.inputsymbs)
     ## Create Variable Inputs
@@ -55,11 +69,51 @@ module Theano
     th_inputs
   end
 
-  function convert(TheanoFunc, funcdef::Arrows.FuncDef)
+  "Get theano variables for outputs of an arrow funcdef"
+  function th_outputs(theano_inputs, funcdef::Arrows.FuncDef)
     ## Create Variable Inputs
-    inputs = th_inputs(funcdef)
-    symb2pyvar = Dict{Symbol, PyObject}()
-    
-    th_inputs
+    # theano_inputs = th_inputs(funcdef)
+
+    # Map funcinputs to theano inputs
+    symb2pyvar = Dict{Symbol, PyObject}(zip(funcdef.inputsymbs, theano_inputs))
+
+    for fcall in funcdef.calls
+      ## Treat 'clone' specially so not to unnecessarily copy data
+      if fcall.name == :clone
+        ..
+      else
+        args = extract(symb2pyvar, fcall.inputsymbs)
+        th_op = name2theanofunc[fcall.name](args)
+
+        # There are only two valid scenarios
+        # 1. theano returns a list of the same length as number of outputs
+        # 2. theano returns a scalar and number of outputs is 1
+
+        # Multiple outputs from theano
+        if isa(th_op, Array)
+          @assert length(th_op) == length(fcall.outputsymbs)
+            """$(fcall.name): theano returned $(length(th_op)) outputs but was
+            expecting $(length(fcall.outputsymbs))"""
+          for i = 1:length(fcall.outputsymbs)
+            haskey(symb2pyvar, fcall.outputsymbs[i]) && error("symbol $symb assigned to twice")
+            @show fcall.outputsymbs[i]
+            symb2pyvar[fcall.outputsymbs[i]] = th_op[i]
+          end
+        else # Single output
+          @assert length(fcall.outputsymbs) == 1 "was expecting more than 1 output"
+          @show fcall.outputsymbs[1]
+          symb2pyvar[fcall.outputsymbs[1]] = th_op
+        end
+      end
+    end
+    @show symb2pyvar
+    extract(symb2pyvar, funcdef.outputsymbs)
+  end
+
+  "Fully construct theano function from funcdef"
+  function convert(::Type{TheanoFunc}, funcdef::Arrows.FuncDef)
+    @show inputs = th_inputs(funcdef)
+    @show outputs = th_outputs(inputs, funcdef)
+    TheanoFunc(theano_func.zfunction(inputs, outputs))
   end
 end

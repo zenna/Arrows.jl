@@ -15,6 +15,18 @@ immutable ArrowType{I, O}
   # end
 end
 
+function string{I,O}(x::ArrowType{I,O})
+  inpstring = string(join(map(string, x.inptypes), ", "))
+  outstring = string(join(map(string, x.outtypes), ", "))
+  constraints = "C (TODO)"
+  "$inpstring >> $outstring | $constraints"
+end
+
+print(io::IO, x::ArrowType) = print(io, string(x))
+println(io::IO, x::ArrowType) = println(io, string(x))
+show(io::IO, x::ArrowType) = print(io, string(x))
+showcompact(io::IO, x::ArrowType) = print(io, string(x))
+
 immutable PrimFunc{I, O}
   typ::ArrowType{I, O}
   name::Symbol
