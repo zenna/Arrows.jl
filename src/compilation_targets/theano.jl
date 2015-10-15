@@ -1,7 +1,9 @@
 ## Compilation to Theano
 ## =====================
 
-"No Way"
+"""Theano is a high performance python based library providing automatic
+differrentiation, GPU nd-array computations and multiple primitives oriented
+towards deep learning."""
 module Theano
 
 using PyCall
