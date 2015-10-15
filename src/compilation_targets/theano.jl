@@ -1,24 +1,6 @@
 ## Compilation to Theano
 ## =====================
 
-# x = pycall(T.dscalar, PyAny, "x")
-#
-# Arrows.CallExpr(:clone,[:x0],[:x1,:x2],[Arrows.ArrayType((Arrows.TypeVariable(:N),)),Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-# Arrows.CallExpr(:sin,[:x1],[:x3],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-# Arrows.CallExpr(:sin,[:x2],[:x4],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-# Arrows.CallExpr(:sin,[:x3],[:x5],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-# Arrows.CallExpr(:sin,[:x4],[:x6],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-# Arrows.CallExpr(:cos,[:x5],[:x7],[Arrows.ArrayType((Arrows.TypeVariable(:N),))])
-#
-# thfunction = f.zfunction
-#
-# x = pycall(T.dscalar, PyAny, "x")
-# y = pycall(T.dscalar, PyAny, "y")
-# z = x[:__add__](y)
-#
-# op = thfunction([x,y], z)
-
-
 module Theano
   using PyCall
   using Arrows
@@ -28,11 +10,12 @@ module Theano
 
   "convert between symbols used for funciton names and theano PyObject functions"
   const name2theanofunc =
-    Dict{Symbol, PyObject}(:cos => T.cos,
-     :sin => T.sin,
-     :(+) => T.add,
-     :(-) => T.sub,
-     :dot => T.dot)
+    Dict{Symbol, PyObject}(
+      :cos => T.cos,
+      :sin => T.sin,
+      :(+) => T.add,
+      :(-) => T.sub,
+      :dot => T.dot)
 
   "Return a set of values from a dictionary from a vector of keys"
   extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]
@@ -52,7 +35,7 @@ module Theano
   call(t::TheanoTensorType, name::ASCIIString) = t.typ(name)
 
   function convert(::Type{TheanoTensorType}, arrtype::Arrows.ArrayType)
-    n = ndims(arrtype)
+    @show n = ndims(arrtype)
     typ = T.TensorType(dtype="float64", broadcastable=tuple([false for i = 1:n]...))
     TheanoTensorType(typ)
   end
@@ -83,7 +66,7 @@ module Theano
         ..
       else
         args = extract(symb2pyvar, fcall.inputsymbs)
-        th_op = name2theanofunc[fcall.name](args)
+        th_op = name2theanofunc[fcall.name](args...)
 
         # There are only two valid scenarios
         # 1. theano returns a list of the same length as number of outputs
