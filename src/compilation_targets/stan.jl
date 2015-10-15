@@ -1,6 +1,7 @@
-#TODO 2. put in type information
-#TODO 3. Make standard library of functions
-#
+## Compilation to Stan math library
+## ================================
+
+module Stan
 
 const header = """
 #pragma once
@@ -45,4 +46,6 @@ function convert(::Type{CppExpr}, x::CallExpr)
   callf = "auto $tuple_var = $(x.name)($args);"
   unpack = ["$(convert(CppExpr, x.outputtypes[i])) $(x.outputsymbs[i]) = std::get<$(i-1)>($tuple_var);" for i = 1:length(x.outputsymbs)]
   join(vcat(callf, unpack), "\n")
+end
+
 end
