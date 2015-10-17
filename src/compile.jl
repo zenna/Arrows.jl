@@ -167,8 +167,4 @@ function compile{I,O}(na::NamedArrow{I,O})
   funcdefs
 end
 
-"Apply an arrow to some input"
-function call{T<:Real}(a::Arrow, v::Array{T})
-  arr_expr = convert(Expr, a)
-  eval(arr_expr)(v)
-end
+# "Apply an arrow to some input"

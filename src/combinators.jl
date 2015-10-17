@@ -32,14 +32,14 @@ function compose{I1, O1I2, O2}(a::CompositeArrow{I1,O1I2}, b::CompositeArrow{O1I
   arrowidoffset = nnodes(a)
 
   for (outp, inp) in Arrows.edges(a)
-    @show outp, inp
+    # @show outp, inp
     # if p2 is an output boundary and p1 not input boundary
     # if p1 is an input boundary and p2 is output |---------------|
     # |     |*****|-----------|
     if Arrows.isboundary(inp)
       p3 = b.edges[Arrows.nthoutport(b, inp.pinid)]
       p3shifted = safeoffsetarrowid(p3, arrowidoffset)
-      @show p3, p3shifted
+      # @show p3, p3shifted
       Arrows.addedge!(c, outp, p3shifted)
 
     # inner edge

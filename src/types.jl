@@ -1,3 +1,24 @@
+## Types
+## =====
+
+
+# Scalar
+# Tensor
+# ValueType - Int8, Int16, Int32,
+# Float16
+#
+# ## Array Types
+# Int
+# Real
+# []                  # Real[]
+# Float64{1,3,T}      # 3D - array of size 1 x 3 x T
+# Real{1,3,T}         #
+# {1,3,T}             # Equivalent to above
+# Int64{1,2T,T}  | T > 0
+# [1, 2, T]             # A fixed size vector of length of a particular type, with values for the
+# [A 2  | A + B == 5  # Fixed size matrix of size 2*2
+#  3 B]
+
 "An expression for type variables"
 abstract TypeExpr{T}
 

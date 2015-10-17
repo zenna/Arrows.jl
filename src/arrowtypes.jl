@@ -50,12 +50,12 @@ nports{I,O}(a::Arrow{I,O}) = I + O
 
 ## Call
 ## ====
-# function call{I,O}(a::Arrow{I,O}, x...; compilation_target = Arrows.Theano.TheanoFunc)
-#   @assert length(x) == I "Tried to call arrow of $I inputs with $(length(x)) inputs"
-#   imperative_arrow = compile(Arrows.NamedArrow(:unnamed, a))
-#   convert(compilation_target, imperative_arrow)
-# end
-
+function call{I,O}(a::Arrow{I,O}, x...; compilation_target = Arrows.Theano.TheanoFunc)
+  @assert length(x) == I "Tried to call arrow of $I inputs with $(length(x)) inputs"
+  imperative_arrow = Arrows.compile(Arrows.NamedArrow(:unnamed, a))
+  compiled_f = convert(compilation_target, imperative_arrow[1])
+  compiled_f(x...)
+end
 
 include("arrowtypes/primarrow.jl")
 include("arrowtypes/compositearrow.jl")

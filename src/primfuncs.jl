@@ -3,21 +3,18 @@
 
 clone(x::Vector) = (x[1],x[2])
 
-equal1d =  ArrowType{1,1}([ArrayType(:N)],
-                          [ArrayType(:N)],
-                          [])
+# Id array type
+equal1d = ArrowType{1,1}([ArrayType(:N)], [ArrayType(:N)],[])
 
-cos1dfunc = PrimFunc(equal1d, :cos)
-sin1dfunc = PrimFunc(equal1d, :sin)
-tan1dfunc = PrimFunc(equal1d, :tan)
-
-equal2d =  ArrowType{1,1}([ArrayType(:N, :M)],
-                          [ArrayType(:N, :M)],
-                          [])
-
-cos2dfunc = PrimFunc(equal2d, :cos)
-sin2dfunc = PrimFunc(equal2d, :sin)
-tan2dfunc = PrimFunc(equal2d, :tan)
+for f in [:abs, :exp, :log, :sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh,
+          :tanh, :atan2, :sqrt]
+  for i = 1:1
+    op = symbol(f, i)
+    genfuncexpr = Expr(:(=), op, Expr(:call, :PrimFunc, :equal1d, QuoteNode(f)))
+    eval(genfuncexpr)
+    eval( Expr(:export, op))
+  end
+end
 
 # Binary Functions
 binequal1d =  ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],

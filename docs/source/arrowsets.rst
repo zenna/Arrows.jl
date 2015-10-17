@@ -6,10 +6,17 @@ This set is defined implicitly through parameters, e.g., weight matrices for a n
 Similarly, (probabilistic) inference methods search over, sample from, or measure sets of values of random variables.
 Fundamental to both cases is the notion of *non-determinism*, i.e. a set of possibilities.
 
-An `ArrowSet` represents a set of possible Arrows.
-Just as random-variables (i.e. pure functions) are used to represent sets of values in probability theory, we use normal arrows to represent an ArrowSet.
-There are two kinds of ArrowSet, the first is any arrow which maps a vector of real values to an arrow.
-An ArrowSet is any Arrow with the type:
+An arrow set (`ArrowSet`) represents a set of possible arrows.
+Conceptually, arrow sets are extremely powerful for two reasons.
+First, they encapsulate computation and parameters into a modular unit.
+This module can be transplanted or replicated across the same or a different model in arbitrary ways, or nested within a more complex arrow set.
+Second, they allow partial specification of code.
+Building complex programs with different array dimensions and sizes often leads to complex code with tedious data reshaping, which is highly dependent on the data size.
+Arrow sets abstract away from these details (and solve them using automated constraint solvers), making programming easier and modules more general.
+
+Just as random-variables (i.e. pure functions) are used to represent sets of values in probability theory, we use normal arrows to represent an arrow set.
+The first kind of arrow set is any arrow which maps a vector of real values to an arrow.
+An `ArrowSet` is any arrow with the type:
 
 .. code-block:: haskell
 
@@ -111,4 +118,52 @@ Distribute Splits Returns uniformly distributed random variable between a and b
 TODO
 ----
 
--
+What I am trying to capture here is the idea of a set of arrows.
+Moreover I want that set to be buildable constructively.
+By constructively I mean the set should be defined by a computable procedure from some simpler
+set to a more complex set.
+This is in contrast to declaratively or implicitly.
+
+- Should an arrowset be an arrow from a vector of values to an arrow or to anything.
+A random variable in Sigma is a functiom from a euclidean box to any type T.
+Why should we favour the arrow as the output.
+Well 1. we're mostly interested in function learning. and an arrow is like a function.
+2. We don;t necessarily need to preclude other output types, we're just saying this is what an arrowset is,
+or a nondeteriminstic ararow.  i.e we need not delineate it technically but conceptually and with tooling.
+
+- Can an arrow and an arrowset be used consistently.
+If an arrowset is just a function, all the combinators are already well defined.
+To get different behaviour we need eitehr different combinators or a different tpye of thing.
+What kind of behaviour do we want
+
+1. To be able to plug an arrow into a new place regardless of its parameters
+
+For instance there may be some section for my neural network architecture that takes a vector of 3 inputs
+I should be able to take a parameter set of some number of inputs and plug that in
+
+I could tolerate changing the combinators, although its not idela
+
+One thing we need to do when we plug in an arrow set is specify how to handle the parameters.
+
+There seem to be two conflictin goals
+
+1. is consistency withinthe arrow type system, say everything is jsut an arrow.
+
+2 is to say consistency between usage.
+
+first' :: a >> (b >> c)
+first' a = arr \x -> first a x
+
+i.e. first is an arrow which takes some vector input applies it to the arrowset to get an arrow,
+then applies first to that arrow
+
+# can this be done with just combinators? Surely
+
+first' a = a >>> lift first
+
+>>> :: (a >> (b >> c)) -> (e >> (c >> d))
+>>>' a b = (a *** b) >>> (lift >>>)
+
+So really the question comes down to whether I want to
+- Describe these arrowsets using new combinators
+- Describe these as a new kind of arrow and redefine the existing combinators

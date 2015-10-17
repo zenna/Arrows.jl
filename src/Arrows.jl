@@ -19,6 +19,9 @@ include("compilation_targets/theano.jl")
 include("primfuncs.jl")
 include("primarrows.jl")
 
+include("library/activations.jl")
+
+
 
 export
   compose,

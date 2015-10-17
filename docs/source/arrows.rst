@@ -21,6 +21,22 @@ The type of the Arrow
     a :: [A] >> [1], [1]
 
 
+Types
+-----
+
+A type corresponds to a set of values.
+All values in a type are either scalars of a particular numeric type or arrays of the same type and some array dimensions.
+Polymorphic types sets of types.
+For instance: the type `{M, N}` is the set of matrices of all sizes, while `{M,N}` is the set of all square matrices.
+At the type level, a polymorhpic arrow is a binary relation on polymorphic types.
+For instance {M, N} >> {M, M} is the set of all pairs matrices and all square matrix.
+
+takes as input a polymorphic type and returns a polymorphic type with some constraints.  These constraints constrain the relation.
+The composition of two polymorphic arrows is type consistent if __there exists__ some selection of types at inp A, output A, inp B, output C
+This is equivalent to saying that the join on types must be not empty.
+Since this is a satisfiability problem, the type systm can be expressive as any satisfiability solver
+
+
 Arrow Types
 -----------
 

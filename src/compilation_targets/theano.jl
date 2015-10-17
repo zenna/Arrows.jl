@@ -50,7 +50,7 @@ function th_inputs(funcdef::Arrows.FuncDef)
   ## Create Variable Inputs
   th_inputs = Array(PyObject, ninputs)
   for i = 1:ninputs
-    varname = string(funcdef.inputsymbs[i])
+    @show varname = string(funcdef.inputsymbs[i])
     th_inputs[i] = convert(TheanoTensorType, funcdef.inputtypes[i])(varname)
   end
   th_inputs
@@ -67,7 +67,7 @@ function th_outputs(theano_inputs, funcdef::Arrows.FuncDef)
   for fcall in funcdef.calls
     ## Treat 'clone' specially so not to unnecessarily copy data
     if fcall.name == :clone
-      ..
+      error("unimplemented")
     else
       args = extract(symb2pyvar, fcall.inputsymbs)
       th_op = name2theanofunc[fcall.name](args...)
@@ -83,12 +83,12 @@ function th_outputs(theano_inputs, funcdef::Arrows.FuncDef)
           expecting $(length(fcall.outputsymbs))"""
         for i = 1:length(fcall.outputsymbs)
           haskey(symb2pyvar, fcall.outputsymbs[i]) && error("symbol $symb assigned to twice")
-          @show fcall.outputsymbs[i]
+          fcall.outputsymbs[i]
           symb2pyvar[fcall.outputsymbs[i]] = th_op[i]
         end
       else # Single output
         @assert length(fcall.outputsymbs) == 1 "was expecting more than 1 output"
-        @show fcall.outputsymbs[1]
+        fcall.outputsymbs[1]
         symb2pyvar[fcall.outputsymbs[1]] = th_op
       end
     end
