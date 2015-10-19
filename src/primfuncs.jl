@@ -45,6 +45,12 @@ binequal1d =  ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],
                              [ArrayType(:N)],
                              [])
 addfunc = PrimFunc(binequal1d, :+)
+
+# add_4_1_type = ArrowType{2,1}([ArrayType(:A), ArrayType(:B), ArrayType(:C), ArrayType(:D)],
+#                               [ArrayType(:N)],
+#                               [])
+# add_4_1_func = PrimFunc(binequal1d, :+)
+
 minusfunc = PrimFunc(binequal1d, :-)
 
 # # Concat

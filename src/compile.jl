@@ -118,12 +118,12 @@ function function_sequence{I,O}(
     edgenames[ingateport] = newinpname      # gen name for this input
 
     push!(inputsymbs, newinpname)
-    push!(inputtypes, inppintype(a, 1))
+    push!(inputtypes, inppintype(a, i))
 
     if isboundary(ingateport)
       # if the input wires directly to the output then we'll say it has same name and type
       outputsymbs[ingateport.pinid] = newinpname
-      outputtypes[ingateport.pinid] = inppintype(a, 1)
+      outputtypes[ingateport.pinid] = inppintype(a, i)
     else
       # otherwise it maps to a subarrow; decrement to account for having 'seen' this edge
       nodequeue[ingateport.arrowid] -= 1

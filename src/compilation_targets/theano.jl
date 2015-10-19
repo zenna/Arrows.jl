@@ -45,6 +45,7 @@ call(t::TheanoTensorType, name::ASCIIString) = t.typ(name)
 
 function convert(::Type{TheanoTensorType}, arrtype::Arrows.ArrayType)
   @show n = ndims(arrtype)
+  @show arrtype
   typ = T.TensorType(dtype="float64", broadcastable=tuple([false for i = 1:n]...))
   TheanoTensorType(typ)
 end
