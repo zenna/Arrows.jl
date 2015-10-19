@@ -9,8 +9,11 @@ module Theano
 using PyCall
 using Arrows
 import Base:convert, call
-@pyimport theano.compile.function as theano_func
+# @pyimport theano.compile.function as theano_func
+@pyimport theano.compile.function as th_function
 @pyimport theano.tensor as T
+@pyimport theano.tensor.nnet as nnet
+@pyimport theano.tensor.nnet.conv as thconv
 
 "convert between symbols used for funciton names and theano PyObject functions"
 const name2theanofunc =
@@ -19,7 +22,9 @@ const name2theanofunc =
     :sin => T.sin,
     :(+) => T.add,
     :(-) => T.sub,
-    :dot => T.dot)
+    :dot => T.dot,
+    :conv2d => thconv.conv2d,
+    :relu => nnet.relu)
 
 "Return a set of values from a dictionary from a vector of keys"
 extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]
@@ -101,7 +106,7 @@ end
 function convert(::Type{TheanoFunc}, funcdef::Arrows.FuncDef)
   @show inputs = th_inputs(funcdef)
   @show outputs = th_outputs(inputs, funcdef)
-  TheanoFunc(theano_func.zfunction(inputs, outputs))
+  TheanoFunc(th_function.pymember(:function)(inputs, outputs))
 end
 
 end

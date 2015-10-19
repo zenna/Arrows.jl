@@ -10,8 +10,13 @@ abstract Arrow{I, O}
 typealias ArrowId Int
 typealias PinId Int
 
-nthinport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= I; InPort(1, n))
-nthoutport{I,O}(::Arrow{I,O}, n::PinId) = (@assert n <= O; OutPort(1, n))
+"Get the inport of an arrow with pinid `n` if it exists"
+nthinport{I,O}(::Arrow{I,O}, n::PinId) =
+  (@assert n <= I "fail: n($n) <= I($I)"; InPort(1, n))
+
+"Get the outport of an arrow with pinid `n` if it exists"
+nthoutport{I,O}(::Arrow{I,O}, n::PinId) =
+  (@assert n <= O "fail: n($n) <= O($O)"; OutPort(1, n))
 
 """An entry or exit to an Arrow, analogous to argument position of multivariate function.
 
@@ -47,15 +52,6 @@ outports{I,O}(a::Arrow{I, O}) = OutPort[OutPort(1, i) for i = 1:O]
 ninports{I,O}(a::Arrow{I,O}) = I
 noutports{I,O}(a::Arrow{I,O}) = O
 nports{I,O}(a::Arrow{I,O}) = I + O
-
-## Call
-## ====
-function call{I,O}(a::Arrow{I,O}, x...; compilation_target = Arrows.Theano.TheanoFunc)
-  @assert length(x) == I "Tried to call arrow of $I inputs with $(length(x)) inputs"
-  imperative_arrow = Arrows.compile(Arrows.NamedArrow(:unnamed, a))
-  compiled_f = convert(compilation_target, imperative_arrow[1])
-  compiled_f(x...)
-end
 
 include("arrowtypes/primarrow.jl")
 include("arrowtypes/compositearrow.jl")

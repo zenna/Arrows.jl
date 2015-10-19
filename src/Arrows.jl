@@ -26,6 +26,7 @@ include("library/activations.jl")
 export
   compose,
   first,
+  over,
   lift,
   multiplex,
   name

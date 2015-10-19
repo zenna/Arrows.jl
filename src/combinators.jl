@@ -32,12 +32,12 @@ function compose{I1, O1I2, O2}(a::CompositeArrow{I1,O1I2}, b::CompositeArrow{O1I
   arrowidoffset = nnodes(a)
 
   for (outp, inp) in Arrows.edges(a)
-    # @show outp, inp
+    @show outp, inp
     # if p2 is an output boundary and p1 not input boundary
     # if p1 is an input boundary and p2 is output |---------------|
     # |     |*****|-----------|
     if Arrows.isboundary(inp)
-      p3 = b.edges[Arrows.nthoutport(b, inp.pinid)]
+      p3 = b.edges[nthinneroutport(b, inp.pinid)]
       p3shifted = safeoffsetarrowid(p3, arrowidoffset)
       # @show p3, p3shifted
       Arrows.addedge!(c, outp, p3shifted)
@@ -77,6 +77,17 @@ function first(a::CompositeArrow{1,1})
   @assert iswellformed(c)
   c
 end
+
+"Place `a` over an identity wire.  Like `first` but for multiple in/out puts"
+function over{I,O}(a::CompositeArrow{I,O})
+  c = CompositeArrow{I+1, O+1}()
+  addnodes!(c, nodes(a))
+  addedges!(c, edges(a))
+  addedge!(c, OutPort(1,I+1), InPort(1,O+1))
+  c
+end
+
+over(a::PrimArrow) = over(encapsulate(a))
 
 "Union two composite arrows into the same arrow"
 function stack{I1, O1, I2, O2}(a::CompositeArrow{I1,O1}, b::CompositeArrow{I2,O2})
