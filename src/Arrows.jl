@@ -7,6 +7,16 @@ using PyCall
 import Base: call, convert, union, first, ndims, print, println, string, show,
   showcompact, >>>
 
+export
+  compose,
+  first,
+  over,
+  lift,
+  multiplex,
+  name,
+  conv2dfunc,
+  addfunc,
+  relu1dfunc
 
 include("util.jl")
 include("types.jl")
@@ -19,16 +29,9 @@ include("compilation_targets/theano.jl")
 include("primfuncs.jl")
 include("primarrows.jl")
 
-include("library/activations.jl")
+include("library.jl")
 
 
 
-export
-  compose,
-  first,
-  over,
-  lift,
-  multiplex,
-  name
 
 end

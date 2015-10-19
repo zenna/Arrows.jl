@@ -1,3 +1,4 @@
+using Arrows
 using Images, ImageView
 img = imread("examples/images/3wolfmoon.jpg")
 A = reinterpret(Uint8, data(img))

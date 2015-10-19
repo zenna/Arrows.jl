@@ -1,7 +1,5 @@
-## Networks
-## ========
-
-# This is a library of standard neural networks and network constructors
+## Networks: a library of standard neural networks and network constructors
+## ========================================================================
 
 ## Convolutional Neural Network
 ## ============================
@@ -16,8 +14,5 @@ is either
 
 """
 
-"This is a simple convolutional neural network with type"
-simple_cnet = Arrows.over(Arrows.lift(Arrows.conv2dfunc)) >>> Arrows.lift(Arrows.addfunc) >>> Arrows.lift(Arrows.relu1dfunc)
-
-cnet_lambda = Arrows.lambda(simple_cnet)
-op = cnet_lambda(D, weights, b)
+"A simple convolutional neural network with type"
+const simple_cnet = over(lift(conv2dfunc)) >>> lift(addfunc)
