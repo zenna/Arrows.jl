@@ -6,7 +6,7 @@
 # - Type signatures are clunky
 # -
 
-const artih_typ = ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],
+const arith_typ = ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],
                                  [ArrayType(:N)],
                                  [])
 

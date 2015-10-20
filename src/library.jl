@@ -3,7 +3,7 @@
 module Library
 
   using Arrows
-  import Arrows: parameters, name, PrimArrow, ArrayType, ArrowType
+  import Arrows: parameters, name, PrimArrow, ArrayType, ArrowType, typ
 
   include("library/arithmetic.jl")
   include("library/trigonometric.jl")
