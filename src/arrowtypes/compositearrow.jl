@@ -76,12 +76,14 @@ alloutports(a::CompositeArrow) = vcat(inasoutports(a), subarrowoutports(a))::Vec
 
 subarrow(a::CompositeArrow, arrowid::ArrowId) = a.nodes[arrowid-1]
 
+"inports for a subarrow with ids relative to parent arrow, i.e. arrowids != 1"
 function subinports(a::CompositeArrow, arrowid::ArrowId)
   @assert arrowid != 1
   arr = subarrow(a, arrowid)
   [InPort(arrowid, i) for i = 1:ninports(arr)]
 end
 
+"outports for a subarrow with ids relative to parent arrow, i.e. arrowids != 1"
 function suboutports(a::CompositeArrow, arrowid::ArrowId)
   @assert arrowid != 1
   arr = subarrow(a, arrowid)

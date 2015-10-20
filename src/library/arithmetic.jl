@@ -1,11 +1,6 @@
 ## Primitive Tensor Functions
 ## ==========================
 
-# Issues
-# - Don't have a way to support arbitrary number of dimensions yet.
-# - Type signatures are clunky
-# -
-
 const arith_typ = ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],
                                  [ArrayType(:N)],
                                  [])

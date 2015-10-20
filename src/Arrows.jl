@@ -3,6 +3,7 @@ using Compat
 using PyCall
 # using Distributions
 
+import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: call, convert, union, first, ndims, print, println, string, show,
   showcompact, >>>
@@ -25,6 +26,7 @@ include("combinators.jl")
 include("compile.jl")
 include("compilation_targets/stan.jl")
 include("compilation_targets/theano.jl")
+include("call.jl")
 
 include("library.jl")
 

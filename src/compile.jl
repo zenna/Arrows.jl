@@ -1,56 +1,35 @@
 ## Compilation and Execution of Arrows
 ## ===================================
 
-# Compilation turns an arrow into a series of function calls
-
+# The goal of compilation is to order a composite arrow into a sequence of
+# of calls to its arrows
 typealias ArrowName Symbol
-import Base.Collections: PriorityQueue, dequeue!, peek
 
-"""Intermediate representation for function call
- (op1, op2, ..., opn) = f"""
-immutable CallExpr
-  name::Symbol
+"An arrow with pins labelled with names"
+immutable LabelledArrow{I, O} <: Arrow{I, O}
+  arr::Arrow{I, O}
+  inpsymbs::Vector{Symbol}
+  outsymbs::Vector{Symbol}
+  function LabelledArrow(arr::Arrow{I, O}, inpsymbs::Vector{Symbol}, outsymbs::Vector{Symbol})
+    @assert length(inpsymbs) == I
+    @assert length(outsymbs) == O
+    new(arr, inpsymbs, outsymbs)
+  end
+end
+
+immutable DecomposedArrow
+  name::ArrowName
   inputsymbs::Vector{Symbol}
   outputsymbs::Vector{Symbol}
-  outputtypes::Vector{ArrayType}
-  params::Dict{Symbol, Any}
-end
-
-"""Represents an imperative function definition: a typed funtion declaration
-  and a sqeuence of imperative calls (CallExprs).  Represents functions in form:
-  function f(i0, i1)
-    x2 = a(i0, i1)
-    (x3,x4) = b(x2, x1)
-    ...
-    return o0, o1, ...
-  end"""
-immutable FuncDef
-  name::Symbol                    # f
-  inputsymbs::Vector{Symbol}      # i0, i1, ...
-  inputtypes::Vector{ArrayType}
-
-  outputsymbs::Vector{Symbol}     # o0, o1, ...
-  outputtypes::Vector{ArrayType}
-
-  calls::Vector{CallExpr}         # x2 = a(10, i1), ...
-end
-
-function convert(::Type{Expr}, x::CallExpr)
-  Expr(:(=), Expr(:tuple, x.outputsymbs...), Expr(:call, x.f, x.inputsymbs...))
-end
-
-function convert(::Type{Expr}, f::FuncDef)
-  header = Expr(:call, f.f, [:($x::Array{Float64}) for x in f.inputsymbs]...)
-  ret = Expr(:return, Expr(:tuple, [x for x in f.outputsymbs]...))
-  code = Expr(:block, [convert(Expr, fcall) for fcall in f.calls]..., ret)
-  Expr(:function, header, code)
+  arrowsequence::Vector{LabelledArrow}
 end
 
 "Pops a subarray, adds names to its outputs and updates queue"
-function handle_subarrow!(a::Arrow, edgenames::Dict{InPort, Symbol},
+function handle_subarrow!(a::Arrow,
+                          edgenames::Dict{InPort, Symbol},
                           nodequeue::PriorityQueue,
-                          outputsymbs::Vector{Symbol},
-                          outputtypes::Vector{ArrayType})
+                          parent::Arrow,
+                          outputsymbs::Vector{Symbol})
   # For all the inputs to the Signal Update hose arrows
   @assert peek(nodequeue).second == 0 "Arrow incorrectly wired.\n $nodequeue"
 
@@ -64,34 +43,26 @@ function handle_subarrow!(a::Arrow, edgenames::Dict{InPort, Symbol},
   end
 
   ip_symbs = [edgenames[port] for port in subinports(a, arrowid)]
-  op_symbs = Symbol[]
-
-  calloutputtypes = ArrayType[]
+  op_symbs = Symbol[]     # names for outputs from this arrow
 
   # For each outport of arrow, generate a symbol name and mark as fulfilled
   for port in suboutports(a, arrowid)
     outsymb = genvar()
     ingateport = edges(a)[port]
-    println("removing", ingateport)
     edgenames[ingateport] = outsymb
     push!(op_symbs, outsymb)
-
-    t = outpintype(curr_arrow, port.pinid)
-    push!(calloutputtypes, t)
 
     # all nodequeue who recieve input from output of this node
     # nown have one less undefined dependency, so increase their priority
     if ingateport.arrowid == 1
       @show noutports(a), ingateport.pinid
       outputsymbs[ingateport.pinid] = outsymb
-      outputtypes[ingateport.pinid] = t
     else
       nodequeue[ingateport.arrowid] -=1
     end
   end
 
-  subarrow = nodes(a)[arrowid-1]
-  CallExpr(name(subarrow), ip_symbs, op_symbs, calloutputtypesm, parameters(subarrow))
+  LabelledArrow{ninports(curr_arrow), noutports(curr_arrow)}(curr_arrow, ip_symbs, op_symbs)
 end
 
 "Sets up priority queue to create sequence of function calls to emulate arrow"
@@ -100,7 +71,7 @@ function function_sequence{I,O}(
 
   a = na.arrow
   # We will give unique names to each edge, since an edge is uniquely defined by
-  # an output port, we will use that to identify them
+  # an inport, we will use that to identify them
   edgenames = Dict{InPort, Symbol}()
 
   # Store each arrow associated with number of inputs (yet to be declared)
@@ -110,35 +81,31 @@ function function_sequence{I,O}(
   end
 
   inputsymbs = Symbol[]               # variable names for inputs to function
-  inputtypes = ArrayType[]            # Types of input to function
   outputsymbs = Array(Symbol, O)      # variable names for outputs to function
-  outputtypes = Array(ArrayType, O)   # Types of output to function
 
   # Gen input names and decrement count for all arrows connected to boundary edges
   for i = 1:I
-    ingateport = edges(a)[OutPort(1, i)]  # which port connected to i-th na input
+    ingateport = edges(a)[OutPort(1, i)]    # which port connected to i-th na input
     newinpname = genvar()
     edgenames[ingateport] = newinpname      # gen name for this input
 
     push!(inputsymbs, newinpname)
-    push!(inputtypes, inppintype(a, i))
 
     if isboundary(ingateport)
-      # if the input wires directly to the output then we'll say it has same name and type
+      # if the input wires directly to the output then we'll say it has same name
       outputsymbs[ingateport.pinid] = newinpname
-      outputtypes[ingateport.pinid] = inppintype(a, i)
     else
       # otherwise it maps to a subarrow; decrement to account for having 'seen' this edge
       nodequeue[ingateport.arrowid] -= 1
     end
   end
 
-  funcapps = CallExpr[]
+  labelledarrs = LabelledArrow[]
   while length(nodequeue) > 0
-    push!(funcapps, handle_subarrow!(a, edgenames, nodequeue, outputsymbs, outputtypes))
+    push!(labelledarrs, handle_subarrow!(a, edgenames, nodequeue, a, outputsymbs))
   end
 
-  FuncDef(na.name, inputsymbs, inputtypes, outputsymbs, outputtypes, funcapps)
+  DecomposedArrow(na.name, inputsymbs, outputsymbs, labelledarrs)
 end
 
 # This algorithm works only for 'causal' arrows with no loops
@@ -157,33 +124,15 @@ function compile{I,O}(na::NamedArrow{I,O})
 
   to_visit = Set{NamedArrow}([na]) # will add named arrows seen within `na` (recursively)
   seen_arrows = Set{ArrowName}()   # don't revisit compiled named arrow
-  funcdefs = FuncDef[]             # 1 funcdef per namedarray
+  decomarrs = DecomposedArrow[]             # 1 funcdef per namedarray
 
   # While compiling a named arrow, may encounter other named arrows, add these to
   # list and keep compiling until none left
   while !isempty(to_visit)
     curr_na = pop!(to_visit)
     push!(seen_arrows, curr_na.name)
-    funcdef = function_sequence(curr_na, to_visit, seen_arrows)
-    push!(funcdefs, funcdef)
+    decomarr = function_sequence(curr_na, to_visit, seen_arrows)
+    push!(decomarrs, decomarr)
   end
-  funcdefs
+  decomarrs
 end
-
-
-## Call
-## ====
-"Compiles the arrow `a` and applies it to input `x`"
-function lambda{I,O}(a::Arrow{I,O}; compilation_target = Arrows.Theano.TheanoFunc)
-  imperative_arrow = Arrows.compile(Arrows.NamedArrow(:unnamed, a))
-  convert(compilation_target, imperative_arrow[1])
-end
-
-"Compiles the arrow `a` and applies it to input `x`"
-function call{I,O}(a::Arrow{I,O}, x...; args...)
-  @assert length(x) == I "Tried to call arrow of $I inputs with $(length(x)) inputs"
-  compiled_f = lambda(a; args...)
-  compiled_f(x...)
-end
-
-# "Apply an arrow to some input"
