@@ -19,7 +19,7 @@ export
   relu1dfunc
 
 include("util.jl")
-include("types.jl")
+include("kinds.jl")
 include("primitive.jl")
 include("arrowtypes.jl")
 include("combinators.jl")

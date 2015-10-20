@@ -13,6 +13,7 @@ immutable CallExpr
   inputsymbs::Vector{Symbol}
   outputsymbs::Vector{Symbol}
   outputtypes::Vector{ArrayType}
+  params::Dict{Symbol, Any}
 end
 
 """Represents an imperative function definition: a typed funtion declaration
@@ -88,7 +89,9 @@ function handle_subarrow!(a::Arrow, edgenames::Dict{InPort, Symbol},
       nodequeue[ingateport.arrowid] -=1
     end
   end
-  CallExpr(name(nodes(a)[arrowid-1]), ip_symbs, op_symbs, calloutputtypes)
+
+  subarrow = nodes(a)[arrowid-1]
+  CallExpr(name(subarrow), ip_symbs, op_symbs, calloutputtypesm, parameters(subarrow))
 end
 
 "Sets up priority queue to create sequence of function calls to emulate arrow"

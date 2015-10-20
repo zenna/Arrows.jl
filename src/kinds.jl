@@ -1,7 +1,7 @@
-## Types
-## =====
+## Kinds, types of types
+## =====================
 
-
+## Syntax (TODO)
 # Scalar
 # Tensor
 # ValueType - Int8, Int16, Int32,
@@ -35,6 +35,9 @@ end
 convert(::Type{TypeExpr}, x::Symbol) = TypeVariable(x)
 convert(::Type{TypeExpr}, x::Expr) = TypeExprComposite(x)
 
+## Array Type : Represent n-dimensional arrays
+## ===========================================
+
 "Type of an nd-array, each element of `s` corresponds to a dimension of the array"
 immutable ArrayType
   @compat dimtypes::Tuple{Vararg{TypeExpr}}
@@ -49,3 +52,32 @@ string(a::ArrayType) = string("{", join(map(string, a.dimtypes),", "), "}")
 print(io::IO, a::ArrayType) = print(io, string(a))
 println(io::IO, a::ArrayType) = println(io, string(a))
 show(io::IO, a::ArrayType) = print(io, a)
+
+## ArrowType : Represent types of arrow
+## ====================================
+
+"""Differentiable arrows take as input a collection of real valued arrays
+ and output a collection of real valued a rray"""
+immutable ArrowType{I, O}
+  inptypes::Vector{ArrayType}
+  outtypes::Vector{ArrayType}
+  constraints::Vector{TypeExpr{Bool}}
+  # function ArrowType(inptypes::Vector{ArrayType}, outtypes::Vector{ArrayType},
+  #           constraints::Vector{TypeExpr{Bool}})
+  #   @assert length(inptypes) == I
+  #   @assert length(outtypes) == O
+  #   new{I,O}(inptypes, outtypes, constraints)
+  # end
+end
+
+function string{I,O}(x::ArrowType{I,O})
+  inpstring = string(join(map(string, x.inptypes), ", "))
+  outstring = string(join(map(string, x.outtypes), ", "))
+  constraints = "C (TODO)"
+  "$inpstring >> $outstring | $constraints"
+end
+
+print(io::IO, x::ArrowType) = print(io, string(x))
+println(io::IO, x::ArrowType) = println(io, string(x))
+show(io::IO, x::ArrowType) = print(io, string(x))
+showcompact(io::IO, x::ArrowType) = print(io, string(x))

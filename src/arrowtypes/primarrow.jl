@@ -1,12 +1,10 @@
 ## Primitive Arrow
 ## ===============
-"A primitived arrow is a lifted primitive function"
-immutable PrimArrow{I, O} <: Arrow{I, O}
-  typ::ArrowType
-  func::PrimFunc
-end
 
-name(a::PrimArrow) = a.func.name
+abstract PrimArrow{I, O} <: Arrow{I, O}
+
+"Parameters of a primitive arrow"
+parameters(x::PrimArrow) = Dict{Symbol, Any}()
 
 "number of arrows"
 nnodes(a::PrimArrow) = 1
@@ -17,7 +15,7 @@ outpintype(x::PrimArrow, pinid::PinId) = x.typ.outtypes[pinid]
 
 # Printing
 string{I,O}(x::PrimArrow{I,O}) =
-  "$(x.func.name) :: PrimArrow{$I,$O}\n$(x.func.name) :: $(string(x.typ))"
+  "$(name(x)) :: PrimArrow{$I,$O}\n$(name(x)) :: $(string(x.typ))"
 print(io::IO, x::PrimArrow) = print(io, string(x))
 println(io::IO, x::PrimArrow) = println(io, string(x))
 show(io::IO, x::PrimArrow) = print(io, string(x))
