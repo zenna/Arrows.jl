@@ -8,3 +8,5 @@ immutable NamedArrow{I,O} <: Arrow{I,O}
   name::Symbol
   arrow::CompositeArrow{I, O}
 end
+
+NamedArrow{I,O}(name::Symbol, a::PrimArrow{I,O}) = NamedArrow{I,O}(name, encapsulate(a))

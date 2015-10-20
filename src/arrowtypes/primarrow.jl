@@ -14,8 +14,8 @@ inppintype(x::PrimArrow, pinid::PinId) = typ(x).inptypes[pinid]
 outpintype(x::PrimArrow, pinid::PinId) = typ(x).outtypes[pinid]
 
 # Intercace methods
-name(x::PrimArrow) = error("interface: children should implement this")
-typ(x::PrimArrow) = error("interface: children should implement this")
+name(x::PrimArrow) = error("interface: children should implement name")
+typ(x::PrimArrow) = error("interface: children should implement typ")
 
 # Printing
 string{I,O}(x::PrimArrow{I,O}) =

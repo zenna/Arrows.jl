@@ -16,29 +16,16 @@ import Base:convert, call
 @pyimport theano.tensor.nnet as nnet
 @pyimport theano.tensor.nnet.conv as thconv
 
-# function (a::DimShuffleArrow)
+## Theano handling of arrow funcs
+## ==============================
+function th_apply(a::Arrows.Library.TrigArrow, inp)
+  th_func = T.pymember(name(a))
+  th_func(inp)
+end
 
-# "convert between symbols used for funciton names and theano PyObject functions"
-# function applytheanofunc(fname::Symbol, args...)
-#   const name2theanofunc =
-#     Dict{Symbol, PyObject}(
-#       :cos => (T.cos, false),
-#       :sin => (T.sin, false),
-#       :(+) => (T.add, false),
-#       :(-) => (T.sub, false),
-#       :dot => (T.dot, false),
-#       :conv2d => (thconv.conv2d, false),
-#       :relu => (nnet.relu, false),
-#       :dimshuffle => (T.dimshuffle, true)
-#
-#   (th_name, ismethod) = name2theanofunc[fname]
-#   if ismethod
-#     @assert length(args) == 1 "Cannot call method for multiple objects"
-#     args[1][th_name]
-#   else
-#     th_name(args...)
-#   end
-# end
+function th_apply(a::Arrows.Library.DimshuffleArrow, inp)
+  inp[:dimshuffle](a.pattern...)
+end
 
 "Return a set of values from a dictionary from a vector of keys"
 extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]
@@ -76,13 +63,7 @@ function th_inputs(arrseq::Arrows.ArrowSequence)
   th_inputs
 end
 
-## Theano handling of arrow funcs
-## ==============================
 
-function th_apply(a::Arrows.Library.TrigArrow, inp)
-  th_func = T.pymember(name(a))
-  th_func(inp)
-end
 
 "Get theano variables for outputs of an arrow arrow"
 function th_outputs(theano_inputs, arrseq::Arrows.ArrowSequence)

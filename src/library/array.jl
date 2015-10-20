@@ -15,7 +15,7 @@ function dummyarrtype(n::Integer,m::Integer)
 end
 
 "Arrow for permuting dimensions with all parameters partially applied"
-immutable DimshuffleArrow{T<:Integer} <: Arrows.Arrow{1, 1}
+immutable DimshuffleArrow{T<:Integer} <: PrimArrow{1, 1}
   typ::Arrows.ArrowType{1, 1}
   pattern::Vector{T}
   function DimshuffleArrow(pattern::Vector{T})
@@ -26,6 +26,7 @@ immutable DimshuffleArrow{T<:Integer} <: Arrows.Arrow{1, 1}
 end
 
 name(a::DimshuffleArrow) = :dimshuffle
+typ(a::DimshuffleArrow) = a.typ
 
 "Return parameters"
 parameters(x::DimshuffleArrow) = Dict(:pattern => x.pattern)
