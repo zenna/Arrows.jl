@@ -15,29 +15,29 @@ import Base:convert, call
 @pyimport theano.tensor.nnet as nnet
 @pyimport theano.tensor.nnet.conv as thconv
 
-function (a::DimShuffleArrow)
+# function (a::DimShuffleArrow)
 
-"convert between symbols used for funciton names and theano PyObject functions"
-function applytheanofunc(fname::Symbol, args...)
-  const name2theanofunc =
-    Dict{Symbol, PyObject}(
-      :cos => (T.cos, false),
-      :sin => (T.sin, false),
-      :(+) => (T.add, false),
-      :(-) => (T.sub, false),
-      :dot => (T.dot, false),
-      :conv2d => (thconv.conv2d, false),
-      :relu => (nnet.relu, false),
-      :dimshuffle => (T.dimshuffle, true)
-
-  (th_name, ismethod) = name2theanofunc[fname]
-  if ismethod
-    @assert length(args) == 1 "Cannot call method for multiple objects"
-    args[1][th_name]
-  else
-    th_name(args...)
-  end
-end
+# "convert between symbols used for funciton names and theano PyObject functions"
+# function applytheanofunc(fname::Symbol, args...)
+#   const name2theanofunc =
+#     Dict{Symbol, PyObject}(
+#       :cos => (T.cos, false),
+#       :sin => (T.sin, false),
+#       :(+) => (T.add, false),
+#       :(-) => (T.sub, false),
+#       :dot => (T.dot, false),
+#       :conv2d => (thconv.conv2d, false),
+#       :relu => (nnet.relu, false),
+#       :dimshuffle => (T.dimshuffle, true)
+#
+#   (th_name, ismethod) = name2theanofunc[fname]
+#   if ismethod
+#     @assert length(args) == 1 "Cannot call method for multiple objects"
+#     args[1][th_name]
+#   else
+#     th_name(args...)
+#   end
+# end
 
 "Return a set of values from a dictionary from a vector of keys"
 extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]

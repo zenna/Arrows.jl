@@ -8,7 +8,7 @@ immutable SigmoidArrow <: PrimArrow{1, 1}
   name::Symbol
 end
 
-typ(x::ActivationArrow) = arith_typ
+typ(x::SigmoidArrow) = sigmoid_typ
 
 ## Primitive Arithmetic Arrows
 ## ===========================

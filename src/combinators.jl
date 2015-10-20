@@ -1,5 +1,5 @@
-"Lifts a primitive function to an arrow"
-lift{I,O}(a::PrimFunc{I,O}) = PrimArrow{I,O}(a.typ, a)
+# "Lifts a primitive function to an arrow"
+# lift{I,O}(a::PrimFunc{I,O}) = PrimArrow{I,O}(a.typ, a)
 
 "Wrap primitive arrow in composite arrow - behaves identically to original arrow"
 function encapsulate{I,O}(a::PrimArrow{I,O})

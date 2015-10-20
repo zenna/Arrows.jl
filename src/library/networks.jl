@@ -15,4 +15,4 @@ is either
 """
 
 "A simple convolutional neural network with type"
-const simple_cnet = over(lift(conv2dfunc)) >>> lift(addfunc)# >>> lift(relu1dfunc)
+# const simple_cnet = over(lift(conv2dfunc)) >>> lift(addfunc)# >>> lift(relu1dfunc)

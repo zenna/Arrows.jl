@@ -20,14 +20,11 @@ export
 
 include("util.jl")
 include("kinds.jl")
-include("primitive.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("compile.jl")
 include("compilation_targets/stan.jl")
 include("compilation_targets/theano.jl")
-include("primfuncs.jl")
-include("primarrows.jl")
 
 include("library.jl")
 
