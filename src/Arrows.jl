@@ -17,20 +17,22 @@ export
   name,
   conv2dfunc,
   addfunc,
-  relu1dfunc
+  relu1dfunc,
+
+  inppintype,
+  outpintype
 
 include("util.jl")
 include("kinds.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("compile.jl")
-include("compilation_targets/stan.jl")
-include("compilation_targets/theano.jl")
 include("call.jl")
 
 include("library.jl")
 
-
+include("compilation_targets/stan.jl")
+include("compilation_targets/theano.jl")
 
 
 end

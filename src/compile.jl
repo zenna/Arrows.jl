@@ -17,19 +17,27 @@ immutable LabelledArrow{I, O} <: Arrow{I, O}
   end
 end
 
-immutable DecomposedArrow
+name(a::LabelledArrow) = name(a.arr)
+
+"A sequence of arrows which should be called in order to preserve causality."
+immutable ArrowSequence
   name::ArrowName
-  inputsymbs::Vector{Symbol}
-  outputsymbs::Vector{Symbol}
+  parent::CompositeArrow
+  inpsymbs::Vector{Symbol}
+  outsymbs::Vector{Symbol}
   arrowsequence::Vector{LabelledArrow}
 end
+
+name(a::ArrowSequence) = a.name
+inppintype(a::ArrowSequence, pinid::PinId) = inppintype(a.parent, pinid)
+outpintype(a::ArrowSequence, pinid::PinId) = outpintype(a.parent, pinid)
 
 "Pops a subarray, adds names to its outputs and updates queue"
 function handle_subarrow!(a::Arrow,
                           edgenames::Dict{InPort, Symbol},
                           nodequeue::PriorityQueue,
                           parent::Arrow,
-                          outputsymbs::Vector{Symbol})
+                          outsymbs::Vector{Symbol})
   # For all the inputs to the Signal Update hose arrows
   @assert peek(nodequeue).second == 0 "Arrow incorrectly wired.\n $nodequeue"
 
@@ -56,7 +64,7 @@ function handle_subarrow!(a::Arrow,
     # nown have one less undefined dependency, so increase their priority
     if ingateport.arrowid == 1
       @show noutports(a), ingateport.pinid
-      outputsymbs[ingateport.pinid] = outsymb
+      outsymbs[ingateport.pinid] = outsymb
     else
       nodequeue[ingateport.arrowid] -=1
     end
@@ -80,8 +88,8 @@ function function_sequence{I,O}(
     nodequeue[i+1] = ninports(nodes(a)[i]) # i+1 accounts for 1-as-self-port offset
   end
 
-  inputsymbs = Symbol[]               # variable names for inputs to function
-  outputsymbs = Array(Symbol, O)      # variable names for outputs to function
+  inpsymbs = Symbol[]               # variable names for inputs to function
+  outsymbs = Array(Symbol, O)      # variable names for outputs to function
 
   # Gen input names and decrement count for all arrows connected to boundary edges
   for i = 1:I
@@ -89,11 +97,11 @@ function function_sequence{I,O}(
     newinpname = genvar()
     edgenames[ingateport] = newinpname      # gen name for this input
 
-    push!(inputsymbs, newinpname)
+    push!(inpsymbs, newinpname)
 
     if isboundary(ingateport)
       # if the input wires directly to the output then we'll say it has same name
-      outputsymbs[ingateport.pinid] = newinpname
+      outsymbs[ingateport.pinid] = newinpname
     else
       # otherwise it maps to a subarrow; decrement to account for having 'seen' this edge
       nodequeue[ingateport.arrowid] -= 1
@@ -102,10 +110,10 @@ function function_sequence{I,O}(
 
   labelledarrs = LabelledArrow[]
   while length(nodequeue) > 0
-    push!(labelledarrs, handle_subarrow!(a, edgenames, nodequeue, a, outputsymbs))
+    push!(labelledarrs, handle_subarrow!(a, edgenames, nodequeue, a, outsymbs))
   end
 
-  DecomposedArrow(na.name, inputsymbs, outputsymbs, labelledarrs)
+  ArrowSequence(na.name, a, inpsymbs, outsymbs, labelledarrs)
 end
 
 # This algorithm works only for 'causal' arrows with no loops
@@ -124,7 +132,7 @@ function compile{I,O}(na::NamedArrow{I,O})
 
   to_visit = Set{NamedArrow}([na]) # will add named arrows seen within `na` (recursively)
   seen_arrows = Set{ArrowName}()   # don't revisit compiled named arrow
-  decomarrs = DecomposedArrow[]             # 1 funcdef per namedarray
+  decomarrs = ArrowSequence[]             # 1 funcdef per namedarray
 
   # While compiling a named arrow, may encounter other named arrows, add these to
   # list and keep compiling until none left
