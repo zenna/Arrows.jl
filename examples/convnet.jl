@@ -15,6 +15,5 @@ weights = rand(Float64, w_shp...) * 2w_bound - w_bound
 b_shp = (2,)
 b = rand(Float64, 2) - 0.5
 
-
-cnet_lambda = Arrows.lambda(simple_cnet)
-op = cnet_lambda(D, weights, b)
+result = Arrows.Library.simple_cnet(D,weights,b)
+view(reshape(result[1][1,2,:,:],631, 508))

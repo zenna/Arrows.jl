@@ -1,10 +1,5 @@
-## Primitive Tensor Functions
-## ==========================
-
-# Issues
-# - Don't have a way to support arbitrary number of dimensions yet.
-# - Type signatures are clunky
-# -
+## Primitive Trigonometric Arrows
+## ==============================
 
 const trig_typ = ArrowType{1,1}([ArrayType(:N)], [ArrayType(:N)],[])
 
@@ -14,6 +9,7 @@ immutable TrigArrow <: PrimArrow{1, 1}
 end
 
 typ(x::TrigArrow) = arith_typ
+name(x::TrigArrow) = x.name
 
 ## Primitive Arithmetic Arrows
 ## ===========================

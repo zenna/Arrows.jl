@@ -8,8 +8,9 @@ module Library
   include("library/arithmetic.jl")
   include("library/trigonometric.jl")
   include("library/array.jl")
-  include("library/networks.jl")
+  include("library/convolution.jl")
   include("library/activations.jl")
+  include("library/networks.jl")
 
   export simple_cnet
 end

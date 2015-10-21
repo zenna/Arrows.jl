@@ -15,13 +15,14 @@ function dummyarrtype(n::Integer,m::Integer)
 end
 
 "Arrow for permuting dimensions with all parameters partially applied"
-immutable DimshuffleArrow{T<:Integer} <: PrimArrow{1, 1}
+immutable DimshuffleArrow <: PrimArrow{1, 1}
   typ::Arrows.ArrowType{1, 1}
-  pattern::Vector{T}
-  function DimshuffleArrow(pattern::Vector{T})
-    typ = dummyarrtype(length(pattern), length(pattern))
+  pattern::Vector
+  function DimshuffleArrow(pattern::Vector)
+    warn("hack, fixme for type length")
+    typ = dummyarrtype(1, length(pattern))
     # Generate the type of the arrow based on the pattern,
-    new{T}(typ, pattern)
+    new(typ, pattern)
   end
 end
 
@@ -54,8 +55,10 @@ dimshuffle :: n:{a b c}, (x, y, z) >> {n[x] n[y] n[z]} | X,Y,Z \in (1, 2 ,3)
 Typically the pattern will include the integers 0, 1, ... ndim-1,
 and any number of ‘x’ characters in dimensions where this tensor should be broadcasted.
 """
-function dimshuffle{T<:Integer}(permutation::Vector{T})
-  # @assert isa(x, Integer) || x == "x"
-  DimshuffleArrow{T}(permutation)
+function dimshuffle(permutation::Vector)
+  [@assert isa(x, Integer) || x == "x" for x in permutation]
+  DimshuffleArrow(permutation)
   # arset(permutation)
 end
+
+export dimshuffle

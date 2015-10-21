@@ -9,11 +9,14 @@ import Base: call, convert, union, first, ndims, print, println, string, show,
   showcompact, >>>
 
 export
+  # Combinators
   compose,
   first,
   over,
   lift,
   multiplex,
+  stack,
+  
   name,
   conv2dfunc,
   addfunc,

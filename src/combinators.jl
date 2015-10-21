@@ -92,21 +92,27 @@ over(a::PrimArrow) = over(encapsulate(a))
 "Union two composite arrows into the same arrow"
 function stack{I1, O1, I2, O2}(a::CompositeArrow{I1,O1}, b::CompositeArrow{I2,O2})
   c = CompositeArrow{I1 + I2, O1 + O2}()
+  # @show a.edges
+  # @show b.edges
   # A can be added pretty much unchanged
   addnodes!(c, nodes(a))
   addedges!(c, edges(a))
-
   addnodes!(c, nodes(b))
   arrowidoffset = nnodes(a)
 
-  for (outp, inp) in edges(a)
+  for (outp, inp) in edges(b)
     newoutp = isboundary(outp) ? OutPort(1, outp.pinid + I1) : OutPort(outp.arrowid + arrowidoffset, outp.pinid)
     newinp = isboundary(inp) ? InPort(1, inp.pinid + O1) : InPort(inp.arrowid + arrowidoffset, inp.pinid)
     addedge!(c, newoutp, newinp)
   end
+  @show c.edges
   @assert iswellformed(c)
   c
 end
+
+stack(a::PrimArrow, b::CompositeArrow) = stack(encapsulate(a), b)
+stack(a::PrimArrow, b::PrimArrow) = stack(encapsulate(a), encapsulate(b))
+stack(a::CompositeArrow, b::PrimArrow) = stack(a, encapsulate(b))
 
 first(a::PrimArrow) = first(encapsulate(a))
 multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)

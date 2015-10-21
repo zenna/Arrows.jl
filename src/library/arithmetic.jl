@@ -11,15 +11,15 @@ immutable ArithArrow <: PrimArrow{2, 1}
 end
 
 typ(x::ArithArrow) = arith_typ
-
+name(a::ArithArrow) = a.name
 
 ## Primitive Arithmetic Arrows
 ## ===========================
 
-const plusarr = ArithArrow(:+)
+const addarr = ArithArrow(:+)
 const minusarr = ArithArrow(:-)
 const divsarr = ArithArrow(:/)
 const mularr = ArithArrow(:*)
 const powarr = ArithArrow(:^)
 
-name(a::ArithArrow) = a.name
+export addarr, minusarr, divsarr, mularr, powarr

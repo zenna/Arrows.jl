@@ -16,11 +16,33 @@ import Base:convert, call
 @pyimport theano.tensor.nnet as nnet
 @pyimport theano.tensor.nnet.conv as thconv
 
+const th_name = Dict{Symbol,Symbol}(
+  :+ => :add,
+  :- => :sub,
+  :/ => :truediv,
+  :^ => :pow,
+  :* => :mul)
+
 ## Theano handling of arrow funcs
 ## ==============================
 function th_apply(a::Arrows.Library.TrigArrow, inp)
   th_func = T.pymember(name(a))
   th_func(inp)
+end
+
+function th_apply(a::Arrows.Library.SigmoidArrow, inp)
+  th_func = nnet.pymember(name(a))
+  th_func(inp)
+end
+
+function th_apply(a::Arrows.Library.ArithArrow, x, y)
+  th_func = T.pymember(th_name[name(a)])
+  th_func(x, y)
+end
+
+function th_apply(a::Arrows.Library.ConvArrow, imgs, weights)
+  th_func = thconv.pymember(:conv2d)
+  th_func(imgs, weights)
 end
 
 function th_apply(a::Arrows.Library.DimshuffleArrow, inp)
@@ -62,8 +84,6 @@ function th_inputs(arrseq::Arrows.ArrowSequence)
   end
   th_inputs
 end
-
-
 
 "Get theano variables for outputs of an arrow arrow"
 function th_outputs(theano_inputs, arrseq::Arrows.ArrowSequence)
