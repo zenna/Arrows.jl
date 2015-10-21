@@ -29,3 +29,17 @@ const atan2arr = TrigArrow(:atan2)
 const sqrtarr = TrigArrow(:sqrt)
 
 name(a::TrigArrow) = a.name
+
+export exparr
+export logarr
+export sinarr
+export cosarr
+export tanarr
+export asinarr
+export acosarr
+export atanarr
+export sinharr
+export cosharr
+export tanharr
+export atan2arr
+export sqrtarr

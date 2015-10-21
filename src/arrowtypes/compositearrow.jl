@@ -28,12 +28,13 @@ println(io::IO, x::CompositeArrow) = println(io, string(x))
 show(io::IO, x::CompositeArrow) = print(io, string(x))
 showcompact(io::IO, x::CompositeArrow) = print(io, string(x))
 
+"The type of the `pinid`th inport of arrow `x`"
 function inppintype(x::CompositeArrow, pinid::PinId)
   inport = edges(x)[OutPort(1,pinid)]
   # This means edge is passing all the way through to output and therefore
   # is Top (Any) type
   if isboundary(inport)
-    CoolType(:Any)
+    error("Any type not supported")
   else
     inppintype(subarrow(x, inport.arrowid), inport.pinid)
   end
