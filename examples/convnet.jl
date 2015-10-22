@@ -3,8 +3,12 @@ using Images, ImageView
 img = imread("examples/images/3wolfmoon.jpg")
 A = reinterpret(Uint8, data(img))
 B = map(Float64,A) / 256
-C = permutedims(B, [3,1,2])
-D = reshape(B, 1,3,516,639)
+
+# reshape into 3 height width
+C = permutedims(B, [1,3,2])
+
+# make minibatch of size 1
+D = reshape(C, 1, 3,639, 516)
 
 # Weights
 w_bound = sqrt(3 * 9 * 9)
@@ -16,4 +20,4 @@ b_shp = (2,)
 b = rand(Float64, 2) - 0.5
 
 result = Arrows.Library.simple_cnet(D,weights,b)
-view(reshape(result[1][1,2,:,:],631, 508))
+view(reshape(result[1][1,1,:,:], 631, 508))
