@@ -1,62 +1,55 @@
 ## ArrowSet
 ## =======
 
+import Base: .>>, >>, >>>, |>
+export firstarrset, expose
+
 """An ArrowSet represents a set of possible Arrows.
 
   It is formalised as a function from a vector of real values to an arrow.
   This formalism is constructive, in the sense we can
 """
 immutable ArrowSet{I,O} <: Arrow{I,O}
+  isparam::BitArray{1}   # ith elem = is ith inport a parameter inport
+  arrow::CompositeArrow
+  function ArrowSet(isparam::BitArray{1}, arrow::CompositeArrow)
+    @assert length(isparam) == ninports(arrow)
+    new{I, O}(isparam, arrow)
+  end
 end
 
-# "A constant arrow. Takes no input (formally maps any input to same output)."
-# immutable contingoustArrow{O} <: Arrow{0,O}
-# end
-#
-# ConstArrow(x::Vector) = lift(constant(x))
-#
-#
-# ## ArrowSet
-# ## =======
-#
-# # Parameters are special in smooth arrows
-# - An ArrowSet represents a set of possible arrows
-# - The simplest ArrowSet is a set of constant arrowsets
-# - It's formalised as an  paramater is an arrow of type Arrow{1,1} of type (A,B)
-# -
-#
-# """An ArrowSet represents a set of possible Arrows.
-#
-#   It is formalised as a function from a vector of real values to an arrow.
-#   This formalism is constructive, in the sense we can
-# """
-# immutable ArrowSet{I,O} <: Arrow{I,O}
-# end
-#
-# "Construct Constant ArrowSet"
-# function ArrowSet(a::Arrow{1,1})
-#   # TypeCheck
-#
-# end
-#
-# >>>(a::ArrowSet, b::ArrowSet, c::Arrow)
-#
-# ""
-# function compose{I1, O1I2, O2}(a::ArrowSet{I1,O1I2}, b::ArrowSet{O1I2,O2}, c::CompositeArrow{1,1})
-# end
-#
-# ""
-# ## We need some functionality which will take a vector and construct an arrow of that type
-# ## Creating Constant Arrow Types
-# jump(x::ArrowSet{I,O})
-#
-# - What kind of thing should an arrowset be? A simple function? a new typeclass, or just a type of arrow.
-#
-# If its just a type of arrow, then it cant be used with existing arrows, the types wont match.
-# e.g.
-# Arrow{RealVec(10), Arrow{A,B}} >> ....
-# is not going to match
-#
-# Option 2. Make it just a function.
-#
-# It should be a new type class.
+# Printing
+string{I,O}(x::ArrowSet{I,O}) = "ArrowSet{$I,$O}"
+print(io::IO, x::ArrowSet) = print(io, string(x))
+println(io::IO, x::ArrowSet) = println(io, string(x))
+show(io::IO, x::ArrowSet) = print(io, string(x))
+showcompact(io::IO, x::ArrowSet) = print(io, string(x))
+
+## ArrowSet combinators
+## ====================
+
+"Takes an param arrow of one output, and an arrow of more than one input"
+function firstarrset{I1, I2, O}(param::CompositeArrow{I1, 1}, x::CompositeArrow{I2, O})
+  @assert I2 > 1 "Can't partially apply if only takes one input"
+  ArrowSet{I1, 1}([true; falses(I2-1)], first(param) >>> x)
+end
+
+# Deal with prim arrows
+firstarrset(param::CompositeArrow, x::PrimArrow) = firstarrset(param, encapsulate(x))
+firstarrset(param::PrimArrow, x::PrimArrow) = firstarrset(encapsulate(param), encapsulate(x))
+firstarrset(param::PrimArrow, x::CompositeArrow) = firstarrset(encapsulate(param), x)
+
+"infix shorthand for `firstarrset`"
+|>(param::Arrow, x::Arrow) = firstarrset(param, x)
+
+function compose{PI, PO}(arrset::ArrowSet{PI, PO}, arrow::CompositeArrow)
+  ArrowSet{PI, PO}(arrset.isparam, arrset.arrow >>> arrow)
+end
+
+compose(arrset::ArrowSet, arrow::PrimArrow) = compose(arrset, encapsulate(arrow))
+
+"Expose turns an ArrowSet into an Arrow by pulling out all the inputs of the Arrow."
+expose(arrset::ArrowSet) = arrset.arrow
+
+"Exposes the parameters of the an arrowset and puts them as contiguously as the first inputs"
+untangle(arrset::Arrow) = error("unimplemented")

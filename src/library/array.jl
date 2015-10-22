@@ -61,4 +61,22 @@ function dimshuffle(permutation::Vector)
   # arset(permutation)
 end
 
+## Clone
+## =====
+immutable CloneArrow{O} <: PrimArrow{1, O}
+  typ::Arrows.ArrowType{1, O}
+end
+
+"Clone an input"
+function clone(n::Integer)
+  @assert n >= 2
+  CloneArrow{n}(ArrowType{1,n}([ArrayType(:N)],
+                               [ArrayType(:N) for i = 1:n],
+                               []))
+end
+
+name(::CloneArrow) = :clone
+typ(a::CloneArrow) = a.typ
+
 export dimshuffle
+export clone
