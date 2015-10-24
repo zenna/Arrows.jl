@@ -14,6 +14,21 @@ function dummyarrtype(n::Integer,m::Integer)
   @show Arrows.ArrowType{1, 1}([ip], [op], [])
 end
 
+## dimshuffle
+## ==========
+
+# dimshuffle takes in an array of n dimensions; a pattern vector of size n,
+# and returns an array of the same size
+dimshuffle :: N pattern:[] >> N | length(pattern) = N
+dimshuffle :: N -> a:{a_i for i = 1:N}, [p_i for i = 1:N] >> {a[p_i] for i = 1:N}
+dimshuffle 3 :: {a_1, a_2, a_3}, [p_1, p_2, p_3] >> {a[p_1], a[p_2], a[p_3]}
+
++ :: N -> a:{a_i for i = 1:N}, a:{a_i for i = 1:N} >> a:{a_i for i = 1:N}
+reshape :: N, M -> p:[p_i for i = 1:N] :> a:{a_i for i = 1:M} >> b:{p_i for i = 1:N} | prod(p) == prod(a)
+reshape 2 3 :: [p_1, p_2] :> {a_1, a_2, a_3} >> {p_1, p_2}
+flatten :: ND :> [p_i...N], >> [q_i...ND] | prod(p) == prod(q)
+diagonal :: {M, M} >> {M}
+
 "Arrow for permuting dimensions with all parameters partially applied"
 immutable DimshuffleArrow <: PrimArrow{1, 1}
   typ::Arrows.ArrowType{1, 1}
@@ -28,9 +43,6 @@ end
 
 name(a::DimshuffleArrow) = :dimshuffle
 typ(a::DimshuffleArrow) = a.typ
-
-"Return parameters"
-parameters(x::DimshuffleArrow) = Dict(:pattern => x.pattern)
 
 # immutable ArraySet{I, O} <: Arrow{I, O}
 #   typ::ArrowSetType

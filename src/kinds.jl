@@ -81,3 +81,11 @@ print(io::IO, x::ArrowType) = print(io, string(x))
 println(io::IO, x::ArrowType) = println(io, string(x))
 show(io::IO, x::ArrowType) = print(io, string(x))
 showcompact(io::IO, x::ArrowType) = print(io, string(x))
+
+## Type Group
+## ==========
+
+"A type group is a finite group of arrow types, it allows polymorphic functions"
+immutable ArrowTypeGroup
+  typs::Set{ArrowType}
+end

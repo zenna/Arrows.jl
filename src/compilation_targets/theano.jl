@@ -15,6 +15,7 @@ import Base:convert, call
 @pyimport theano.tensor as T
 @pyimport theano.tensor.nnet as nnet
 @pyimport theano.tensor.nnet.conv as thconv
+@pyimport theano.tensor.signal.downsample as downsample
 
 const th_name = Dict{Symbol,Symbol}(
   :+ => :add,
@@ -48,6 +49,13 @@ end
 function th_apply(a::Arrows.Library.DimshuffleArrow, inp)
   inp[:dimshuffle](a.pattern...)
 end
+
+function th_apply(a::Arrows.Library.MaxPool2DArrow, inp)
+  downsample.max_pool_2d(inp, a.maxpool_shape)
+end
+
+## Compilation
+## ===========
 
 "Return a set of values from a dictionary from a vector of keys"
 extract{A,B}(x::Dict{A, B}, v::Vector{A}) = B[x[val] for val in v]
