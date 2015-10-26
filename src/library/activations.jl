@@ -1,7 +1,7 @@
 ## activation functions
 ## ====================
-
-const sigmoid_typ = ArrowType{1,1}([ArrayType(:N)], [ArrayType(:N)],[])
+arb_array = @shape s [x_i for i = 1:n]
+const sigmoid_typ = @arrtype [arb_array] [arb_array]
 
 "Class of arrows for sigmoids"
 immutable SigmoidArrow <: PrimArrow{1, 1}

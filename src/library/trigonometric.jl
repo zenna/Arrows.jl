@@ -1,7 +1,8 @@
 ## Primitive Trigonometric Arrows
 ## ==============================
 
-const trig_typ = ArrowType{1,1}([ArrayType(:N)], [ArrayType(:N)],[])
+arb_array = @shape s [x_i for i = 1:n]
+const trig_type = @arrtype [arb_array] [arb_array]
 
 "Class of arrows for primitive binary arithmetic operations, + / + ^"
 immutable TrigArrow <: PrimArrow{1, 1}

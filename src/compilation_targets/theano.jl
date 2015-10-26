@@ -45,14 +45,14 @@ function th_apply(a::Arrows.Library.ConvArrow, imgs, weights)
   th_func = thconv.pymember(:conv2d)
   th_func(imgs, weights)
 end
-
-function th_apply(a::Arrows.Library.DimshuffleArrow, inp)
-  inp[:dimshuffle](a.pattern...)
-end
-
-function th_apply(a::Arrows.Library.MaxPool2DArrow, inp)
-  downsample.max_pool_2d(inp, a.maxpool_shape)
-end
+#
+# function th_apply(a::Arrows.Library.DimshuffleArrow, inp)
+#   inp[:dimshuffle](a.pattern...)
+# end
+#
+# function th_apply(a::Arrows.Library.MaxPool2DArrow, inp)
+#   downsample.max_pool_2d(inp, a.maxpool_shape)
+# end
 
 ## Compilation
 ## ===========
@@ -74,7 +74,8 @@ end
 
 call(t::TheanoTensorType, name::ASCIIString) = t.typ(name)
 
-function convert(::Type{TheanoTensorType}, arrtype::Arrows.ArrayType)
+function convert{T}(::Type{TheanoTensorType}, arrtype::Arrows.ShapeParams{T})
+  @assert Arrows.isfixeddims(arrtype) "Cannot convert variable dimensional arrow into theano"
   @show n = ndims(arrtype)
   @show arrtype
   typ = T.TensorType(dtype="float64", broadcastable=tuple([false for i = 1:n]...))

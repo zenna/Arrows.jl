@@ -6,7 +6,7 @@ using PyCall
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: call, convert, union, first, ndims, print, println, string, show,
-  showcompact, >>>
+  showcompact, >>>, length
 
 export
   # Combinators
@@ -16,17 +16,23 @@ export
   lift,
   multiplex,
   stack,
-  
+
   name,
   conv2dfunc,
   addfunc,
   relu1dfunc,
 
   inppintype,
-  outpintype
+  outpintype,
+
+  typ,
+  @shape,
+  @arrtype,
+  @intparams,
+  fix
 
 include("util.jl")
-include("kinds.jl")
+include("kinder.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("compile.jl")
@@ -37,5 +43,5 @@ include("library.jl")
 include("compilation_targets/stan.jl")
 include("compilation_targets/theano.jl")
 
-
+# using Arrows.Library
 end

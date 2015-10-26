@@ -3,7 +3,8 @@
 module Library
 
   using Arrows
-  import Arrows: parameters, name, PrimArrow, ArrayType, ArrowType, typ
+  import Arrows: parameters, name, PrimArrow, ArrayType, ArrowType, typ, isfixeddims
+  import Arrows: @shape, @arrtype, @intparams
 
   include("library/arithmetic.jl")
   include("library/trigonometric.jl")

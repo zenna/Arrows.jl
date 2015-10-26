@@ -1,9 +1,9 @@
 ## Primitive Tensor Functions
 ## ==========================
 
-const arith_typ = ArrowType{2,1}([ArrayType(:N), ArrayType(:N)],
-                                 [ArrayType(:N)],
-                                 [])
+const a = @shape a [x_i for i = 1:n]
+"a:{x_i for i = 1:n}, a:{x_i for i = 1:n} >> a:{x_i for i = 1:n}"
+const arith_typ = @arrtype [a, a] [a]
 
 "Class of arrows for primitive unary arithmetic operations"
 immutable ArithArrow <: PrimArrow{2, 1}

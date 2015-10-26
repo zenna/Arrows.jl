@@ -15,4 +15,4 @@ is either
 """
 
 "A simple convolutional neural network with type"
-const simple_cnet = stack(conv2darr, dimshuffle(["x", 0, "x", "x"])) >>> addarr >>> sigmoidarr
+# const simple_cnet = stack(conv2darr, dimshuffle(["x", 0, "x", "x"])) >>> addarr >>> sigmoidarr
