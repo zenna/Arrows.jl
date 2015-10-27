@@ -32,7 +32,7 @@ export
   fix
 
 include("util.jl")
-include("kinder.jl")
+include("kinds.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("compile.jl")
