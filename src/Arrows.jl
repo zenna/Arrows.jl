@@ -33,6 +33,7 @@ export
 
 include("util.jl")
 include("kinds.jl")
+include("maketypes.jl")
 include("arrowtypes.jl")
 include("combinators.jl")
 include("compile.jl")

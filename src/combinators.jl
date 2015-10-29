@@ -114,5 +114,5 @@ stack(a::PrimArrow, b::CompositeArrow) = stack(encapsulate(a), b)
 stack(a::PrimArrow, b::PrimArrow) = stack(encapsulate(a), encapsulate(b))
 stack(a::CompositeArrow, b::PrimArrow) = stack(a, encapsulate(b))
 
-first(a::PrimArrow) = first(encapsulate(a))
+first(a::PrimArrow{1, 1}) = first(encapsulate(a))
 multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)
