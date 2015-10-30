@@ -153,8 +153,8 @@ string(a::ValueParams) = string(string(a.portname)":","[", string(a.values),"]")
 ## ArrowType : Represent types of arrow
 ## ====================================
 
-"""Differentiable arrows take as input a collection of real valued arrays
- and output a collection of real valued a rray"""
+"""an arrow type represents the type at the input and type of output
+These types could be array types, or other arrows types."""
 immutable ArrowType{I, O} <: Kind
   inptypes::Tuple{Vararg{Kind}}
   outtypes::Tuple{Vararg{Kind}}

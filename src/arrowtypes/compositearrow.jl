@@ -21,6 +21,15 @@ edges(a::CompositeArrow) = a.edges
 addedges!(a::CompositeArrow, e::Dict{OutPort, InPort}) = merge!(a.edges, e)
 addedge!(a::CompositeArrow, p1::Port, p2::Port) = a.edges[p1] = p2
 
+# Type stuff
+"Number of dimensions of array at inport `p` of subarrow within `a`"
+function ndims{I, O}(a::CompositeArrow{I, O}, p::Port)
+  # @assert p.pinid <= I
+  @assert p.arrowid != 1 "Determining in/outport type at boundary unsupported"
+  subarr = nodes(a)[p.arrowid - 1] # FIXME: this minus 1 is error prone
+  ndims(subarr, p)
+end
+
 # Printing
 string{I,O}(x::CompositeArrow{I,O}) = "CompositeArrow{$I,$O} - $(nnodes(x)) subarrows"
 print(io::IO, x::CompositeArrow) = print(io, string(x))

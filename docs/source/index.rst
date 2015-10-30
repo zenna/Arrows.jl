@@ -24,12 +24,14 @@ Contents:
    :maxdepth: 2
 
    starting
-   modeling
    arrows
+   types
    arrowsets
    primarrows
    combinators
+   inversion
    library
+   compilation
 
    license
 

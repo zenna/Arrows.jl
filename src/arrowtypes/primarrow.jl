@@ -17,6 +17,21 @@ outpintype(x::PrimArrow, pinid::PinId) = typ(x).outtypes[pinid]
 name(x::PrimArrow) = error("interface: children should implement name")
 typ(x::PrimArrow) = error("interface: children should implement typ")
 
+"Number of dimensions of array at inport `p` of arrow `a`"
+function ndims{I, O}(a::PrimArrow{I, O}, p::InPort)
+  @assert p.pinid <= I
+  t::ArrowType = typ(a)
+  ndims(t.inptypes[p.pinid])
+end
+
+"Number of dimensions of array at inport `p` of arrow `a`"
+function ndims{I, O}(a::PrimArrow{I, O}, p::OutPort)
+  @assert p.pinid <= O
+  t::ArrowType = typ(a)
+  ndims(t.outtypes[p.pinid])
+end
+
+
 # Printing
 string{I,O}(x::PrimArrow{I,O}) =
   "$(name(x)) :: PrimArrow{$I,$O}\n$(name(x)) :: $(string(typ(x)))"
