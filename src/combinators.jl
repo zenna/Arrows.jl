@@ -83,11 +83,28 @@ function over{I,O}(a::CompositeArrow{I,O})
   c = CompositeArrow{I+1, O+1}()
   addnodes!(c, nodes(a))
   addedges!(c, edges(a))
-  addedge!(c, OutPort(1,I+1), InPort(1,O+1))
+  addedge!(c, OutPort(1,I+1), InPort(1,O+1)) # identity wire
   c
 end
 
 over(a::PrimArrow) = over(encapsulate(a))
+
+"Place `a` under an identity wire.  Like `second` but for multiple in/out puts"
+function under{I,O}(a::CompositeArrow{I,O})
+  c = CompositeArrow{I+1, O+1}()
+  addnodes!(c, nodes(a))
+  # add edges of a but increment ports at boundaries by 1
+  for (outp, inp) in edges(a)
+    newinp = isboundary(inp) ? InPort(inp.arrowid, inp.pinid + 1) : inp
+    newoutp = isboundary(outp) ? OutPort(outp.arrowid, outp.pinid + 1) : outp
+    addedge!(c, newoutp, newinp)
+  end
+  addedge!(c, OutPort(1,1), InPort(1,1)) # identity wire
+  c
+end
+
+under(a::PrimArrow) = under(encapsulate(a))
+
 
 "Union two composite arrows into the same arrow"
 function stack{I1, O1, I2, O2}(a::CompositeArrow{I1,O1}, b::CompositeArrow{I2,O2})
@@ -116,3 +133,50 @@ stack(a::CompositeArrow, b::PrimArrow) = stack(a, encapsulate(b))
 
 first(a::PrimArrow{1, 1}) = first(encapsulate(a))
 multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)
+
+## Inversion
+## =========
+#
+# "Invert an invertible arrow"
+# function inv(a::UnaryArithArrow)
+#   inverses = Dict(:* => :/, :/ => :*, :+ => :-, :- => :+, :^ => :log, :log => :^)
+#   inverse_f = inverses(a.name)
+#   if a.name == :- && a.isnumfirst == true
+#     return a
+#   elseif a.name == :- && a.isnumfirst == false
+#     return UnaryArithArrow{T}(:+, a.value, false)
+#   elseif a.name == :+
+#     # y = x + 3 => x = y - 3
+#     return UnaryArithArrow{T}(:-, a.value, false)
+#   elseif a.name == :*
+#     # y = x * 3 => x = y/3
+#     return UnaryArithArrow{T}(:/, a.value, false)
+#   elseif a.name == :/ && a.isnumfirst == true
+#     # y = 3/x => x = 3/y
+#     return UnaryArithArrow{T}(:/, a.value, true)
+#   elseif a.name == :/ && a.isnumfirst == false
+#     # y = x/3 => x = 3y
+#     return UnaryArithArrow{T}(:*, a.value, true)
+#   elseif a.name == :^ && a.isnumfirst == true
+#     # y = 3 ^ x => x = log_3(y)
+#     return UnaryArithArrow{T}(:log, a.value, true)
+#   elseif a.name == :^ && a.isnumfirst == false
+#     # y = x ^ 3 => x = log_y(3)
+#     return UnaryArithArrow{T}(:log, a.value, false)
+#   elseif a.name == :log && a.isnumfirst == true
+#     # y = log_2(x) => x = 2^y
+#     return UnaryArithArrow{T}(:^, a.value, true)
+#   elseif a.name == :log && a.isnumfirst == false
+#     # y = log_x(2) => x = 2^(1/y)
+#     return invarrow >> UnaryArithArrow{T}(:^, a.value, true)
+#   else
+#     error("unsupported case")
+#   end
+# end
+#
+# "Invert a binary arithmetic arrow"
+# function inv(a::ArithArrow)
+#   if a.name == :+
+#     over(clone(2)) >>> under(addarr)
+#   end
+# end

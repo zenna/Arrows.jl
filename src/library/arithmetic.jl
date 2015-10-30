@@ -21,5 +21,16 @@ const minusarr = ArithArrow(:-)
 const divsarr = ArithArrow(:/)
 const mularr = ArithArrow(:*)
 const powarr = ArithArrow(:^)
+const logarr = ArithArrow(:log)
 
-export addarr, minusarr, divsarr, mularr, powarr
+export addarr, minusarr, divsarr, mularr, powarr, logarr
+
+## Unary Binary operations
+## =======================
+
+"Unary arithmetic arrow - partially applied ArithArrow"
+immutable UnaryArithArrow{T} <: PrimArrow{1, 1}
+  name::Symbol
+  value::T
+  isnumfirst::Bool # is the number first, .e.g f(x) = (+)(3,x) => true
+end

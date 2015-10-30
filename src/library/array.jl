@@ -64,13 +64,14 @@ immutable CloneArrow{O} <: PrimArrow{1, O}
   typ::Arrows.ArrowType{1, O}
 end
 
-# "Clone an input"
-# function clone(n::Integer)
-#   @assert n >= 2 "Cannot clone input into $n outputs, $n >= 2"
-#   @show a = @shape s [x_i for i = 1:n]
-#   @show b = collect(repeated(a, n))
-#   CloneArrow{n}(@arrtype [a] b)
-# end
+"Generate an arrow which takes one input and clones it on all its `n` outputs"
+function clone(n::Integer)
+  @assert n >= 2 "Cannot clone input into $n outputs, $n >= 2"
+  a = @shape s [x_i for i = 1:n]
+  b = collect(repeated(a, n))
+  atype = Arrows.ArrowType{1,n}(tuple(a,), tuple(b...), [])
+  CloneArrow{n}(atype)
+end
 
 name(::CloneArrow) = :clone
 typ(a::CloneArrow) = a.typ

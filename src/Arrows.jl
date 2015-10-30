@@ -13,9 +13,11 @@ export
   compose,
   first,
   over,
+  under,
   lift,
   multiplex,
   stack,
+  encapsulate,
 
   name,
   conv2dfunc,

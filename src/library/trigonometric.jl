@@ -16,7 +16,6 @@ name(x::TrigArrow) = x.name
 ## ===========================
 
 const exparr = TrigArrow(:exp)
-const logarr = TrigArrow(:log)
 const sinarr = TrigArrow(:sin)
 const cosarr = TrigArrow(:cos)
 const tanarr = TrigArrow(:tan)
@@ -32,7 +31,6 @@ const sqrtarr = TrigArrow(:sqrt)
 name(a::TrigArrow) = a.name
 
 export exparr
-export logarr
 export sinarr
 export cosarr
 export tanarr

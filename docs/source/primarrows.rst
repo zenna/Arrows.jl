@@ -10,11 +10,8 @@ Arrows has support for common mathematical binary functions.
 These functions are defined pointwise, so that adding two vectors results in a vector of the same size with each element the sum of the arguments.
 Arrows supports `add,sub,mul,div,truediv,floordiv`, and for each arrow has an arrow up to a given dimensionality, e.g.:
 
-.. function:: add :: Arrow [A], [A] -> [A]
-.. function:: add :: Arrow [A, B], [A, B] -> [A, B]
-.. function:: add :: Arrow [A, B, C], [A, B, C] -> [A, B, C]
-
-.. function:: sub1 :: Arrow{(A, A), (B)}
+.. function:: addarr :: Arrow [A], [A] -> [A]
+.. function:: subarr :: Arrow{(A, A), (B)}
 
 concat :: Arrow [A] [B] -> [C] | C = A + B}
 
