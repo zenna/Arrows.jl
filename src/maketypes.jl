@@ -22,7 +22,7 @@ end
 
 function param_gen(x::Expr, t::DataType)
   xq = Expr(:quote, x)
-  :(CompositeParameter{$t}($xq))
+  :(TransformedParameter{$t}($xq))
 end
 
 function arg_gen(x::Symbol)

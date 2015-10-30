@@ -58,6 +58,9 @@
 #   # arset(permutation)
 # end
 
+## Array slicing
+"""slice :: [lb_i,ub_i for i = 1:n] |> {x_i for i = 1:n} >> {ub_i - lb_i + 1 for i = 1:n}
+          |  {lb_i >= 1, ub_i >= lb_i, lb_i <= x_i, ub_i <= x_i for i = 1:n}"""
 ## Clone
 ## =====
 immutable CloneArrow{O} <: PrimArrow{1, O}

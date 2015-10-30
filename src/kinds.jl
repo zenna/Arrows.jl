@@ -34,7 +34,7 @@ end
 "Non negative parameter of numeric type `T`, e.g. for dimension sizes."
 function nonnegparam{T<:Number}(::Type{T}, name::Symbol)
   p = Parameter{T}(name)
-  constraint = CompositeParameter{Bool}(:($p>=0))
+  constraint = TransformedParameter{Bool}(:($p>=0))
   ConstrainedParameter{T}(p, ConstraintSet([constraint]))
 end
 
@@ -54,12 +54,43 @@ end
 
 string(x::IndexedParameter) = string(x.name, "_", x.index)
 
-"A type variable after transformation, e.g. `2T`"
-immutable CompositeParameter{T} <: ParameterExpr{T}
+"parameter(s) after transformation, e.g. `2t` or `a+b+5`"
+immutable TransformedParameter{T} <: ParameterExpr{T}
   expr::Expr
+  function TransformedParameter(expr)
+    @assert expr.head == :call || expr.head == :comparison "expr must start with call not $(expr.head)"
+    new{T}(expr)
+  end
 end
 
-string(x::CompositeParameter) = string(x.expr)
+# "Return expr but with `a` replaced with `b`"
+# function substitute(expr, a::Dict{Variable, SMTVar})
+#
+# end
+
+"default do nothing"
+handle(x) = x
+
+"Convert param to whatever"
+handle(v::Variable) = @show :(args[$(QuoteNode(v.name))])
+
+function handle(x::Expr)
+  const params = Expr(:parameters, Expr(:kw, :ctx, :ctx))
+  Expr(:call, x.args[1], params, [handle(arg) for arg in x.args[2:end]]...)
+end
+
+"Lets rewrite"
+function SMTify(p::TransformedParameter)
+  paramsexpr = handle(p.expr)
+  Expr(:(->), :((args::Dict, ctx::Z3.Context)), paramsexpr)
+end
+
+"Convert type parameter into something that can be called"
+lambarise(p::TransformedParameter) = eval(SMTify(p))
+
+" e,g, c=2n; c(n=>10)"
+call(c::TransformedParameter) = substitute(c.expr)
+string(x::TransformedParameter) = string(x.expr)
 
 "Symbol name for argument (input or output) of arrow"
 immutable PortName <: Variable
@@ -196,10 +227,6 @@ immutable ArrowType{I, O} <: Kind
   end
 end
 
-# "Return a set of all the variables in this"
-# function variables(a::ArrowType)
-# end
-
 function fix{I, O}(a::ArrowType{I, O}, model::Model)
   newinptypes = map(m->(fix(m, model)), a.inptypes)
   newouttypes = map(m->(fix(m, model)), a.outtypes)
@@ -214,3 +241,22 @@ function string{I,O}(x::ArrowType{I,O})
   constraints = string(join(map(string, x.constraints), " & "))
   "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
 end
+#
+# ""
+# "Return a set of all the variables in this"
+# function variables(a::ParaneterExpr)
+# end
+#
+# "Return a set of all the dimension variables in a"
+# function dimvariables(a::ParaneterExpr)
+# end
+# immutable ConstrainedParameter{T} <: ParameterExpr{T}
+# immutable IndexedParameter{T} <: Pa
+#
+# FixedLenVarArray
+# VarLengthVar
+# ShapeParams
+# ValueParams
+#
+# dimvariables(a::ArrowType) =
+#   union(dimvariables(a.inptypes), dimvariables(a.outtypes), dimvariables(a.constraints))

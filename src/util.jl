@@ -15,3 +15,7 @@ function printers(T::Type)
   @eval show(io::IO, x::$T) = print(io, string(x))
   @eval showcompact(io::IO, x::$T) = print(io, string(x))
 end
+
+macro unimplemented()
+  error("not yet implemented")
+end
