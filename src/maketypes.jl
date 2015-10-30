@@ -10,13 +10,13 @@ end
 "Is this an index symbol _"
 isindexsymbol(x::Symbol) = length(split(string(x), '_')) == 2
 
-function param_gen(x::Symbol, t::DataType)
+function param_gen(x::Symbol, t::DataType; nonneg::Bool = true)
   if isindexsymbol(x)
     args = namefromindex(x)
     :(IndexedParameter{Real}($args...))
   else
     xq = QuoteNode(x)
-    :(Parameter{$t}($xq))
+    nonneg ? :(nonnegparam($t, $xq)) : :(Parameter{$t}($xq))
   end
 end
 
@@ -81,7 +81,7 @@ macro arrtype(a, b)
     inps = Expr(:call, :tuple, map(esc, a.args)...)
     outs = Expr(:call, :tuple, map(esc, b.args)...)
     #TODO handle constraints
-    :(ArrowType{$I, $O}($inps, $outs, []))
+    :(ArrowType{$I, $O}($inps, $outs))
   else
     error("inps and outs must be vectors")
   end

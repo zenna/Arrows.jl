@@ -17,25 +17,25 @@ end
 
 string(x::Parameter) = string(x.name)
 
-## constraints
-
-typealias ConstraintSet Tuple{ParameterExpr{Bool}}
+"A set of constraints"
+# typealias ConstraintSet Tuple{Vararg{ParameterExpr{Bool}}}
+typealias ConstraintSet Set{ParameterExpr{Bool}}
 string(constraints::ConstraintSet) = join(map(string, constraints), " & ")
 
 "A constrained parameter used within a parametric type, ranges over values of type `T`"
 immutable ConstrainedParameter{T} <: ParameterExpr{T}
   param::Parameter{T}                       # e.g. x
-  constraints::ConstraintSet  # e.g. x | x > 10
-  ConstrainedParameter(p::Parameter{T}) = new{T}(p, [])
+  constraints::ConstraintSet                # e.g. x | x > 10
+  ConstrainedParameter(p::Parameter{T}) = new{T}(p, ConstraintSet())
   ConstrainedParameter(p::Parameter, constraints) =
     new{T}(p, constraints)
 end
 
-"Non negative parameter, e.g. for dimension sizes."
+"Non negative parameter of numeric type `T`, e.g. for dimension sizes."
 function nonnegparam{T<:Number}(::Type{T}, name::Symbol)
   p = Parameter{T}(name)
-  constraint = CompositeParameter{Bool}(:($p>0))
-  ConstrainedParameter{T}(p, tuple(constraint))
+  constraint = CompositeParameter{Bool}(:($p>=0))
+  ConstrainedParameter{T}(p, ConstraintSet([constraint]))
 end
 
 string(c::ConstrainedParameter; withconstraints::Bool = false) =
@@ -89,7 +89,7 @@ string(x::FixedLenVarArray) = join(map(string, x.typs),", ")
 "A vector of variable length of type expressions of `len`, e.g. s:[x_i for i = 1:n]"
 immutable VarLenVarArray
   lb::Integer
-  ub::Parameter{Integer}
+  ub::ParameterExpr{Integer}
   expr::ParameterExpr
 end
 
@@ -182,14 +182,17 @@ These types could be array types, or other arrows types."""
 immutable ArrowType{I, O} <: Kind
   inptypes::Tuple{Vararg{Kind}}
   outtypes::Tuple{Vararg{Kind}}
-  constraints::Vector{ParameterExpr{Bool}}
+  constraints::ConstraintSet
   function ArrowType(
       inptypes::Tuple{Vararg{Kind}},
       outtypes::Tuple{Vararg{Kind}},
-      constraints)
+      constraints::ConstraintSet)
     @assert length(inptypes) == I
     @assert length(outtypes) == O
     new{I,O}(inptypes, outtypes, constraints)
+  end
+  function ArrowType(inptypes::Tuple{Vararg{Kind}},outtypes::Tuple{Vararg{Kind}})
+    new{I, O}(inptypes, outtypes, ConstraintSet())
   end
 end
 
