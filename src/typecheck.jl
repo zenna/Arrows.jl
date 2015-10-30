@@ -3,13 +3,6 @@
 
 import Z3
 
-# "Constructs map from symbol names to (SMT) variables"
-# function uniquevariables(atyp::ArrowType)
-#   typvarnames = typevars(atype)
-#   typevars = map(Var, typevarnames)
-#   Dict(zip(typvarnames, typevars)
-# end
-
 "Convert an integer into an SMT integer"
 function SMTify(v::Integer, ctx::Z3.Context)
   @show x
@@ -28,8 +21,10 @@ function typeparamsdims(a::CompositeArrow)
   ctx = Z3.Context()
   slv = Z3.Solver(;ctx=ctx)
 
-
   ## Construct this map from ports to their dimensions
+  # for subarr in nodes(a)
+  #   subarrvars = variables(typ(subarr))
+  # end
   inport2var = [inport => SMTify(ndims(a, inport), ctx) for inport in subarrowinports(a)]
   outport2var = [outport => SMTify(ndims(a, outport), ctx) for outport in subarrowoutports(a)]
 

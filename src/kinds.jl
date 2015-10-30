@@ -11,11 +11,35 @@ printers(Variable)
 abstract ParameterExpr{T} <: Variable
 
 "A parameter used within a parametric type, ranges over values of type `T`"
-immutable Parameter{T} <: ParameterExpr{T}  # all type variables are integer based
-  name::Symbol
+immutable Parameter{T <: Number} <: ParameterExpr{T}  # all type variables are integer based
+  name::Symbol                              # e.g. x
 end
 
 string(x::Parameter) = string(x.name)
+
+## constraints
+
+typealias ConstraintSet Tuple{ParameterExpr{Bool}}
+string(constraints::ConstraintSet) = join(map(string, constraints), " & ")
+
+"A constrained parameter used within a parametric type, ranges over values of type `T`"
+immutable ConstrainedParameter{T} <: ParameterExpr{T}
+  param::Parameter{T}                       # e.g. x
+  constraints::ConstraintSet  # e.g. x | x > 10
+  ConstrainedParameter(p::Parameter{T}) = new{T}(p, [])
+  ConstrainedParameter(p::Parameter, constraints) =
+    new{T}(p, constraints)
+end
+
+"Non negative parameter, e.g. for dimension sizes."
+function nonnegparam{T<:Number}(::Type{T}, name::Symbol)
+  p = Parameter{T}(name)
+  constraint = CompositeParameter{Bool}(:($p>0))
+  ConstrainedParameter{T}(p, tuple(constraint))
+end
+
+string(c::ConstrainedParameter; withconstraints::Bool = false) =
+  string(c.param, !(isempty(c.constraints)) ? string(" | ", string(c.constraints)) : " ")
 
 "An indexed type variable, used in VarLengthVar, e.g. `x_i` in [x_1 for i = 1:n]"
 immutable IndexedParameter{T} <: ParameterExpr{T}
@@ -168,6 +192,10 @@ immutable ArrowType{I, O} <: Kind
     new{I,O}(inptypes, outtypes, constraints)
   end
 end
+
+# "Return a set of all the variables in this"
+# function variables(a::ArrowType)
+# end
 
 function fix{I, O}(a::ArrowType{I, O}, model::Model)
   newinptypes = map(m->(fix(m, model)), a.inptypes)
