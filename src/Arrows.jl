@@ -34,14 +34,13 @@ export
   fix
 
 include("util.jl")
-include("kinds.jl")
-include("maketypes.jl")
-include("arrowtypes.jl")
-include("typecheck.jl")
+include("types.jl")
+include("arrow.jl")
 include("combinators.jl")
 include("compile.jl")
 include("call.jl")
 
+include("types/typecheck.jl")
 include("library.jl")
 
 include("compilation_targets/stan.jl")
