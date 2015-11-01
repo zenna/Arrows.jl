@@ -63,33 +63,6 @@ immutable TransformedParameter{T} <: ParameterExpr{T}
   end
 end
 
-# "Return expr but with `a` replaced with `b`"
-# function substitute(expr, a::Dict{Variable, SMTVar})
-#
-# end
-
-"default do nothing"
-handle(x) = x
-
-"Convert param to whatever"
-handle(v::Variable) = @show :(args[$(QuoteNode(v.name))])
-
-function handle(x::Expr)
-  const params = Expr(:parameters, Expr(:kw, :ctx, :ctx))
-  Expr(:call, x.args[1], params, [handle(arg) for arg in x.args[2:end]]...)
-end
-
-"Lets rewrite"
-function SMTify(p::TransformedParameter)
-  paramsexpr = handle(p.expr)
-  Expr(:(->), :((args::Dict, ctx::Z3.Context)), paramsexpr)
-end
-
-"Convert type parameter into something that can be called"
-lambarise(p::TransformedParameter) = eval(SMTify(p))
-
-" e,g, c=2n; c(n=>10)"
-call(c::TransformedParameter) = substitute(c.expr)
 string(x::TransformedParameter) = string(x.expr)
 
 "Symbol name for argument (input or output) of arrow"
@@ -205,6 +178,31 @@ end
 
 string(a::ValueParams) = string(string(a.portname)":","[", string(a.values),"]")
 
+## Diemsnion Type
+## ==============
+
+typealias VarMap Dict{Variable, Variable}
+
+immutable DimType{I, O} <: Kind
+  inptypes::Tuple{Vararg{Parameter{Integer}}}
+  outptypes::Tuple{Vararg{Parameter{Integer}}}
+  constraints::ConstraintSet
+end
+
+"Return a new dimension type with variables substituted"
+function substitute(d::DimType, varmap::VarMap)
+  error("unimplemented")
+end
+
+"Set of unique dimensionality parameters"
+function parameters(d::DimType)
+  paramset = Set{Parameter}()
+  for dtype in vcat(dtyp.inptypes, dtyp.outtypes, dtype.constraints)
+    merge!(paramset, parameters(dtype))
+  end
+  paramset
+end
+
 ## ArrowType : Represent types of arrow
 ## ====================================
 
@@ -227,6 +225,27 @@ immutable ArrowType{I, O} <: Kind
   end
 end
 
+"An arrow type"
+immutable ArrowTypeDim{I, O} <: Kind
+  dimtype::DimType{I,O}
+  inptypes::Tuple{Vararg{Kind}}
+  outtypes::Tuple{Vararg{Kind}}
+  constraints::ConstraintSet
+
+  "Construct DimTypes from Arrowtypes if not given"
+  function ArrowTypeDim(
+      inptypes::Tuple{Vararg{Kind}},
+      outtypes::Tuple{Vararg{Kind}},
+      constraints::ConstraintSet)
+    @assert length(inptypes) == I
+    @assert length(outtypes) == O
+    new{I,O}(inptypes, outtypes, constraints)
+  end
+  function ArrowTypeDim(inptypes::Tuple{Vararg{Kind}},outtypes::Tuple{Vararg{Kind}})
+    new{I, O}(inptypes, outtypes, ConstraintSet())
+  end
+end
+
 function fix{I, O}(a::ArrowType{I, O}, model::Model)
   newinptypes = map(m->(fix(m, model)), a.inptypes)
   newouttypes = map(m->(fix(m, model)), a.outtypes)
@@ -241,6 +260,7 @@ function string{I,O}(x::ArrowType{I,O})
   constraints = string(join(map(string, x.constraints), " & "))
   "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
 end
+
 #
 # ""
 # "Return a set of all the variables in this"

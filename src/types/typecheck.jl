@@ -1,47 +1,74 @@
-## Type Checking
-## =============
+## Compile constraints
+## ==================
 
-import Z3
+"A flat arrow has only primitive arrows as its subarrows. TODO: make this a real type"
+typealias FlatArrow CompositeArrow
 
-"Convert an integer into an SMT integer"
-function SMTify(v::Integer, ctx::Z3.Context)
-  @show x
-  Z3.NumeralAst(Integer, v; ctx=ctx)
+"Return an prim arrow with all the parameters unique, globally"
+function unique_dimvars(a::PrimArrow)
+  dtyp = dimtype(a)
+  paramset = parameters(dtyp)
+  varmap::VarMap = [param => uniquevar() for param in paramset]
+  # newtype = substitute(dtyp, varmap)
+  # (replacetyp(a, newtyp), varmap)
 end
 
-"Convert a parameter into an SMT variable"
-function SMTify{T}(x::Parameter{T}, ctx::Z3.Context)
-  @show x
-  Z3.Var(Integer; name = string(x.name), ctx=ctx)
+"Return a flat arrow with all the parameters unique, globally"
+function unique_dimvars{I, O}(a::FlatArrow{I, O})
+  # Construct a new arrow identical to previous one but with unique parameter names
+  # newarr = FlatArrow{I, O}()
+  # addedges!(newarr, a.edges)
+
+  varmap = VarMap()         # Maps old variables to new variablees
+  for arr in nodes(a)
+    subvarmap = unique_dimvars(arr)
+    merge!(varmap, subvarmap)
+    # addnode!(newarr, newsubarr)
+  end
+  varmap
 end
 
-"Are the dimensions compatible, if so return model"
-function typeparamsdims(a::CompositeArrow)
-  Z3.disable_global_ctx!()
-  ctx = Z3.Context()
-  slv = Z3.Solver(;ctx=ctx)
+"Extract constraints on dimensions of an arrow"
+function dimconstraints(a::FlatArrow)
+  constraints = ConstraintSet()
 
-  ## Construct this map from ports to their dimensions
-  # for subarr in nodes(a)
-  #   subarrvars = variables(typ(subarr))
-  # end
-  inport2var = [inport => SMTify(ndims(a, inport), ctx) for inport in subarrowinports(a)]
-  outport2var = [outport => SMTify(ndims(a, outport), ctx) for outport in subarrowoutports(a)]
+  # Convert arrow into one where different dim variables are different
+  varmap = unique_dimvars(a)
 
-  ## assert that dimensions connected by edges are equal
-  for (outp, inp) in edges(a)
-    if !(isboundary(outp) | isboundary(inp))
-      Z3.add!((==)(outport2var[outp], inport2var[inp];ctx=ctx); solver=slv, ctx=ctx)
-    end
+  # Collect constraints from each subarrow and parent arrow
+  push!(constraints, [substitute(expr, varmap) for expr in alldimconstraints(a)]...)
+
+  # Collect constraints x == y, for each (x, y) ∈ edges(a)
+  for (outp, inp) in edges(uniqarrow)
+    outdimexpr = dimexpr(uniqarrow, outp)
+    indimexpr = dimexpr(uniquearrow, outp)
+    edge_constr = substitute(outdimexpr, varmap) == substitute(indimexpr, varmap)
+    push!(constraints, edge_constr)
   end
 
-  # TOADD
-  # - variable dimensions should be positive
-  # - variables with same symbol should be the same variable - doofus
+  # Return pair of constraints and mapping between variables
+  (constraints, varmap)::Tuple{ConstraintSet, VarMap}
+end
 
-  @show Z3.check(;solver=slv, ctx=ctx)
-  Z3.del_context(ctx)
-  return Nullable{Model}(model)
+"Are the dimensions consistent? if so return non-parametric dimensionality type"
+function typeparamsdims(a::FlatArrow)
+  # Get set of constraints
+  (constraints, varmap) = dimconstraints(a)
+
+  # Check using SMT
+  istypesafe = check(solver = Z3)
+  !istypesafe && return Nullable{Model}()
+
+  # if it is satisfiable
+  model::Dict{uniquenames, values}
+
+  # substitute in values to construct a concrete type
+end
+
+"Returns an arrow with all dimensionality parameters turned into real values"
+function reifydims(a::FlatArrow)
+  dimmodel = typeparamsdims(a)
+  replacetyp(a, dimmodel)
 end
 
 # function typeparams(a::CompositeArrow)
@@ -73,9 +100,9 @@ end
 #
 #   # if
 # end
-
-"Is arrow `a` type safe?"
-istypesafe(a::Arrow; args...) = isnull(typeparams(a; args...))
+#
+# "Is arrow `a` type safe?"
+# istypesafe(a::Arrow; args...) = isnull(typeparams(a; args...))
 
 ## TODO
 ## =====

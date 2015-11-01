@@ -62,6 +62,7 @@ function atype(name, x)
   end
 end
 
+"Construct a shape parameter, usage: @shape n [x_i for i = 1:n]"
 macro shape(name, x)
   name = arg_gen(name)
   body = atype(name, x)

@@ -53,6 +53,30 @@ ninports{I,O}(a::Arrow{I,O}) = I
 noutports{I,O}(a::Arrow{I,O}) = O
 nports{I,O}(a::Arrow{I,O}) = I + O
 
+## Type Stuff
+## ==========
+
+"Construct a dimtype from an arrow"
+function dimtype(a::Arrow)
+  t = typ(a)
+  t.inptypes
+  error("unimplemented")
+end
+
+function replacetyp(a::Arrow, d::DimType)
+  error("unimplemented")
+end
+
+"Return constraints for all variables within arrow"
+function alldimconstraints(a::Arrow)
+  error("unimplemented")
+end
+
+"Return the dim parameter expression of an arrow a at port p"
+function dimexpr(a::Arrow, p::Port)
+  error("unimplemented")
+end
+
 include("arrowtypes/primarrow.jl")
 include("arrowtypes/compositearrow.jl")
 include("arrowtypes/namedarrow.jl")
