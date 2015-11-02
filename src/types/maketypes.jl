@@ -87,3 +87,20 @@ macro arrtype(a, b)
     error("inps and outs must be vectors")
   end
 end
+
+"""Create a dim type.
+
+@dimtype [n] [m] [n + m == 10]"""
+macro dimtype(a, b)
+  if a.head == :vect && b.head == :vect
+    I = length(a.args)
+    O = length(b.args)
+    inps = [param_gen(arg, Integer) for arg in a.args]
+    inpst = :(tuple($(inps...)))
+    outps = [param_gen(arg, Integer) for arg in b.args]
+    outpst = :(tuple($(outps...)))
+    :(DimType{$I, $O}($inpst, $outpst))
+  else
+    error("inps and outs must be vectors")
+  end
+end

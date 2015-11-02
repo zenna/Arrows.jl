@@ -184,10 +184,13 @@ string(a::ValueParams) = string(string(a.portname)":","[", string(a.values),"]")
 typealias VarMap Dict{Variable, Variable}
 
 immutable DimType{I, O} <: Kind
-  inptypes::Tuple{Vararg{Parameter{Integer}}}
-  outptypes::Tuple{Vararg{Parameter{Integer}}}
-  constraints::ConstraintSet
+  inptypes::Tuple{Vararg{ParameterExpr{Integer}}}
+  outptypes::Tuple{Vararg{ParameterExpr{Integer}}}
+  # constraints::ConstraintSet
 end
+
+string(d::DimType) = string(join([string(t) for t in d.inptypes], ", "), " >> ",
+                            join([string(t) for t in d.outptypes]))
 
 "Return a new dimension type with variables substituted"
 function substitute(d::DimType, varmap::VarMap)
