@@ -1,6 +1,6 @@
 ## Type Hierarchy
 ## Variable -->
-#     ParameteExpr ---> Parameter, TransformedParmaeter
+#     ParameteExpr ---> Parameter, TransformedParameter
 #     PortName
 #     Argument
 
@@ -231,12 +231,16 @@ immutable IfElseVar{T,A1,A2,A3} <: ParameterExpr{T}
 end
 head(::IfElseVar) = :ifelse
 
-## ifelse
+## Ifelse
 ## ======
-ifelse{T}(A::ParameterExpr{Bool}, B::ParameterExpr{T}, C::ParameterExpr{T}) = IfElseVar{T,Bool,T,T}((A,B,C))
-ifelse{T<:Real}(A::ParameterExpr{Bool}, B::T, C::T) = IfElseVar{T,Bool,T,T}((A,ConstantVar(B),ConstantVar(C)))
-ifelse{T<:Real}(A::ParameterExpr{Bool}, B::ParameterExpr{T}, C::T) = IfElseVar{T,Bool,T,T}((A,B,ConstantVar(C)))
-ifelse{T<:Real}(A::ParameterExpr{Bool}, B::T, C::ParameterExpr{T}) = IfElseVar{T,Bool,T,T}((A,ConstantVar(B),C))
+ifelse{T}(A::ParameterExpr{Bool}, B::ParameterExpr{T}, C::ParameterExpr{T}) =
+  IfElseVar{T,Bool,T,T}((A,B,C))
+ifelse{T<:Real}(A::ParameterExpr{Bool}, B::T, C::T) =
+  IfElseVar{T,Bool,T,T}((A,ConstantVar(B),ConstantVar(C)))
+ifelse{T<:Real}(A::ParameterExpr{Bool}, B::ParameterExpr{T}, C::T) =
+  IfElseVar{T,Bool,T,T}((A,B,ConstantVar(C)))
+ifelse{T<:Real}(A::ParameterExpr{Bool}, B::T, C::ParameterExpr{T}) =
+  IfElseVar{T,Bool,T,T}((A,ConstantVar(B),C))
 
 # Unions
 ## =====
@@ -248,7 +252,8 @@ IneqExpr = Union{GTVar,GTEVar,LTEVar, LTVar,EqVar,NeqVar}
 LogicalExpr = Union{OrVar,AndVar, BicondVar, NotVar}
 
 # All Functional expressions
-CompositeVar = Union{BinaryRealExpr, UnaryRealExpr, TrigExpr, IneqExpr, LogicalExpr, SqrtVar, IfElseVar}
+CompositeVar = Union{BinaryRealExpr, UnaryRealExpr, TrigExpr, IneqExpr,
+                     LogicalExpr, SqrtVar, IfElseVar}
 
 args{T<:CompositeVar}(X::T) = X.args
 

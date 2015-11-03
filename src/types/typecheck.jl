@@ -16,7 +16,7 @@ end
 function unique_dimvars{I, O}(a::FlatArrow{I, O})
   varmap = VarMap()         # Maps old variables to new variablees
   for arr in nodes(a)
-    subvarmap = unique_dimvars(dimtyp(arr))
+    @show subvarmap = unique_dimvars(dimtyp(arr))
     merge!(varmap, subvarmap)
     # addnode!(newarr, newsubarr)
   end
@@ -27,8 +27,11 @@ end
 function dimconstraints(a::FlatArrow)
   constraints = ConstraintSet()
 
+  # Give a unique name to each subarrow, so as to not confuse type var names
+  uniq_arrnames = [symbol(genvar("arrow")) for i = 1:(nnodes(a) + 1)] # +1 to include parent
+
   # Convert arrow into one where different dim variables are different
-  varmap = unique_dimvars(a)
+  # varmap = unique_dimvars(a)
 
   # Collect constraints from each subarrow and parent arrow
   # push!(constraints, [substitute(expr, varmap) for expr in alldimconstraints(a)]...)
@@ -38,14 +41,16 @@ function dimconstraints(a::FlatArrow)
     # FIXME, add constraints from boundaries
     if !(isboundary(outp) || isboundary(inp))
       outdimexpr = dimexpr(a, outp)
-      indimexpr = dimexpr(a, outp)
-      @show edge_constr = substitute(outdimexpr, varmap) == substitute(indimexpr, varmap)
+      indimexpr = dimexpr(a, inp)
+      @show a = prefix(indimexpr, uniq_arrnames[outp.arrowid])
+      @show b = prefix(outdimexpr, uniq_arrnames[inp.arrowid])
+      @show edge_constr = a == b
       push!(constraints, edge_constr)
     end
   end
 
-  # Return pair of constraints and mapping between variables
-  (constraints, varmap)::Tuple{ConstraintSet, VarMap}
+  # Return pair of constraints and arrow names
+  (constraints, uniq_arrnames)
 end
 
 "Are the dimensions consistent? if so return non-parametric dimensionality type"

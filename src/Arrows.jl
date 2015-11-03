@@ -57,6 +57,7 @@ include("call.jl")
 
 include("types/typecheck.jl")
 include("library.jl")
+include("smt_solvers/z3interface.jl")
 
 # include("compilation_targets/theano.jl")
 # include("compilation_targets/stan.jl")
