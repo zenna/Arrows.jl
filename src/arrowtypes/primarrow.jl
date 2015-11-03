@@ -16,6 +16,13 @@ outpintype(x::PrimArrow, pinid::PinId) = typ(x).outtypes[pinid]
 # Intercace methods
 name(x::PrimArrow) = error("interface: children should implement name")
 typ(x::PrimArrow) = error("interface: children should implement typ")
+dimtyp(x::PrimArrow) = error("interface: children should implement dimtyp")
+
+"Expression for dimensionality type at inport `p` of arrow `x`"
+dimexpr(x::PrimArrow, p::InPort) = dimtyp(x).inptypes[p.pinid]
+
+"Expression for dimensionality type at outport `p` of arrow `x`"
+dimexpr(x::PrimArrow, p::OutPort) = dimtyp(x).outtypes[p.pinid]
 
 "Number of dimensions of array at inport `p` of arrow `a`"
 function ndims{I, O}(a::PrimArrow{I, O}, p::InPort)

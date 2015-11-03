@@ -4,24 +4,19 @@
 "A flat arrow has only primitive arrows as its subarrows. TODO: make this a real type"
 typealias FlatArrow CompositeArrow
 
-"Return an prim arrow with all the parameters unique, globally"
-function unique_dimvars(a::PrimArrow)
-  dtyp = dimtype(a)
-  paramset = parameters(dtyp)
-  varmap::VarMap = [param => uniquevar() for param in paramset]
-  # newtype = substitute(dtyp, varmap)
-  # (replacetyp(a, newtyp), varmap)
+uniquevar(T::Type) = Parameter{T}(genvar("param"))
+
+"Return an varmap (Variable => Variable) to give unique names to dim parameters in arrow"
+function unique_dimvars(d::DimType)
+  paramset = parameters(d)
+  varmap::VarMap = [param => uniquevar(Integer) for param in paramset]
 end
 
 "Return a flat arrow with all the parameters unique, globally"
 function unique_dimvars{I, O}(a::FlatArrow{I, O})
-  # Construct a new arrow identical to previous one but with unique parameter names
-  # newarr = FlatArrow{I, O}()
-  # addedges!(newarr, a.edges)
-
   varmap = VarMap()         # Maps old variables to new variablees
   for arr in nodes(a)
-    subvarmap = unique_dimvars(arr)
+    subvarmap = unique_dimvars(dimtyp(arr))
     merge!(varmap, subvarmap)
     # addnode!(newarr, newsubarr)
   end
@@ -36,14 +31,17 @@ function dimconstraints(a::FlatArrow)
   varmap = unique_dimvars(a)
 
   # Collect constraints from each subarrow and parent arrow
-  push!(constraints, [substitute(expr, varmap) for expr in alldimconstraints(a)]...)
+  # push!(constraints, [substitute(expr, varmap) for expr in alldimconstraints(a)]...)
 
   # Collect constraints x == y, for each (x, y) ∈ edges(a)
-  for (outp, inp) in edges(uniqarrow)
-    outdimexpr = dimexpr(uniqarrow, outp)
-    indimexpr = dimexpr(uniquearrow, outp)
-    edge_constr = substitute(outdimexpr, varmap) == substitute(indimexpr, varmap)
-    push!(constraints, edge_constr)
+  for (outp, inp) in edges(a)
+    # FIXME, add constraints from boundaries
+    if !(isboundary(outp) || isboundary(inp))
+      outdimexpr = dimexpr(a, outp)
+      indimexpr = dimexpr(a, outp)
+      @show edge_constr = substitute(outdimexpr, varmap) == substitute(indimexpr, varmap)
+      push!(constraints, edge_constr)
+    end
   end
 
   # Return pair of constraints and mapping between variables
@@ -53,7 +51,7 @@ end
 "Are the dimensions consistent? if so return non-parametric dimensionality type"
 function typeparamsdims(a::FlatArrow)
   # Get set of constraints
-  (constraints, varmap) = dimconstraints(a)
+  @show (constraints, varmap) = dimconstraints(a)
 
   # Check using SMT
   istypesafe = check(solver = Z3)

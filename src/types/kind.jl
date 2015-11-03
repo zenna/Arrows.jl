@@ -1,82 +1,5 @@
-## Kinds: types of types
-## =====================
-
-## Type expressions / variables
-## ============================
-"Gives names to things which can vary - parameters, port names, type variables"
-abstract Variable
-printers(Variable)
-
-"An expression for parameters which represent values of type `T`"
-abstract ParameterExpr{T} <: Variable
-
-"A parameter used within a parametric type, ranges over values of type `T`"
-immutable Parameter{T <: Number} <: ParameterExpr{T}  # all type variables are integer based
-  name::Symbol                              # e.g. x
-end
-
-string(x::Parameter) = string(x.name)
-
-"A set of constraints"
-# typealias ConstraintSet Tuple{Vararg{ParameterExpr{Bool}}}
-typealias ConstraintSet Set{ParameterExpr{Bool}}
-string(constraints::ConstraintSet) = join(map(string, constraints), " & ")
-
-"A constrained parameter used within a parametric type, ranges over values of type `T`"
-immutable ConstrainedParameter{T} <: ParameterExpr{T}
-  param::Parameter{T}                       # e.g. x
-  constraints::ConstraintSet                # e.g. x | x > 10
-  ConstrainedParameter(p::Parameter{T}) = new{T}(p, ConstraintSet())
-  ConstrainedParameter(p::Parameter, constraints) =
-    new{T}(p, constraints)
-end
-
-"Non negative parameter of numeric type `T`, e.g. for dimension sizes."
-function nonnegparam{T<:Number}(::Type{T}, name::Symbol)
-  p = Parameter{T}(name)
-  constraint = TransformedParameter{Bool}(:($p>=0))
-  ConstrainedParameter{T}(p, ConstraintSet([constraint]))
-end
-
-string(c::ConstrainedParameter; withconstraints::Bool = false) =
-  string(c.param, !(isempty(c.constraints)) ? string(" | ", string(c.constraints)) : " ")
-
-"An indexed type variable, used in VarLengthVar, e.g. `x_i` in [x_1 for i = 1:n]"
-immutable IndexedParameter{T} <: ParameterExpr{T}
-  name::Symbol
-  index::Symbol
-end
-
-"Convert an indexed parameter to a normal parameter"
-function Parameter{T}(x::IndexedParameter{T}, index::Integer)
-  Parameter{T}(symbol(x.name, :_, index))
-end
-
-string(x::IndexedParameter) = string(x.name, "_", x.index)
-
-"parameter(s) after transformation, e.g. `2t` or `a+b+5`"
-immutable TransformedParameter{T} <: ParameterExpr{T}
-  expr::Expr
-  function TransformedParameter(expr)
-    @assert expr.head == :call || expr.head == :comparison "expr must start with call not $(expr.head)"
-    new{T}(expr)
-  end
-end
-
-string(x::TransformedParameter) = string(x.expr)
-
-"Symbol name for argument (input or output) of arrow"
-immutable PortName <: Variable
-  name::Symbol
-end
-
-string(x::PortName) = string(x.name)
-
-## Model
-## =====
-
-"An assignment of values to variables, e.g. [n => 10]"
-typealias Model Dict{Variable, Integer}
+## Kind: types of type
+## ===================
 
 ## Type Arrays: arrays of type expressions
 ## =======================================
@@ -185,23 +108,49 @@ typealias VarMap Dict{Variable, Variable}
 
 immutable DimType{I, O} <: Kind
   inptypes::Tuple{Vararg{ParameterExpr{Integer}}}
-  outptypes::Tuple{Vararg{ParameterExpr{Integer}}}
-  # constraints::ConstraintSet
+  outtypes::Tuple{Vararg{ParameterExpr{Integer}}}
+  # constraints::ConstraintSet #FIXME: Enable
 end
 
 string(d::DimType) = string(join([string(t) for t in d.inptypes], ", "), " >> ",
-                            join([string(t) for t in d.outptypes]))
+                            join([string(t) for t in d.outtypes]))
+
+function substitute(d::Parameter, varmap::VarMap)
+  if haskey(varmap, d)
+    varmap[d]
+  else
+    error("varmap does not contain parameter $d")
+  end
+end
+
+"Constrained parameter with parameter replaced accoriding to `varmap`"
+function substitute{T}(d::ConstrainedParameter{T}, varmap::VarMap)
+  if haskey(varmap, d.param)
+    ConstrainedParameter{T}(varmap[d.param])
+    warn("FIXME: not handling constraints")
+  else
+    error("varmap does not contain parameter $d")
+  end
+end
 
 "Return a new dimension type with variables substituted"
-function substitute(d::DimType, varmap::VarMap)
-  error("unimplemented")
+function substitute{I, O}(d::DimType{I, O}, varmap::VarMap)
+  newinptypes = map(t->substite(t,varmap), d.inptypes)
+  newouttypes = map(t->substite(t,varmap), d.outtypes)
+  # FIXME: add constraints
+  DimType{I, O}(newinptypes, newouttypes)
 end
+
+parameters(p::Parameter) = Set([p])
+parameters(p::ConstrainedParameter) = Set([p.param])
 
 "Set of unique dimensionality parameters"
 function parameters(d::DimType)
-  paramset = Set{Parameter}()
-  for dtype in vcat(dtyp.inptypes, dtyp.outtypes, dtype.constraints)
-    merge!(paramset, parameters(dtype))
+  paramset = Set{Parameter{Integer}}()
+  # FIXME: add constraints, d.constraints
+  for dtype in vcat(d.inptypes..., d.outtypes...)
+    @show dtype
+    union!(paramset, parameters(dtype))
   end
   paramset
 end
@@ -228,6 +177,13 @@ immutable ArrowType{I, O} <: Kind
   end
 end
 
+function string{I,O}(x::ArrowType{I,O})
+  inpstring = string(join(map(string, x.inptypes), ", "))
+  outstring = string(join(map(string, x.outtypes), ", "))
+  constraints = string(join(map(string, x.constraints), " & "))
+  "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
+end
+
 "An arrow type"
 immutable ArrowTypeDim{I, O} <: Kind
   dimtype::DimType{I,O}
@@ -237,17 +193,31 @@ immutable ArrowTypeDim{I, O} <: Kind
 
   "Construct DimTypes from Arrowtypes if not given"
   function ArrowTypeDim(
+      dimtype::DimType{I,O},
       inptypes::Tuple{Vararg{Kind}},
       outtypes::Tuple{Vararg{Kind}},
       constraints::ConstraintSet)
     @assert length(inptypes) == I
     @assert length(outtypes) == O
-    new{I,O}(inptypes, outtypes, constraints)
+    new{I,O}(dimtype, inptypes, outtypes, constraints)
   end
-  function ArrowTypeDim(inptypes::Tuple{Vararg{Kind}},outtypes::Tuple{Vararg{Kind}})
-    new{I, O}(inptypes, outtypes, ConstraintSet())
+  function ArrowTypeDim(
+    dimtype::DimType{I,O},
+    inptypes::Tuple{Vararg{Kind}},
+    outtypes::Tuple{Vararg{Kind}})
+    new{I, O}(dimtype, inptypes, outtypes, ConstraintSet())
   end
 end
+
+function string{I,O}(x::ArrowTypeDim{I,O})
+  inpstring = string(join(map(string, x.inptypes), ", "))
+  outstring = string(join(map(string, x.outtypes), ", "))
+  constraints = string(join(map(string, x.constraints), " & "))
+  dimtype = string(x.dimtype)
+  shapetype = "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
+  "$dimtype \n $shapetype"
+end
+
 
 function fix{I, O}(a::ArrowType{I, O}, model::Model)
   newinptypes = map(m->(fix(m, model)), a.inptypes)
@@ -256,30 +226,3 @@ function fix{I, O}(a::ArrowType{I, O}, model::Model)
   newconstraints = a.constraints
   ArrowType{I, O}(newinptypes, newouttypes, newconstraints)
 end
-
-function string{I,O}(x::ArrowType{I,O})
-  inpstring = string(join(map(string, x.inptypes), ", "))
-  outstring = string(join(map(string, x.outtypes), ", "))
-  constraints = string(join(map(string, x.constraints), " & "))
-  "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
-end
-
-#
-# ""
-# "Return a set of all the variables in this"
-# function variables(a::ParaneterExpr)
-# end
-#
-# "Return a set of all the dimension variables in a"
-# function dimvariables(a::ParaneterExpr)
-# end
-# immutable ConstrainedParameter{T} <: ParameterExpr{T}
-# immutable IndexedParameter{T} <: Pa
-#
-# FixedLenVarArray
-# VarLengthVar
-# ShapeParams
-# ValueParams
-#
-# dimvariables(a::ArrowType) =
-#   union(dimvariables(a.inptypes), dimvariables(a.outtypes), dimvariables(a.constraints))

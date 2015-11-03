@@ -6,7 +6,22 @@ using PyCall
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: call, convert, union, first, ndims, print, println, string, show,
-  showcompact, >>>, length
+  showcompact, >>>, length, isequal
+
+import Base:  ^,
+              +,
+              -,
+              *,
+              /,
+              >,
+              >=,
+              <=,
+              <,
+              ==,
+              !=,
+              |,
+              &,
+              !
 
 export
   # Combinators
@@ -43,8 +58,8 @@ include("call.jl")
 include("types/typecheck.jl")
 include("library.jl")
 
-include("compilation_targets/stan.jl")
-include("compilation_targets/theano.jl")
+# include("compilation_targets/theano.jl")
+# include("compilation_targets/stan.jl")
 
 # using Arrows.Library
 end

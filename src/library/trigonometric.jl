@@ -1,14 +1,16 @@
 ## Primitive Trigonometric Arrows
 ## ==============================
 
-arb_array = @shape s [x_i for i = 1:n]
-const trig_type = @arrtype [arb_array] [arb_array]
+const trig_dimtype = @dimtype [n] [n]
+const arb_array = @shape s [x_i for i = 1:n]
+const trig_type = @arrtype2 trig_dimtype [arb_array] [arb_array]
 
 "Class of arrows for primitive binary arithmetic operations, + / + ^"
 immutable TrigArrow <: PrimArrow{1, 1}
   name::Symbol
 end
 
+dimtyp(x::TrigArrow) = trig_dimtype
 typ(x::TrigArrow) = arith_typ
 name(x::TrigArrow) = x.name
 

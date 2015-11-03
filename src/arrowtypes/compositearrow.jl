@@ -84,7 +84,9 @@ allinports(a::CompositeArrow) = vcat(outasinports(a), subarrowinports(a))::Vecto
 "All outports, both nested and boundary"
 alloutports(a::CompositeArrow) = vcat(inasoutports(a), subarrowoutports(a))::Vector{OutPort}
 
-subarrow(a::CompositeArrow, arrowid::ArrowId) = a.nodes[arrowid-1]
+"The subarrow contained within `a` with `arrowid`"
+subarrow(a::CompositeArrow, arrowid::ArrowId) =
+  (@assert arrowid != 1 "not subarrow, arrowid = $arrowid"; a.nodes[arrowid-1])
 
 "inports for a subarrow with ids relative to parent arrow, i.e. arrowids != 1"
 function subinports(a::CompositeArrow, arrowid::ArrowId)
@@ -130,3 +132,9 @@ function iswellformed{I,O}(c::CompositeArrow{I,O})
     return false
   end
 end
+
+## Type Stuff
+## ==========
+
+"Expression for dimensionality type at outport `p` of arrow `x`"
+dimexpr(a::CompositeArrow, p::Port) = dimexpr(subarrow(a, p.arrowid), p)

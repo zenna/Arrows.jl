@@ -19,3 +19,5 @@ end
 macro unimplemented()
   error("not yet implemented")
 end
+
+fields(X) = [getfield(X, field) for field in fieldnames(X)]

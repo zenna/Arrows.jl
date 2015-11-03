@@ -2,7 +2,7 @@
 ## ==========================================
 "x_i -> (x,i), hello_pos -> (hello_pos)"
 function namefromindex(x::Symbol)
-  x = split(string(x), '_')
+  x = map(symbol, split(string(x), '_'))
   @assert length(x) == 2 "Only one _ allowed in name"
   x
 end
@@ -13,7 +13,7 @@ isindexsymbol(x::Symbol) = length(split(string(x), '_')) == 2
 function param_gen(x::Symbol, t::DataType; nonneg::Bool = true)
   if isindexsymbol(x)
     args = namefromindex(x)
-    :(IndexedParameter{Real}($args...))
+    :(IndexedParameter(Real, $args...))
   else
     xq = QuoteNode(x)
     nonneg ? :(nonnegparam($t, $xq)) : :(Parameter{$t}($xq))
@@ -88,9 +88,7 @@ macro arrtype(a, b)
   end
 end
 
-"""Create a dim type.
-
-@dimtype [n] [m] [n + m == 10]"""
+"Create a dim type. usage: @dimtype [n] [m] [n + m == 10]"
 macro dimtype(a, b)
   if a.head == :vect && b.head == :vect
     I = length(a.args)
@@ -100,6 +98,19 @@ macro dimtype(a, b)
     outps = [param_gen(arg, Integer) for arg in b.args]
     outpst = :(tuple($(outps...)))
     :(DimType{$I, $O}($inpst, $outpst))
+  else
+    error("inps and outs must be vectors")
+  end
+end
+
+macro arrtype2(d, a, b)
+  if a.head == :vect && b.head == :vect
+    I = length(a.args)
+    O = length(b.args)
+    inps = Expr(:call, :tuple, map(esc, a.args)...)
+    outs = Expr(:call, :tuple, map(esc, b.args)...)
+    #TODO handle constraints
+    @show :(ArrowTypeDim{$I, $O}($(esc(d)), $inps, $outs))
   else
     error("inps and outs must be vectors")
   end
