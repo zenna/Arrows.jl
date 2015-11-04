@@ -33,6 +33,7 @@ export
   multiplex,
   stack,
   encapsulate,
+  inswitch,
 
   _,
 

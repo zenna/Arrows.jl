@@ -134,6 +134,33 @@ stack(a::CompositeArrow, b::PrimArrow) = stack(a, encapsulate(b))
 first(a::PrimArrow{1, 1}) = first(encapsulate(a))
 multiplex{I,O}(a::CompositeArrow{I,O}, b::CompositeArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)
 
+## Switch
+## ======
+
+"Switch inport `p1` and `p2`: usage inswitch(subarr, 1, 2)"
+function inswitch{I, O}(a::CompositeArrow{I, O}, p1::Integer, p2::Integer)
+  @assert 1 <= p1 <= I "Invalid switch range, violates 1 <= p1 <= $I"
+  @assert 1 <= p2 <= I "Invalid switch range, violates 1 <= p2 <= $I"
+
+  c = CompositeArrow{I, O}()
+  addnodes!(c, nodes(a))
+  for (outp, inp) in edges(a)
+    if isboundary(outp) && outp.pinid == p1
+      addedge!(c, OutPort(1, p2), inp)
+    elseif isboundary(outp) && outp.pinid == p2
+      addedge!(c, OutPort(1, p1), inp)
+    else
+      addedge!(c, outp, inp)
+    end
+  end
+
+  @assert iswellformed(c)
+  c
+end
+
+inswitch(a::PrimArrow, p1::Integer, p2::Integer) = inswitch(encapsulate(a),p1,p2)
+
+
 ## Inversion
 ## =========
 #
