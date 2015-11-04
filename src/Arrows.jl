@@ -34,6 +34,8 @@ export
   stack,
   encapsulate,
 
+  _,
+
   name,
   conv2dfunc,
   addfunc,
@@ -43,6 +45,7 @@ export
   outpintype,
 
   typ,
+  dimtyp,
   @shape,
   @arrtype,
   @intparams,

@@ -6,6 +6,8 @@ module Library
   import Arrows: parameters, name, PrimArrow, ArrayType, ArrowType, typ, dimtyp,
                  isfixeddims
   import Arrows: @shape, @arrtype, @intparams, @dimtype, @arrtype2
+  import Arrows: _
+  import Base: call
 
   include("library/arithmetic.jl")
   include("library/trigonometric.jl")

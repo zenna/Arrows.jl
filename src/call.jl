@@ -1,4 +1,8 @@
 ## Call: apply an arrow to some input
+
+"Wildcard for partial application"
+immutable _ end
+
 ## =================================
 "Compiles the arrow `a` and applies it to input `x`"
 function lambda{I,O}(a::Arrow{I,O}; compilation_target = Arrows.Theano.TheanoFunc)
