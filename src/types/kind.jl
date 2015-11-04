@@ -171,38 +171,13 @@ end
 """an arrow type represents the type at the input and type of output
 These types could be array types, or other arrows types."""
 immutable ArrowType{I, O} <: Kind
-  inptypes::Tuple{Vararg{Kind}}
-  outtypes::Tuple{Vararg{Kind}}
-  constraints::ConstraintSet
-  function ArrowType(
-      inptypes::Tuple{Vararg{Kind}},
-      outtypes::Tuple{Vararg{Kind}},
-      constraints::ConstraintSet)
-    @assert length(inptypes) == I
-    @assert length(outtypes) == O
-    new{I,O}(inptypes, outtypes, constraints)
-  end
-  function ArrowType(inptypes::Tuple{Vararg{Kind}},outtypes::Tuple{Vararg{Kind}})
-    new{I, O}(inptypes, outtypes, ConstraintSet())
-  end
-end
-
-function string{I,O}(x::ArrowType{I,O})
-  inpstring = string(join(map(string, x.inptypes), ", "))
-  outstring = string(join(map(string, x.outtypes), ", "))
-  constraints = string(join(map(string, x.constraints), " & "))
-  "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
-end
-
-"An arrow type"
-immutable ArrowTypeDim{I, O} <: Kind
   dimtype::DimType{I,O}
   inptypes::Tuple{Vararg{Kind}}
   outtypes::Tuple{Vararg{Kind}}
   constraints::ConstraintSet
 
   "Construct DimTypes from Arrowtypes if not given"
-  function ArrowTypeDim(
+  function ArrowType(
       dimtype::DimType{I,O},
       inptypes::Tuple{Vararg{Kind}},
       outtypes::Tuple{Vararg{Kind}},
@@ -211,7 +186,7 @@ immutable ArrowTypeDim{I, O} <: Kind
     @assert length(outtypes) == O
     new{I,O}(dimtype, inptypes, outtypes, constraints)
   end
-  function ArrowTypeDim(
+  function ArrowType(
     dimtype::DimType{I,O},
     inptypes::Tuple{Vararg{Kind}},
     outtypes::Tuple{Vararg{Kind}})
@@ -219,7 +194,7 @@ immutable ArrowTypeDim{I, O} <: Kind
   end
 end
 
-function string{I,O}(x::ArrowTypeDim{I,O})
+function string{I,O}(x::ArrowType{I,O})
   inpstring = string(join(map(string, x.inptypes), ", "))
   outstring = string(join(map(string, x.outtypes), ", "))
   constraints = string(join(map(string, x.constraints), " & "))

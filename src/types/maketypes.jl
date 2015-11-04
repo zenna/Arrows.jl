@@ -110,7 +110,7 @@ macro arrtype2(d, a, b)
     inps = Expr(:call, :tuple, map(esc, a.args)...)
     outs = Expr(:call, :tuple, map(esc, b.args)...)
     #TODO handle constraints
-    @show :(ArrowTypeDim{$I, $O}($(esc(d)), $inps, $outs))
+    @show :(ArrowType{$I, $O}($(esc(d)), $inps, $outs))
   else
     error("inps and outs must be vectors")
   end

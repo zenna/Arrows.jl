@@ -53,19 +53,47 @@ function dimconstraints(a::FlatArrow)
   (constraints, uniq_arrnames)
 end
 
+"Dimvars with appropriate prefixes"
+function prefix_dimvars(a::FlatArrow, uniq_arrnames::Vector{Symbol})
+  paramset = Set{Parameter}()
+  for i = 1:length(nodes(a))
+    ps = parameters(dimtyp(nodes(a)[i]))
+    [push!(paramset, prefix(p, uniq_arrnames[i+1])) for p in ps]
+  end
+  paramset
+end
+
+
+
 "Are the dimensions consistent? if so return non-parametric dimensionality type"
-function typeparamsdims(a::FlatArrow)
+function typeparamsdims(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
   # Get set of constraints
-  @show (constraints, varmap) = dimconstraints(a)
+  @show (constraints, uniq_arrnames) = dimconstraints(a)
 
   # Check using SMT
-  istypesafe = check(solver = Z3)
-  !istypesafe && return Nullable{Model}()
+  slv = Arrows.Z3Interface.solver(Solver)
 
-  # if it is satisfiable
-  model::Dict{uniquenames, values}
+  # add constraints
+  [Arrows.Z3Interface.add!(slv, constraint) for constraint in constraints]
 
-  # substitute in values to construct a concrete type
+  # Check whether dimensions are type safe
+  @show istypesafe = Arrows.Z3Interface.check(slv)
+  if isnull(istypesafe)
+    Arrows.Z3Interface.cleanup(slv)
+    error("""Could not determine dim-typesafety, please instantiate typevariables
+            manually, try different solver or use decidable theories""")
+  elseif !get(istypesafe)
+    Arrows.Z3Interface.cleanup(slv)
+    error("""Is not type safe""")
+  elseif get(istypesafe)
+    @show uniq_varnames = tuple(prefix_dimvars(a, uniq_arrnames)...)
+    m = Arrows.Z3Interface.model(slv)
+    @show solution = Arrows.Z3Interface.interpret(slv, m, uniq_varnames)
+
+    # substitute in values to construct a concrete type
+    # Cleanup
+    Arrows.Z3Interface.cleanup(slv)
+  end
 end
 
 "Returns an arrow with all dimensionality parameters turned into real values"
