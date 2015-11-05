@@ -20,13 +20,6 @@ immutable VarLenVarArray
   expr::ParameterExpr
 end
 
-"Convert a variable length var array into a fixed length one"
-function fix(x::VarLenVarArray, ub::Integer)
-  # TODO: Implement for expressions
-  typs = [Parameter(x.expr, i) for i = x.lb:ub]
-  FixedLenVarArray(tuple(typs...))
-end
-
 length(x::VarLenVarArray) = x.ub
 ndims(x::VarLenVarArray) = 1
 string(x::VarLenVarArray) = string("$(string(x.expr)) for i = $(x.lb):$(string(x.ub))")
@@ -63,16 +56,6 @@ end
 "Number of dimensions of the array this shape parameter represents"
 ndims(a::ShapeParams) = length(a.dimtypes)
 string(a::ShapeParams) = string(string(a.portname)":","{", string(a.dimtypes),"}")
-fix{T}(a::ShapeParams{T}, n::Integer) = ShapeParams{T}(a.portname, fix(a.dimtypes, n))
-function fix(a::ShapeParams, model::Model)
-  if !isfixeddims(a) && haskey(model, ndims(a))
-    @show "got here"
-    @show model[ndims(a)]
-    fix(a, model[ndims(a)])
-  else
-    return a
-  end
-end
 
 
 ## Int-Array : Represents n-dimensional array
@@ -89,16 +72,6 @@ end
 "Number of dimensions of the integer array this ValueParams represents"
 ndims(a::ValueParams) = ndims(a.values)
 length(a::ValueParams) = length(a.values)
-
-fix(a::ValueParams, n::Integer) = ValueParams{T}(a.portname, fix(a.values, n))
-function fix(a::ValueParams, model::Model)
-  if !isfixeddims(akind) && haskey(model, length(a))
-    fix(a, model[length(a)])
-  else
-    return a
-  end
-end
-
 string(a::ValueParams) = string(string(a.portname)":","[", string(a.values),"]")
 
 ## Diemsnion Type
@@ -202,13 +175,4 @@ function string{I,O}(x::ArrowType{I,O})
   dimtype = string(x.dimtype)
   shapetype = "$inpstring >> $outstring $(!(isempty(constraints)) ? constraints : " ")"
   "$dimtype \n $shapetype"
-end
-
-
-function fix{I, O}(a::ArrowType{I, O}, model::Model)
-  newinptypes = map(m->(fix(m, model)), a.inptypes)
-  newouttypes = map(m->(fix(m, model)), a.outtypes)
-  # TODO handle constraints
-  newconstraints = a.constraints
-  ArrowType{I, O}(newinptypes, newouttypes, newconstraints)
 end
