@@ -70,14 +70,17 @@ end
 "Generate an arrow which takes one input and clones it on all its `n` outputs"
 function clone(n::Integer)
   @assert n >= 2 "Cannot clone input into $n outputs, $n >= 2"
+  nd = Arrows.nonnegparam(Integer,:n)
+  dtyp = Arrows.DimType{1, n}(tuple(nd), tuple([nd for i = 1:n]...))
   a = @shape s [x_i for i = 1:n]
   b = collect(repeated(a, n))
-  atype = Arrows.ArrowType{1,n}(tuple(a,), tuple(b...), [])
+  atype = Arrows.ArrowType{1,n}(dtyp, tuple(a,), tuple(b...))
   CloneArrow{n}(atype)
 end
 
 name(::CloneArrow) = :clone
 typ(a::CloneArrow) = a.typ
+dimtyp(a::CloneArrow) = a.typ.dimtype
 
 export dimshuffle
 export clone

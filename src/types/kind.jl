@@ -153,6 +153,7 @@ end
 
 parameters(p::Parameter) = Set([p])
 parameters(p::ConstrainedParameter) = Set([p.param])
+parameters(p::ConstantVar) = Set{Parameter}()
 
 "Set of unique dimensionality parameters"
 function parameters(d::DimType)

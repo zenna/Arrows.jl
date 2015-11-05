@@ -50,7 +50,8 @@ export
   @shape,
   @arrtype,
   @intparams,
-  fix
+  fix,
+  typeparams
 
 include("util.jl")
 include("types.jl")

@@ -103,6 +103,7 @@ function expand{T}(
   if haskey(sym_to_var, p)
     sym_to_var[p]
   else
+    # println("\n\n\n MAKING NEW  VARIABLE : $p \n\n\n")
     sym_to_var[p] = Z3.Var(T; ctx=ctx)
   end
 end

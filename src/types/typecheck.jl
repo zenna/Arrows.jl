@@ -42,13 +42,16 @@ function dimconstraints(a::FlatArrow)
     if !(isboundary(outp) || isboundary(inp))
       outdimexpr = dimexpr(a, outp)
       indimexpr = dimexpr(a, inp)
-      @show a = prefix(indimexpr, uniq_arrnames[outp.arrowid])
-      @show b = prefix(outdimexpr, uniq_arrnames[inp.arrowid])
-      @show edge_constr = a == b
+      @show outp
+      @show inp
+      @show lh = prefix(outdimexpr, uniq_arrnames[outp.arrowid])
+      @show rh = prefix(indimexpr, uniq_arrnames[inp.arrowid])
+      @show edge_constr = lh == rh
       push!(constraints, edge_constr)
     end
   end
 
+  @show length(constraints)
   # Return pair of constraints and arrow names
   (constraints, uniq_arrnames)
 end
