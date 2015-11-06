@@ -1,5 +1,12 @@
-## ArrowSet
-## =======
+## Arrow/Array Sets
+## ================
+
+# Probability theory uses functions to represent non-deterministic values (i.e. random variables).
+# We adopt the same approach
+# An array set is a set of values.
+# ArraySets are formalised as arrows from some input type to the output type which the set will range over
+# The input type can be either integer or real value typed.
+
 
 import Base: .>>, >>, >>>, |>
 export firstarrset, expose
@@ -20,10 +27,29 @@ end
 
 # Printing
 string{I,O}(x::ArrowSet{I,O}) = "ArrowSet{$I,$O}"
-print(io::IO, x::ArrowSet) = print(io, string(x))
-println(io::IO, x::ArrowSet) = println(io, string(x))
-show(io::IO, x::ArrowSet) = print(io, string(x))
-showcompact(io::IO, x::ArrowSet) = print(io, string(x))
+
+## Examples
+## ========
+
+begin
+""" ones |::| 0, 0  |> n
+    ones  ::  n, sz |> [sz for i=1:n]"""
+local nil = Arrows.ConstantVar{Integer}(0)
+local nparam = Arrows.nonnegparam(Integer, :n)
+local szparam = Arrows.nonnegparam(Integer, :sz)
+local dtyp = Arrows.DimType{2,1}(tuple(nil,nil), tuple(nparam))
+local shpparam = @shape z [sz for i = 1:n]
+const onestype = Arrows.ArrowType{2,1}(dtyp, tuple(Arrows.Scalar(nparam), Arrows.Scalar(szparam)), tuple(shpparam))
+end
+
+abstract PrimArrowSet{I, O} <: PrimArrow{I, O}
+abstract PrimValueSet{I, O}
+
+"Generates ones"
+immutable OnesArrow <: PrimArrowSet{3,1}
+
+end
+
 
 ## ArrowSet combinators
 ## ====================

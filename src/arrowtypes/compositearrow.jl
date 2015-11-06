@@ -32,10 +32,6 @@ end
 
 # Printing
 string{I,O}(x::CompositeArrow{I,O}) = "CompositeArrow{$I,$O} - $(nnodes(x)) subarrows"
-print(io::IO, x::CompositeArrow) = print(io, string(x))
-println(io::IO, x::CompositeArrow) = println(io, string(x))
-show(io::IO, x::CompositeArrow) = print(io, string(x))
-showcompact(io::IO, x::CompositeArrow) = print(io, string(x))
 
 "The type of the `pinid`th inport of arrow `x`"
 function inppintype(x::CompositeArrow, pinid::PinId)

@@ -42,7 +42,3 @@ end
 # Printing
 string{I,O}(x::PrimArrow{I,O}) =
   "$(name(x)) :: PrimArrow{$I,$O}\n$(name(x)) :: $(string(typ(x)))"
-print(io::IO, x::PrimArrow) = print(io, string(x))
-println(io::IO, x::PrimArrow) = println(io, string(x))
-show(io::IO, x::PrimArrow) = print(io, string(x))
-showcompact(io::IO, x::PrimArrow) = print(io, string(x))

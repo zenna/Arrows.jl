@@ -3,6 +3,7 @@
 
 "A functional unit which transforms `I` inputs to `O` outputs"
 abstract Arrow{I, O}
+printers(Arrow)
 
 ## Port
 ## ====
