@@ -39,16 +39,15 @@ end
 "Extract constraints on dimensions of an arrow"
 function edgeconstraints(a::FlatArrow, exprtyp::Function, uniq_arrnames::Vector{Symbol})
   constraints = ConstraintSet()
-
   # Collect constraints x == y, for each (x, y) ∈ edges(a)
   for (outp, inp) in edges(a)
     # FIXME, add constraints from boundaries
     if !(isboundary(outp) || isboundary(inp))
       outexpr = exprtyp(a, outp)
       inexpr = exprtyp(a, inp)
-      lh = prefix(outexpr, uniq_arrnames[outp.arrowid])
-      rh = prefix(inexpr, uniq_arrnames[inp.arrowid])
-      edge_constr = lh == rh
+      lhs = prefix(outexpr, uniq_arrnames[outp.arrowid])
+      rhs = prefix(inexpr, uniq_arrnames[inp.arrowid])
+      edge_constr = lhs == rhs
       push!(constraints, edge_constr)
     end
   end
@@ -72,9 +71,29 @@ function dimaddcheck(a::FlatArrow, uniq_arrnames::Vector{Symbol}, slv)
   @show istypesafe = Arrows.Z3Interface.check(slv)
 end
 
-"""Are the dimensions consistent? if so return an arrow with a non-parametric
+function reifydimtype{I, O}(a::PrimArrow{I, O}, pfx::Symbol, model::Dict)
+  dtyp = dimtyp(a)
+  ps = parameters(dtyp)
+  warn("integer hack")
+  varmap = [p => ConstantVar{Integer}(model[prefix(p, pfx)]) for p in ps]
+  newdtyp = substitute(dtyp, varmap)
+end
+
+
+function reifydimtype{I, O}(
+    a::FlatArrow{I, O},
+    uniq_arrnames::Vector{Symbol},
+    model::Dict)        # e.g. arrow2_n => 5, FIXME, make type tighter Parameter => Any
+  c = CompositeArrow{I, O}
+  for i = 1:length(nodes(a))
+    reifydimtype(nodes(a)[i], uniq_arrnames[i+1], model)
+  end
+end
+
+"""Make type parameters concrete.
+If dimensions are consistent, return an arrow with a non-parametric
 dimensionality type.  Otherwise return a NullAble{ArrowType}()"""
-function dimparams(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
+function reifydimparams(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
   # Give a unique name to each subarrow, so as to not confuse type var names
   uniq_arrnames = mk_uniq_arrnames(a)
   slv = Arrows.Z3Interface.solver(Solver)
@@ -92,6 +111,7 @@ function dimparams(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
     @show uniq_varnames = tuple(prefix_dimvars(a, uniq_arrnames)...)
     m = Arrows.Z3Interface.model(slv)
     @show solution = Arrows.Z3Interface.interpret(slv, m, uniq_varnames)
+    reifydimtype(a, uniq_arrnames, Dict(zip(uniq_varnames, solution)))
   end
 end
 

@@ -25,6 +25,7 @@ string(x::Parameter) = string(x.name)
 
 "A set of constraints"
 # typealias ConstraintSet Tuple{Vararg{ParameterExpr{Bool}}}
+typealias ParameterSet Set{Parameter}
 typealias ConstraintSet Set{ParameterExpr{Bool}}
 string(constraints::ConstraintSet) = join(map(string, constraints), " & ")
 
@@ -268,9 +269,9 @@ typealias Model Dict{Variable, Integer}
 ## Parameter Extraction
 ## ====================
 
-parameters(p::Parameter) = Set([p])
-parameters(p::ConstrainedParameter) = Set([p.param])
-parameters(p::ConstantVar) = Set{Parameter}()
+parameters(p::Parameter) = ParameterSet([p])
+parameters(p::ConstrainedParameter) = ParameterSet([p.param])
+parameters(p::ConstantVar) = ParameterSet()
 
 ## Prefixing
 ## =========
@@ -283,6 +284,7 @@ prefix(cs::ConstraintSet, pfx::Symbol) = ConstraintSet(map(i->prefix(i, pfx), cs
 prefix(c::ConstantVar, pfx::Symbol) = c
 prefix{T <: TransformedParameter}(c::T, pfx::Symbol) =
   T(tuple([prefix(arg, pfx) for arg in args(c)]...))
+prefix(ps::ParameterSet, pfx::Symbol) = ParameterSet([prefix(p, pfx) for p in ps])
 
 function substitute(d::Parameter, varmap::VarMap)
   if haskey(varmap, d)

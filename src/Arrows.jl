@@ -34,6 +34,7 @@ export
   stack,
   encapsulate,
   inswitch,
+  init,
 
   _,
 

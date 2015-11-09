@@ -144,7 +144,7 @@ function inswitch{I, O}(a::CompositeArrow{I, O}, p1::Integer, p2::Integer)
 
   c = CompositeArrow{I, O}()
   addnodes!(c, nodes(a))
-  for (outp, inp) in edges(a)
+  for (ou tp, inp) in edges(a)
     if isboundary(outp) && outp.pinid == p1
       addedge!(c, OutPort(1, p2), inp)
     elseif isboundary(outp) && outp.pinid == p2
@@ -159,6 +159,12 @@ function inswitch{I, O}(a::CompositeArrow{I, O}, p1::Integer, p2::Integer)
 end
 
 inswitch(a::PrimArrow, p1::Integer, p2::Integer) = inswitch(encapsulate(a),p1,p2)
+
+## Recursion Combinators
+## =====================
+"""Constructs `InitArrow` with initial value as argument.
+usage: loop(first(init(0)) >>> +) # Creates a counter that starts at 0"""
+init(initval...) = InitArrow{length(initval)}(initval)
 
 
 ## Inversion

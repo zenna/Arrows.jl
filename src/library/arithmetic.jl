@@ -8,11 +8,14 @@ const arith_typ = @arrtype2 arith_dimtype [a, a] [a]
 
 "Class of arrows for primitive unary arithmetic operations"
 immutable ArithArrow <: PrimArrow{2, 1}
+  typ::ArrowType
   name::Symbol
 end
 
-dimtyp(x::ArithArrow) = arith_dimtype
-typ(x::ArithArrow) = arith_typ
+ArithArrow(s::Symbol) = ArithArrow(arith_typ, s)
+
+dimtyp(a::ArithArrow) = a.typ.dimtype
+typ(a::ArithArrow) = a.typ
 name(a::ArithArrow) = a.name
 
 ## Primitive Arithmetic Arrows

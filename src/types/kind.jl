@@ -59,12 +59,12 @@ string(d::DimType) = string(join([string(t) for t in d.inptypes], ", "), " >> ",
                             join([string(t) for t in d.outtypes]))
 
 
-"Return a new dimension type with variables substituted"
-function substitute{I, O}(d::DimType{I, O}, varmap::VarMap)
-  newinptypes = map(t->substite(t,varmap), d.inptypes)
-  newouttypes = map(t->substite(t,varmap), d.outtypes)
+"Return a new dimension type with variables substituted,"
+function substitute{I, O}(d::DimType{I, O}, varmap::Dict) #FIXME, make types tighter
+  newinptypes = [substitute(t, varmap) for t in d.inptypes]
+  newouttypes = [substitute(t, varmap) for t in d.outtypes]
   # FIXME: add constraints
-  DimType{I, O}(newinptypes, newouttypes)
+  DimType{I, O}(tuple(newinptypes...), tuple(newouttypes...))
 end
 
 "Set of unique dimensionality parameters"
@@ -77,6 +77,8 @@ function parameters(d::DimType)
   end
   paramset
 end
+
+
 
 ## ArrowType : Represent types of arrow
 ## ====================================

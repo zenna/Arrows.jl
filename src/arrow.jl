@@ -70,4 +70,5 @@ end
 include("arrowtypes/primarrow.jl")
 include("arrowtypes/compositearrow.jl")
 include("arrowtypes/namedarrow.jl")
+include("arrowtypes/initarrow.jl")
 include("arrowtypes/arrowset.jl")

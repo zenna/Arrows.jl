@@ -7,11 +7,13 @@ const trig_type = @arrtype2 trig_dimtype [arb_array] [arb_array]
 
 "Class of arrows for primitive binary arithmetic operations, + / + ^"
 immutable TrigArrow <: PrimArrow{1, 1}
+  typ::ArrowType
   name::Symbol
 end
 
-dimtyp(x::TrigArrow) = trig_dimtype
-typ(x::TrigArrow) = arith_typ
+TrigArrow(s::Symbol) = TrigArrow(trig_type, s)
+dimtyp(a::TrigArrow) = a.typ.dimtype
+typ(a::TrigArrow) = a.typ
 name(x::TrigArrow) = x.name
 
 ## Primitive Arithmetic Arrows
