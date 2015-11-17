@@ -2,8 +2,10 @@
 ## =============
 module Z3Interface
 import Z3
-import Arrows: Variable, TransformedParameter, ConstantVar, Parameter, ConstrainedParameter
-import Arrows: head, args
+import SMTBase: head, args
+import SMTBase: SMTSolver, SMTModel
+import SMTBase: Variable, TransformedParameter, ConstantVar, Parameter, ConstrainedParameter
+
 
 # Globals will juist cause trouble
 Z3.disable_global_ctx!()
@@ -13,8 +15,6 @@ Z3.disable_global_solver!()
 ## Implement the SMTBase Interface
 ## ===============================
 
-abstract SMTSolver
-
 typealias SymbToVar Dict{Variable, Any}
 
 type Z3Solver <: SMTSolver
@@ -22,8 +22,6 @@ type Z3Solver <: SMTSolver
   slv::Z3.Solver
   sym_to_var::SymbToVar
 end
-
-abstract SMTModel
 
 type Z3Model <: SMTModel
   m::Z3.Model

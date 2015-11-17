@@ -1,6 +1,10 @@
 module Arrows
 using Compat
 using PyCall
+using ZenUtils
+using SMTBase
+import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
+                ConstantVar, nonnegparam, IndexedParameter
 # using Distributions
 
 import Base.Collections: PriorityQueue, dequeue!, peek
@@ -63,8 +67,8 @@ include("call.jl")
 
 include("types/typecheck.jl")
 include("library.jl")
-include("smt_solvers/z3interface.jl")
 
+# include("smt_solvers/z3interface.jl")
 # include("compilation_targets/theano.jl")
 # include("compilation_targets/stan.jl")
 

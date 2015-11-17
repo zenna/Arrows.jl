@@ -34,10 +34,10 @@ string{I,O}(x::ArrowSet{I,O}) = "ArrowSet{$I,$O}"
 begin
 """ ones |::| 0, 0  |> n
     ones  ::  n, sz |> [sz for i=1:n]"""
-local nil = Arrows.ConstantVar{Integer}(0)
-local nparam = Arrows.nonnegparam(Integer, :n)
-local szparam = Arrows.nonnegparam(Integer, :sz)
-local dtyp = Arrows.DimType{2,1}(tuple(nil,nil), tuple(nparam))
+local nil = ConstantVar{Integer}(0)
+local nparam = nonnegparam(Integer, :n)
+local szparam = nonnegparam(Integer, :sz)
+local dtyp = DimType{2,1}(tuple(nil,nil), tuple(nparam))
 local shpparam = @shape z [sz for i = 1:n]
 const onestype = Arrows.ArrowType{2,1}(dtyp, tuple(Arrows.Scalar(nparam), Arrows.Scalar(szparam)), tuple(shpparam))
 end

@@ -144,7 +144,7 @@ function inswitch{I, O}(a::CompositeArrow{I, O}, p1::Integer, p2::Integer)
 
   c = CompositeArrow{I, O}()
   addnodes!(c, nodes(a))
-  for (ou tp, inp) in edges(a)
+  for (outp, inp) in edges(a)
     if isboundary(outp) && outp.pinid == p1
       addedge!(c, OutPort(1, p2), inp)
     elseif isboundary(outp) && outp.pinid == p2
