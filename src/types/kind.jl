@@ -250,27 +250,8 @@ function parameters(d::ArrowParam)
   paramset
 end
 
-
-## Stratified Type
-## ===============
-#
-# "Type is one where more concrete parameterisations are generated from more abstract ones"
-# immutable StratifiedType <: Kind
-#   ...
-# end
-#
-# What are we actually trying to do, we're trying to generate a partial arrow.
-# This means we need to update the type.
-# In order to update the type we need some mechanism.  Just the simplest thing is,
-# change the values of dimtype and the values of arraytype.
-#
-# But in general this won't work for really stratifeid types, where we actually do code gen.
-# Also I haven't even handled scalar types properly.
-
 ## ArrowType : Represent types of arrow
 ## ====================================
-
-
 "This is an explicit arrow type; I'm breaking everything"
 immutable ExplicitArrowType{I, O} <: ArrowType
   elemtype::ArrowParam{I, O, ElementParam}
@@ -279,33 +260,6 @@ immutable ExplicitArrowType{I, O} <: ArrowType
   valuetype::ArrowParam{I, O, ValueParams}
   constraints::ConstraintSet
 end
-
-
-# """an arrow type represents the type at the input and type of output
-# These types could be array types, or other arrows types."""
-# immutable ArrowType{I, O} <: Kind
-#   dimtype::ArrowParam{I,O}
-#   inptypes::Tuple{Vararg{Kind}}
-#   outtypes::Tuple{Vararg{Kind}}
-#   constraints::ConstraintSet
-#
-#   "Construct DimTypes from Arrowtypes if not given"
-#   function ArrowType(
-#       dimtype::DimType{I,O},
-#       inptypes::Tuple{Vararg{Kind}},
-#       outtypes::Tuple{Vararg{Kind}},
-#       constraints::ConstraintSet)
-#     @assert length(inptypes) == I
-#     @assert length(outtypes) == O
-#     new{I,O}(dimtype, inptypes, outtypes, constraints)
-#   end
-#   function ArrowType(
-#     dimtype::DimType{I,O},
-#     inptypes::Tuple{Vararg{Kind}},
-#     outtypes::Tuple{Vararg{Kind}})
-#     new{I, O}(dimtype, inptypes, outtypes, ConstraintSet())
-#   end
-# end
 
 function string{I,O}(x::ExplicitArrowType{I,O})
   pstrings = [string(a) for a in [x.elemtype, x.dimtype, x.shapetype, x.valuetype]]

@@ -10,8 +10,14 @@ parameters(x::PrimArrow) = Dict{Symbol, Any}()
 nnodes(a::PrimArrow) = 1
 nodes(a::PrimArrow) = Arrow[a]
 
-inppintype(x::PrimArrow, pinid::PinId) = typ(x).inptypes[pinid]
-outpintype(x::PrimArrow, pinid::PinId) = typ(x).outtypes[pinid]
+eleminppintype(x::PrimArrow, pinid::PinId) = typ(x).elemtype.inptypes[pinid]
+elemoutpintype(x::PrimArrow, pinid::PinId) = typ(x).elemtype.outtypes[pinid]
+diminppintype(x::PrimArrow, pinid::PinId) = typ(x).dimtype.inptypes[pinid]
+dimoutpintype(x::PrimArrow, pinid::PinId) = typ(x).dimtype.outtypes[pinid]
+shapeinppintype(x::PrimArrow, pinid::PinId) = typ(x).shapetype.inptypes[pinid]
+shapeoutpintype(x::PrimArrow, pinid::PinId) = typ(x).shapetype.outtypes[pinid]
+valueinppintype(x::PrimArrow, pinid::PinId) = typ(x).valuetype.inptypes[pinid]
+valueoutpintype(x::PrimArrow, pinid::PinId) = typ(x).valuetype.outtypes[pinid]
 
 # Intercace methods
 name(x::PrimArrow) = error("interface: children should implement name")

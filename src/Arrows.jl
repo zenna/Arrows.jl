@@ -30,7 +30,6 @@ import Base:  ^,
 export
   # Combinators
   compose,
-  first,
   over,
   under,
   lift,
