@@ -57,18 +57,19 @@ nports{I,O}(a::Arrow{I,O}) = I + O
 ## Type Stuff
 ## ==========
 
-function replacetyp(a::Arrow, d::DimType)
-  error("unimplemented")
-end
-
-"Return constraints for all variables within arrow"
-function alldimconstraints(a::Arrow)
-  error("unimplemented")
-end
+# function replacetyp(a::Arrow, d::DimType)
+#   error("unimplemented")
+# end
+#
+# "Return constraints for all variables within arrow"
+# function alldimconstraints(a::Arrow)
+#   error("unimplemented")
+# end
 
 
 include("arrowtypes/primarrow.jl")
 include("arrowtypes/compositearrow.jl")
 include("arrowtypes/namedarrow.jl")
 include("arrowtypes/initarrow.jl")
-include("arrowtypes/arrowset.jl")
+include("arrowtypes/partialarrow.jl")
+# include("arrowtypes/arrowset.jl")
