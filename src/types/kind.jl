@@ -228,6 +228,11 @@ immutable ArrowParam{I, O, D} <: Kind
   end
 end
 
+addconstraints{I, O, D}(x::ArrowParam{I, O, D}, cs::ConstraintSet) =
+  ArrowParam{I, O, D}(x.inptypes, x.outtypes, union(x.constraints, cs))
+addconstraint(x::ArrowParam, c::ParameterExpr{Bool}) =
+  addconstraints(x, ConstraintSet([c]))
+
 string(d::ArrowParam) = string(join([string(t) for t in d.inptypes], ", "), " >> ",
                             join([string(t) for t in d.outtypes]))
 

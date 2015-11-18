@@ -54,6 +54,12 @@ ninports{I,O}(a::Arrow{I,O}) = I
 noutports{I,O}(a::Arrow{I,O}) = O
 nports{I,O}(a::Arrow{I,O}) = I + O
 
+## Wild Card
+## ==================================
+"Wildcard for partial application"
+immutable _ end
+
+
 ## Type Stuff
 ## ==========
 

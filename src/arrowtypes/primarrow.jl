@@ -44,7 +44,6 @@ function ndims{I, O}(a::PrimArrow{I, O}, p::OutPort)
   ndims(t.outtypes[p.pinid])
 end
 
-
 # Printing
 string{I,O}(x::PrimArrow{I,O}) =
   "$(name(x)) :: PrimArrow{$I,$O}\n$(name(x)) :: $(string(typ(x)))"
