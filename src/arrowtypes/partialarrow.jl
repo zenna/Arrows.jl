@@ -65,20 +65,3 @@ shapetyp{T<:Real}(x::Array{T}) =
   ShapeParams(FixedLenVarArray(tuple([SMTBase.ConstantVar(t) for t in size(x)]...)))
 valuetyp{T<:Real}(x::T) = ValueParams(Scalar(ConstantVar(x)))
 valuetyp{T<:Real}(x::Array{T}) = ValueParams(ConstantArray(x))
-
-# "Transform an arrowtype by putting in arrow in the pids place"
-# function fix{I, O, T<:Real}(at::ExplicitArrowType{I, O}, pinid::PinId, a::Array{T})
-#   # When we're updating a type we want to
-#   # (i) at all levels replace the type with that types type
-#   # - add constraints for any type variables
-#   # - check that its a valid replacement
-#
-#   etyp = dimtyp(a)
-#   curretyp = at.dimtype.inptypes[pinid]
-#   newdimtype = if isa(curretyp.value, Parameter)
-#     substitute(arrowtyp.dimtype, Dict(curretyp.value => etyp.value))
-#   else
-#     addconstraint(at.dimtype, curretyp.value == etyp.value)
-#   end
-#     ExplicitArrowType{I, O}(at.elemtype, newdimtype, at.shapetype, at.valuetype, at.constraints)
-# end

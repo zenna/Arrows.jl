@@ -192,12 +192,12 @@ string(e::DimParam) = string(e.value)
 s:ShapedParameterisedArrayType denotes `s` is an array which elements of type `T`
 Elements in `s` correspond to the dimension sizes of s"""
 immutable ShapeParams <: ArrayType
-  dimtypes::VarArray                  # e.g. [1, 2t, p]
+  values::VarArray                  # e.g. [1, 2t, p]
 end
 
 "Number of dimensions of the array this shape parameter represents"
-ndims(a::ShapeParams) = length(a.dimtypes)
-string(a::ShapeParams) = string("{", string(a.dimtypes),"}")
+ndims(a::ShapeParams) = length(a.values)
+string(a::ShapeParams) = string("{", string(a.values),"}")
 
 """Class of Arrays parameterised by values
 """
@@ -214,34 +214,48 @@ string(a::ValueParams) = string("[", string(a.values),"]")
 ## ================
 abstract ArrowType <: Kind
 
+# "Class of arrows parameterised by dimensionality of individual scalars"
+# immutable ArrowParam{I, O, D} <: Kind
+#   inptypes::Tuple{Vararg{D}}
+#   outtypes::Tuple{Vararg{D}}
+#   constraints::ConstraintSet
+#   function ArrowParam(
+#       inptypes::Tuple{Vararg{D}},
+#       outtypes::Tuple{Vararg{D}},
+#       constraints::ConstraintSet)
+#     @assert length(inptypes) == I && length(outtypes) == O
+#     new{I,O, D}(inptypes, outtypes, constraints)
+#   end
+# end
+
 "Class of arrows parameterised by dimensionality of individual scalars"
-immutable ArrowParam{I, O, D} <: Kind
-  inptypes::Tuple{Vararg{D}}
-  outtypes::Tuple{Vararg{D}}
+immutable ArrowParam{I, O} <: Kind
+  inptypes::Tuple{Vararg{ArrayType}}
+  outtypes::Tuple{Vararg{ArrayType}}
   constraints::ConstraintSet
   function ArrowParam(
-      inptypes::Tuple{Vararg{D}},
-      outtypes::Tuple{Vararg{D}},
+      inptypes::Tuple{Vararg{ArrayType}},
+      outtypes::Tuple{Vararg{ArrayType}},
       constraints::ConstraintSet)
     @assert length(inptypes) == I && length(outtypes) == O
-    new{I,O, D}(inptypes, outtypes, constraints)
+    new{I,O}(inptypes, outtypes, constraints)
   end
 end
 
-addconstraints{I, O, D}(x::ArrowParam{I, O, D}, cs::ConstraintSet) =
-  ArrowParam{I, O, D}(x.inptypes, x.outtypes, union(x.constraints, cs))
+addconstraints{I, O}(x::ArrowParam{I, O}, cs::ConstraintSet) =
+  ArrowParam{I, O}(x.inptypes, x.outtypes, union(x.constraints, cs))
 addconstraint(x::ArrowParam, c::ParameterExpr{Bool}) =
   addconstraints(x, ConstraintSet([c]))
 
 string(d::ArrowParam) = string(join([string(t) for t in d.inptypes], ", "), " >> ",
-                            join([string(t) for t in d.outtypes]))
+                            join([string(t) for t in d.outtypes], ", "))
 
 "Return a new dimension type with variables substituted,"
-function substitute{I, O, D}(d::ArrowParam{I, O, D}, varmap::Dict) #FIXME, make types tighter
+function substitute{I, O}(d::ArrowParam{I, O}, varmap::Dict) #FIXME, make types tighter
   newinptypes = [substitute(t, varmap) for t in d.inptypes]
   newouttypes = [substitute(t, varmap) for t in d.outtypes]
   # FIXME: add constraints
-  ArrowParam{I, O, D}(tuple(newinptypes...), tuple(newouttypes...))
+  ArrowParam{I, O}(tuple(newinptypes...), tuple(newouttypes...))
 end
 
 "Set of unique dimensionality parameters"
@@ -259,15 +273,15 @@ end
 ## ====================================
 "This is an explicit arrow type; I'm breaking everything"
 immutable ExplicitArrowType{I, O} <: ArrowType
-  elemtype::ArrowParam{I, O, ElementParam}
-  dimtype::ArrowParam{I, O, DimParam}
-  shapetype::ArrowParam{I, O, ShapeParams}
-  valuetype::ArrowParam{I, O, ValueParams}
+  elemtype::ArrowParam{I, O}     # Element Type
+  dimtype::ArrowParam{I, O}      # Dimension
+  shapetype::ArrowParam{I, O}    # Reason about shape and value simultaneously
+  values::ArrowParam{I, O}    # Reason about shape and value simultaneously
   constraints::ConstraintSet
 end
 
 function string{I,O}(x::ExplicitArrowType{I,O})
-  pstrings = [string(a) for a in [x.elemtype, x.dimtype, x.shapetype, x.valuetype]]
+  pstrings = [string(a) for a in [x.elemtype, x.dimtype, x.shapevaluetype]]
   join(pstrings, "\n")
   # constraints = string(join(map(string, x.constraints), " & "))
 end

@@ -3,25 +3,25 @@
 import SMTBase
 begin
   # Let's generate the type
-  local borderparam = Arrows.Parameter{Bool}(:border)
-  local border = Arrows.Scalar(Arrows.Parameter{Bool}(:border))
-  local fil = Arrows.@shape filter [fw, fh]
-  local img = Arrows.@shape img [w, h, c]
-  local convimg = Arrows.@shape convimg [wout, hout]
-  local fw = Arrows.nonnegparam(Integer, :fw)
-  local w = Arrows.nonnegparam(Integer, :w)
-  local wout = Arrows.nonnegparam(Integer, :wout)
-  local fh = Arrows.nonnegparam(Integer, :fh)
-  local h = Arrows.nonnegparam(Integer, :h)
-  local hout = Arrows.nonnegparam(Integer, :hout)
+  local etyp = arrowelem((Real, Integer, Real), (Real,))
+  local dtyp = arrowdim((3, 0, 4), (3,))
+  wout, w, fw, hout, h, fh = nonnegparam(Integer, :wout), nonnegparam(Integer, :w),
+          nonnegparam(Integer, :fw), nonnegparam(Integer, :hout), nonnegparam(Integer, :h),
+          nonnegparam(Integer, :fh)
+  local border = Parameter{Bool}(:border)
   local c = ifelse(borderparam, (wout == w - fw + 1) & (hout == h - fh + 1),
                           (wout == w + fw - 1) & (hout == h + fh - 1))
-  local inpdims = tuple(SMTBase.ConstantVar{Integer}(2), SMTBase.ConstantVar{Integer}(0),SMTBase.ConstantVar{Integer}(3))
-  local outdims = tuple(SMTBase.ConstantVar{Integer}(3))
-  local dtype = Arrows.DimType{3,1}(inpdims, outdims)
-  local cset = SMTBase.ConstraintSet([c])
+
+  local valshptyp = arrowshp(( (:fw, :wh), (0,), (:w, :h, :c) ), ( (:wout, :hout), ), c)
+  arith_typ = ExplicitArrowType(etyp, dtyp, shptyp, ConstraintSet())
+
   conv_typ = Arrows.ArrowType{3,1}(dtype, tuple(fil,border,img), tuple(convimg), cset)
 end
+
+begin
+  x =  Arrows.shpparams((:x,:y,:z))
+  t = Arrows.vlparams((1,:s, :t))
+  Arrows.ArrowParam2{1,1}((x,),(x,),SMTBase.ConstraintSet())
 #
 # local x1typ = @shape x1 [batch, stakc, row, col]
 # x2typ = @shape x2 [filter, stack, row, col]

@@ -115,3 +115,81 @@ macro arrtype2(d, a, b)
     error("inps and outs must be vectors")
   end
 end
+
+## Helpers for making things easy
+## ================================
+IntOrSymbol = Union{Int, Symbol}
+TypeOrSymbol = Union{Type, Symbol}
+
+# Elem
+genelemtype(s::Symbol) = ElementParam(Parameter{DataType}(s))
+genelemtype{T<:Real}(::Type{T}) =  ElementParam(ConstantVar(T))
+
+"usage: arrowdim((3,:s,:t), (1,2,3)) ==> 3, s⁺, t⁺ >> 1, 2, 3"
+function arrowelem(inpelemvars::Tuple{Vararg{TypeOrSymbol}}, outelemvars::Tuple{Vararg{TypeOrSymbol}})
+  ArrowParam{length(inpelemvars), length(outelemvars), ElementParam}(
+    map(genelemtype, inpelemvars), map(genelemtype, outelemvars), ConstraintSet())
+end
+
+# dim
+"Construct dimension param `s`"
+function nndimp(s::Symbol)
+  n = nonnegparam(Integer, s)
+  DimParam(n)
+end
+
+"Construct dimension param `s`"
+function nndimp(s::Integer)
+  n = ConstantVar{Integer}(s)
+  DimParam(n)
+end
+
+"create dimension parameters, e.g. dims = [3,d,1]"
+function dimarray(dimvars::Tuple{Vararg{IntOrSymbol}})
+  map(nndimp, dimvars)
+end
+
+"usage: arrowdim((3,:s,:t), (1,2,3)) ==> 3, s⁺, t⁺ >> 1, 2, 3"
+function arrowdim(inpdimvars::Tuple{Vararg{IntOrSymbol}}, outdimvars::Tuple{Vararg{IntOrSymbol}})
+  ArrowParam{length(inpdimvars), length(outdimvars), DimParam}(
+    dimarray(inpdimvars),dimarray(outdimvars), ConstraintSet())
+end
+
+# shape
+"Construct dimension param `s`"
+function variable(s::Symbol)
+  nonnegparam(Integer, s)
+end
+
+"Construct dimension param `s`"
+function variable(s::Integer)
+  ConstantVar{Integer}(s)
+end
+
+"create dimension parameters, e.g. dims = [3,d,1]"
+function variable(vars::Tuple{Vararg{IntOrSymbol}})
+  map(variable, vars)
+end
+
+"create dimension parameters, e.g. dims = [3,d,1]"
+function flarray(vars::Tuple{Vararg{IntOrSymbol}})
+  FixedLenVarArray(variable(vars))
+end
+
+"create dimension parameters, e.g. dims = [3,d,1]"
+function vlparams(vars::Tuple{Vararg{IntOrSymbol}})
+  ValueParams(flarray(vars))
+end
+
+"create dimension parameters, e.g. dims = [3,d,1]"
+function shpparams(vars::Tuple{Vararg{IntOrSymbol}})
+  ShapeParams(flarray(vars))
+end
+
+"usage: arrowdim((3,:s,:t), (3,:s,:t)), (1,2,3)) ==> 3, s⁺, t⁺ >> 1, 2, 3"
+function arrowshp(inpshpvars::Tuple{Vararg{Tuple{Vararg{IntOrSymbol}}}},
+                  outshpvars::Tuple{Vararg{Tuple{Vararg{IntOrSymbol}}}},
+                  c = ConstraintSet())
+  ArrowParam{length(inpshpvars), length(outshpvars), ShapeParams}(
+    map(shpparams,inpshpvars),map(shpparams,outshpvars), c)
+end

@@ -18,12 +18,12 @@ begin
   local valso1 = Arrows.ValueParams(Arrows.VarLenVarArray(1, n, o1_i))
 
   ##
-  local darrow = ArrowParam{2, 1, DimParam}((nd,nd),(nd,), ConstraintSet())
-  local etypearrow = ArrowParam{2, 1, ElementParam}((etype,etype),(etype,), ConstraintSet())
-  local shparrow  = ArrowParam{2, 1, Arrows.ShapeParams}((shp,shp),(shp,), ConstraintSet())
-  local valarrow  = ArrowParam{2, 1, Arrows.ValueParams}((valsi1,valsi2),(valso1,), ConstraintSet())
+  local darrow = ArrowParam{2, 1}((nd,nd),(nd,), ConstraintSet())
+  local etypearrow = ArrowParam{2, 1}((etype,etype),(etype,), ConstraintSet())
+  local shparrow  = ArrowParam{2, 1}((shp,shp),(shp,), ConstraintSet())
+  local valarrow  = ArrowParam{2, 1}((valsi1,valsi2),(valso1,), ConstraintSet())
 
-  arith_typ = ExplicitArrowType(etypearrow, darrow, shparrow, valarrow, ConstraintSet())
+  arith_typ = ExplicitArrowType(etypearrow, darrow, shparrow, ConstraintSet())
 
 end
 
