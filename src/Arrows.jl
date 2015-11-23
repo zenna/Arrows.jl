@@ -4,13 +4,13 @@ using PyCall
 using ZenUtils
 using SMTBase
 import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
-                ConstantVar, nonnegparam, IndexedParameter
+                ConstantVar, nonnegparam, IndexedParameter, shape
 # using Distributions
 
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: call, convert, union, first, ndims, print, println, string, show,
-  showcompact, >>>, length, isequal
+  showcompact, >>>, length, isequal, eltype
 
 import Base:  ^,
               +,

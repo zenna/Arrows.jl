@@ -45,5 +45,9 @@ function ndims{I, O}(a::PrimArrow{I, O}, p::OutPort)
 end
 
 # Printing
-string{I,O}(x::PrimArrow{I,O}) =
-  "$(name(x)) :: PrimArrow{$I,$O}\n$(name(x)) :: $(string(typ(x)))"
+function string{I,O}(x::PrimArrow{I,O})
+  """$(name(x))\t:: PrimArrow{$I,$O}
+  eltyp\t:: $(go(typ(x), eltype))
+  ndims\t:: $(go(typ(x), ndims))
+  shape\t:: $(go(typ(x), shape; postprocess = parens))"""
+end

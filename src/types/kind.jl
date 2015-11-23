@@ -44,10 +44,24 @@ immutable OkArray <: NonDetArray
   shapetype::ShapeParams
 end
 
+immutable ShapeArray <: NonDetArray
+  elemtype::ElementParam
+  shape::ShapeParams
+end
+
+ndims(s::ShapeArray) = length(s.shape)
+shape(s::ShapeArray) = s.shape
+eltype(s::ShapeArray) = s.elemtype
+
+# Convenience
+ShapeArray(s::Tuple) = ShapeArray(ConstantVar(Real), SMTBase.FixedLenVarArray(s))
+
 "Nondeterminstic array specified by saying its equal to some array of variables"
 immutable ValueArray <: NonDetArray
   value::VarArray
 end
+
+ValueArray(p::ParameterExpr) = ValueArray(SMTBase.Scalar(p))
 
 # nubmer of dims is determined
 ndims(v::ValueArray) = ndims(v.value)
@@ -83,12 +97,15 @@ addconstraints{I, O}(x::ExplicitArrowType{I, O}, cs::ConstraintSet) =
 addconstraint(x::ExplicitArrowType, c::ParameterExpr{Bool}) =
   addconstraints(x, ConstraintSet([c]))
 
-function string(d::ExplicitArrowType)
-  vals = vcat([string(ndarray.values) for ndarray in d.inptypes], ">>", [string(ndarray.values) for ndarray in d.outtypes])
-  elemtypes = vcat([string(ndarray.elemtype) for ndarray in d.inptypes], ">>", [string(ndarray.elemtype) for ndarray in d.outtypes])
-  dimtypes = vcat([string(ndarray.dimtype) for ndarray in d.inptypes], ">>", [string(ndarray.dimtype) for ndarray in d.outtypes])
-  shapetypes = vcat([string(ndarray.shapetype) for ndarray in d.inptypes], ">>", [string(ndarray.shapetype) for ndarray in d.outtypes])
-  join([join(vals, ", "), join(elemtypes, ", "), join(dimtypes, ", "), join(shapetypes, ", ")], "\n")
+function go(x::ExplicitArrowType, f::Function; postprocess = identity)
+  inps = [postprocess(string(f(ndarray))) for ndarray in x.inptypes]
+  outs = [postprocess(string(f(ndarray))) for ndarray in x.outtypes]
+  string(join(inps, ", "), " ⇝ ", join(outs, ", "))
+end
+
+
+function string(x::ExplicitArrowType)
+  join([go(x, eltype), go(x, ndims), go(x, shape; postprocess = parens)], "\n")
 end
 
 "Return a new dimension type with variables substituted,"

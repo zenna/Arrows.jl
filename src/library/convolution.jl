@@ -2,33 +2,19 @@
 ## ==============================
 import SMTBase
 begin
-  # Let's generate the type
-  local etyp = arrowelem((Real, Integer, Real), (Real,))
-  local dtyp = arrowdim((3, 0, 4), (3,))
-  wout, w, fw, hout, h, fh = nonnegparam(Integer, :wout), nonnegparam(Integer, :w),
-          nonnegparam(Integer, :fw), nonnegparam(Integer, :hout), nonnegparam(Integer, :h),
-          nonnegparam(Integer, :fh)
-  local border = Parameter{Bool}(:border)
-  local c = ifelse(borderparam, (wout == w - fw + 1) & (hout == h - fh + 1),
-                          (wout == w + fw - 1) & (hout == h + fh - 1))
+  filter = ShapeArray((:fw, :fh))
+  borderparam = Parameter{Bool}(:border)
+  border = ValueArray(borderparam)
+  imgin = ShapeArray((:w, :h, :c))
+  imgout = ShapeArray((:wout, :hout))
+  wout, w, fw, hout, h, fh = map(sym->nonnegparam(Integer, sym),
+                                (:wout, :w, :fw, :hout, :h, :fh))
+  c = ifelse(borderparam, (wout == w - fw + 1) & (hout == h - fh + 1),
+                     (wout == w + fw - 1) & (hout == h + fh - 1))
 
-  local valshptyp = arrowshp(( (:fw, :wh), (0,), (:w, :h, :c) ), ( (:wout, :hout), ), c)
-  arith_typ = ExplicitArrowType(etyp, dtyp, shptyp, ConstraintSet())
-
-  conv_typ = Arrows.ArrowType{3,1}(dtype, tuple(fil,border,img), tuple(convimg), cset)
+  conv_typ = ExplicitArrowType{3, 1}((filter, border, imgin), (imgout,), ConstraintSet([c]))
 end
 
-begin
-  x =  Arrows.shpparams((:x,:y,:z))
-  t = Arrows.vlparams((1,:s, :t))
-  Arrows.ArrowParam2{1,1}((x,),(x,),SMTBase.ConstraintSet())
-#
-# local x1typ = @shape x1 [batch, stakc, row, col]
-# x2typ = @shape x2 [filter, stack, row, col]
-# x3typ = @shape x1 [batch, stakc, row, col]
-#
-# const conv_typ = @arrtype [x1typ, x2typ] [x3typ]
-#
 """conv2d :: filter:{fw, fh}, border::Bool, img:{w, h, c} >> convimg:{wout, hout} |
            if border then wout == w - fw + 1 & hout == h - fh + 1
               else wout == w + fw - 1 & hout == h + fh - 1"""
