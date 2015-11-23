@@ -1,24 +1,24 @@
 # ## Partial Application
 # ## ===================
 #
-"""Partial application is the process of applying an arrow to some subset of its inputs.
-Unlike full application (i.e. just call an arrow), not all the inputs are provided.
-Partial application is more important in arrows than in other languages because it is
-often the case that compilation targets will not support an arrow in its normal unpartially
-applied form.  For example theano wants integer inputs to the convolution function conv2d
-to be decided before the program is compiled.
-#
-# Partial application
-# - Update dimension type variables, if they are type variables.
-# - Generate shape types
-# - Update These
-# - Generate value types
-# - Update these
-# - Update shape type variables
-# - Update value variables
-#
-# Take permute dims
-"""
+# Partial application is the process of applying an arrow to some subset of its inputs.
+# Unlike full application (i.e. just call an arrow), not all the inputs are provided.
+# Partial application is more important in arrows than in other languages because it is
+# often the case that compilation targets will not support an arrow in its normal unpartially
+# applied form.  For example theano wants integer inputs to the convolution function conv2d
+# to be decided before the program is compiled.
+# #
+# # Partial application
+# # - Update dimension type variables, if they are type variables.
+# # - Generate shape types
+# # - Update These
+# # - Generate value types
+# # - Update these
+# # - Update shape type variables
+# # - Update value variables
+# #
+# # Take permute dims
+
 "A Partial Arrow is an arrow which has some of its units partially applied"
 immutable PartialArrow{I, O, PA <: Arrows.PrimArrow} <: PrimArrow{I, O}
   arrow::PA

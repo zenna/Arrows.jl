@@ -111,3 +111,156 @@ Type Checking
 Type checking serves two purposes
 1. To determine whether a program is consistent with respect to types
 2. To determine valid values of nondeterministic values in ArrowSets
+
+
+"""The most basic datatype in Arrows.jl is the multidimensional array, or simply array
+The array in arrows should be thought of analogously to strings of bits in systems languages like c;
+everything else in the language is just some structuring of computation around them.
+
+Primitve Types
+------------
+Scalar types are the most primitive types:
+IntX, FloatX, ComplexX, RationalX
+
+Compound Types
+--------------
+Composite types are compositions of primitive types or composite types:
+
+Array Types
+-----------
+Array types are multidimensional arrays of Primitive Or Composite Types.
+Scalars are considered 0-dimensional arrays.
+arrow types can be fixed or parameterised with respect to
+- dimensionality of the array
+- the element type
+
+Arrow Types
+-----------
+Arrow types correspond an ordered list of input array types to an ordered
+list of output array types.
+
+The type system is stratified into layers.
+This means that an arrow type can be parameterised in a number of ways
+(shapes, elementtypes, values), there is only one arrow type, i.e. even though
+it is parameterised in many ways in different layers there is still one predicate
+which determines whether some set of inputs and outputs is valid.
+Given that it seems that form a constraint perspective, what im calling stratification
+is basically saying here are some variables, let's partition these into disjoint sets,
+solve for one subset, substitute, then solve for the rest.
+It's kind of different in the dimensionality case because the number of variables determined by the solution.
+Is that special?
+
+The following are in the relation +
+[1.2], [2.2], [3.4]
+[1, 1  [2, 3   [3, 4
+ 1, 1], 4, 3],  5, 4]
+
+So if you give me a triple of these values, there is some test, with a unique answer
+which will tell me whether that triple is in the relation.
+The type system represents this set either exactly, or it may over approximate it.
+One way the type system could represent this relation is to list out all the elements.
+This would not be economoical in space, and may be impossible if the space is unbounded.
+We can do much better if instead we use variables to implicitly define a space.
+Constraints on these variables will give us more power to better approximate the space we want.
+
+For instance we might have concat as
+concat {A}, {B} >> {C}
+which says that [1,2], [3,4], [1,2,3,4] is in the relation
+
+It also says [1,2], [3,4], [1,2,3,4,5] is in the relation
+
+We can restrict that by saying
+concat :: {A}, {B} >> {C} | C == A + B
+
+Now we have a type that represents a relation which more concretely represents the true relation.
+
+Note that neither type restricts a whole class of bad values; bad in the sense they dont belong to the relation.
+
+There are two things going on
+- empirically, restriction of array shapes elimiates most common errors.
+In other words, most primitive functions are defined all all inputs of a given size.
+For instance + can take any two arrays if their shapes are identical.
+The same is true for multiplication, negation, etc.
+There are exceptions of course, like division; and these indeed are the cause of errors.
+
+Back to the central problem.
+When we use variables to represent a relation, these variables must correspond to some things and there must
+be some mapping between that and the underlying set.
+For instance the elemetype may be represented by an enumeration variable which ranges of Int, Float, etc.
+
+The crux of the issue is this:
+
+There are some relations that cannot be represented with a finite number of variables.
+
+Thats not quite it.
+
+First of we have to acknowledge the way we've defined this set.  It is parameterically.
+Alternatively, we could have defined a function which mapped a value to whether its in the relation or not.
+A predicatee.
+
+Theres some list X and some list Y and forall x in X and y in Y x == y.
+
+So the point is, for our given parameterisation, there's no wnay to define this set with a finite number of variables.
+Our choices are then to choose a different parameterisation, e.g. one where we can reason about variable size arrays
+and use quantificaiton, or split the type system.
+
+We'll call a stratified parameteric model as one composed of a base logical formula L_1, and a finite sequence of functions (L,f_1,...,f_n)
+We generate a base model L_1, m_1.
+We evaluate L_2 = f_1(m_1), and generate a model for L_1, m_2.
+We stop once we have generated a model for L_n.
+
+- In general this might not terminate
+- In our use case, it will terminate, because the number of solutions at each levels is bounded
+- Also in general, it is not necesary to have an explicit mapping between the model at any intermediate stage and the relation.
+
+- In our case, the base formula refers to Dimensionality
+- The second cases refer to
+Each model
+
+Constraints
+Stratifiation places limitations of the constraints that can be imposed.
+In short, constraints cannot cross the levels.
+In practice, for arrays, there are rarely constraints between dimensionality and shape.
+This is in part because dimensionality is tightly linked to shape, its a function of it.
+In other words, the constraints between the shape and the dimensionality are implicit in the function generator.
+An ill formed function generator could for example, solve for dimension and get a value of 2, but return a shape type with 3 dimensions.
+In essence this would be problematic because we use the dimensionality
+
+What is the stratification.
+
+L_0: Dimension parameters
+f_0: Function that maps dimension model to something that is parametric in shape and value
+
+- Can you treat the arrays of an arrow independently, no!
+- Why do you have parametric types for variables but not values.
+- Parametric types are used basically to define a set of functions and ensure one of them is valid using type checking.
+- If you have a parametric
+Viewed from another way we do have parametric values if you think of functions or arrows as values.
+a parametric array would be a kind of nondeterministic values.
+Basically there are two ways to define a nondeterministic value, by making its type parametric or by making its constructively nondeterminstic.
+
+There could be a mechanism for nondeterminstic arrays, but what use would it have.
+
+You could be liek partial(+, nondetermisticarray).  im not sure what the point would be, it would be possible, for sure.
+It's not obvious.
+
+either way, what do we need.  We
+"""
+
+"""
+The type system is stratified.
+- In a first order system, there are the following kinds of types. (i) Primitive Types (ii) ArrayTypes (iii) ArrowTypes.
+- The type system is stratified.
+- L_0 is parametric in elementtype
+- L_1 is parametric in dimension
+- L_2 is parametric in shape and value
+
+- If element type is unsat then everything else is unsat.
+- If dimension is unsat then everything else is unsat
+- shape and value are a function of.
+
+The restriction we might make is
+
+nodes = [elementtype,dimension,shape,values]
+arrows = [dimension->(shape,values)]
+"""

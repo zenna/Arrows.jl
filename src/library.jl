@@ -13,6 +13,8 @@ module Library
   import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
                   ConstantVar, nonnegparam, IndexedParameter
 
+  import SMTBase: VarLenVarArray, FixedLenVarArray
+
   include("library/arithmetic.jl")
   # include("library/trigonometric.jl")
   # include("library/array.jl")
