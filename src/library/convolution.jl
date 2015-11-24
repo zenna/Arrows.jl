@@ -2,11 +2,11 @@
 ## ==============================
 import SMTBase
 begin
-  filter = ShapeArray((:fw, :fh))
+  filter = ShapeArray((:nf, :nc, :fw, :fh))
   borderparam = Parameter{Bool}(:border)
   border = ValueArray(borderparam)
-  imgin = ShapeArray((:w, :h, :c))
-  imgout = ShapeArray((:wout, :hout))
+  imgin = ShapeArray((:nimg, :w, :h, :c))
+  imgout = ShapeArray((:nf, :nimg, :wout, :hout))
   wout, w, fw, hout, h, fh = map(sym->nonnegparam(Integer, sym),
                                 (:wout, :w, :fw, :hout, :h, :fh))
   c = ifelse(borderparam, (wout == w - fw + 1) & (hout == h - fh + 1),
@@ -15,7 +15,7 @@ begin
   conv_typ = ExplicitArrowType{3, 1}((filter, border, imgin), (imgout,), ConstraintSet([c]))
 end
 
-"""conv2d :: filter:{fw, fh}, border::Bool, img:{w, h, c} >> convimg:{wout, hout} |
+"""conv2d :: filter:{nf, fw, fh}, border::Bool, img:{ni, w, h, c} >> convimg:{ni, wout, hout} |
            if border then wout == w - fw + 1 & hout == h - fh + 1
               else wout == w + fw - 1 & hout == h + fh - 1"""
 immutable ConvArrow <: PrimArrow{3, 1}

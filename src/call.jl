@@ -8,8 +8,10 @@ function lambda{I,O}(a::Arrow{I,O}; compilation_target = Arrows.Theano.TheanoFun
 end
 
 "Compiles the arrow `a` and applies it to input `x`"
-function call{I,O}(a::Arrow{I,O}, x...; args...)
+function call{I,O}(a::CompositeArrow{I,O}, x...; args...)
   @assert length(x) == I "Tried to call arrow of $I inputs with $(length(x)) inputs"
   compiled_f = lambda(a; args...)
   compiled_f(x...)
 end
+
+call(a::PrimArrow, x...; args...) = call(encapsulate(a), x...; args...)

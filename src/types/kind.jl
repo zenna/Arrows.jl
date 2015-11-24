@@ -1,5 +1,4 @@
 
-import SMTBase: VarArray
 ## Kind: types of type
 ## ===================
 "All permissible types"
@@ -8,12 +7,6 @@ printers(Kind)
 
 ## Array Type : Represent n-dimensional arrays
 ## ===========================================
-"Represents a set of arrays through some parameterisation"
-abstract ArrayType <: Kind
-
-"Is an array type of a fixed number of dimensions"
-isfixeddims(at::ArrayType) = isa(ndims(at), Integer)
-
 """Class of arrays parameterised by dimensionality.
 A parameter that represents the dimensionality of an array"""
 typealias ElementParam ParameterExpr{DataType} #FIXME, get a better type than datatype
@@ -26,53 +19,46 @@ typealias DimParam ParameterExpr{Integer}
 s:ShapedParameterisedArrayType denotes `s` is an array which elements of type `T`
 Elements in `s` correspond to the dimension sizes of s"""
 typealias ShapeParams VarArray                  # e.g. [1, 2t, p]
-#
-# "Number of dimensions of the array this shape parameter represents"
-# ndims(a::ShapeParams) = length(a.values)
-# string(a::ShapeParams) = string("{", string(a.values),"}")
 
 "Class of Arrays parameterised by values"
 typealias ValueParams VarArray
 
+## Non Determinstic Arrays
+## =======================
+"A nondeterministic array represents a set of arrays."
 abstract NonDetArray
 
-"This is a nondeterminstic array"
-immutable OkArray <: NonDetArray
-  values::ParameterExpr{Array}
-  elemtype::ElementParam
-  dimtype::DimParam
-  shapetype::ShapeParams
-end
-
+"A non deterministic parameterised by a finite or variable set of shape parameters"
 immutable ShapeArray <: NonDetArray
   elemtype::ElementParam
   shape::ShapeParams
 end
 
+# Convenience
+ShapeArray(s::Tuple) = ShapeArray(ConstantVar(Real), SMTBase.FixedLenVarArray(s))
 ndims(s::ShapeArray) = length(s.shape)
 shape(s::ShapeArray) = s.shape
 eltype(s::ShapeArray) = s.elemtype
 
-# Convenience
-ShapeArray(s::Tuple) = ShapeArray(ConstantVar(Real), SMTBase.FixedLenVarArray(s))
-
-"Nondeterminstic array specified by saying its equal to some array of variables"
+function reifydim(x::ShapeArray)
+  @assert !isfixeddims(x.shape)
+  error("unimplemetned")
+end
+## Value Array
+## ===========
+"Nondeterminstic array specified as equal to some array of variables (and/or constants)"
 immutable ValueArray <: NonDetArray
   value::VarArray
 end
 
 ValueArray(p::ParameterExpr) = ValueArray(SMTBase.Scalar(p))
-
-# nubmer of dims is determined
 ndims(v::ValueArray) = ndims(v.value)
 eltype(v::ValueArray) = eltype(v.value)
 shape(v::ValueArray) = shape(v.value)
 
-# Printing
-string(x::NonDetArray) = join([string(x.elemtype), string(x.dimtype), parens(string(x.shapetype))],"\n")
-curly(x::AbstractString) = string("{",x,"}")
-parens(x::AbstractString) = string("(",x,")")
-square(x::AbstractString) = string("[",x,"]")
+function reify(x::ShapeArray, varmap)
+  n = ndims(x)
+end
 
 ## Arrow Extentions
 ## ================
@@ -97,15 +83,19 @@ addconstraints{I, O}(x::ExplicitArrowType{I, O}, cs::ConstraintSet) =
 addconstraint(x::ExplicitArrowType, c::ParameterExpr{Bool}) =
   addconstraints(x, ConstraintSet([c]))
 
-function go(x::ExplicitArrowType, f::Function; postprocess = identity)
+"Generates the a string for a particular feature `f` (e.g. ndims) of an arrow type"
+function arrtypf(x::ExplicitArrowType, f::Function; postprocess = identity)
   inps = [postprocess(string(f(ndarray))) for ndarray in x.inptypes]
   outs = [postprocess(string(f(ndarray))) for ndarray in x.outtypes]
   string(join(inps, ", "), " ⇝ ", join(outs, ", "))
 end
 
+finptypes(x::ExplicitArrowType, f::Function) = [f(ndarray) for ndarray in x.inptypes]
+fouttypes(x::ExplicitArrowType, f::Function) = [f(ndarray) for ndarray in x.outtypes]
+ftypes(x::ExplicitArrowType, f::Function) = vcat(finptypes(x, f), fouttypes(x, f))
 
 function string(x::ExplicitArrowType)
-  join([go(x, eltype), go(x, ndims), go(x, shape; postprocess = parens)], "\n")
+  join([arrtypf(x, eltype), arrtypf(x, ndims), arrtypf(x, shape; postprocess = parens)], "\n")
 end
 
 "Return a new dimension type with variables substituted,"
@@ -118,7 +108,7 @@ end
 
 "Set of unique dimensionality parameters"
 function parameters(d::ExplicitArrowType)
-  paramset = Set{Parameter{Integer}}()
+  paramset = Set{Parameter}()
   # FIXME: add constraints, d.constraints
   for dtype in vcat(d.inptypes..., d.outtypes...)
     @show dtype

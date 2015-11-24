@@ -31,10 +31,10 @@ function th_apply(a::Arrows.Library.TrigArrow, inp)
   th_func(inp)
 end
 
-function th_apply(a::Arrows.Library.SigmoidArrow, inp)
-  th_func = nnet.pymember(name(a))
-  th_func(inp)
-end
+# function th_apply(a::Arrows.Library.SigmoidArrow, inp)
+#   th_func = nnet.pymember(name(a))
+#   th_func(inp)
+# end
 
 function th_apply(a::Arrows.Library.ArithArrow, x, y)
   th_func = T.pymember(th_name[name(a)])

@@ -1,9 +1,16 @@
 ## Primitive Trigonometric Arrows
 ## ==============================
 
-const trig_dimtype = @dimtype [n] [n]
-const arb_array = @shape s [x_i for i = 1:n]
-const trig_type = @arrtype2 trig_dimtype [arb_array] [arb_array]
+begin
+  """
+  Real >> Real
+  n >> n
+  (xi for i = 1:n) >> (xi for i = 1:n)
+  """
+  local x = VarLenVarArray(:i, 1, :n, :x)
+  local xnd = Arrows.ShapeArray(ConstantVar(Real), x)
+  trig_type = Arrows.ExplicitArrowType{1,1}((xnd,), (xnd,), SMTBase.ConstraintSet())
+end
 
 "Class of arrows for primitive binary arithmetic operations, + / + ^"
 immutable TrigArrow <: PrimArrow{1, 1}

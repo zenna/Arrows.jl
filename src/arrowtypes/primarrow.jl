@@ -25,10 +25,10 @@ typ(x::PrimArrow) = error("interface: children should implement typ")
 dimtyp(x::PrimArrow) = error("interface: children should implement dimtyp")
 
 "Expression for dimensionality type at inport `p` of arrow `x`"
-dimexpr(x::PrimArrow, p::InPort) = dimtyp(x).inptypes[p.pinid]
+dimexpr(x::PrimArrow, p::InPort) = ndims(typ(x).inptypes[p.pinid])
 
 "Expression for dimensionality type at outport `p` of arrow `x`"
-dimexpr(x::PrimArrow, p::OutPort) = dimtyp(x).outtypes[p.pinid]
+dimexpr(x::PrimArrow, p::OutPort) = ndims(typ(x).outtypes[p.pinid])
 
 "Number of dimensions of array at inport `p` of arrow `a`"
 function ndims{I, O}(a::PrimArrow{I, O}, p::InPort)
@@ -47,7 +47,8 @@ end
 # Printing
 function string{I,O}(x::PrimArrow{I,O})
   """$(name(x))\t:: PrimArrow{$I,$O}
-  eltyp\t:: $(go(typ(x), eltype))
-  ndims\t:: $(go(typ(x), ndims))
-  shape\t:: $(go(typ(x), shape; postprocess = parens))"""
+  eltyp\t:: $(arrtypf(typ(x), eltype))
+  ndims\t:: $(arrtypf(typ(x), ndims))
+  shape\t:: $(arrtypf(typ(x), shape; postprocess = parens))
+       \t | $(string(typ(x).constraints))"""
 end

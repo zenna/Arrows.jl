@@ -2,17 +2,14 @@
 ## ==========================
 
 begin
-  n = nonnegparam(Integer, :n)
-  x = VarLenVarArray(:i, 1, :n, :x)
-  xnd = Arrows.OkArray(Parameter{Array}(:i1), Parameter{DataType}(:τ), n, x)
-
-  y = VarLenVarArray(:i, 1, :n, :y)
-  ynd = Arrows.OkArray(Parameter{Array}(:i2), Parameter{DataType}(:τ), n, y)
-
-  z = VarLenVarArray(:i, 1, :n, :z)
-  znd = Arrows.OkArray(Parameter{Array}(:o1), Parameter{DataType}(:τ), n, z)
-
-  arith_typ = Arrows.ExplicitArrowType{2,1}((xnd, ynd), (znd,), SMTBase.ConstraintSet())
+  """
+  Real >> Real
+  n >> n
+  (xi for i = 1:n) >> (xi for i = 1:n)
+  """
+  local x = VarLenVarArray(:i, 1, :n, :x)
+  local xnd = Arrows.ShapeArray(ConstantVar(Real), x)
+  arith_type = Arrows.ExplicitArrowType{2,1}((xnd,xnd), (xnd,), SMTBase.ConstraintSet())
 end
 
 "Class of arrows for primitive unary arithmetic operations"
@@ -21,7 +18,7 @@ immutable ArithArrow <: PrimArrow{2, 1}
   name::Symbol
 end
 
-ArithArrow(s::Symbol) = ArithArrow(arith_typ, s)
+ArithArrow(s::Symbol) = ArithArrow(arith_type, s)
 dimtyp(a::ArithArrow) = a.typ.dimtype
 typ(a::ArithArrow) = a.typ
 name(a::ArithArrow) = a.name

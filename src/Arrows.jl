@@ -3,8 +3,11 @@ using Compat
 using PyCall
 using ZenUtils
 using SMTBase
+using Z3
 import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
-                ConstantVar, nonnegparam, IndexedParameter, shape
+                ConstantVar, nonnegparam, IndexedParameter, shape, VarArray, ConstrainedParameter,
+                TransformedParameter, parameters
+
 # using Distributions
 
 import Base.Collections: PriorityQueue, dequeue!, peek
@@ -54,7 +57,7 @@ export
   @shape,
   @arrtype,
   @intparams,
-  fix,
+  partial,
   typeparams
 
 include("util.jl")
@@ -68,7 +71,7 @@ include("types/typecheck.jl")
 include("library.jl")
 
 # include("smt_solvers/z3interface.jl")
-# include("compilation_targets/theano.jl")
+include("compilation_targets/theano.jl")
 # include("compilation_targets/stan.jl")
 
 # using Arrows.Library

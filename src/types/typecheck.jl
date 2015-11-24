@@ -18,12 +18,19 @@ typealias FlatArrow CompositeArrow
 mk_uniq_arrnames(a::Arrow) =
   [symbol(genvar("arrow")) for i = 1:(nnodes(a) + 1)] # +1 to include parent
 
+function prefix_dimvars(a::PrimArrow, pfx::Symbol)
+  dtypes = ftypes(typ(a), ndims)
+  prefixed = union([prefix(parameters(dtype), pfx) for dtype in dtypes]...) # ›⋙
+  paramset = ParameterSet(prefixed)
+end
+
 "Set of parameters, prefixed with the appropriate arrowname"
 function prefix_dimvars(a::FlatArrow, uniq_arrnames::Vector{Symbol})
-  paramset = Set{Parameter}()
+  paramset = ParameterSet()
   for i = 1:length(nodes(a))
-    ps = parameters(dimtyp(nodes(a)[i]))
-    [push!(paramset, prefix(p, uniq_arrnames[i+1])) for p in ps]
+    sbarr = nodes(a)[i]
+    prefixedparams = prefix_dimvars(sbarr, uniq_arrnames[i+1])
+    union!(paramset, prefixedparams)
   end
   paramset
 end
@@ -43,8 +50,8 @@ function edgeconstraints(a::FlatArrow, exprtyp::Function, uniq_arrnames::Vector{
   for (outp, inp) in edges(a)
     # FIXME, add constraints from boundaries
     if !(isboundary(outp) || isboundary(inp))
-      outexpr = exprtyp(a, outp)
-      inexpr = exprtyp(a, inp)
+      @show outexpr = exprtyp(a, outp)
+      @show inexpr = exprtyp(a, inp)
       lhs = prefix(outexpr, uniq_arrnames[outp.arrowid])
       rhs = prefix(inexpr, uniq_arrnames[inp.arrowid])
       edge_constr = lhs == rhs
@@ -59,18 +66,19 @@ end
 ## ============================
 
 "Add constraints and Check"
-# TODO add type slv::Arrows.Z3Interface.SMTSolver
+# TODO add type slv::SMTBase.SMTSolver
 function dimaddcheck(a::FlatArrow, uniq_arrnames::Vector{Symbol}, slv)
   # Get set of constraints
   @show constraints = edgeconstraints(a, dimexpr, uniq_arrnames)
 
   # add constraints
-  [Arrows.Z3Interface.add!(slv, constraint) for constraint in constraints]
+  [SMTBase.add!(slv, constraint) for constraint in constraints]
 
   # Check whether dimensions are type safe
-  @show istypesafe = Arrows.Z3Interface.check(slv)
+  @show istypesafe = SMTBase.check(slv)
 end
 
+"Replace dim type parameters with concrete values"
 function reifydimtype{I, O}(a::PrimArrow{I, O}, pfx::Symbol, model::Dict)
   dtyp = dimtyp(a)
   ps = parameters(dtyp)
@@ -79,7 +87,7 @@ function reifydimtype{I, O}(a::PrimArrow{I, O}, pfx::Symbol, model::Dict)
   newdtyp = substitute(dtyp, varmap)
 end
 
-
+"Replace dim type parameters with concrete values"
 function reifydimtype{I, O}(
     a::FlatArrow{I, O},
     uniq_arrnames::Vector{Symbol},
@@ -93,24 +101,24 @@ end
 """Make type parameters concrete.
 If dimensions are consistent, return an arrow with a non-parametric
 dimensionality type.  Otherwise return a NullAble{ArrowType}()"""
-function reifydimparams(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
+function reifydimparams(a::FlatArrow; Solver = Z3.SMTBaseInterface.Z3Solver)
   # Give a unique name to each subarrow, so as to not confuse type var names
   uniq_arrnames = mk_uniq_arrnames(a)
-  slv = Arrows.Z3Interface.solver(Solver)
+  slv = SMTBase.solver(Solver)
   istypesafe = dimaddcheck(a, uniq_arrnames, slv)
 
   if isnull(istypesafe)
-    Arrows.Z3Interface.cleanup(slv)
+    SMTBase.cleanup(slv)
     warn("""Could not determine dim-typesafety, please instantiate typevariables
             manually, try different solver or use decidable theories""")
     Nullable{FlatArrow}()
   elseif !get(istypesafe)
-    Arrows.Z3Interface.cleanup(slv)
+    SMTBase.cleanup(slv)
     Nullable{FlatArrow}()
   elseif get(istypesafe)
     @show uniq_varnames = tuple(prefix_dimvars(a, uniq_arrnames)...)
-    m = Arrows.Z3Interface.model(slv)
-    @show solution = Arrows.Z3Interface.interpret(slv, m, uniq_varnames)
+    m = SMTBase.model(slv)
+    @show solution = SMTBase.interpret(slv, m, uniq_varnames)
     reifydimtype(a, uniq_arrnames, Dict(zip(uniq_varnames, solution)))
   end
 end
@@ -127,18 +135,18 @@ function shapeaddcheck(a::FlatArrow, uniq_arrnames::Vector{Symbol})
   @show constraints = edgeconstraints(a, shapeexpr, uniq_arrnames)
 
   # add constraints
-  [Arrows.Z3Interface.add!(slv, constraint) for constraint in constraints]
+  [SMTBase.add!(slv, constraint) for constraint in constraints]
 
   # Check whether dimensions are type safe
-  @show istypesafe = Arrows.Z3Interface.check(slv)
+  @show istypesafe = SMTBase.check(slv)
 end
 
 
 "How is this supposed to work?"
-function shapeparams(a::FlatArrow; Solver = Arrows.Z3Interface.Z3Solver)
+function shapeparams(a::FlatArrow; Solver = SMTBase.Z3Solver)
   @assert !isdimpolymorphic(a) "Works only on types which are not polymorphic in dimension"
   uniq_arrnames = mk_uniq_arrnames(a)
-  slv = Arrows.Z3Interface.solver(Solver)
+  slv = SMTBase.solver(Solver)
   istypesafe = shapeaddcheck(a, uniq_arrnames)
 end
 
@@ -146,7 +154,7 @@ end
 # Returns arrows without polymorphic type, or return Nullable{Arrow}()"""
 # function allparams(a::FlatArrow; unambgiuous = false)
 #   uniq_arrnames = mk_uniq_arrnames(a)
-#   slv = Arrows.Z3Interface.solver(Solver)
+#   slv = SMTBase.solver(Solver)
 #   typemdoel = addcheck(a, uniq_arrnames)
 #
 # end

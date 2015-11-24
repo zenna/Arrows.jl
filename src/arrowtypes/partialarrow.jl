@@ -51,7 +51,7 @@ function partial{PA <: PrimArrow}(a::PA, values::Tuple{Vararg{ArrayOrMissing}})
       inps[i] = values[i]
     end
   end
-  PartialArrow{I - length(inps), noutports(a), PA}(a, inps)
+  PartialArrow{ninports(a) - length(inps), noutports(a), PA}(a, inps)
 end
 
 ## Array Types from concrete arrays
