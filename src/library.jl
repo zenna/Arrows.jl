@@ -19,9 +19,13 @@ module Library
   include("library/arithmetic.jl")
   include("library/convolution.jl")
   include("library/trigonometric.jl")
+  include("library/distance.jl")
   # include("library/array.jl")
   # include("library/activations.jl")
   # include("library/networks.jl")
+
+  # Data Types
+  include("library/stack.jl")
 
   export simple_cnet
 end

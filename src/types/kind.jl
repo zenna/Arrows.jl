@@ -62,10 +62,10 @@ end
 
 ## Arrow Extentions
 ## ================
-abstract ArrowType <: Kind
+abstract ArrowType{I, O} <: Kind
 
 "Class of arrows parameterised by dimensionality of individual scalars"
-immutable ExplicitArrowType{I, O} <: ArrowType
+immutable ExplicitArrowType{I, O} <: ArrowType{I, O}
   inptypes::Tuple{Vararg{NonDetArray}}
   outtypes::Tuple{Vararg{NonDetArray}}
   constraints::ConstraintSet
