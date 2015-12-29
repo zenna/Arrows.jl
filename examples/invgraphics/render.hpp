@@ -1,14 +1,8 @@
 #pragma once
 
-#include <boost/math/tools/promotion.hpp>
+#include "boost/math/tools/promotion.hpp"
 #include <fstream>
 #include <iostream>
-
-// The issue is that when we have a collection of mixed types like this, we store
-// A pointer to its base class.  But the intersection point depends on whether
-// The ray is a var or the sphere is a var
-// But its problematic because we dont know if the sphere is a ray
-// KISS use vector<
 
 #include <tuple>
 #include <memory>
@@ -58,7 +52,7 @@ struct Ray {
 
 // The return type depends on whether the sphere is a var/double and whether ray is
 // But we cant template the return type
-//  opt1. templat the shape and make it aubtype of a bigger untemplated set
+// opt1. template the shape and make it aubtype of a bigger untemplated set
 // opt2. just return a booleam, and modify the values
 
 template <typename T>
@@ -234,60 +228,6 @@ std::vector<Vec<T>> render(const std::vector<Sphere<T>> &spheres) {
     }
   }
   return image;
-}
-
-std::vector<Sphere<double>> gen_spheres() {
-  std::vector<Sphere<double>> spheres;
-  // spheres.push_back(Sphere<double>{Vec3( 0.0, -10004., -20.), 10000, Vec3(0.20, 0.20, 0.20), 0., 0.0, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     4, Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3( 5.0,     -1., -15.),     2, Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3( 5.0,      0., -25.),     3, Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
-    // light
-  spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3, Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(3.0)});
-  //
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     4., Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     4., Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3( 5.0,     -1., -15.),     2., Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3( 5.0,      0., -25.),     3., Vec3(0.65, 0.77, 0.97), 1., 0.0, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3., Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
-  // // # light
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(20.)});
-  return spheres;
-}
-
-// Point<T> center;              // position of the sphere
-// T radius;                     // radius
-// Vec<T> surface_color;         // surfae colour
-// T reflection;
-// T transparency;
-// Vec<T> emission_co
-
-std::vector<Sphere<double>> gen_spheres2() {
-  std::vector<Sphere<double>> spheres;
-
-  spheres.push_back(Sphere<double>{Vec3( 5.0,      -1., -15.),     4, Vec3(1.00, 0.32, 0.36), 1., 0.5, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3( 0.0,     1., -20.),     2, Vec3(0.90, 0.76, 0.46), 1., 0.0, Vec3(0.0)});
-  spheres.push_back(Sphere<double>{Vec3( -5.0,      0., -25.),     3, Vec3(0.15, 0.27, 0.37), 1., 0.0, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
-    // light
-  spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3, Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(3.0)});
-
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -18.),     2.3, Vec3(0.5, 0.12, 0.16), 1., 0.5, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -15.),     3, Vec3(0.90, 0.90, 0.90), 1., 0.0, Vec3(0.0)});
-  // spheres.push_back(Sphere<double>{Vec3(-5.5,      0., -10.),     3, Vec3(0.10, 0.30, 0.90), 1., 0.0, Vec3(0.0)});
-  //
-  //
-  // // spheres.push_back(Sphere<double>{Vec3( 0.0,      0., -20.),     3.5, Vec3(1.00, 0.11, 0.12), 1., 0.5, Vec3(0.0)});
-  // // // # light
-  // spheres.push_back(Sphere<double>{Vec3( 0.0,     20., -30.),     3., Vec3(0.00, 0.00, 0.00), 0., 0.0, Vec3(5.)});
-  return spheres;
-} 
-
-
-std::vector<Vec<double>> gen_img() {
-  std::vector<Sphere<double>> spheres = gen_spheres();
-  return render<double>(spheres);
 }
 
 Matrix<double, Dynamic, 1> realize(const std::vector<Sphere<double>> &spheres) {

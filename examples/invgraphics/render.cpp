@@ -2,6 +2,9 @@
 #include <boost/math/constants/constants.hpp>
 #include <stan/math.hpp>
 #include "render.hpp"
+#include "scenes.hpp"
+#include "sdf.hpp"
+
 #include "optimize.hpp"
 
 using Eigen::Matrix;
@@ -12,8 +15,12 @@ int main() {
   std::vector<RT::Sphere<double>> init_spheres = RT::gen_spheres2();
   RT::drawtofile("initial.ppm", imgdata, 480,320);
 
-  RT::optimize(imgdata, init_spheres);
-} 
+  RT::SphereSDF<double> scene{RT::Vec3( 5.0, -1., -15.), 4.0};
+  std::vector<RT::Vec<double>> imgsdfdata = RT::renderraymarch<double>(scene);
+  RT::drawtofile("holymoly2.ppm", imgsdfdata, 480,320);
+
+  // RT::optimize(imgdata, init_spheres);
+}
 
   //
   // int main() {

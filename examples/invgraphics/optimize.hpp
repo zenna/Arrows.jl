@@ -79,7 +79,7 @@ void optimize(const Image &observation, const std::vector<Sphere<double>> &init_
   std::cout << "Nparams : " << initip.size() << std::endl;
 
   nlopt::opt opt(nlopt::LN_COBYLA, initip.size());
-  nlopt::opt opt(nlopt::LN_MMA, initip.size());
+  // nlopt::opt opt(nlopt::LN_MMA, initip.size());
 
 
   // Set bounds
