@@ -7,7 +7,43 @@ import pylab
 import matplotlib.pyplot as plt
 from PIL import Image
 
+# # Return the number of parameters needed for an edit chain of n units
+# def edit_chain_nparams(n):
+#     return 10
+#
+# # Chain of signed distance functions
+# def edit_chain(pos, params, n):
+#     # generate a chain of n nodes (n primitives, )
+#
+#     # For n edits we need n primitives, n translations and n - 1 merges
+#     for i in range(n):
+#         prims = super_prim(pos, params[start:end])
+#
+#     for i in rnage(n-1)
+#         merge = super_merge(...)
+#
+#     return ok
+#
+# def stack_images(imgs):
+#     return T.stack(imgs, axis = 2)
+#
+# def smooth_min(dists, k):
+#     stacked_imgs = stack_images(dists)
+#     b = T.pow(stack_images, k)
+#
+#
+# def super_prim(pos, b, t, r):
+#     box = sdBox(pos, b)
+#     torus = sdBox(pos, t)
+#     roundbox = udRoundBox(pos, b,r)
+#     return merged = softmin([box, torus, roundbox])
+
 ## Signed Distance Functions, xyz -> d
+
+## Which representatin of geometry?   It doesnt even matter
+## WHat kind of function would a basis function be
+# distance to a point, if its zero then it has no surface.
+
 
 def adddim(img):
     return T.reshape(img, (640, 480, 1))
@@ -24,6 +60,11 @@ def sdTorus(pos, t):
     b = T.stack([a, pos[:,:,1]], axis=2)
     return adddim(b.norm(2,axis=2) - t[1])
 
+def udRoundBox(pos, b, r):
+    #FIXME, using magicnu mber 100 instead of ∞, i.e max
+    a = T.clip(T.abs_(pos) - b, 0.0, 1000.0)
+    return adddim(a.norm(2, axis=2) - r)
+
 def sdSphere(pos, s):
     return adddim(pos.norm(2, axis=2) - s)
 
@@ -36,12 +77,42 @@ def opU(d1, d2, width, height):
     broadcond = T.reshape(cond, (width, height, 1))
     return T.switch(broadcond, d1, d2)
 
+# ## Try a mix and a blend using softmax
+# def opBlend(ds, weights, width, height):
+#     dosomebledingin = 10
+#     ok = T.stack(ds, axis = 2)
+#     oksum = T.sum(ok, axis = 2)
+#     return ok / oksum
+
+## Try a mix and a blend using softmax
+def opBlend(dswithcolor, weights, width, height):
+    ds = []
+    # extract distances, ignore colours
+    for d in dswithcolor:
+        ds.append(d[:,:,0])
+
+    expweights = np.exp(weights)
+    softweights = expweights / np.sum(expweights)
+    rewightedds = []
+    for i in range(len(weights)):
+        rewightedds.append(ds[i] * weights[i])
+
+    ok = T.stack(rewightedds, axis = 2)
+    summed = T.sum(ok, axis = 2)
+    return T.reshape(summed, (width, height, 1))
+
 def map(pos, width, height):
     res = stack(sdSphere(pos - np.array([0.0, 0.25, 0.0]), 0.25 ), width, height, 100.0)
     torus = stack(sdTorus(pos - np.array([0.0, 0.25, 1.0]), np.array([0.20, 0.05])), width, height, 25.0)
-    res = opU(res, torus, width, height)
-
-    # res = opU(stack(sdPlane(pos), width, height, 10.0), stack(sdSphere(pos - np.array([0.0, 0.25, 0.0]), 0.25 ), width, height, 100.0), width, height)
+    plane = stack(sdPlane(pos), width, height, 10.0)
+    rndbox = stack(udRoundBox(pos - np.array([0.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
+    boxtorus = opBlend([rndbox, torus], [0.2, 0.9], width, height)
+    # rndbox = stack(udRoundBox(pos - np.array([1.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
+    # Union these all
+    res = opU(res, plane, width, height)
+    # res = opU(res, torus, width, height)
+    # res = opU(res, rndbox, width, height)
+    res = opU(res, boxtorus, width, height)
     return res
 
 def castray(ro, rd, width, height):
@@ -55,7 +126,7 @@ def castray(ro, rd, width, height):
     # So we want something like 0, 20, 25, 27, 28, 28, 28, 28, 28
     # OK
 
-    max_num_steps = 17
+    max_num_steps = 25
 
     distcolors = map(ro + rd * 0, width, height) #FIXME, reshape instead of mul by 0
     dists = distcolors[:,:,0]
