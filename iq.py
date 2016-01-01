@@ -102,14 +102,14 @@ def opBlend(dswithcolor, weights, width, height):
     return T.reshape(summed, (width, height, 1))
 
 def map(pos, width, height):
-    res = stack(sdSphere(pos - np.array([0.0, 0.25, 0.0]), 0.25 ), width, height, 100.0)
+    sphere = stack(sdSphere(pos - np.array([0.0, 0.25, 0.0]), 0.25 ), width, height, 100.0)
     torus = stack(sdTorus(pos - np.array([0.0, 0.25, 1.0]), np.array([0.20, 0.05])), width, height, 25.0)
     plane = stack(sdPlane(pos), width, height, 10.0)
     rndbox = stack(udRoundBox(pos - np.array([0.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
-    boxtorus = opBlend([rndbox, torus], [0.2, 0.9], width, height)
+    boxtorus = opBlend([rndbox, sphere], [0.4, 0.4], width, height)
     # rndbox = stack(udRoundBox(pos - np.array([1.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
     # Union these all
-    res = opU(res, plane, width, height)
+    res = opU(boxtorus, plane, width, height)
     # res = opU(res, torus, width, height)
     # res = opU(res, rndbox, width, height)
     res = opU(res, boxtorus, width, height)
