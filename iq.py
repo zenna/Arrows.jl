@@ -8,7 +8,7 @@ import pylab
 import matplotlib.pyplot as plt
 from PIL import Image
 
-theano.config.optimizer = 'None'
+# theano.config.optimizer = 'None'
 
 # # Return the number of parameters needed for an edit chain of n units
 # def edit_chain_nparams(n):
@@ -39,8 +39,7 @@ theano.config.optimizer = 'None'
 #     return opU(ok, plane, width, height)
 
 # Chain of signed distance functions
-def mapedit(pos, params, width, height):
-    nprims = 2
+def mapedit(pos, params, nprims, width, height):
     pos_repeat = T.reshape(T.tile(pos, nprims), (width, height, nprims, 3))
     translate_params = params[:, 0:3]
     translated_pos = pos_repeat + translate_params
@@ -164,7 +163,7 @@ def map(pos, width, height):
     res = opU(res, boxtorus, width, height)
     return res
 
-def castray(ro, rd, shape_params, width, height):
+def castray(ro, rd, shape_params, nprims, width, height):
     tmin = 1.0
     tmax = 20.0
     precis = 0.002
@@ -178,14 +177,14 @@ def castray(ro, rd, shape_params, width, height):
     max_num_steps = 25
 
     # distcolors = map(ro + rd * 0, width, height) #FIXME, reshape instead of mul by 0
-    distcolors = mapedit(ro + rd * 0, shape_params, width, height)
+    distcolors = mapedit(ro + rd * 0, shape_params, nprims, width, height)
     dists = distcolors[:,:,0]
     steps = T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
     accum_dists = T.reshape(dists, (width, height, 1))
 
     for i in range(max_num_steps - 1):
         # distcolors = map(ro + rd * accum_dists, width, height) #FIXME, reshape instead of mul by 0
-        distcolors = mapedit(ro + rd * accum_dists, shape_params, width, height) #FIXME, reshape instead of mul by 0
+        distcolors = mapedit(ro + rd * accum_dists, shape_params, nprims, width, height) #FIXME, reshape instead of mul by 0
         dists = distcolors[:,:,0]
         steps = steps + T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
         accum_dists = accum_dists + T.reshape(dists, (width, height, 1))
@@ -207,9 +206,9 @@ def normal(ok):
 
 
 ## Render with ray at ray origin ro and direction rd
-def renderrays(ro, rd, shape_params, width, height):
+def renderrays(ro, rd, shape_params, nprims, width, height):
     # col = np.array([0.7, 0.9, 1.0]) + T.reshape(rd[:,:,1], (width, height, 1)) * 0.8
-    (res1, res2, res3, res4, res5) = castray(ro, rd, shape_params, width, height)
+    (res1, res2, res3, res4, res5) = castray(ro, rd, shape_params, nprims, width, height)
     return (res1, res2, res3, res4, res5)
     # m = col[:,:,1]
     # return np.array([0.05,0.08,0.10]) * m
@@ -285,7 +284,7 @@ def stack(intensor, width, height, scalar):
     scalars = np.ones([width, height, 1]) * scalar
     return T.concatenate([intensor, scalars], axis=2)
 
-def make_render(width, height):
+def make_render(nprims, width, height):
     # Shape params
     shape_params = T.matrix('shape')
     iResolution = np.array([width, height], dtype=float)
@@ -306,7 +305,7 @@ def make_render(width, height):
     c = T.sum(cw * outop, axis=2)
     # Get ray direction
     rd = T.stack([a,b,c], axis=2)
-    (res1, res2, res3, res4, res5) = renderrays(ro, rd, shape_params, width, height)
+    (res1, res2, res3, res4, res5) = renderrays(ro, rd, shape_params, nprims, width, height)
     render = function([fragCoords, shape_params], [res1, res2, res3, res4, res5])
     return render
 
@@ -319,13 +318,29 @@ def gen_fragcoords(width, height):
 
 ## example
 ##########
+def go():
+    return np.random.rand()*4 - 2
+
+def gogo():
+    return np.random.rand()*0.1
 
 width = 640
 height = 480
 exfragcoords = gen_fragcoords(width, height)
-render = make_render(width, height)
-shape = np.array([[-0.0, -0.25, -1.0, 0.25, 0.1, 0.1, 2.9],
-                  [-1.0, -0.25, -1.0, 0.25, 0.1, 3.1, 0.9]])
-img = render(exfragcoords, shape)
+nprims = 100
+render = make_render(nprims, width, height)
+
+shapes = []
+for i in range(nprims):
+    shapes.append([go(), go(), go(), gogo(), gogo(), gogo(), gogo()])
+
+shapes = np.array(shapes)
+#
+#
+# shape = np.array([[-0.0, -0.25, -1.0, 0.25, 0.1, 0.1, 2.9],
+#                   [-1.0, -0.25, -1.0, 0.25, 0.1, 3.1, 0.9],
+#                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
+#                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
+img = render(exfragcoords, shapes)
 plt.imshow(img[0])
 plt.show()
