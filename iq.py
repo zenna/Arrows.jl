@@ -1,28 +1,71 @@
 from theano import tensor as T
 from theano import function
 import numpy as np
+import theano
 
 import numpy
 import pylab
 import matplotlib.pyplot as plt
 from PIL import Image
 
+theano.config.optimizer = 'None'
+
 # # Return the number of parameters needed for an edit chain of n units
 # def edit_chain_nparams(n):
 #     return 10
 #
-# # Chain of signed distance functions
-# def edit_chain(pos, params, n):
+
+# Chain of signed distance functions
+# def mapedit(pos, params, width, height):
 #     # generate a chain of n nodes (n primitives, )
-#
 #     # For n edits we need n primitives, n translations and n - 1 merges
-#     for i in range(n):
-#         prims = super_prim(pos, params[start:end])
+#     # for i in range(n):
+#     #     ## Super Primitive
+#     numparamsper
+#     primouts = []
+#     for j in range(10):
+#         i = j * 7
+#         translate_params = params[i:i+3]
+#         translated_pos = pos + translate_params
+#         a = sdSphere(translated_pos, params[3])
+#         b = udRoundBox(translated_pos, np.array([.15, .15, .15]), params[i+4])
+#         mix = opBlend([a,b], params[i+5:i+7], width, height)
+#         # mix = opBlend([a,b], params[i+5:i+6], width, height)
+#         ok = stack(mix, width, height, 1.0)
+#         primouts.append(ok)
 #
-#     for i in rnage(n-1)
-#         merge = super_merge(...)
+#     plane = stack(sdPlane(pos), width, height, 10.0)
 #
-#     return ok
+#     return opU(ok, plane, width, height)
+
+# Chain of signed distance functions
+def mapedit(pos, params, width, height):
+    nprims = 2
+    pos_repeat = T.reshape(T.tile(pos, nprims), (width, height, nprims, 3))
+    translate_params = params[:, 0:3]
+    translated_pos = pos_repeat + translate_params
+    # Do sphere
+    norms = translated_pos.norm(2, axis = 3)
+    sphere_radii = params[:, 3]
+    spheredists = norms - sphere_radii
+    # Round box
+    box_radii = params[:, 4] # FIXME? Share radii param?
+    abspos = T.clip(T.abs_(translated_pos) - np.array([.15, .15, .15]), 0.0, 1000.0)
+    rounddists = abspos.norm(2, axis = 3) - box_radii
+    # Blend
+    blend_params = params[:, 5:7]
+    expweights = T.exp(blend_params)
+    softweights = expweights / T.reshape(T.sum(expweights, axis = 1), (nprims, 1))
+    # MIX
+    stacked = T.stack([spheredists, rounddists], axis=3)
+    reweighted = stacked * softweights
+    mixed = T.sum(reweighted, axis = 3)
+    union = mixed.min(axis=2)
+    # add colour and plane
+    stacked_union = stack(adddim(union), width, height, 1.0) # GET RID OF COOLOUR FROM GEOM
+    plane = stack(sdPlane(pos), width, height, 10.0)
+    return opU(stacked_union, plane, width, height)
+
 #
 # def stack_images(imgs):
 #     return T.stack(imgs, axis = 2)
@@ -85,28 +128,34 @@ def opU(d1, d2, width, height):
 #     return ok / oksum
 
 ## Try a mix and a blend using softmax
-def opBlend(dswithcolor, weights, width, height):
-    ds = []
-    # extract distances, ignore colours
-    for d in dswithcolor:
-        ds.append(d[:,:,0])
+# def opBlend(dswithcolor, weights, width, height):
+#     ds = []
+#     # extract distances, ignore colours
+#     for d in dswithcolor:
+#         ds.append(d[:,:,0])
+#
+#     expweights = np.exp(weights)
+#     softweights = expweights / np.sum(expweights)
+#     rewightedds = []
+#     for i in range(len(weights)):
+#         rewightedds.append(ds[i] * weights[i])
+#
+#     ok = T.stack(rewightedds, axis = 2)
+#     summed = T.sum(ok, axis = 2)
+#     return T.reshape(summed, (width, height, 1))
 
-    expweights = np.exp(weights)
-    softweights = expweights / np.sum(expweights)
-    rewightedds = []
-    for i in range(len(weights)):
-        rewightedds.append(ds[i] * weights[i])
-
-    ok = T.stack(rewightedds, axis = 2)
-    summed = T.sum(ok, axis = 2)
-    return T.reshape(summed, (width, height, 1))
+def opBlend(ds, weights, width, height):
+    expweights = T.exp(weights)
+    softweights = expweights / T.sum(expweights)
+    reweighted = T.concatenate(ds, axis = 2) * softweights
+    return T.reshape(T.sum(reweighted, axis=2), (width, height, 1))
 
 def map(pos, width, height):
-    sphere = stack(sdSphere(pos - np.array([0.0, 0.25, 0.0]), 0.25 ), width, height, 100.0)
+    sphere = stack(sdSphere(pos - np.array([0.0, 0.25, 1.0]), 0.25 ), width, height, 100.0)
     torus = stack(sdTorus(pos - np.array([0.0, 0.25, 1.0]), np.array([0.20, 0.05])), width, height, 25.0)
     plane = stack(sdPlane(pos), width, height, 10.0)
     rndbox = stack(udRoundBox(pos - np.array([0.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
-    boxtorus = opBlend([rndbox, sphere], [0.4, 0.4], width, height)
+    boxtorus = opBlend([rndbox, sphere], [0.2, 0.9], width, height)
     # rndbox = stack(udRoundBox(pos - np.array([1.0, 0.25, 1.0]), np.array([.15, .15, .15]), 0.1), width, height, 41.0)
     # Union these all
     res = opU(boxtorus, plane, width, height)
@@ -115,7 +164,7 @@ def map(pos, width, height):
     res = opU(res, boxtorus, width, height)
     return res
 
-def castray(ro, rd, width, height):
+def castray(ro, rd, shape_params, width, height):
     tmin = 1.0
     tmax = 20.0
     precis = 0.002
@@ -128,13 +177,15 @@ def castray(ro, rd, width, height):
 
     max_num_steps = 25
 
-    distcolors = map(ro + rd * 0, width, height) #FIXME, reshape instead of mul by 0
+    # distcolors = map(ro + rd * 0, width, height) #FIXME, reshape instead of mul by 0
+    distcolors = mapedit(ro + rd * 0, shape_params, width, height)
     dists = distcolors[:,:,0]
     steps = T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
     accum_dists = T.reshape(dists, (width, height, 1))
 
     for i in range(max_num_steps - 1):
-        distcolors = map(ro + rd * accum_dists, width, height) #FIXME, reshape instead of mul by 0
+        # distcolors = map(ro + rd * accum_dists, width, height) #FIXME, reshape instead of mul by 0
+        distcolors = mapedit(ro + rd * accum_dists, shape_params, width, height) #FIXME, reshape instead of mul by 0
         dists = distcolors[:,:,0]
         steps = steps + T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
         accum_dists = accum_dists + T.reshape(dists, (width, height, 1))
@@ -156,9 +207,9 @@ def normal(ok):
 
 
 ## Render with ray at ray origin ro and direction rd
-def renderrays(ro, rd, width, height):
+def renderrays(ro, rd, shape_params, width, height):
     # col = np.array([0.7, 0.9, 1.0]) + T.reshape(rd[:,:,1], (width, height, 1)) * 0.8
-    (res1, res2, res3, res4, res5) = castray(ro, rd, width, height)
+    (res1, res2, res3, res4, res5) = castray(ro, rd, shape_params, width, height)
     return (res1, res2, res3, res4, res5)
     # m = col[:,:,1]
     # return np.array([0.05,0.08,0.10]) * m
@@ -235,6 +286,8 @@ def stack(intensor, width, height, scalar):
     return T.concatenate([intensor, scalars], axis=2)
 
 def make_render(width, height):
+    # Shape params
+    shape_params = T.matrix('shape')
     iResolution = np.array([width, height], dtype=float)
     fragCoords = T.tensor3()
     cat = T.matrix()
@@ -253,8 +306,8 @@ def make_render(width, height):
     c = T.sum(cw * outop, axis=2)
     # Get ray direction
     rd = T.stack([a,b,c], axis=2)
-    (res1, res2, res3, res4, res5) = renderrays(ro, rd, width, height)
-    render = function([fragCoords], [res1, res2, res3, res4, res5])
+    (res1, res2, res3, res4, res5) = renderrays(ro, rd, shape_params, width, height)
+    render = function([fragCoords, shape_params], [res1, res2, res3, res4, res5])
     return render
 
 def gen_fragcoords(width, height):
@@ -271,6 +324,8 @@ width = 640
 height = 480
 exfragcoords = gen_fragcoords(width, height)
 render = make_render(width, height)
-img = render(exfragcoords)
+shape = np.array([[-0.0, -0.25, -1.0, 0.25, 0.1, 0.1, 2.9],
+                  [-1.0, -0.25, -1.0, 0.25, 0.1, 3.1, 0.9]])
+img = render(exfragcoords, shape)
 plt.imshow(img[0])
 plt.show()
