@@ -61,30 +61,9 @@ def mapedit(pos, params, nprims, width, height):
     mixed = T.sum(reweighted, axis = 3)
     union = mixed.min(axis=2)
     # add colour and plane
-    stacked_union = stack(adddim(union), width, height, 1.0) # GET RID OF COOLOUR FROM GEOM
-    plane = stack(sdPlane(pos), width, height, 10.0)
+    stacked_union = adddim(union) # GET RID OF COOLOUR FROM GEOM
+    plane = sdPlane(pos)
     return opU(stacked_union, plane, width, height)
-
-#
-# def stack_images(imgs):
-#     return T.stack(imgs, axis = 2)
-#
-# def smooth_min(dists, k):
-#     stacked_imgs = stack_images(dists)
-#     b = T.pow(stack_images, k)
-#
-#
-# def super_prim(pos, b, t, r):
-#     box = sdBox(pos, b)
-#     torus = sdBox(pos, t)
-#     roundbox = udRoundBox(pos, b,r)
-#     return merged = softmin([box, torus, roundbox])
-
-## Signed Distance Functions, xyz -> d
-
-## Which representatin of geometry?   It doesnt even matter
-## WHat kind of function would a basis function be
-# distance to a point, if its zero then it has no surface.
 
 
 def adddim(img):
@@ -115,7 +94,7 @@ def sdSphere(pos, s):
 
 ## Union - d1, d2 = width × height × 2
 def opU(d1, d2, width, height):
-    cond = d1[:,:,0] < d2[:,:,0]
+    cond = d1 < d2
     broadcond = T.reshape(cond, (width, height, 1))
     return T.switch(broadcond, d1, d2)
 
@@ -178,14 +157,14 @@ def castray(ro, rd, shape_params, nprims, width, height):
 
     # distcolors = map(ro + rd * 0, width, height) #FIXME, reshape instead of mul by 0
     distcolors = mapedit(ro + rd * 0, shape_params, nprims, width, height)
-    dists = distcolors[:,:,0]
+    dists = distcolors
     steps = T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
     accum_dists = T.reshape(dists, (width, height, 1))
 
     for i in range(max_num_steps - 1):
         # distcolors = map(ro + rd * accum_dists, width, height) #FIXME, reshape instead of mul by 0
         distcolors = mapedit(ro + rd * accum_dists, shape_params, nprims, width, height) #FIXME, reshape instead of mul by 0
-        dists = distcolors[:,:,0]
+        dists = distcolors
         steps = steps + T.switch(dists < precis, T.zeros_like(dists), T.ones_like(dists))
         accum_dists = accum_dists + T.reshape(dists, (width, height, 1))
 
@@ -193,7 +172,7 @@ def castray(ro, rd, shape_params, nprims, width, height):
     depthmap = T.switch(last_depth < tmax, last_depth / tmax, T.zeros_like(last_depth))
     color = 1.0 - steps / float(max_num_steps)
     # Distance marched along ray and delta between last two steps
-    return (depthmap, depthmap, depthmap, depthmap, depthmap)
+    return depthmap
 
 #
 # def reflect(ray_dir, normal):
@@ -208,8 +187,7 @@ def normal(ok):
 ## Render with ray at ray origin ro and direction rd
 def renderrays(ro, rd, shape_params, nprims, width, height):
     # col = np.array([0.7, 0.9, 1.0]) + T.reshape(rd[:,:,1], (width, height, 1)) * 0.8
-    (res1, res2, res3, res4, res5) = castray(ro, rd, shape_params, nprims, width, height)
-    return (res1, res2, res3, res4, res5)
+    return castray(ro, rd, shape_params, nprims, width, height)
     # m = col[:,:,1]
     # return np.array([0.05,0.08,0.10]) * m
 #     vec3 col = vec3(0.7, 0.9, 1.0) + rd.y * 0.8;
@@ -305,8 +283,8 @@ def make_render(nprims, width, height):
     c = T.sum(cw * outop, axis=2)
     # Get ray direction
     rd = T.stack([a,b,c], axis=2)
-    (res1, res2, res3, res4, res5) = renderrays(ro, rd, shape_params, nprims, width, height)
-    render = function([fragCoords, shape_params], [res1, res2, res3, res4, res5])
+    res = renderrays(ro, rd, shape_params, nprims, width, height)
+    render = function([fragCoords, shape_params], res)
     return render
 
 def gen_fragcoords(width, height):
@@ -342,5 +320,5 @@ shapes = np.array(shapes)
 #                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
 img = render(exfragcoords, shapes)
-plt.imshow(img[0])
+plt.imshow(img)
 plt.show()
