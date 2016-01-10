@@ -6,18 +6,35 @@ import Arrows: AbstractNonDetArray, UninterpretedArrow, AbstractDataType,
 begin
   local abstractstacktyp = AbstractNonDetArray(:stack)
   "Stack ⇝ ():Real"
-  local isemptytyp = ExplicitArrowType{1,1}((abstractstacktyp,),
+  local isemptytype = ExplicitArrowType{1,1}(
+                     (abstractstacktyp,),
                      (ShapeArray(ConstantVar(Real), FixedLenVarArray{Integer}()),),
                      ConstraintSet())
-  # @show isemptytyp
-  local isempty = UninterpretedArrow(isemptytyp)
+  # @show isemptytype
+  local isemptyuarr = UninterpretedArrow(isemptytype)
+  "Stack ⇝ ():Real"
+  local poptype = ExplicitArrowType{1,2}(
+                     (abstractstacktyp,)
+                     (abstractstacktyp, (ShapeArray(ConstantVar(Real), FixedLenVarArray((:n))),)),
+                     ConstraintSet())
+  local popuarr = UninterpretedArrow(poptype)
 
+  local pushtype = ExplicitArrowType{2,1}(
+                     (abstractstacktyp, (ShapeArray(ConstantVar(Real), FixedLenVarArray((:n))),)),
+                     (abstractstacktyp,),
+                     ConstraintSet())
+  local pushuarr = UninterpretedArrow(pushtype)
 
-  # local pop = UninterpretedArrow()
-  # local equalities = Set([isempty(empty()) == 0, pop(push()) == 0])
-  # local spec = isempty >>>
-  local spec = EquationalSpec(Set{Arrow}())
-  abstractstack = AbstractDataType([isemptytyp], spec)
+  ## So we'll describe the
+  push >>> pop >>> concatarr
+
+  local s = ForallVar()
+  local i = ForallVar()
+  local spec1 = isempty(empty())
+  local spec2 = !isempty(push(s, i))
+  local spec3 = (push >> pop)(s, i) == (s, i)
+  local spec = EquationalSpec(Set{Arrow}(spec1, spec2, spec3, spec4))
+  abstractstack = AbstractDataType([isemptytype], spec)
 end
 
 begin
@@ -38,3 +55,8 @@ begin
   "This is an implementation of an abstract stack by simply using variable length vectors"
   concatstack = ConcreteDataType(:concatstack, data, [isemptyarr])
 end
+
+
+## TODO
+# - what kind of thing is emptystack? - a nullary function? or what
+#
