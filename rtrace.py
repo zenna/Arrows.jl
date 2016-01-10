@@ -142,7 +142,7 @@ def gogo():
 width = 640
 height = 480
 exfragcoords = gen_fragcoords(width, height)
-nprims = 10
+nprims = 2
 render = make_render(nprims, width, height)
 
 shapes = []
