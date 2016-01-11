@@ -29,52 +29,46 @@ c = o_o - radii**2
 
 def mapedit(ro, rd, params, nprims, width, height):
     # Translate ray origin by the necessary parameters
-    ro_repeat = T.tile(T.reshape(ro_repeat, (width, height, 3, 1)), nprims)
+    ro_repeat = T.reshape(T.tile(ro, nprims), (width, height, nprims, 3))
+    rd_r = T.reshape(T.tile(rd, nprims), (width, height, nprims, 3))
     translate_params = params[:, 0:3]
-    ro_translated = ro_repeat + translate_params
-    ro = ro_translated
+    ro_t = ro_repeat + translate_params
     # ro_translated = ro_repeat
     sphere_radii = params[:, 3]
 
     # Do sphere
-    d_d = T.sum(rd * rd, axis = 2)
-    d_o = T.sum(rd * ro, axis = 2)
-    o_o = T.sum(ro * ro, axis = 2)
-    a = d_d
+    d_o = T.sum(rd_r * ro_t, axis = 3)
+    o_o = T.sum(ro_t * ro_t, axis = 3)
+    # a = 1
     b = 2*d_o
-    o_o_ = T.reshape(o_o, (640, 480, 1))
-    c = T.tile(o_o_, nprims) - sphere_radii**2
-    a_ = T.reshape(a, (width, height, 1))
-    b_ = T.reshape(b, (width, height, 1))
-    b__ = T.tile(b_, nprims)
-    inner = b_ * b_ - 4*a_* c
+    c = o_o - sphere_radii**2
+    inner = b * b - 4*c
 
     ## Case 1
     does_intersect = inner > 0.0
-    does_not_intersect = T.reshape(inner < 0.0, (640, 480, nprims, 1))
-    closest_root = -d_o / d_d
-    closest_root = T.tile(T.reshape(closest_root, (640, 480, 1)), nprims)
+    does_not_intersect = T.reshape(inner < 0.0, (width, height, nprims, 1))
+    closest_root = -d_o
+    closest_root = T.tile(T.reshape(closest_root, (width, height, 1)), nprims)
 
     ## Calculate Roots
-    two_a = 2.0*a
-    minus_b = -b_
+    minus_b = -b
     sqrt_inner = T.sqrt(inner)
-    root1 = (minus_b - sqrt_inner)/adddim(two_a)
-    root2 = (minus_b + sqrt_inner)/adddim(two_a)
+    root1 = (minus_b - sqrt_inner)/2.0
+    root2 = (minus_b + sqrt_inner)/2.0
     root1 = T.reshape(root1, (width, height, nprims, 1))
     root2 = T.reshape(root2, (width, height, nprims, 1))
 
     ## Cases
-    one_pos = root1 > 0.0
-    two_pos = root2 > 0.0
-    only_one_pos = T.xor(one_pos, two_pos)
-    both_pos = T.and_(one_pos, two_pos)
+    # one_pos = root1 > 0.0
+    # two_pos = root2 > 0.0
+    # only_one_pos = T.xor(one_pos, two_pos)
+    # both_pos = T.and_(one_pos, two_pos)
 
     # Of it does not intersect return blank.
     # if its behind the screen
     # then return background_dist = 100.0
-    background_dist = 100
-    maxes = np.full((640, 480, nprims, 1), background_dist)
+    background_dist = 10
+    maxes = np.full((width, height, nprims, 1), background_dist)
     # unclamped = T.switch(does_intersect, maxes,
     #                          T.switch(b__ > 0, root2,
     #                                          T.switch(root1 < 0, root2, root1)))
@@ -84,7 +78,7 @@ def mapedit(ro, rd, params, nprims, width, height):
                                              T.switch(root2 > 0, root2, maxes)))
     # root = T.maximum(0.0, unclamped)
     # union = T.min(root, axis=2)
-    depth = T.reshape(depth, (640, 480, nprims))
+    depth = T.reshape(depth, (width, height, nprims))
     global ro_capture
     ro_capture = ro
     global rd_capture
@@ -92,11 +86,14 @@ def mapedit(ro, rd, params, nprims, width, height):
     global params_capture
     params_capture = params
     i = T.min(depth, axis = 2)
-    return [i, rd, d_d, d_o, o_o, a, b, c, o_o, o_o_, innerm sphere_radii]
+    return [i]
     #return T.min(depth, axis = 2)
 
 def adddim(img):
-    return T.reshape(img, (640, 480, 1))
+    # LOL!
+    global width
+    global height
+    return T.reshape(img, (width, height, 1))
 
 def castray(ro, rd, shape_params, nprims, width, height):
     return mapedit(ro, rd, shape_params, nprims, width, height)
@@ -163,10 +160,10 @@ def go():
 def gogo():
     return np.random.rand()*0.1
 
-width = 640
-height = 480
+width = 300
+height = 300
 exfragcoords = gen_fragcoords(width, height)
-nprims = 50
+nprims = 100
 render = make_render(nprims, width, height)
 
 shapes = []
