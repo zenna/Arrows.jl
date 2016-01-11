@@ -14,15 +14,7 @@ from PIL import Image
 # ro_capture = 0
 # rd_capture = 0
 # params_capture = 0
-d_d = 1
-ro = np.array([-3.96497374,  2.        ,  0.99392003])
-rd = np.array([ 0.68886577, -0.6642004 , -0.2903477 ])
-o_o = np.dot(ro, ro)
-d_o = np.dot(rd, ro)
-a = d_d
-b = 2*d_o
-radii = 0.01204426
-c = o_o - radii**2
+
 
 # rd = img[1][0,0]
 # ro = np.array([-3.96497374,  2.        ,  0.99392003])
@@ -143,6 +135,6 @@ shapes = np.array(shapes)
 #                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
 # array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
-time img = render(exfragcoords, shapes)
+img = render(exfragcoords, shapes)
 plt.imshow(img)
 plt.show()
