@@ -11,12 +11,29 @@ from PIL import Image
 ## THe function will take as input
 theano.config.optimizer = 'None'
 
+# ro_capture = 0
+# rd_capture = 0
+# params_capture = 0
+d_d = 1
+ro = np.array([-3.96497374,  2.        ,  0.99392003])
+rd = np.array([ 0.68886577, -0.6642004 , -0.2903477 ])
+o_o = np.dot(ro, ro)
+d_o = np.dot(rd, ro)
+a = d_d
+b = 2*d_o
+radii = 0.01204426
+c = o_o - radii**2
+
+# rd = img[1][0,0]
+# ro = np.array([-3.96497374,  2.        ,  0.99392003])
 
 def mapedit(ro, rd, params, nprims, width, height):
     # Translate ray origin by the necessary parameters
-    ro_repeat = T.reshape(T.tile(ro, nprims), (width, height, nprims, 3))
+    ro_repeat = T.tile(T.reshape(ro_repeat, (width, height, 3, 1)), nprims)
     translate_params = params[:, 0:3]
     ro_translated = ro_repeat + translate_params
+    ro = ro_translated
+    # ro_translated = ro_repeat
     sphere_radii = params[:, 3]
 
     # Do sphere
@@ -26,7 +43,7 @@ def mapedit(ro, rd, params, nprims, width, height):
     a = d_d
     b = 2*d_o
     o_o_ = T.reshape(o_o, (640, 480, 1))
-    c = o_o_ - T.tile(T.reshape(o_o, (640, 480, 1)), nprims) - sphere_radii**2
+    c = T.tile(o_o_, nprims) - sphere_radii**2
     a_ = T.reshape(a, (width, height, 1))
     b_ = T.reshape(b, (width, height, 1))
     b__ = T.tile(b_, nprims)
@@ -68,14 +85,21 @@ def mapedit(ro, rd, params, nprims, width, height):
     # root = T.maximum(0.0, unclamped)
     # union = T.min(root, axis=2)
     depth = T.reshape(depth, (640, 480, nprims))
-    return T.min(depth, axis = 2)
+    global ro_capture
+    ro_capture = ro
+    global rd_capture
+    rd_capture = rd
+    global params_capture
+    params_capture = params
+    i = T.min(depth, axis = 2)
+    return [i, rd, d_d, d_o, o_o, a, b, c, o_o, o_o_, innerm sphere_radii]
+    #return T.min(depth, axis = 2)
 
 def adddim(img):
     return T.reshape(img, (640, 480, 1))
 
 def castray(ro, rd, shape_params, nprims, width, height):
-    maxes = mapedit(ro, rd, shape_params, nprims, width, height)
-    return maxes
+    return mapedit(ro, rd, shape_params, nprims, width, height)
 
 ## Render with ray at ray origin ro and direction rd
 def renderrays(ro, rd, shape_params, nprims, width, height):
@@ -142,12 +166,12 @@ def gogo():
 width = 640
 height = 480
 exfragcoords = gen_fragcoords(width, height)
-nprims = 2
+nprims = 50
 render = make_render(nprims, width, height)
 
 shapes = []
 for i in range(nprims):
-    shapes.append([go(), go(), go(), gogo(), gogo(), gogo(), gogo()])
+    shapes.append([go(), go(), go(), gogo()])
 
 shapes = np.array(shapes)
 #
@@ -156,6 +180,7 @@ shapes = np.array(shapes)
 #                   [-1.0, -0.25, -1.0, 0.25, 0.1, 3.1, 0.9],
 #                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
+# array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
 img = render(exfragcoords, shapes)
-plt.imshow(img)
+plt.imshow(img[0])
 plt.show()
