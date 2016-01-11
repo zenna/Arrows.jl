@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 ## THe function will take as input
-theano.config.optimizer = 'None'
+# theano.config.optimizer = 'None'
 
 # ro_capture = 0
 # rd_capture = 0
@@ -163,7 +163,7 @@ def gogo():
 width = 300
 height = 300
 exfragcoords = gen_fragcoords(width, height)
-nprims = 100
+nprims = 200
 render = make_render(nprims, width, height)
 
 shapes = []
