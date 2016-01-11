@@ -26,68 +26,33 @@ c = o_o - radii**2
 
 # rd = img[1][0,0]
 # ro = np.array([-3.96497374,  2.        ,  0.99392003])
-
-def mapedit(ro, rd, params, nprims, width, height):
-    # Translate ray origin by the necessary parameters
-    ro_repeat = T.reshape(T.tile(ro, nprims), (width, height, nprims, 3))
-    rd_r = T.reshape(T.tile(rd, nprims), (width, height, nprims, 3))
-    translate_params = params[:, 0:3]
-    ro_t = ro_repeat + translate_params
-    # ro_translated = ro_repeat
-    sphere_radii = params[:, 3]
-
-    # Do sphere
-    d_o = T.sum(rd_r * ro_t, axis = 3)
-    o_o = T.sum(ro_t * ro_t, axis = 3)
-    # a = 1
+def mindist(translate, radii, min_so_far, ro, rd, background):
+    ro = ro + translate
+    d_o = T.dot(rd, ro)     # 640, 480
+    o_o = T.dot(ro, ro)   # scalar
     b = 2*d_o
-    c = o_o - sphere_radii**2
-    inner = b * b - 4*c
-
-    ## Case 1
-    does_intersect = inner > 0.0
-    does_not_intersect = T.reshape(inner < 0.0, (width, height, nprims, 1))
-    closest_root = -d_o
-    closest_root = T.tile(T.reshape(closest_root, (width, height, 1)), nprims)
-
-    ## Calculate Roots
+    c = o_o - radii**2 #FIXME, remove this squaring
+    inner = b **2 - 4 * c   # 640 480
+    does_not_intersect = inner < 0.0
     minus_b = -b
     sqrt_inner = T.sqrt(inner)
     root1 = (minus_b - sqrt_inner)/2.0
     root2 = (minus_b + sqrt_inner)/2.0
-    root1 = T.reshape(root1, (width, height, nprims, 1))
-    root2 = T.reshape(root2, (width, height, nprims, 1))
+    depth = T.switch(does_not_intersect, background,
+                        T.switch(root1 > 0, root1,
+                        T.switch(root2 > 0, root2, background)))
+    return T.min([min_so_far, depth], axis=0)
 
-    ## Cases
-    # one_pos = root1 > 0.0
-    # two_pos = root2 > 0.0
-    # only_one_pos = T.xor(one_pos, two_pos)
-    # both_pos = T.and_(one_pos, two_pos)
 
-    # Of it does not intersect return blank.
-    # if its behind the screen
-    # then return background_dist = 100.0
+
+def mapedit(ro, rd, params, nprims, width, height):
+    # Translate ray origin by the necessary parameters
+    translate_params = params[:, 0:3]
+    sphere_radii = params[:, 3]
     background_dist = 10
-    maxes = np.full((width, height, nprims, 1), background_dist)
-    # unclamped = T.switch(does_intersect, maxes,
-    #                          T.switch(b__ > 0, root2,
-    #                                          T.switch(root1 < 0, root2, root1)))
-    # intersect_behind = T.and_(root1 < 0.0, root2 < 0.0)
-    depth = T.switch(does_not_intersect, maxes,
-                             T.switch(root1 > 0, root1,
-                                             T.switch(root2 > 0, root2, maxes)))
-    # root = T.maximum(0.0, unclamped)
-    # union = T.min(root, axis=2)
-    depth = T.reshape(depth, (width, height, nprims))
-    global ro_capture
-    ro_capture = ro
-    global rd_capture
-    rd_capture = rd
-    global params_capture
-    params_capture = params
-    i = T.min(depth, axis = 2)
-    return [i]
-    #return T.min(depth, axis = 2)
+    background = np.full((width, height), background_dist)
+    results, updates = theano.scan(mindist, outputs_info=background, sequences=[translate_params, sphere_radii], non_sequences = [ro, rd, background])
+    return results[-1]
 
 def adddim(img):
     # LOL!
@@ -141,7 +106,7 @@ def make_render(nprims, width, height):
     # Get ray direction
     rd = T.stack([a,b,c], axis=2)
     ro_ = np.tile(ro, [width, height, 1])
-    res = renderrays(ro_, rd, shape_params, nprims, width, height)
+    res = renderrays(ro, rd, shape_params, nprims, width, height)
     render = function([fragCoords, shape_params], res)
     return render
 
@@ -163,9 +128,9 @@ def gogo():
 width = 300
 height = 300
 exfragcoords = gen_fragcoords(width, height)
-nprims = 200
 render = make_render(nprims, width, height)
 
+nprims = 100
 shapes = []
 for i in range(nprims):
     shapes.append([go(), go(), go(), gogo()])
@@ -178,6 +143,6 @@ shapes = np.array(shapes)
 #                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
 # array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
-img = render(exfragcoords, shapes)
-plt.imshow(img[0])
+time img = render(exfragcoords, shapes)
+plt.imshow(img)
 plt.show()
