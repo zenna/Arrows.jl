@@ -1,12 +1,8 @@
 from theano import tensor as T
-from theano import function
+from theano import function, config, shared
 import numpy as np
 import theano
-
 import numpy
-import pylab
-import matplotlib.pyplot as plt
-from PIL import Image
 
 ## THe function will take as input
 # theano.config.optimizer = 'None'
@@ -42,7 +38,7 @@ def mapedit(ro, rd, params, nprims, width, height):
     translate_params = params[:, 0:3]
     sphere_radii = params[:, 3]
     background_dist = 10
-    background = np.full((width, height), background_dist)
+    background = np.full((width, height), background_dist, dtype=config.floatX)
     results, updates = theano.scan(mindist, outputs_info=background, sequences=[translate_params, sphere_radii], non_sequences = [ro, rd, background])
     return results[-1]
 
@@ -66,30 +62,30 @@ def normalize(v):
 
 def set_camera(ro, ta, cr):
     cw = normalize(ta - ro)
-    cp = np.array([np.sin(cr), np.cos(cr),0.0])
+    cp = np.array([np.sin(cr), np.cos(cr),0.0], dtype=config.floatX)
     cu = normalize(np.cross(cw,cp))
     cv = normalize(np.cross(cu,cw))
     return (cu, cv, cw)
 
 # Append an image filled with scalars to the back of an image.
 def stack(intensor, width, height, scalar):
-    scalars = np.ones([width, height, 1]) * scalar
+    scalars = np.ones([width, height, 1], dtype=config.floatX) * scalar
     return T.concatenate([intensor, scalars], axis=2)
 
 def make_render(nprims, width, height):
     # Shape params
     shape_params = T.matrix('shape')
-    iResolution = np.array([width, height], dtype=float)
+    iResolution = np.array([width, height], dtype=config.floatX)
     fragCoords = T.tensor3()
     cat = T.matrix()
     q = fragCoords / iResolution
     p = -1.0 + 2.0 * q
-    p2 = p * np.array([iResolution[0]/iResolution[1],1.0])
+    p2 = p * np.array([iResolution[0]/iResolution[1],1.0], dtype=config.floatX)
     # Ray Direction
     op = stack(p2, width, height, 2.0)
     outop = op / T.reshape(op.norm(2, axis=2), (width, height, 1))
-    ro = np.array([-0.5+3.5*np.cos(3.0), 2.0, 0.5 + 3.5*np.sin(3.0)])
-    ta = np.array([-0.5, -0.4, 0.5])
+    ro = np.array([-0.5+3.5*np.cos(3.0), 2.0, 0.5 + 3.5*np.sin(3.0)], dtype=config.floatX)
+    ta = np.array([-0.5, -0.4, 0.5], dtype=config.floatX)
     (cu, cv, cw) = set_camera(ro, ta, 0.0)
     # setup Camera
     a = T.sum(cu * outop, axis=2)
@@ -103,10 +99,10 @@ def make_render(nprims, width, height):
     return render
 
 def gen_fragcoords(width, height):
-    fragCoords = np.zeros([width, height, 2])
+    fragCoords = np.zeros([width, height, 2], dtype=config.floatX)
     for i in range(width):
         for j in range(height):
-            fragCoords[i,j] = np.array([i,j]) + 0.5
+            fragCoords[i,j] = np.array([i,j], dtype=config.floatX) + 0.5
     return fragCoords
 
 ## example
@@ -120,14 +116,15 @@ def gogo():
 width = 300
 height = 300
 exfragcoords = gen_fragcoords(width, height)
+nprims = 1000
+
 render = make_render(nprims, width, height)
 
-nprims = 100
 shapes = []
 for i in range(nprims):
     shapes.append([go(), go(), go(), gogo()])
 
-shapes = np.array(shapes)
+shapes = np.array(shapes, dtype=config.floatX)
 #
 #
 # shape = np.array([[-0.0, -0.25, -1.0, 0.25, 0.1, 0.1, 2.9],
@@ -136,5 +133,9 @@ shapes = np.array(shapes)
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
 # array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
 img = render(exfragcoords, shapes)
-plt.imshow(img)
-plt.show()
+
+# import pylab
+# import matplotlib.pyplot as plt
+# from PIL import Image
+# plt.imshow(img)
+# plt.show()
