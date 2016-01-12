@@ -39,8 +39,9 @@ def mapedit(ro, rd, params, nprims, width, height):
     sphere_radii = params[:, 3]
     background_dist = 10
     background = np.full((width, height), background_dist, dtype=config.floatX)
-    results, updates = theano.scan(mindist, outputs_info=background, sequences=[translate_params, sphere_radii], non_sequences = [ro, rd, background])
-    return results[-1]
+    init_depth = shared(background)
+    results, updates = theano.scan(mindist, outputs_info=init_depth, sequences=[translate_params, sphere_radii], non_sequences = [ro, rd, init_depth])
+    return results[-1], updates
 
 def adddim(img):
     # LOL!
@@ -94,8 +95,8 @@ def make_render(nprims, width, height):
     # Get ray direction
     rd = T.stack([a,b,c], axis=2)
     ro_ = np.tile(ro, [width, height, 1])
-    res = renderrays(ro, rd, shape_params, nprims, width, height)
-    render = function([fragCoords, shape_params], res)
+    res, updates = renderrays(ro, rd, shape_params, nprims, width, height)
+    render = function([fragCoords, shape_params], res, updates=updates)
     return render
 
 def gen_fragcoords(width, height):
@@ -116,7 +117,7 @@ def gogo():
 width = 300
 height = 300
 exfragcoords = gen_fragcoords(width, height)
-nprims = 1000
+nprims = 2000
 
 render = make_render(nprims, width, height)
 
@@ -133,7 +134,7 @@ shapes = np.array(shapes, dtype=config.floatX)
 #                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
 # array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
 img = render(exfragcoords, shapes)
-
+#
 # import pylab
 # import matplotlib.pyplot as plt
 # from PIL import Image
