@@ -3,17 +3,10 @@ from theano import function, config, shared
 import numpy as np
 import theano
 import numpy
+import pickle
 
 ## THe function will take as input
 # theano.config.optimizer = 'None'
-
-# ro_capture = 0
-# rd_capture = 0
-# params_capture = 0
-
-
-# rd = img[1][0,0]
-# ro = np.array([-3.96497374,  2.        ,  0.99392003])
 def mindist(translate, radii, min_so_far, ro, rd, background):
     ro = ro + translate
     d_o = T.dot(rd, ro)     # 640, 480
@@ -31,8 +24,6 @@ def mindist(translate, radii, min_so_far, ro, rd, background):
                         T.switch(root2 > 0, root2, background)))
     return T.min([min_so_far, depth], axis=0)
 
-
-
 def mapedit(ro, rd, params, nprims, width, height):
     # Translate ray origin by the necessary parameters
     translate_params = params[:, 0:3]
@@ -42,12 +33,6 @@ def mapedit(ro, rd, params, nprims, width, height):
     init_depth = shared(background)
     results, updates = theano.scan(mindist, outputs_info=init_depth, sequences=[translate_params, sphere_radii], non_sequences = [ro, rd, init_depth])
     return results[-1], updates
-
-def adddim(img):
-    # LOL!
-    global width
-    global height
-    return T.reshape(img, (width, height, 1))
 
 def castray(ro, rd, shape_params, nprims, width, height):
     return mapedit(ro, rd, shape_params, nprims, width, height)
@@ -114,29 +99,75 @@ def go():
 def gogo():
     return np.random.rand()*0.1
 
-width = 300
-height = 300
-exfragcoords = gen_fragcoords(width, height)
-nprims = 2000
+def features(img):
+    import lasagne
+    from lasagne.layers import InputLayer, DenseLayer, DropoutLayer
+    from lasagne.layers import Conv2DLayer as ConvLayer
+    from lasagne.layers import MaxPool2DLayer as PoolLayer
+    from lasagne.layers import LocalResponseNormalization2DLayer as NormLayer
+    from lasagne.utils import floatX
 
-render = make_render(nprims, width, height)
+    img = T.tensor4('input_img')
+    net = {}
+    net['input'] = InputLayer((None, 3, 224, 224), input_var = img)
+    net['conv1'] = ConvLayer(net['input'], num_filters=96, filter_size=7, stride=2)
+    net['norm1'] = NormLayer(net['conv1'], alpha=0.0001) # caffe has alpha = alpha * pool_size
+    net['pool1'] = PoolLayer(net['norm1'], pool_size=3, stride=3, ignore_border=False)
+    net['conv2'] = ConvLayer(net['pool1'], num_filters=256, filter_size=5)
+    net['pool2'] = PoolLayer(net['conv2'], pool_size=2, stride=2, ignore_border=False)
+    net['conv3'] = ConvLayer(net['pool2'], num_filters=512, filter_size=3, pad=1)
+    net['conv4'] = ConvLayer(net['conv3'], num_filters=512, filter_size=3, pad=1)
+    net['conv5'] = ConvLayer(net['conv4'], num_filters=512, filter_size=3, pad=1)
+    net['pool5'] = PoolLayer(net['conv5'], pool_size=3, stride=3, ignore_border=False)
+    net['fc6'] = DenseLayer(net['pool5'], num_units=4096)
+    net['drop6'] = DropoutLayer(net['fc6'], p=0.5)
+    net['fc7'] = DenseLayer(net['drop6'], num_units=4096)
+    net['drop7'] = DropoutLayer(net['fc7'], p=0.5)
+    net['fc8'] = DenseLayer(net['drop7'], num_units=1000, nonlinearity=lasagne.nonlinearities.softmax)
+    output_layer = net['fc8']
 
-shapes = []
-for i in range(nprims):
-    shapes.append([go(), go(), go(), gogo()])
+    model = pickle.load(open('vgg_cnn_s.pkl'))
+    CLASSES = model['synset words']
+    MEAN_IMAGE = model['mean image']
 
-shapes = np.array(shapes, dtype=config.floatX)
+    lasagne.layers.set_all_param_values(output_layer, model['values'])
+    params = lasagne.layers.get_all_params(output_layer)
+    conv1_th = lasagne.layers.get_output(net['conv1'])
+    norm1_th = lasagne.layers.get_output(net['norm1'])
+    pool1_th = lasagne.layers.get_output(net['pool1'])
+    conv2_th = lasagne.layers.get_output(net['conv2'])
+    pool2_th = lasagne.layers.get_output(net['pool2'])
+    conv3_th = lasagne.layers.get_output(net['conv3'])
+    conv4_th = lasagne.layers.get_output(net['conv4'])
+    conv5_th = lasagne.layers.get_output(net['conv5'])
+    pool5_th = lasagne.layers.get_output(net['pool5'])
+    fc6_th = lasagne.layers.get_output(net['fc6'])
+    drop6_th = lasagne.layers.get_output(net['drop6'])
+    fc7_th = lasagne.layers.get_output(net['fc7'])
+    output_layer_th = lasagne.layers.get_output(output_layer)
+    return (conv1_th norm1_th, pool1_th, conv2_th, pool2_th, conv3_th, conv4_th,
+            conv5_th, pool5_th, fc6_th, drop6_th, fc7_th, output_layer_th)
+
+def draw(img):
+    import pylab
+    import matplotlib.pyplot as plt
+    from PIL import Image
+    plt.imshow(img)
+    plt.show()
+
+def main():
+    width = 224
+    height = 224
+    # Generate initial rays
+    exfragcoords = gen_fragcoords(width, height)
+    nprims = 2000
+    render = make_render(nprims, width, height)
+    shapes = []
+    for i in range(nprims):
+        shapes.append([go(), go(), go(), gogo()])
+
+    shapes = np.array(shapes, dtype=config.floatX)
+    img = render(exfragcoords, shapes)
+
 #
-#
-# shape = np.array([[-0.0, -0.25, -1.0, 0.25, 0.1, 0.1, 2.9],
-#                   [-1.0, -0.25, -1.0, 0.25, 0.1, 3.1, 0.9],
-#                   [-1.0, -1.25, -0.5, 0.21, 0.3, 0.5, 0.5],
-#                   [go(), go(), go(), gogo(), gogo(), gogo(), gogo()]])
-# array([[-1.4989805 ,  0.61595596, -0.07049085,  0.01204426]])
-img = render(exfragcoords, shapes)
-#
-# import pylab
-# import matplotlib.pyplot as plt
-# from PIL import Image
-# plt.imshow(img)
-# plt.show()
+# f = theano.function([inp_var], [conv1_th, pool1_th, fc6_th, output_layer_th])
