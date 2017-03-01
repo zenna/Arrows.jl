@@ -9,7 +9,7 @@ import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
                 TransformedParameter, parameters, FixedLenVarArray
 
 # using Distributions
-
+import LightGraphs
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: call, convert, union, first, ndims, print, println, string, show,
@@ -62,19 +62,16 @@ export
 
 include("util.jl")
 include("types.jl")
-include("arrow.jl")
-include("combinators.jl")
-include("compile.jl")
-# include("call.jl")
-include("adt.jl")
 
+include("arrows/arrow.jl")
+include("arrows/primarrow.jl")
+include("arrows/comparrow.jl")
 
-include("types/typecheck.jl")
+# include("types/typecheck.jl")
 include("library.jl")
 
 # include("smt_solvers/z3interface.jl")
-include("compilation_targets/theano.jl")
+# include("compilation_targets/theano.jl")
 # include("compilation_targets/stan.jl")
-
 # using Arrows.Library
 end
