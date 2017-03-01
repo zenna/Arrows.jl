@@ -3,7 +3,7 @@ using Compat
 using PyCall
 using ZenUtils
 using SMTBase
-using Z3
+# using Z3
 import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
                 ConstantVar, nonnegparam, IndexedParameter, shape, VarArray, ConstrainedParameter,
                 TransformedParameter, parameters, FixedLenVarArray
@@ -65,7 +65,7 @@ include("types.jl")
 include("arrow.jl")
 include("combinators.jl")
 include("compile.jl")
-include("call.jl")
+# include("call.jl")
 include("adt.jl")
 
 

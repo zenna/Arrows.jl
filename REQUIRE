@@ -1,3 +1,3 @@
-julia 0.4
-Compat
-PyCall
+julia 0.5
+TensorFlow
+LightGraphs

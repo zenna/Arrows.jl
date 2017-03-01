@@ -1,15 +1,10 @@
-
 ## Composite Arrows
 ## ================
 
-# Edges should go from outports to inports.
-# Edges with the boundary need special care, because an outport on the boundary is
-# (or at least is connected to) an inport of the arrow from the outside world
-
 "An arrow with `I` input ports and `O` output ports"
 immutable CompositeArrow{I, O} <: Arrow{I,O}
-  edges::Dict{OutPort, InPort}
-  nodes::Vector{PrimArrow}
+  edges::LightGraph.Graph
+  nodes::Vector{Arrow}
   CompositeArrow() = new{I,O}(Dict{Port, Port}(), Arrow[])
 end
 
