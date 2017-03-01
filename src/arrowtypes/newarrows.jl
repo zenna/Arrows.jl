@@ -1,6 +1,6 @@
-import LightGraphs
+import LightGraphs: Graph, add_edge!, add_vertex!
 
-abstract Arrow
+abstract Arrow{I, O}
 
 immutable Port
   arrow::Arrow
@@ -8,62 +8,91 @@ immutable Port
 end
 
 abstract PortAttribute
-immutable Shape <: PortAttribute
-immutable PrimitiveArrow <: Arrow
-  name::String
-end
+# immutable Shape <: PortAttribute
 
-immutable CompositeArrow <: Arrow
-  name::String
+abstract PrimArrow
+
+## Composiet Arrows
+## ================
+"Composite Arrow"
+immutable CompArrow{I, O} <: Arrow{I, O}
+  name::Symbol
   edges::LightGraphs.Graph  # Each port has a unique index
-  ports::Vector{Port}
+  port_map::Vector{Port}    # Mapping from port indices in edges to Port
   port_attr::Vector{Set{PortAttribute}}
 end
 
-function is_sub_arrow(ctx::CompositeArrow, arrow::Arrow)::Bool
+function CompArrow(name::Symbol)
+  CompArrow(name, LightGraphs.Graph(), Port[], [])
+end
+
+"Find the index of this port in c edges"
+function port_index(arr::CompArrow, port::Port)::Integer
+  if !is_sub_arrow(arr, port.arrow)
+    throw(DomainError())
+  else
+    res = findfirst(c.port_map, port)
+    @assert res > 0
+    res
+  end
+end
+
+function num_all_ports(arr::CompArrow)::Integer
+  length(arr.port_map)
+end
+
+"Add a port to the composite arrow"
+function add_port!(arr::CompArrow)::Port
+  push!(arr.port_attr, Set{PortAttribute}())
+  p = Port(c, num_all_ports(c))
+  push!(arr.port_map, p)
+  add_vertex!(arr.edges)
+  p
+end
+
+"Add an edge in CompArrow from port `l` to port `r`"
+function link_ports!(c::CompArrow, l::Port, r::Port)
+  l_idx = port_index(c, l)
+  r_idx = port_index(c, r)
+  add_edge!(c.edges, l_idx, r_idx)
+end
+
+## External Interface
+function is_sub_arrow(ctx::CompArrow, arrow::Arrow)::Bool
   arrow == ctx || arrow.parent == ctx
 end
 
-function port_index(ctx::CompositeArrow, port::Port)::Integer
-  if arr.parent != context
-    throw(DomainError())
+"How many ports does `arr` have"
+function num_ports(arr::CompArrow)::Integer
+  return length(arr.port_map)
+end
+
+function port(arr::CompArrow, i::Integer)::Port
+  if 1 <= i <= num_ports(arr)
+    Port(arr, i)
   else
+    throw(DomainError())
+  end
 end
 
-function add_port!(c::CompositeArrow)::Port
-  push!(c.port_attr, Set{PortAttribute}())
-  Port(c, num_ports(c))
+function ports(arr::CompArrow)::Vector{Port}
+  [port(arr, i) for i = 1:num_ports(arr)]
 end
 
-"""How many ports does `arr` have"""
-function num_ports(arr::CompositeArrow)::Integer
-  return length(arr.port_attr)
-end
-
-function ports(arr::CompositeArrow)::Vector{Port}
-  [Port(arr, i) for i = 1:num_prts(arr)]
-end
-
-function out_ports(c::CompositeArrow)::
+function out_ports(arr::CompArrow)::Vector{Port}
   filter(p -> is_out_port(p), ports(c))
 end
 
-function out_port(c::CompositeArrow, i::Integer)
-  out_ports(c)[i]
+function out_port(arr::CompArrow, i::Integer)::Port
+  out_ports(arr)[i]
 end
 
-
-function add_edge(l::Port, r::Port)
-  1 + 1
-end
 
 # Example
-plus = PrimitiveArrow("plus")
-c = CompositeArrow("name", LightGraphs.Graph(), [])
-out_port(c, 0)
-
-
-## Predicate Dispatch
-
-@defmulti foo ok
-@defmethod
+plus = PrimArrow(:+)
+c = CompArrow(:xyx)
+p = add_port!(c)
+num_ports(c)
+port(c, 1)
+p2 = add_port!(c)
+link_ports!(c, p, p2)
