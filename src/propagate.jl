@@ -1,54 +1,57 @@
 """"Generic Propagation of values around a composite arrow"""
-# FIXME: Really port_attr reflects two different kinds of things.
+# FIXME: Really  reflects two different kinds of things.
 # This which are actually about the ports themselves, i.e. whether its an out
 # port or inport, which we dont want to propagate, and things which are Really
 # abstractios (or actually) values which should propagate along the node
 # e.g. shape, type, symbolic, etc.  NO_PROP is a simple workaround, need better
 # solution
 
-# Do not propagate port attributes of this kind
-DONT_PROP = set(['InOut', 'parametric', 'error'])
+function is_equal(x, y):
+  a = (x == y)
+  if isinstance(a, np.ndarray)
+      return a.all()
+  else
+    return a
+end
 
-def is_equal(x, y):
-    a = (x == y)
-    if isinstance(a, np.ndarray):
-        return a.all()
-    else:
-        return a
+function update_port_attrs!(to_update::PortAttributes,
+                            with_p::PortAttributes,
+                            dont_update::Set,
+                            fail_on_conflict=True):
+  for (key, value) in with_p:
+    if key not in dont_update:
+      if key in to_update and fail_on_conflict:
+        @assert is_equal(value, to_update[key]), "conflict %s, %s" % (value, to_update[key])
+        to_update[key] = value
+      end
+    end
+  end
+end
 
-def update_port_attr(to_update: PortAttributes,
-                     with_p: PortAttributes,
-                     dont_update: Set,
-                     fail_on_conflict=True):
-    for key, value in with_p.items():
-        if key not in dont_update:
-            if key in to_update and fail_on_conflict:
-                assert is_equal(value, to_update[key]), "conflict %s, %s" % (value, to_update[key])
-            to_update[key] = value
+function equiv_neigh(port: Port, context):
+  seen = set()
+  to_see = set([port])
+  equiv = set()
+  # import pdb; pdb.set_trace()
+  while len(to_see) > 0:
+      port = to_see.pop()
+      seen.add(port)
+      for neigh in context.neigh_ports(port):
+          equiv.add(neigh)
+          if neigh not in seen:
+              to_see.add(neigh)
+  return equiv
+end
 
-def equiv_neigh(port: Port, context):
-    seen = set()
-    to_see = set([port])
-    equiv = set()
-    # import pdb; pdb.set_trace()
-    while len(to_see) > 0:
-        port = to_see.pop()
-        seen.add(port)
-        for neigh in context.neigh_ports(port):
-            equiv.add(neigh)
-            if neigh not in seen:
-                to_see.add(neigh)
-    return equiv
-
-def update_neigh(sub_port_attr: PortAttributes,
-                 port_attr: PortAttributes,
-                 context: CompositeArrow,
-                 working_set: Set[Arrow]):
+function update_neigh(sub_port_attr::PortAttributes,
+                      port_attrs::PortAttributes,
+                      context::CompositeArrow,
+                      working_set::Set[Arrow]):
     """
-    For every port in sub_port_attr the port_attr data all of its connected nodes
+    For every port in sub_port_attr the  data all of its connected nodes
     Args:
         sub_port_attr: Port Attributes restricted to a particular arrow
-        port_attr: Global PortAttributes for composition to be update
+        : Global PortAttributes for composition to be update
         context: The composition
         working_set: Set of arrows that need further propagation
     """
@@ -58,26 +61,38 @@ def update_neigh(sub_port_attr: PortAttributes,
             # If the neighbouring node doesn't have a key which I have, then it will
             # have to be added to working set to propagate again
             if (neigh_port.arrow != context):
-                neigh_attr_keys = port_attr[neigh_port].keys()
+                neigh_attr_keys = [neigh_port].keys()
                 if any((attr_key not in neigh_attr_keys for attr_key in attrs.keys())):
                     working_set.add(neigh_port.arrow)
-            update_port_attr(port_attr[neigh_port], attrs, dont_update=DONT_PROP)
+            update_port_attr([neigh_port], attrs, dont_update=DONT_PROP)
         # Update global with this port
-        update_port_attr(port_attr[port], attrs, dont_update=DONT_PROP)
+        update_port_attr([port], attrs, dont_update=DONT_PROP)
 
 
-function extract_port_attr(comp_arrow, port_attr):
+function extract_port_attr(comp_arrow, port):
     for sub_arrow in comp_arrow.get_all_arrows():
         for port in sub_arrow.ports():
             attributes = get_port_attr(port)
-            if port not in port_attr:
-                port_attr[port] = {}
-            update_port_attr(port_attr[port], attributes, set())
+            if port not in :
+                [port] = {}
+            update_port_attr([port], attributes, set())
+
+
+function copy(port_attr::PortAttrs)
+  _port_attr = defaultdict(lambda: dict())
+  for (port, attr) in port_attrs
+      for (attr_key, attr_value) in attr
+          _port_attr[port][attr_key] = attr_value
+      end
+  end
+end
 
 #FIXME: Does unnecessary Propagate, will do a dispatch more than once
 # which is (probably) never needed
-# FIXME: There is a loss of information bug from port_attr,
+# FIXME: There is a loss of information bug from ,
 # remove __eq__ form symbolictensor and run voxel render to sees
+
+function sub_propagate(arr:PrimArrow, port_attr::PortAttrs)
 
 """
 Propagate values around a composite arrow to determine knowns from unknowns
@@ -86,18 +101,14 @@ Args:
     sub_propagate: an @overloaded function which propagates from each arrow
       sub_propagate(a: ArrowType, port_to_known:Dict[Port, T], state:Any)
     comp_arrow: Composite Arrow to propagate through
-    port_attr: port->value map for inputs to composite arrow
+    : port->value map for inputs to composite arrow
     state: A value of any type that is passed around during propagation
            and can be updated by sub_propagate
 Returns:
     port->value map for all ports in composite arrow
 """
-function propagate(arr:: CompArrow, port_attr::PortAttr, state=None)::PortAttr:
-    _port_attr = defaultdict(lambda: dict())
-    for port, attr in port_attr.items():
-        for attr_key, attr_value in attr.items():
-            _port_attr[port][attr_key] = attr_value
-
+function propagate(arr:: CompArrow, port_attr::PortAttr, state)::PortAttr
+    _port_attr = copy(port_attr)
     extract_port_attr(comp_arrow, _port_attr)
     updated = set(comp_arrow.get_sub_arrows())
     update_neigh(_port_attr, _port_attr, comp_arrow, updated)
@@ -125,3 +136,4 @@ end
 
 function propagate(arr::CompArrow)
   propagate(arr, Dict{}, )
+end

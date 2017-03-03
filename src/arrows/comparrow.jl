@@ -1,16 +1,28 @@
 ## Composite Arrows
 ## ================
 
-"Composite Arrow"
-immutable CompArrow{I, O} <: Arrow{I, O}
+"Directed Composite Arrow"
+immutable CompArrow{D, I, O} <: Arrow{D, I, O}
+  name::Symbol
+  edges::LightGraphs.DiGraph  # Each port has a unique index
+  port_map::Vector{Port}    # Mapping from port indices in edges to Port
+  port_attrs::Vector{PortAttrs}
+
+  function CompArrow(name::Symbol)
+    new(name, LightGraphs.Graph(), Port[], [])
+  end
+end
+
+"Undirected Composite Arrow"
+immutable CompArrow{D< I, O} <: Arrow{I, O}
   name::Symbol
   edges::LightGraphs.Graph  # Each port has a unique index
   port_map::Vector{Port}    # Mapping from port indices in edges to Port
-  port_attr::Vector{Set{PortAttribute}}
-end
+  port_attrs::Vector{PortAttrs}
 
-function CompArrow(name::Symbol)
-  CompArrow(name, LightGraphs.Graph(), Port[], [])
+  function CompArrow(name::Symbol)
+    new(name, LightGraphs.Graph(), Port[], [])
+  end
 end
 
 "Find the index of this port in c edges"
@@ -24,13 +36,12 @@ function port_index(arr::CompArrow, port::Port)::Integer
   end
 end
 
-function num_all_ports(arr::CompArrow)::Integer
-  length(arr.port_map)
-end
+"Number of all the ports in of all the arrows in the composition"
+num_all_ports(arr::CompArrow)::Integer = length(arr.port_map)
 
 "Add a port to the composite arrow"
 function add_port!(arr::CompArrow)::Port
-  push!(arr.port_attr, Set{PortAttribute}())
+  push!(arr.port_attrs, Set{PortAttribute}())
   p = Port(c, num_all_ports(c))
   push!(arr.port_map, p)
   add_vertex!(arr.edges)
@@ -44,35 +55,12 @@ function link_ports!(c::CompArrow, l::Port, r::Port)
   add_edge!(c.edges, l_idx, r_idx)
 end
 
-## External Interface
-function is_sub_arrow(ctx::CompArrow, arrow::Arrow)::Bool
-  arrow == ctx || arrow.parent == ctx
+"is `arr` a sub_arrow of `ctx`"
+function is_sub_arrow(ctx::CompArrow, arr::Arrow)::Bool
+  arr == ctx || arr.parent == ctx
 end
 
-"How many ports does `arr` have"
-function num_ports(arr::CompArrow)::Integer
-  return length(arr.port_map)
-end
 
-function port(arr::CompArrow, i::Integer)::Port
-  if 1 <= i <= num_ports(arr)
-    Port(arr, i)
-  else
-    throw(DomainError())
-  end
-end
-
-function ports(arr::CompArrow)::Vector{Port}
-  [port(arr, i) for i = 1:num_ports(arr)]
-end
-
-function out_ports(arr::CompArrow)::Vector{Port}
-  filter(p -> is_out_port(p), ports(c))
-end
-
-function out_port(arr::CompArrow, i::Integer)::Port
-  out_ports(arr)[i]
-end
 
 # "Number of dimensions of array at inport `p` of subarrow within `a`"
 # function ndims{I, O}(a::CompositeArrow{I, O}, p::Port)

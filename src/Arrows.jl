@@ -66,9 +66,9 @@ include("types.jl")
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
-
-# include("types/typecheck.jl")
-include("library.jl")
+include("primitive/math.jl")
+include("compose/combinators.jl")
+# include("library.jl")
 
 # include("smt_solvers/z3interface.jl")
 # include("compilation_targets/theano.jl")

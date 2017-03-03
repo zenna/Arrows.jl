@@ -1,11 +1,8 @@
 using Base.Test
-using Arrows
+import Arrows: PrimArrow, CompArrow, add_port!, num_ports, port, link_ports!
+import Arrows
 
-
-plus = PrimArrow(:+)
-c = CompArrow(:xyx)
-p = add_port!(c)
-num_ports(c)
-port(c, 1)
-p2 = add_port!(c)
-link_ports!(c, p, p2)
+addarr = Arrows.AddArrow()
+ports(addarr)
+sqrtarr = Arrows.SqrtArrow()
+add_sqrt = Arrows.compose(addarr, sqrtarr)
