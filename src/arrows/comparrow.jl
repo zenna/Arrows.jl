@@ -1,8 +1,9 @@
 ## Composite Arrows
 ## ================
 
+
 "Directed Composite Arrow"
-immutable CompArrow{D, I, O} <: Arrow{D, I, O}
+immutable CompArrow{I, O} <: Arrow{I, O}
   name::Symbol
   edges::LightGraphs.DiGraph  # Each port has a unique index
   port_map::Vector{Port}    # Mapping from port indices in edges to Port
@@ -13,17 +14,6 @@ immutable CompArrow{D, I, O} <: Arrow{D, I, O}
   end
 end
 
-"Undirected Composite Arrow"
-immutable CompArrow{D< I, O} <: Arrow{I, O}
-  name::Symbol
-  edges::LightGraphs.Graph  # Each port has a unique index
-  port_map::Vector{Port}    # Mapping from port indices in edges to Port
-  port_attrs::Vector{PortAttrs}
-
-  function CompArrow(name::Symbol)
-    new(name, LightGraphs.Graph(), Port[], [])
-  end
-end
 
 "Find the index of this port in c edges"
 function port_index(arr::CompArrow, port::Port)::Integer

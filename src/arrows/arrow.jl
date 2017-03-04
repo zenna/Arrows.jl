@@ -6,25 +6,31 @@ import LightGraphs: Graph, add_edge!, add_vertex!
 # be able to maek a port a paraemtric port easily
 
 
-# FIXME: What about directivity
-# FIXME: Should directivity be in teh type?
+"A relation is a kind of undirected computational model over `N` variables"
+abstract Relation{N}
+
 "An Arrow of `I` inputs and `O` outputs"
-abstract Arrow{D, I, O}
+abstract Arrow{I, O} <: Relation{IO}
 
 ## Ports
 """An entry or exit to an Arrow, analogous to argument position of multivariate function.
 A port is uniquely determined by the arrow it belongs to and an index"""
 abstract Port
 
+# Problem with this is taht it disassociates the
+# port attribtues with the arrow
+
 immutable OutPort <: Port
   arrow::Arrow
   index::Integer
+  name::Symbol
   labels::Set{Symbol}
 end
 
 immutable InPort <: Port
   arrow::Arrow
   index::Integer
+  name::Symbol
   labels::Set{Symbol}
 end
 
