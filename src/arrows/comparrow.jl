@@ -6,37 +6,78 @@
 immutable CompArrow{I, O} <: Arrow{I, O}
   name::Symbol
   edges::LightGraphs.DiGraph  # Each port has a unique index
-  port_map::Vector{Port}    # Mapping from port indices in edges to Port
+  port_map::Vector{Integer}   # Mapping from port indices in edges to Port
   port_attrs::Vector{PortAttrs}
+  parent::Nullable{CompArrow}
 
+  "Constructs CompArrow with Any"
   function CompArrow(name::Symbol)
-    new(name, LightGraphs.Graph(), Port[], [])
+    nports = I + O
+    g = LightGraphs.DiGraph(nports)
+    port_map = [i for i = 1:nports]
+    in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
+    out_port_attrs = [PortAttrs(true, Symbol(:out_, i), Any) for i = 1:I]
+    port_attrs = vcat(in_port_attrs, out_port_attrs)
+    new(name, g, port_map, port_attrs, Nullable{CompArrow}())
   end
 end
 
+"Does the arrow have a parent? (is it within a composition)?"
+is_parentless(arr::Arrow)::Bool = isnull(arr.parent)
 
 "Find the index of this port in c edges"
 function port_index(arr::CompArrow, port::Port)::Integer
   if !is_sub_arrow(arr, port.arrow)
     throw(DomainError())
   else
-    res = findfirst(c.port_map, port)
+    res = findfirst(arr.port_map, port)
     @assert res > 0
     res
   end
+end
+
+# FIXME: Could specialize this to avoid check from port_index above
+port_index(port::Port)::Integer = port_index(port.arrow, port)
+
+"The Port with index `i` in arr.edges"
+port_index(arr::CompArrow, i::Integer)::Port = arr.port_map[i]
+
+function port_attrs(arr::CompArrow, port::Port)
+  arr.port_attrs[port_index(port.arrow, port)]
 end
 
 "Number of all the ports in of all the arrows in the composition"
 num_all_ports(arr::CompArrow)::Integer = length(arr.port_map)
 
 "Add a port to the composite arrow"
-function add_port!(arr::CompArrow)::Port
-  push!(arr.port_attrs, Set{PortAttribute}())
+function add_port!(arr::CompArrow, port_attrs::PortAttrs)::Port
+  push!(arr.port_attrs, port_attrs)
   p = Port(c, num_all_ports(c))
   push!(arr.port_map, p)
   add_vertex!(arr.edges)
   p
 end
+
+"Add a port to the composite arrow"
+function add_port!(arr::CompArrow, is_in_port::Bool, name::Symbol, typ::Any,
+                   labels::Set{Symbol})::Port
+  add_port!(arr, PortAttrs(input, name, typ, labels))
+end
+
+"Add an in_port to `arr`"
+function add_in_port!(arr::CompArrow, name::Symbol, typ::Any,
+                      labels::Set{Symbol})::Port
+  add_port!(arr, PortAttrs(true, name, typ, labels))
+end
+
+"Add an out_port to `arr`"
+function add_out_port!(arr::CompArrow, name::Symbol, typ::Any,
+                       labels::Set{Symbol})::Port
+  add_port!(arr, PortAttrs(false, name, typ, labels))
+end
+
+"Add a port to `arr` with same attributes as `port`"
+add_port_like!(arr::CompArrow, port::Port)::Port = add_port!(arr, port_attrs(port))
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(c::CompArrow, l::Port, r::Port)
@@ -50,6 +91,11 @@ function is_sub_arrow(ctx::CompArrow, arr::Arrow)::Bool
   arr == ctx || arr.parent == ctx
 end
 
+# Graph traversal
+function neighbors(port::Port)::List{Port}
+  neigh_indices = neighbors(port.arrow.edges, port_index(port))
+  [port_index(port.arrow, i) for i in neigh_indices]
+end
 
 
 # "Number of dimensions of array at inport `p` of subarrow within `a`"

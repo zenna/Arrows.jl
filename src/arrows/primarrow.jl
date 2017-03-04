@@ -2,10 +2,8 @@
 ## ===============
 
 abstract PrimArrow{I, O} <: Arrow{I, O}
+port_attrs(arr::PrimArrow, port::Port) = arr.port_attrs[port.index]
 
-ports{I, O}(arr::PrimArrow{I, O}) = [Port(arr, i) for i = 1:I+O]
-
-# Intercace methods
 name(x::PrimArrow) = error("interface: children should implement name")
 typ(x::PrimArrow) = error("interface: children should implement typ")
 dimtyp(x::PrimArrow) = error("interface: children should implement dimtyp")

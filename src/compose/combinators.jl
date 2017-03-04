@@ -1,24 +1,9 @@
-"Wrap primitive arrow in composite arrow - behaves identically to original arrow"
-function encapsulate{I,O}(a::PrimArrow{I,O})
+"Wrap an arrow in another arrow - behaves identically to original arrow"
+function encapsulate{I,O}(arr::PrimArrow{I,O})
   c = CompArrow{I,O}()
-  addnodes!(c, [a])
-  for i = 1:I
-    addedge!(c, OutPort(1, i), InPort(2, i))
-  end
-
-  for i = 1:O
-    addedge!(c, OutPort(2, i), InPort(1, i))
-  end
-  @assert iswellformed(c)
   c
 end
-#
-# "Increment the arrowid of a port by `offset`. Usful when combining arrows, where some arrowids need to be offset"
-# offsetarrowid{P <: Port}(p::P, offset::ArrowId) = P(p.arrowid + offset, p.pinid)
-#
-# "Offset only if it is a boundary port"
-# safeoffsetarrowid(p::Port, offset::ArrowId) =
-#   isboundary(p) ? p : offsetarrowid(p, offset)
+
 "Right Composition - Wire outputs of `a` to inputs of `b`"
 function compose{I1, O1I2, O2}(a::Arrow{I1, O1I2},
                                b::Arrow{O1I2, O2})::Arrow{I1,O2}
