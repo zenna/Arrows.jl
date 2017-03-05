@@ -16,7 +16,7 @@ immutable CompArrow{I, O} <: Arrow{I, O}
     g = LightGraphs.DiGraph(nports)
     port_map = [i for i = 1:nports]
     in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
-    out_port_attrs = [PortAttrs(true, Symbol(:out_, i), Any) for i = 1:I]
+    out_port_attrs = [PortAttrs(false, Symbol(:out_, i), Any) for i = 1:O]
     port_attrs = vcat(in_port_attrs, out_port_attrs)
     new(name, g, port_map, port_attrs, Nullable{CompArrow}())
   end
@@ -30,7 +30,7 @@ function port_index(arr::CompArrow, port::Port)::Integer
   if !is_sub_arrow(arr, port.arrow)
     throw(DomainError())
   else
-    res = findfirst(arr.port_map, port)
+    res = findfirst(arr.port_map, port.index)
     @assert res > 0
     res
   end

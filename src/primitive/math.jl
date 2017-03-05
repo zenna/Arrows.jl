@@ -1,4 +1,5 @@
 # Primitimve Math Arrow
+
 function bin_arith_port_attrs()
   [PortAttrs(true, :x, Array{Real}),
    PortAttrs(true, :y, Array{Real}),
@@ -13,6 +14,18 @@ immutable AddArrow <: PrimArrow{2, 1}
     new(:+, port_attrs)
   end
 end
+
+convert(Arrow, ::typeof(+)) = AddArrow
+lift(f::Function) = convert(Arrow, f)
+function +(x::Port, y::Port)
+  if !same((parent(p) for p in [x,y])
+    throw(DomainError())
+  end
+  # Check all parent arrows are the same
+  # Find the corresponding port in this composition
+  # Create a new arrow
+  # wire them upp
+
 
 immutable MinusArrow <: PrimArrow{2, 1}
   name::Symbol
