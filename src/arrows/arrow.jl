@@ -7,6 +7,9 @@ abstract Arrow{I, O} <: Relation{IO}
 "Generate a unique arrow id"
 gen_id()::Symbol = gensym()
 
+"Get the parent of an arrow"
+parent(a::Arrow) = get(a.parent)
+
 """An entry or exit to an Arrow, analogous to argument of multivariate function.
 A port is uniquely determined by the arrow it belongs to and an index"""
 abstract AbstractPort
@@ -26,7 +29,7 @@ immutable InPort{T <: Integer} <: AbstractPort
   index::T
 end
 
-parent(port::Port)::Nullable{CompArrow} = port.arrow.parent
+parent(port::Port)::Nullable{CompArrow} = parent(port.arrow)
 
 """Port Attributes (i.e) properties intristinc to a port"""
 immutable PortAttrs

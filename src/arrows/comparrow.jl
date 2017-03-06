@@ -30,6 +30,16 @@ type CompArrow{I, O} <: Arrow{I, O}
   end
 end
 
+"Return all the sub_arrows of `arr` excluding arr itself"
+function sub_arrows(arr::CompArrow)::Vector{Arrow}
+  unique([port.arrow for port in arr.port_map if port.arrow != arr])
+end
+
+"Return all the sub_arrows of `arr` including arr itself"
+function all_sub_arrows(arr::CompArrow)::Vector{Arrow}
+  unique([port.arrow for port in arr.port_map])
+end
+
 "Does the arrow have a parent? (is it within a composition)?"
 is_parentless(arr::Arrow)::Bool = isnull(arr.parent)
 
@@ -63,6 +73,7 @@ add_port_like!(arr::CompArrow, port::Port)::Port = add_port!(arr, port_attrs(por
 "Is `port` within `arr`"
 in(port::Port, arr::CompArrow)::Bool = port in arr.port_map
 
+# FIXME this searches over many duplicates
 "Is `arr` a sub_arrow of composition `c_arr`"
 in(arr::Arrow, c_arr::CompArrow)::Bool = arr in (p.arrow for p in c_arr.port_map)
 
@@ -94,22 +105,17 @@ function link_ports!(c::CompArrow, l::Port, r::Port)
   add_edge!(c.edges, l_idx, r_idx)
 end
 
-"is `arr` a sub_arrow of `ctx`"
-function is_sub_arrow(ctx::CompArrow, arr::Arrow)::Bool
-  arr == ctx || arr.parent == ctx
-end
-
 # Graph traversal
 "is vertex `v` a destination"
-is_dest(g::LightGraphs.DiGraph, v::Integer) = in_degree(g, v) > 0
+is_dest(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.indegree(g, v) > 0
 
 "is vertex `v` a source"
-is_src(g::LightGraphs.DiGraph, v::Integer) = out_degree(g, v) > 0
+is_src(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.outdegree(g, v) > 0
 
 #FIXME: Turn this into a macro for type stability
 "Helper function to translate LightGraph functions to Port functions"
-function lg_to_p(f::Function, port::Port, arr::Arrow)
-  f(port.arrow.edges, port_index(arr, port))
+function lg_to_p(f::Function, port::Port, arr::CompArrow)
+  f(arr.edges, port_index(arr, port))
 end
 
 function v_to_p(f::Function, port::Port, arr::Arrow)
@@ -117,10 +123,10 @@ function v_to_p(f::Function, port::Port, arr::Arrow)
 end
 
 "Is port a destination"
-is_dest(port::Port) = lg_to_p(is_dest, port)
+is_dest(port::Port, arr::CompArrow) = lg_to_p(is_dest, port, arr)
 
 "Is port a source"
-is_src(port::Port) = lg_to_p(is_src, port)
+is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
 
 "Vector of all neighbors of `port`"
 neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.neighbors, port, arr)
@@ -140,6 +146,10 @@ out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.outdegree,
 "Return the number of ports which end at port p"
 in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.indegree, port, arr)
 
+is_src{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
+
+is_dest{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
+
 is_src{A<:CompArrow}(port::Port{A}) = is_src(port, port.arrow)
 
 is_dest{A<:CompArrow}(port::Port{A}) = is_dest(port, port.arrow)
@@ -155,26 +165,33 @@ out_degree{A<:CompArrow}(port::Port{A}) = out_degree(port, port.arrow)
 in_degree{A<:CompArrow}(port::Port{A}) = in_degree(port, port.arrow)
 
 # Primitive
-is_src{A<:PrimArrow}(port::Port{A}) = is_src(port, port.arrow.parent)
+is_src{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
 
-is_dst{A<:PrimArrow}(port::Port{A}) = is_dest(port, port.arrow.parent)
+is_dest{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
 
-neighbors{A<:PrimArrow}(port::Port{A}) = neighbors(port, port.arrow.parent)
+is_src{A<:PrimArrow}(port::Port{A}) = is_src(port, parent(port.arrow))
 
-in_neighbors{A<:PrimArrow}(port::Port{A}) = in_neighbors(port, port.arrow.parent)
+is_dest{A<:PrimArrow}(port::Port{A}) = is_dest(port, parent(port.arrow))
 
-out_neighbors{A<:PrimArrow}(port::Port{A}) = out_neighbors(port, port.arrow.parent)
+neighbors{A<:PrimArrow}(port::Port{A}) = neighbors(port, parent(port.arrow))
 
-out_degree{A<:PrimArrow}(port::Port{A}) = out_degree(port, port.arrow.parent)
+in_neighbors{A<:PrimArrow}(port::Port{A}) = in_neighbors(port, parent(port.arrow))
 
-in_degree{A<:PrimArrow}(port::Port{A}) = in_degree(port, port.arrow.parent)
+out_neighbors{A<:PrimArrow}(port::Port{A}) = out_neighbors(port, parent(port.arrow))
 
-"Return a p"
-function proj_port(port::Port)
-  if is_dest(port)
-    first(in_neighbors(port))
-  else
-    @assert is_src(port)
-    port
+out_degree{A<:PrimArrow}(port::Port{A}) = out_degree(port, parent(port.arrow))
+
+in_degree{A<:PrimArrow}(port::Port{A}) = in_degree(port, parent(port.arrow))
+
+"Is `arr` wired up correctly"
+function is_wired_correct(arr::CompArrow)::Bool
+  for i = 1:LightGraphs.nv(arr.edges)
+    if is_dest(port_index(arr, i)) && LightGraphs.indegree(arr.edges, i) != 1
+      return false
+    end
+    if is_src(port_index(arr, i)) && LightGraphs.outdegree(arr.edges, 1) < 1
+      return false
+    end
   end
+  true
 end

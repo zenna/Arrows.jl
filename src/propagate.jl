@@ -98,10 +98,7 @@ function sub_propagate(arr:PrimArrow, port_attr::PortAttrs)
 Propagate values around a composite arrow to determine knowns from unknowns
 The knowns should be determined by the knowns, otherwise an error throws
 Args:
-    sub_propagate: an @overloaded function which propagates from each arrow
-      sub_propagate(a: ArrowType, port_to_known:Dict[Port, T], state:Any)
-    comp_arrow: Composite Arrow to propagate through
-    : port->value map for inputs to composite arrow
+    arr: Composite Arrow to propagate through
     state: A value of any type that is passed around during propagation
            and can be updated by sub_propagate
 Returns:
