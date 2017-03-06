@@ -28,7 +28,8 @@ import Base:  ^,
               !=,
               |,
               &,
-              !
+              !,
+              in
 
 export
   # Combinators

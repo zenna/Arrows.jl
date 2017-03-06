@@ -17,9 +17,10 @@ abstract Arrow{I, O} <: Relation{IO}
 A port is uniquely determined by the arrow it belongs to and an index"""
 abstract AbstractPort
 
-immutable Port{T <: Integer} <: AbstractPort
-  arrow::Arrow
+immutable Port{A <: Arrow, T <: Integer} <: AbstractPort
+  arrow::A
   index::T
+  port_index::Nullable{T}
 end
 
 immutable OutPort{T <: Integer} <: AbstractPort
