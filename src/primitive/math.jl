@@ -18,83 +18,62 @@
 # youd need to do some indexing based on.
 # That is, a port would have to return its port_index
 
-immutable AddArrow <: PrimArrow{2, 1} end
+# Pros
+# - Gain: space efficnet
+# - more elegant in a way + == +
+#
+
+# Cons
+# - Lose ability to take port and see directly where it is, must always know the context
+# vcannot build a big global map of port to something,e e.g. abstract value or something
+# cannot label port attributes (do we need to?)
+#
+
+# It's not clear in the code that we have that we need parent
+# We do need ports to be distinct though....
+# If it turns out we need a parent then I'll add it
+
+
+# Is using location in memory a good thing? for distinguishing equivalence
+
+# Arrow e quivalence
+# When are two arrows equivalent?
+# equievalence is important because we use equivalence
+# 1. All arrows have a unique name
+# 1. arrows are different by virtue of their location in memory
+# 3. arrows are equivalent by virtue of their index in the composition
+# 4.
+
+function bin_arith_port_attrs()
+  [PortAttrs(true, :x, Array{Real}),
+   PortAttrs(true, :y, Array{Real}),
+   PortAttrs(false, :z, Array{Real})]
+end
+
+set_parent!{A <: PrimArrow}(arr::A, c_arr::CompArrow)::A = A(c_arr)
+
+immutable AddArrow <: PrimArrow{2, 1}
+  id::Symbol
+  parent::Nullable{CompArrow}
+end
 name(::AddArrow)::Symbol = :+
 port_attrs(::AddArrow) = bin_arith_port_attrs()
+AddArrow() = AddArrow(gen_id(), Nullable{CompArrow}())
+AddArrow(parent::CompArrow) = AddArrow(gen_id(), parent)
 
-# A possibility there is that the port_index could be wrong
-#
+convert(Arrow, ::typeof(+)) = AddArrow
+lift(f::Function) = convert(Arrow, f)
+function +(x::Port, y::Port)
+  # Check all parent arrows are the same
+  if !same((parent(p) for p in [x,y]))
+    throw(DomainError())
+  end
 
-#
-# # Cons
-# # It's more difficult to just say what is the vlaue at some port
-#
-# #FIXME: DRY
-#
-# function bin_arith_port_attrs()
-#   [PortAttrs(true, :x, Array{Real}),
-#    PortAttrs(true, :y, Array{Real}),
-#    PortAttrs(false, :z, Array{Real})]
-# end
-#
-# immutable AddArrow <: PrimArrow{2, 1}
-#   name::Symbol
-#   port_attrs::Tuple{PortAttrs, PortAttrs, PortAttrs}
-#   function AddArrow()
-#     port_attrs = bin_arith_port_attrs()
-#     new(:+, port_attrs, Nullable{CompArrow}())
-#   end
-# end
-#
-# convert(Arrow, ::typeof(+)) = AddArrow
-# lift(f::Function) = convert(Arrow, f)
-# function +(x::Port, y::Port)
-#   # Check all parent arrows are the same
-#   if !same((parent(p) for p in [x,y]))
-#     throw(DomainError())
-#   end
-#
-#   # Find the corresponding port in this composition
-#   x2 = proj_port(x)
-#   y2 = proj_port(y)
-#
-#   addarr = AddArrow()
-#   # Create a new arrow
-#   # wire them upp
-# end
-#
-# immutable MinusArrow <: PrimArrow{2, 1}
-#   name::Symbol
-#   port_attrs::Vector{PortAttrs}
-#   parent::Nullable{CompArrow}
-#   function AddArrow()
-#     port_attrs = bin_arith_port_attrs()
-#     new(:-, port_attrs, Nullable{CompArrow}())
-#   end
-# end
-#
-# immutable MulArrow <: PrimArrow{2, 1}
-#   name::Symbol
-#   port_attrs::Vector{PortAttrs}
-#   parent::Nullable{CompArrow}
-#   function MulArrow()
-#     port_attrs = bin_arith_port_attrs()
-#     new(:*, port_attrs, Nullable{CompArrow}())
-#   end
-# end
-#
-# immutable DivArrow <: PrimArrow{2, 1}
-#   name::Symbol
-#   port_attrs::Vector{PortAttrs}
-#   parent::Nullable{CompArrow}
-#   function DivArrow()
-#     port_attrs = bin_arith_port_attrs()
-#     new(:/, port_attrs)
-#   end
-# end
-#
-# # Ooptiosn 1. go on 31st 273
-#
-# # Ooptiosn 2. go on 5am on 1st, pay 343more.
-#
-# # Optio n3.
+  # Find the corresponding port in this composition
+  x2 = proj_port(x)
+  y2 = proj_port(y)
+
+  addarr = AddArrow()
+  # Create a new arrow
+  # wire them upp
+end

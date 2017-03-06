@@ -1,18 +1,12 @@
-import LightGraphs: Graph, add_edge!, add_vertex!
-
-## Desiderata
-# -Be able to change an undirected arrow to a directed arrow and vice versa
-# Be able to make a port an error port or not easily
-# be able to maek a port a paraemtric port easily
-
-
 "A relation is a kind of undirected computational model over `N` variables"
 abstract Relation{N}
 
 "An Arrow of `I` inputs and `O` outputs"
 abstract Arrow{I, O} <: Relation{IO}
 
-## Ports
+"Generate a unique arrow id"
+gen_id()::Symbol = gensym()
+
 """An entry or exit to an Arrow, analogous to argument of multivariate function.
 A port is uniquely determined by the arrow it belongs to and an index"""
 abstract AbstractPort
@@ -20,7 +14,6 @@ abstract AbstractPort
 immutable Port{A <: Arrow, T <: Integer} <: AbstractPort
   arrow::A
   index::T
-  port_index::Nullable{T}
 end
 
 immutable OutPort{T <: Integer} <: AbstractPort
