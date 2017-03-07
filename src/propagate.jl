@@ -1,19 +1,4 @@
-""""Generic Propagation of values around a composite arrow"""
-# FIXME: Really  reflects two different kinds of things.
-# This which are actually about the ports themselves, i.e. whether its an out
-# port or inport, which we dont want to propagate, and things which are Really
-# abstractios (or actually) values which should propagate along the node
-# e.g. shape, type, symbolic, etc.  NO_PROP is a simple workaround, need better
-# solution
-
-function is_equal(x, y):
-  a = (x == y)
-  if isinstance(a, np.ndarray)
-      return a.all()
-  else
-    return a
-end
-
+"""Generic Propagation of values around a composite arrow"""
 function update_port_attrs!(to_update::PortAttributes,
                             with_p::PortAttributes,
                             dont_update::Set,
@@ -87,12 +72,22 @@ function copy(port_attr::PortAttrs)
   end
 end
 
-#FIXME: Does unnecessary Propagate, will do a dispatch more than once
-# which is (probably) never needed
-# FIXME: There is a loss of information bug from ,
-# remove __eq__ form symbolictensor and run voxel render to sees
 
-function sub_propagate(arr:PrimArrow, port_attr::PortAttrs)
+function shape_pred()
+end
+
+@register ArithmeticArrow
+function shape_dispatch()
+end
+
+## propagate data structure is what?
+
+
+
+PropDict = Dict{Symbol, Any}
+typealias Props Dict{Port, PropDict}
+
+function sub_propagate(arr:PrimArrow, props::Props)
 
 """
 Propagate values around a composite arrow to determine knowns from unknowns
