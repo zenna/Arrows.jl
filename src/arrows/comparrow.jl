@@ -131,9 +131,6 @@ is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
 "Vector of all neighbors of `port`"
 neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.neighbors, port, arr)
 
-"Vector of all neighbors of `port`"
-neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.neighbors, port, arr)
-
 "Vector of ports which `port` projects to"
 in_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.in_neighbors, port, arr)
 

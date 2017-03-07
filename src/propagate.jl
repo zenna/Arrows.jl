@@ -86,7 +86,6 @@ end
 
 PropDict = Dict{Symbol, Any}
 typealias Props Dict{Port, PropDict}
-
 function sub_propagate(arr:PrimArrow, props::Props)
 
 """
@@ -99,33 +98,50 @@ Args:
 Returns:
     port->value map for all ports in composite arrow
 """
-function propagate(arr:: CompArrow, port_attr::PortAttr, state)::PortAttr
-    _port_attr = copy(port_attr)
-    extract_port_attr(comp_arrow, _port_attr)
-    updated = set(comp_arrow.get_sub_arrows())
-    update_neigh(_port_attr, _port_attr, comp_arrow, updated)
-    while len(updated) > 0:
-        # print(len(updated), " arrows updating in proapgation iteration")
-        sub_arrow = updated.pop()
-        sub_port_attr = {port: _port_attr[port]
-                           for port in sub_arrow.ports()
-                           if port in _port_attr}
+function propagate(arr:: CompArrow, state)::PortAttr
+  _port_attr = copy(port_attr)
+  extract_port_attr(comp_arrow, _port_attr)
+  updated = set(comp_arrow.get_sub_arrows())
+  update_neigh(_port_attr, _port_attr, comp_arrow, updated)
 
-        pred_dispatches = sub_arrow.get_dispatches()
-        for pred, dispatch in pred_dispatches.items():
-            if pred(sub_arrow, sub_port_attr):
-                new_sub_port_attr = dispatch(sub_arrow, sub_port_attr)
-                update_neigh(new_sub_port_attr, _port_attr, comp_arrow, updated)
-        if isinstance(sub_arrow, CompositeArrow):
-            sub_port_attr = {port: _port_attr[port]
-                            for port in sub_arrow.ports()
-                            if port in _port_attr}
-            new_sub_port_attr = propagate(sub_arrow, sub_port_attr, state)
-            update_neigh(new_sub_port_attr, _port_attr, comp_arrow, updated)
-    print("Done Propagating")
-    return _port_attr
+  while len(updated) > 0:
+    sub_arrow = updated.pop()
+    sub_port_attr = {port: _port_attr[port]
+                     for port in sub_arrow.ports()
+                     if port in _port_attr}
+
+    pred_dispatches = sub_arrow.get_dispatches()
+    for pred, dispatch in pred_dispatches.items():
+      if pred(sub_arrow, sub_port_attr):
+        new_sub_port_attr = dispatch(sub_arrow, sub_port_attr)
+        update_neigh(new_sub_port_attr, _port_attr, comp_arrow, updated)
+    if isinstance(sub_arrow, CompositeArrow):
+      sub_port_attr = {port: _port_attr[port]
+                       for port in sub_arrow.ports()
+                       if port in _port_attr}
+      new_sub_port_attr = propagate(sub_arrow, sub_port_attr, state)
+      update_neigh(new_sub_port_attr, _port_attr, comp_arrow, updated)
+  print("Done Propagating")
+  return _port_attr
 end
 
 function propagate(arr::CompArrow)
   propagate(arr, Dict{}, )
 end
+
+# There are a number of different scenarios
+#
+
+"A predicate dispatch"
+immutable PredDispatch
+  pred::Function   # The predicate
+  disp::Function   # The dispatch function
+  refire::Function # Continue Firing
+end
+
+#TODO:
+# 1. How to do multiple dispatch
+# 2. How to not propagate more than once
+# 3. WHat kind of datastructure to propagate
+# 4. Remember we might go in and out of a function
+# 5. How to know if something isn't propagated

@@ -3,7 +3,7 @@ parens(x::AbstractString) = string("(",x,")")
 square(x::AbstractString) = string("[",x,"]")
 
 
-"""All elements in xs are the same?"""
+"All elements in xs are the same?"
 function same(xs)::Bool
   if isempty(xs)
     return true
