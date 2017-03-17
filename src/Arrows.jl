@@ -59,7 +59,19 @@ export
   @arrtype,
   @intparams,
   partial,
-  typeparams
+  typeparams,
+
+  CompArrow,
+  link_ports!,
+  add_sub_arr!,
+  in_port,
+  in_ports,
+  out_port,
+  out_ports,
+  port,
+  ports,
+
+  AddArrow
 
 include("util.jl")
 include("types.jl")
