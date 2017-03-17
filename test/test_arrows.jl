@@ -1,5 +1,5 @@
 using Arrows
-import Arrows: is_wired_correct
+import Arrows: is_wired_correct, CompArrow, AddArrow, link_ports
 using Base.Test
 
 "x * y + x"

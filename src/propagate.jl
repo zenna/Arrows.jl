@@ -1,3 +1,10 @@
+#TODO:
+# 1. How to do multiple dispatch
+# 2. How to not propagate more than once
+# 3. WHat kind of datastructure to propagate
+# 4. Remember we might go in and out of a function
+# 5. How to know if something isn't propagated
+
 """Generic Propagation of values around a composite arrow"""
 function update_port_attrs!(to_update::PortAttributes,
                             with_p::PortAttributes,
@@ -28,18 +35,18 @@ function equiv_neigh(port: Port, context):
   return equiv
 end
 
+"""
+For every port in sub_port_attr the  data all of its connected nodes
+Args:
+    sub_port_attr: Port Attributes restricted to a particular arrow
+    : Global PortAttributes for composition to be update
+    context: The composition
+    working_set: Set of arrows that need further propagation
+"""
 function update_neigh(sub_port_attr::PortAttributes,
                       port_attrs::PortAttributes,
                       context::CompositeArrow,
                       working_set::Set[Arrow]):
-    """
-    For every port in sub_port_attr the  data all of its connected nodes
-    Args:
-        sub_port_attr: Port Attributes restricted to a particular arrow
-        : Global PortAttributes for composition to be update
-        context: The composition
-        working_set: Set of arrows that need further propagation
-    """
     for port, attrs in sub_port_attr.items():
         neigh_ports = equiv_neigh(port, context)
         for neigh_port in neigh_ports:
@@ -79,9 +86,6 @@ end
 @register ArithmeticArrow
 function shape_dispatch()
 end
-
-## propagate data structure is what?
-
 
 
 PropDict = Dict{Symbol, Any}
@@ -128,20 +132,3 @@ end
 function propagate(arr::CompArrow)
   propagate(arr, Dict{}, )
 end
-
-# There are a number of different scenarios
-#
-
-"A predicate dispatch"
-immutable PredDispatch
-  pred::Function   # The predicate
-  disp::Function   # The dispatch function
-  refire::Function # Continue Firing
-end
-
-#TODO:
-# 1. How to do multiple dispatch
-# 2. How to not propagate more than once
-# 3. WHat kind of datastructure to propagate
-# 4. Remember we might go in and out of a function
-# 5. How to know if something isn't propagated
