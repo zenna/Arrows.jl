@@ -192,3 +192,23 @@ function is_wired_correct(arr::CompArrow)::Bool
   end
   true
 end
+
+# FIXME: This can be done much more quickly with connece components on LG
+"Set of ports which are directly or indirectly connected to `port` within `arr`"
+function connected(port::Port, arr::CompArrow)::Set{Port}
+  seen = Set{Port}()
+  to_see = Set{Port}(port)
+  equiv = Set{Port}()
+  # import pdb; pdb.set_trace()
+  while length(to_see) > 0
+    port = pop!(to_see)
+    push!(seen, port)
+    for neigh in neighbors(port, arr)
+      add!(equiv, neigh)
+      if neigh ∉ seen
+          add!(to_see, neigh)
+        end
+      end
+    end
+  return equiv
+end

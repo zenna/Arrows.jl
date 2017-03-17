@@ -2,11 +2,11 @@ module Arrows
 using Compat
 using PyCall
 using ZenUtils
-using SMTBase
+# using SMTBase
 # using Z3
-import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
-                ConstantVar, nonnegparam, IndexedParameter, shape, VarArray, ConstrainedParameter,
-                TransformedParameter, parameters, FixedLenVarArray
+# import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
+#                 ConstantVar, nonnegparam, IndexedParameter, shape, VarArray, ConstrainedParameter,
+#                 TransformedParameter, parameters, FixedLenVarArray
 
 # using Distributions
 import LightGraphs
@@ -70,17 +70,21 @@ export
   out_ports,
   port,
   ports,
+  propagate,
 
   AddArrow
 
 include("util.jl")
-include("types.jl")
+# include("types.jl")
 
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
 include("primitive/math.jl")
 include("compose/combinators.jl")
+
+include("apply/preddisp.jl")
+include("apply/propagate.jl")
 # include("library.jl")
 
 # include("smt_solvers/z3interface.jl")
