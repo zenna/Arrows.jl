@@ -1,58 +1,113 @@
-#TODO:
-# 1. How to do multiple dispatch
-# 2. How to not propagate more than once
-# 3. WHat kind of datastructure to propagate
-# 4. Remember we might go in and out of a function
-# 5. How to know if something isn't propagated
 
-# How to ddeal with port att
+function any_shape(arr::AddArrow, props::Props)
+  return true
+end
 
-"""Generic Propagation of values around a composite arrow"""
-function update_propss!(to_update::Props,
-                            with_p::Props,
-                            dont_update::Set,
-                            fail_on_conflict=True)
-  for (key, value) in with_p
-    if key not in dont_update
-      if key in to_update && fail_on_conflict
-        @assert is_equal(value, to_update[key]), "conflict %s, %s" % (value, to_update[key])
-        to_update[key] = value
-      end
-    end
-  end
+function same_shape(arr::AddArrow, props::Props)
+  Props(port=>Dict("shape"=>(1, 2, 3)) for port in ports(arr))
 end
 
 
+function predicate_dispatches(::AddArrow)
+  [(any_shape, same_shape)]
+end
 
-# """
-# For every port in sub_props the  data all of its connected nodes
-# Args:
-#     sub_props: Port Attributes restricted to a particular arrow
-#     : Global Props for composition to be update
-#     context: The composition
-#     working_set: Set of arrows that need further propagation
-# """
-# function update_neigh(sub_props::Props,
-#                       propss::Props,
-#                       context::CompositeArrow,
-#                       working_set::Set[Arrow])
-#   for (port, attrs) in sub_props
-#     neigh_ports = conected(port, context)
-#     for neigh_port in neigh_ports
-#         # If the neighbouring node doesn't have a key which I have, then it will
-#         # have to be added to working set to propagate again
-#         if (neigh_port.arrow != context)
-#             neigh_attr_keys = [neigh_port].keys()
-#             if any((attr_key not in neigh_attr_keys for attr_key in attrs.keys())):
-#                 working_set.add(neigh_port.arrow)
-#         update_props([neigh_port], attrs, dont_update=DONT_PROP)
-#     # Update global with this port
-#     update_props([port], attrs, dont_update=DONT_PROP)
-#
+"Given a `partition` return a mapping from elements to the cell (integer id)"
+function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
+  element_to_class = Dict{T, Int}()
+  for (i, class) in enumerate(partition), element in class
+    @assert element ∉ keys(element_to_class)
+    element_to_class[element] = i
+  end
+  element_to_class
+end
+
+"Propagate with port partitions already defined"
+function propagate(arr::CompArrow,
+                   props::Props,
+                   state,
+                   class_to_ports::Vector{Vector{Port}},
+                   port_to_class::Dict{Port, Int},
+                   class_props::Vector{PropDict})
+  # TODO: Think about adding optimization to do all primitives before
+  arrows_to_see = sub_arrows(arr)
+
+  "Get the property dictionary of a port, from its class"
+  sub_prop_dict(port) = class_props[port_to_class[port]]
+
+  # Main propagation loop
+  while length(arrows_to_see) > 0
+    sub_arrow = pop!(arrows_to_see)
+
+    # Find attributes restricted to sub_arrow
+    sub_props = Props(port=>sub_prop_dict(port) for port in ports(sub_arrow))
+
+    # For each pred_dispatch of sub_arrow
+    # TODO pred dispatch
+    for (pred, dispatch) in predicate_dispatches(sub_arrow)
+      if pred(sub_arrow, sub_props)
+        new_sub_props = dispatch(sub_arrow, sub_props)
+
+        # Update the associated equivalence class
+        for (port, prop_dict) in  new_sub_props
+          class = port_to_class[port]
+          update_prop_dict!(class_props[class], prop_dict)
+
+          # Must (re)see every sub_arrow of any port in a cell which has changed
+          for port in class_to_ports[class]
+            # FIXME: Just because a port has a value doesnt mean its unchanged
+            if port.arrow != arr
+              push!(arrows_to_see, port.arrow)
+            end
+          end
+        end
+      end
+    end
+  end
+  unravel_equiv_class
+end
+
+
+"""
+Propagate values around a composite arrow
+Args:
+    arr: Composite Arrow to propagate through
+    props: A mapping from Port to Attribute Name to Attribute Valeu,
+           e.g. Port0 => 'shape' => (1, 2, 3)
+    state: A value of any type that is passed around during propagation
+           and can be updated by sub_propagate
+Returns:
+    port->value map for all ports in composite arrow
+"""
+function propagate!(arr:: CompArrow, props::Props, state)
+  updated = Set{Arrow}(sub_arrows(arr))
+
+  # 1. Partition every edge into connected components
+  class_to_ports = weakly_connected_components(arr)
+
+  # Set up a mapping from a port to its class
+  port_to_class = cell_membership(class_to_ports)
+
+  # aggregate class attributes
+  function aggregate(ports::Vector{Port})
+    prop_dict = PropDict()
+    for port in ports
+      if port in keys(props)
+        update_prop_dict!(prop_dict, props[port])
+      end
+    end
+    prop_dict
+  end
+
+  # Propagating values of each class
+  class_props = aggregate.(class_to_ports)
+  propagate(arr, props, state, class_to_ports, port_to_class, class_props)
+end
 
 function copy(props::Props)::Props
   _props = Props()
-  for (port, attr) in propss
+  for (port, attr) in props
+    _props[port] = PropDict()
     for (attr_key, attr_value) in attr
       _props[port][attr_key] = attr_value
     end
@@ -60,45 +115,11 @@ function copy(props::Props)::Props
   _props
 end
 
-function xxx(sub_arrows, _props)
-  Dict(port=>_props[port] for port in ports(sub_arrow) if port in _props)
-end
-
-"""
-Propagate values around a composite arrow to determine knowns from unknowns
-The knowns should be determined by the knowns, otherwise an error throws
-Args:
-    arr: Composite Arrow to propagate through
-    state: A value of any type that is passed around during propagation
-           and can be updated by sub_propagate
-Returns:
-    port->value map for all ports in composite arrow
-"""
-function propagate(arr:: CompArrow, state)::Props
+function propagate(arr::CompArrow, props::Props)
   _props = copy(props)
-  extract_props(comp_arrow, _props)
-  updated = set(comp_arrow.get_sub_arrows())
-  update_neigh(_props, _props, comp_arrow, updated)
-
-  while len(updated) > 0
-    sub_arrow = updated.pop()
-    sub_props = xxx(sub_arrows, _props)
-
-    for (pred, dispatch) in pred_dispatches(sub_arrow)
-      if pred(sub_arrow, sub_props)
-        new_sub_props = dispatch(sub_arrow, sub_props)
-        update_neigh(new_sub_props, _props, comp_arrow, updated)
-      end
-    end
-    if isinstance(sub_arrow, CompositeArrow)
-      sub_props = xxx(sub_arrows, _props)
-      new_sub_props = propagate(sub_arrow, sub_props, state)
-      update_neigh(new_sub_props, _props, comp_arrow, updated)
-    end
-  end
-  return _props
+  propagate!(arr, _props, Dict())
 end
 
 function propagate(arr::CompArrow)
-  propagate(arr, Dict{}, )
+  propagate!(arr, Props(), Dict())
 end

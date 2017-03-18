@@ -1,6 +1,6 @@
 ## Composite Arrows
 ## ================
-import LightGraphs: Graph, add_edge!, add_vertex!
+import LightGraphs: Graph, add_edge!, add_vertex!, connected_components, weakly_connected_components
 
 "Directed Composite Arrow"
 type CompArrow{I, O} <: Arrow{I, O}
@@ -211,4 +211,11 @@ function connected(port::Port, arr::CompArrow)::Set{Port}
       end
     end
   return equiv
+end
+
+"""Partition the ports into weakly connected equivalence classes"""
+function weakly_connected_components(arr::CompArrow)::Vector{Vector{Port}}
+  cc = weakly_connected_components(arr.edges)
+  pi = i->port_index(arr, i)
+  map(component->pi.(component), cc)
 end
