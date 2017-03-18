@@ -17,3 +17,14 @@ function same(xs)::Bool
   end
   return true
 end
+
+
+"Given a `partition` return a mapping from elements to the cell (integer id)"
+function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
+  element_to_class = Dict{T, Int}()
+  for (i, class) in enumerate(partition), element in class
+    @assert element ∉ keys(element_to_class)
+    element_to_class[element] = i
+  end
+  element_to_class
+end

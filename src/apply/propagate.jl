@@ -1,3 +1,11 @@
+# TODO:
+# 1. Decide when precisely we should repropagate an arrow
+# 2. For composites decide whether we can just use a special dispatch or
+  # we need to call propagate explicitly
+# Determine how to stop refiring
+# Determine how to do caching
+# Determine how to do types
+
 
 function any_shape(arr::AddArrow, props::Props)
   return true
@@ -12,15 +20,6 @@ function predicate_dispatches(::AddArrow)
   [(any_shape, same_shape)]
 end
 
-"Given a `partition` return a mapping from elements to the cell (integer id)"
-function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
-  element_to_class = Dict{T, Int}()
-  for (i, class) in enumerate(partition), element in class
-    @assert element ∉ keys(element_to_class)
-    element_to_class[element] = i
-  end
-  element_to_class
-end
 
 "Propagate with port partitions already defined"
 function propagate(arr::CompArrow,
@@ -30,13 +29,14 @@ function propagate(arr::CompArrow,
                    port_to_class::Dict{Port, Int},
                    class_props::Vector{PropDict})
   # TODO: Think about adding optimization to do all primitives before
-  arrows_to_see = sub_arrows(arr)
+  arrows_to_see = Set{Arrow}(sub_arrows(arr))
 
   "Get the property dictionary of a port, from its class"
   sub_prop_dict(port) = class_props[port_to_class[port]]
 
   # Main propagation loop
   while length(arrows_to_see) > 0
+    println("Propagating: ", length(arrows_to_see), " arrows to see")
     sub_arrow = pop!(arrows_to_see)
 
     # Find attributes restricted to sub_arrow
@@ -86,7 +86,7 @@ function propagate!(arr:: CompArrow, props::Props, state)
   class_to_ports = weakly_connected_components(arr)
 
   # Set up a mapping from a port to its class
-  port_to_class = cell_membership(class_to_ports)
+  port_to_class = elem_to_cell(class_to_ports)
 
   # aggregate class attributes
   function aggregate(ports::Vector{Port})
