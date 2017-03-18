@@ -24,8 +24,14 @@ print_with_color(:blue, "Running tests:\n")
 #     nothing
 # end
 
+
+
 # Single thread
 srand(345679)
+res = map(tests) do t
+  include(t*".jl")
+  nothing
+end
 
 # print method ambiguities
 println("Potentially stale exports: ")
