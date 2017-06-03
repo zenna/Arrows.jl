@@ -1,3 +1,5 @@
+"Primitive Math Arrow"
+
 function bin_arith_port_attrs()
   [PortAttrs(true, :x, Array{Real}),
    PortAttrs(true, :y, Array{Real}),
@@ -14,6 +16,24 @@ name(::AddArrow)::Symbol = :+
 port_attrs(::AddArrow) = bin_arith_port_attrs()
 AddArrow() = AddArrow(gen_id(), Nullable{CompArrow}())
 AddArrow(parent::CompArrow) = AddArrow(gen_id(), parent)
+
+immutable MulArrow <: PrimArrow{2, 1}
+  id::Symbol
+  parent::Nullable{CompArrow}
+end
+name(::MulArrow)::Symbol = :*
+port_attrs(::MulArrow) = bin_arith_port_attrs()
+MulArrow() = MulArrow(gen_id(), Nullable{CompArrow}())
+MulArrow(parent::CompArrow) = MulArrow(gen_id(), parent)
+
+immutable DivArrow <: PrimArrow{2, 1}
+  id::Symbol
+  parent::Nullable{CompArrow}
+end
+name(::DivArrow)::Symbol = :/
+port_attrs(::DivArrow) = bin_arith_port_attrs()
+DivArrow() = DivArrow(gen_id(), Nullable{CompArrow}())
+DivArrow(parent::CompArrow) = DivArrow(gen_id(), parent)
 
 function unary_arith_port_attrs()
   [PortAttrs(true, :x, Array{Real}),

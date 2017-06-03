@@ -29,7 +29,8 @@ import Base:  ^,
               |,
               &,
               !,
-              in
+              in,
+              parent
 
 export
   # Combinators
@@ -72,7 +73,8 @@ export
   ports,
   propagate,
 
-  AddArrow
+  AddArrow,
+  MulArrow
 
 include("util.jl")
 # include("types.jl")
@@ -80,6 +82,7 @@ include("util.jl")
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
+include("arrows/port_arith.jl")
 include("primitive/math.jl")
 include("compose/combinators.jl")
 

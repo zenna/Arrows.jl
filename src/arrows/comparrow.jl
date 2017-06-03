@@ -1,6 +1,7 @@
 ## Composite Arrows
 ## ================
-import LightGraphs: Graph, add_edge!, add_vertex!, connected_components, weakly_connected_components
+import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
+  weakly_connected_components
 
 "Directed Composite Arrow"
 type CompArrow{I, O} <: Arrow{I, O}
@@ -29,6 +30,28 @@ type CompArrow{I, O} <: Arrow{I, O}
     c
   end
 end
+
+"""
+There are two notions of arrow parent:
+1. `parent` Smallest enclosing composite arrow
+2. `  self_parent` Next enclosing composite arrow
+"""
+parent
+
+"Get the parent of an arrow (nUll if it doesn't exist)"
+parent(a::Arrow)::CompArrow = get(a.parent)
+
+"`self_parent` of a composite is just itself"
+self_parent(a::CompArrow)::CompArrow = a
+
+"`self_parent` of a primitive is its parent"
+self_parent(a::PrimArrow)::CompArrow = parent(a)
+
+"Parent arrow of a port"
+parent(port::Port)::CompArrow = parent(port.arrow)
+
+"Self parent of a ports arrow"
+self_parent(port::Port)::CompArrow = self_parent(port.arrow)
 
 "Return all the sub_arrows of `arr` excluding arr itself"
 function sub_arrows(arr::CompArrow)::Vector{Arrow}

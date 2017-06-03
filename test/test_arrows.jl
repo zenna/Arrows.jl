@@ -6,7 +6,7 @@ using Base.Test
 function xy_plus_x()
   c = CompArrow{2, 1}(:xyx)
   x, y, z = ports(c)
-  mularr = AddArrow()
+  mularr = MulArrow()
   m2 = add_sub_arr!(mularr, c)
   link_ports!(c, x, in_port(m2, 1))
   link_ports!(c, y, in_port(m2, 2))
@@ -19,3 +19,13 @@ function xy_plus_x()
 end
 
 @test is_wired_correct(xy_plus_x())
+
+function xy_plus_x_port_arith()
+  c = CompArrow{2, 1}(:xyx)
+  x, y, z = ports(c)
+  add_out_port = x * y + x
+  link_ports!(c, add_out_port, z)
+  c
+end
+
+@test is_wired_correct(xy_plus_x_port_arith())
