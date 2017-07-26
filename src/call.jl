@@ -14,4 +14,4 @@ function call{I,O}(a::CompositeArrow{I,O}, x...; args...)
   compiled_f(x...)
 end
 
-call(a::PrimArrow, x...; args...) = call(encapsulate(a), x...; args...)
+call(a::PrimArrow, x...; args...) = call(wrap(a), x...; args...)

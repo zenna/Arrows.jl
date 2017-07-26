@@ -12,7 +12,7 @@ using ZenUtils
 import LightGraphs
 import Base.Collections: PriorityQueue, dequeue!, peek
 
-import Base: call, convert, union, first, ndims, print, println, string, show,
+import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, >>>, length, isequal, eltype
 
 import Base:  ^,
@@ -40,7 +40,7 @@ export
   lift,
   multiplex,
   stack,
-  encapsulate,
+  wrap,
   inswitch,
   init,
 
@@ -74,17 +74,21 @@ export
   propagate,
 
   AddArrow,
-  MulArrow
+  MulArrow,
+  SourceArrow,
+  CondArrow,
+  EqualArrow,
+  SubArrow
 
 include("util.jl")
 # include("types.jl")
 
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
-include("arrows/comparrow.jl")
+include("arrows/comparrow2.jl")
 include("arrows/port_arith.jl")
 include("primitive/math.jl")
-include("compose/combinators.jl")
+include("combinators/compose.jl")
 
 include("apply/preddisp.jl")
 include("apply/propagate.jl")

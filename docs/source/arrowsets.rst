@@ -8,7 +8,7 @@ Fundamental to both cases is the notion of *non-determinism*, i.e. a set of poss
 
 An arrow set (`ArrowSet`) represents a set of possible arrows.
 Conceptually, arrow sets are extremely powerful for two reasons.
-First, they encapsulate computation and parameters into a modular unit.
+First, they wrap computation and parameters into a modular unit.
 This module can be transplanted or replicated across the same or a different model in arbitrary ways, or nested within a more complex arrow set.
 Second, they allow partial specification of code.
 Building complex programs with different array dimensions and sizes often leads to complex code with tedious data reshaping, which is highly dependent on the data size.

@@ -1,5 +1,4 @@
-"""The Arrow Component Libary contains arrows, arrowsets, combinators for learning
-  and inference problems"""
+"""The Arrow Library contains arrows and combinators for inference problems"""
 module Library
 
   using Arrows
@@ -16,16 +15,16 @@ module Library
 
   import SMTBase: VarLenVarArray, FixedLenVarArray
 
-  include("library/arithmetic.jl")
-  include("library/convolution.jl")
-  include("library/trigonometric.jl")
-  include("library/distance.jl")
-  # include("library/array.jl")
-  # include("library/activations.jl")
-  # include("library/networks.jl")
+  include("arithmetic.jl")
+  include("convolution.jl")
+  include("trigonometric.jl")
+  include("distance.jl")
+  # include("array.jl")
+  # include("activations.jl")
+  # include("networks.jl")
 
   # Data Types
-  include("library/stack.jl")
+  include("stack.jl")
 
   export simple_cnet
 end

@@ -22,4 +22,4 @@ function update_prop_dict!(old_pd::PropDict, new_pd::PropDict)
   old_pd
 end
 
-typealias Props Dict{Port, PropDict}
+Props = Dict{Port, PropDict}

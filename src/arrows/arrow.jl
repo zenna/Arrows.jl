@@ -1,33 +1,33 @@
 "A relation is a kind of undirected computational model over `N` variables"
-abstract Relation{N}
+abstract type Relation{N} end
 
 "An Arrow of `I` inputs and `O` outputs"
-abstract Arrow{I, O} <: Relation{IO}
+abstract type Arrow{I, O} <: Relation{IO} end
 
 "Generate a unique arrow id"
 gen_id()::Symbol = gensym()
 
 """An entry or exit to an Arrow, analogous to argument of multivariate function.
 A port is uniquely determined by the arrow it belongs to and an index"""
-abstract AbstractPort
+abstract type AbstractPort end
 
-immutable Port{A <: Arrow, T <: Integer} <: AbstractPort
+struct Port{A <: Arrow, T <: Integer} <: AbstractPort
   arrow::A
   index::T
 end
 
-immutable OutPort{T <: Integer} <: AbstractPort
+struct OutPort{T <: Integer} <: AbstractPort
   arrow::Arrow
   index::T
 end
 
-immutable InPort{T <: Integer} <: AbstractPort
+struct InPort{T <: Integer} <: AbstractPort
   arrow::Arrow
   index::T
 end
 
 """Port Attributes (i.e) properties instrinsic to a port"""
-immutable PortAttrs
+struct PortAttrs
   is_in_port::Bool
   name::Symbol
   typ::Type

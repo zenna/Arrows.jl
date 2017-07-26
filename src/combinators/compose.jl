@@ -1,6 +1,12 @@
 "Wrap an arrow in another arrow - behaves identically to original arrow"
-function encapsulate{I,O}(arr::PrimArrow{I,O})
-  c = CompArrow{I,O}()
+function wrap{I,O}(arr::Arrow{I,O})
+  arr_wrap = CompArrow{I,O}()
+  add_sub_arr!(arr_wrap, arr)
+
+  # Link up in_ports (out_ports) of arr to out_ports of arr_wrap
+  for (i, port) in enumerate(ports(c))
+    link_ports!(c, ports{})
+  end
   c
 end
 
@@ -29,14 +35,14 @@ end
 function compose{I1, O1I2, O2}(a::PrimArrow{I1, O1I2},
                                b::PrimArrow{O1I2, O2})::CompArrow{I1,O2}
   c = CompArrow{I1,O2}(Symbol(name(a), :_, name(b)))
-  aa = add_sub_arr!(a, c)
-  bb = add_sub_arr!(b, c)
+  aa = add_sub_arr!(c, a)
+  bb = add_sub_arr!(c, b)
   compose(c, aa, bb)
 end
 
-# compose(a::PrimArrow, b::CompArrow) = compose(encapsulate(a), b)
-# compose(a::CompArrow, b::PrimArrow) = compose(a, encapsulate(b))
-# compose(a::PrimArrow, b::PrimArrow) = compose(encapsulate(a), encapsulate(b))
+# compose(a::PrimArrow, b::CompArrow) = compose(wrap(a), b)
+# compose(a::CompArrow, b::PrimArrow) = compose(a, wrap(b))
+# compose(a::PrimArrow, b::PrimArrow) = compose(wrap(a), wrap(b))
 >>>(a::Arrow, b::Arrow) = compose(a, b)
 # CompArrow{2, 1}(:hello, Graph(), Port[], [])
 # CompArrow{3, 1}(:a)
@@ -60,7 +66,7 @@ end
 #   c
 # end
 #
-# over(a::PrimArrow) = over(encapsulate(a))
+# over(a::PrimArrow) = over(wrap(a))
 #
 # "Place `a` under an identity wire.  Like `second` but for multiple in/out puts"
 # function under{I,O}(a::CompArrow{I,O})
@@ -76,7 +82,7 @@ end
 #   c
 # end
 #
-# under(a::PrimArrow) = under(encapsulate(a))
+# under(a::PrimArrow) = under(wrap(a))
 #
 #
 # "Union two composite arrows into the same arrow"
@@ -100,11 +106,11 @@ end
 #   c
 # end
 #
-# stack(a::PrimArrow, b::CompArrow) = stack(encapsulate(a), b)
-# stack(a::PrimArrow, b::PrimArrow) = stack(encapsulate(a), encapsulate(b))
-# stack(a::CompArrow, b::PrimArrow) = stack(a, encapsulate(b))
+# stack(a::PrimArrow, b::CompArrow) = stack(wrap(a), b)
+# stack(a::PrimArrow, b::PrimArrow) = stack(wrap(a), wrap(b))
+# stack(a::CompArrow, b::PrimArrow) = stack(a, wrap(b))
 #
-# first(a::PrimArrow{1, 1}) = first(encapsulate(a))
+# first(a::PrimArrow{1, 1}) = first(wrap(a))
 # multiplex{I,O}(a::CompArrow{I,O}, b::CompArrow{I,O}) = lift(clone1dfunc) >>> stack(a,b)
 #
 # ## Switch
@@ -131,7 +137,7 @@ end
 #   c
 # end
 #
-# inswitch(a::PrimArrow, p1::Integer, p2::Integer) = inswitch(encapsulate(a),p1,p2)
+# inswitch(a::PrimArrow, p1::Integer, p2::Integer) = inswitch(wrap(a),p1,p2)
 #
 # ## Recursion Combinators
 # ## =====================

@@ -53,7 +53,7 @@ More complex arrows are made by combining simpler arrows.  We can __wire__ these
 ```julia
 a = Arrows.lift(Arrows.sin1dfunc)
 b = Arrows.compose(a,a)
-c = Arrows.encapsulate(b)
+c = Arrows.wrap(b)
 stacked = Arrows.stack(c,c)
 d = Arrows.multiplex(c,c)
 e = Arrows.first(Arrows.lift(Arrows.cos1dfunc))
