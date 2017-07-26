@@ -1,13 +1,18 @@
 "Wrap an arrow in another arrow - behaves identically to original arrow"
 function wrap{I,O}(arr::Arrow{I,O})
-  arr_wrap = CompArrow{I,O}()
-  add_sub_arr!(arr_wrap, arr)
+  arr_wrap = CompArrow{I,O}(Symbol(arr.name, :_wrap), arr.port_attrs)
+  arrc = add_sub_arr!(arr_wrap, arr)
 
-  # Link up in_ports (out_ports) of arr to out_ports of arr_wrap
-  for (i, port) in enumerate(ports(c))
-    link_ports!(c, ports{})
+  for i = 1:num_ports(arrc)
+    if is_in_port(port(arrc, i))
+      println("for ith port making edge from wrapping to inner")
+      link_ports!(arr_wrap, port(arr_wrap, i), port(arrc, i))
+    else
+      println("for ith port making edge from inner to wrapping")
+      link_ports!(arr_wrap, port(arrc, i), port(arr_wrap, i))
+    end
   end
-  c
+  arr_wrap
 end
 
 "Right Composition - Wire outputs of `a` to inputs of `b`"

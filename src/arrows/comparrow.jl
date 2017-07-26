@@ -1,57 +1,54 @@
-## Composite Arrows
-## ================
 import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
   weakly_connected_components
+
+"Does a vector of port attributes have I inports and O outports?"
+function is_valid_port_attrs(port_attrs::Vector{PortAttrs}, I::Integer, O::Integer)::Bool
+  ni = 0
+  no = 0
+  for port_attr in port_attrs
+    if is_in_port(port_attr)
+      ni += 1
+    elseif is_out_port(port_attr)
+      no += 1
+    end
+  end
+  ni == I && no == O
+end
 
 "Directed Composite Arrow"
 type CompArrow{I, O} <: Arrow{I, O}
   name::Symbol                  # name of CompArrow
   id::Symbol                    # Unique id
-  edges::LightGraphs.DiGraph    # Each port has a unique index
-  port_map::Vector{Port}        # Mapping from port indices in edges to Port
+  edges::LightGraphs.DiGraph    # Graph over port indices - each port unique id
+  port_map::Vector{Port}        # port_map[i] is `Port` with index i in `edges`
   port_attrs::Vector{PortAttrs} # Mapping from border port to attributes
-  parent::Nullable{CompArrow}   # CompArrow which this arrow is subarrow of
 
-  "Constructs CompArrow with Any"
-  function CompArrow(name::Symbol)
+
+  function CompArrow{I, O}(name::Symbol, port_attrs::Vector{PortAttrs}) where{I, O}
+    if !is_valid_port_attrs(port_attrs, I, O)
+      throw(DomainError())
+    end
     c = new()
     nports = I + O
     g = LightGraphs.DiGraph(nports)
     port_map = [Port(c, i) for i=1:nports]
-    in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
-    out_port_attrs = [PortAttrs(false, Symbol(:out_, i), Any) for i = 1:O]
-    port_attrs = vcat(in_port_attrs, out_port_attrs)
     c.name = name
     c.id = gen_id()
     c.port_map = port_map
     c.edges = g
     c.port_attrs = port_attrs
-    c.parent = Nullable{CompArrow}()
     c
   end
 end
 
-"""
-There are two notions of arrow parent:
-1. `parent` Smallest enclosing composite arrow
-2. `  self_parent` Next enclosing composite arrow
-"""
-parent
-
-"Get the parent of an arrow (nUll if it doesn't exist)"
-parent(a::Arrow)::CompArrow = get(a.parent)
-
-"`self_parent` of a composite is just itself"
-self_parent(a::CompArrow)::CompArrow = a
-
-"`self_parent` of a primitive is its parent"
-self_parent(a::PrimArrow)::CompArrow = parent(a)
-
-"Parent arrow of a port"
-parent(port::Port)::CompArrow = parent(port.arrow)
-
-"Self parent of a ports arrow"
-self_parent(port::Port)::CompArrow = self_parent(port.arrow)
+"Constructs CompArrow with Any"
+function CompArrow{I, O}(name::Symbol) where {I, O}
+  # Default is for first I ports to be in_ports then next O oout_ports
+  in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
+  out_port_attrs = [PortAttrs(false, Symbol(:out_, i), Any) for i = 1:O]
+  port_attrs = vcat(in_port_attrs, out_port_attrs)
+  CompArrow{I, O}(name, port_attrs)
+end
 
 "Return all the sub_arrows of `arr` excluding arr itself"
 function sub_arrows(arr::CompArrow)::Vector{Arrow}
@@ -62,9 +59,6 @@ end
 function all_sub_arrows(arr::CompArrow)::Vector{Arrow}
   unique([port.arrow for port in arr.port_map])
 end
-
-"Does the arrow have a parent? (is it within a composition)?"
-is_parentless(arr::Arrow)::Bool = isnull(arr.parent)
 
 "Find the index of this port in c edg es"
 function port_index(arr::CompArrow, port::Port)::Integer
@@ -100,24 +94,15 @@ in(port::Port, arr::CompArrow)::Bool = port in arr.port_map
 "Is `arr` a sub_arrow of composition `c_arr`"
 in(arr::Arrow, c_arr::CompArrow)::Bool = arr in (p.arrow for p in c_arr.port_map)
 
-function set_parent!(arr::Arrow, c_arr::CompArrow)::Arrow
-  if arr == c_arr || !is_parentless(arr)
-    throw(DomainError())
-  else
-    arr.parent = c_arr
-  end
-end
-
 "Add a sub_arrow `arr` to composition `c_arr`"
-function add_sub_arr!(arr::Arrow, c_arr::CompArrow)::Arrow
+function add_sub_arr!(c_arr::CompArrow, arr::Arrow)::Arrow
   if arr in c_arr
     throw(DomainError())
   else
-    arr2 = set_parent!(arr, c_arr)
-    for port in ports(arr2)
+    for port in ports(arr)
       add_port!(c_arr, port)
     end
-    arr2
+    arr
   end
 end
 
@@ -129,10 +114,10 @@ function link_ports!(c::CompArrow, l::Port, r::Port)
 end
 
 # Graph traversal
-"is vertex `v` a destination"
+"is vertex `v` a destination, i.e. does it project more than 0 edges"
 is_dest(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.indegree(g, v) > 0
 
-"is vertex `v` a source"
+"is vertex `v` a source, i.e. does it receive more than 0 edges"
 is_src(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.outdegree(g, v) > 0
 
 #FIXME: Turn this into a macro for type stability
@@ -145,10 +130,10 @@ function v_to_p(f::Function, port::Port, arr::Arrow)
   map(i->port_index(arr, i), lg_to_p(f, port, arr))
 end
 
-"Is port a destination"
+"Is port a destination. i.e. does corresponding vertex project more than 0"
 is_dest(port::Port, arr::CompArrow) = lg_to_p(is_dest, port, arr)
 
-"Is port a source"
+"Is port a source,  i.e. does corresponding vertex receive more than 0"
 is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
 
 "Vector of all neighbors of `port`"
@@ -166,51 +151,66 @@ out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.outdegree,
 "Return the number of ports which end at port p"
 in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.indegree, port, arr)
 
-is_src{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
+"`port` is a source wrt to context `arr` if"
+function should_src{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool
+  # TODO: Is this check necessary?
+  if !(port in ports(arr))
+    "The port should be "
+    throw(DomainError())
+  end
+  if arr == port.arrow
+    is_in_port(port)
+  else
+    is_out_port(port)
+  end
+end
 
-is_dest{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
+function should_dest{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool
+  if !(port in ports(arr))
+    "The port should be "
+    throw(DomainError())
+  end
+  if arr == port.arrow
+    is_out_port(port)
+  else
+    is_in_port(port)
+  end
+end
 
-is_src{A<:CompArrow}(port::Port{A}) = is_src(port, port.arrow)
+should_src{A<:CompArrow}(port::Port{A}) = is_src(port, port.arrow)
 
 is_dest{A<:CompArrow}(port::Port{A}) = is_dest(port, port.arrow)
 
-neighbors{A<:CompArrow}(port::Port{A}) = neighbors(port, port.arrow)
-
-in_neighbors{A<:CompArrow}(port::Port{A}) = in_neighbors(port, port.arrow)
-
-out_neighbors{A<:CompArrow}(port::Port{A}) = out_neighbors(port, port.arrow)
-
-out_degree{A<:CompArrow}(port::Port{A}) = out_degree(port, port.arrow)
-
-in_degree{A<:CompArrow}(port::Port{A}) = in_degree(port, port.arrow)
 
 # Primitive
 is_src{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
 
 is_dest{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
 
-is_src{A<:PrimArrow}(port::Port{A}) = is_src(port, parent(port.arrow))
-
-is_dest{A<:PrimArrow}(port::Port{A}) = is_dest(port, parent(port.arrow))
-
-neighbors{A<:PrimArrow}(port::Port{A}) = neighbors(port, parent(port.arrow))
-
-in_neighbors{A<:PrimArrow}(port::Port{A}) = in_neighbors(port, parent(port.arrow))
-
-out_neighbors{A<:PrimArrow}(port::Port{A}) = out_neighbors(port, parent(port.arrow))
-
-out_degree{A<:PrimArrow}(port::Port{A}) = out_degree(port, parent(port.arrow))
-
-in_degree{A<:PrimArrow}(port::Port{A}) = in_degree(port, parent(port.arrow))
-
 "Is `arr` wired up correctly"
-function is_wired_correct(arr::CompArrow)::Bool
+function is_wired_ok(arr::CompArrow)::Bool
   for i = 1:LightGraphs.nv(arr.edges)
-    if is_dest(port_index(arr, i)) && LightGraphs.indegree(arr.edges, i) != 1
-      return false
+    if should_dest(port_index(arr, i), arr)
+      # If it should be a desination
+      if !(LightGraphs.indegree(arr.edges, i) == 1 &&
+           LightGraphs.outdegree(arr.edges, i) == 0)
+      # TODO: replace error with lens
+        errmsg = """vertex $i Port $(port_index(arr, i)) should be a dest but
+                    indeg is $(LightGraphs.indegree(arr.edges, i)) (notbe 1)
+                    outdeg is $(LightGraphs.outdegree(arr.edges, i) == 0)) (not 0)
+                  """
+        warn(errmsg)
+        return false
+      end
     end
-    if is_src(port_index(arr, i)) && LightGraphs.outdegree(arr.edges, 1) < 1
-      return false
+    if should_src(port_index(arr, i), arr)
+      # if it should be a source
+      if !(LightGraphs.outdegree(arr.edges, i) > 0 || LightGraphs.indegree(arr.edges) == 1)
+        errmsg = """vertex $i Port $(port_index(arr, i)) is source but out degree is
+        $(LightGraphs.outdegree(arr.edges, 1)) (should be >= 1)"""
+        warn(errmsg)
+        return false
+      end
     end
   end
   true

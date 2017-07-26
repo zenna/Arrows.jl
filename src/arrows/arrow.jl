@@ -90,3 +90,11 @@ num_out_ports(arr::Arrow)::Integer = length(out_ports(arr))
 
 "How many in ports does `arr` have"
 num_in_ports(arr::Arrow)::Integer = length(in_ports(arr))
+
+function string(p::Port)
+  inps = is_in_port(p) ? "InPort" : "OutPort"
+  pa = port_attrs(p)
+  "$inps-$(p.index)-$(pa.name):$(p.arrow.name)"
+end
+
+print(io::IO, p::Port) = print(io, string(p))

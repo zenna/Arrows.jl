@@ -18,8 +18,11 @@ function xy_plus_x()
   c
 end
 
-@test is_wired_correct(xy_plus_x())
-
+arr = xy_plus_x()
+@test is_wired_correct(arr)
+@test wrap(arr)
+wrap(arr)
+CompArrow{1, 2}(:hi)
 # function xy_plus_x_port_arith()
 #   c = CompArrow{2, 1}(:xyx)
 #   x, y, z = ports(c)

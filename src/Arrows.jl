@@ -85,7 +85,7 @@ include("util.jl")
 
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
-include("arrows/comparrow2.jl")
+include("arrows/comparrow.jl")
 include("arrows/port_arith.jl")
 include("primitive/math.jl")
 include("combinators/compose.jl")
