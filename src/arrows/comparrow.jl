@@ -50,10 +50,15 @@ function CompArrow{I, O}(name::Symbol) where {I, O}
   CompArrow{I, O}(name, port_attrs)
 end
 
+name(arr::CompArrow) = arr.name
+
 "Return all the sub_arrows of `arr` excluding arr itself"
 function sub_arrows(arr::CompArrow)::Vector{Arrow}
   unique([port.arrow for port in arr.port_map if port.arrow != arr])
 end
+
+"Ports of "
+sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LightGraphs.nv(arr.edges)]
 
 "Return all the sub_arrows of `arr` including arr itself"
 function all_sub_arrows(arr::CompArrow)::Vector{Arrow}
@@ -152,10 +157,11 @@ out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.outdegree,
 in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.indegree, port, arr)
 
 "`port` is a source wrt to context `arr` if"
-function should_src{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool
+function should_src(port::Port, arr::CompArrow)::Bool
   # TODO: Is this check necessary?
-  if !(port in ports(arr))
-    "The port should be "
+  if !(port in sub_ports(arr))
+    errmsg = "Port $port not in ports of $(name(arr))"
+    println(errmsg)
     throw(DomainError())
   end
   if arr == port.arrow
@@ -165,9 +171,10 @@ function should_src{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool
   end
 end
 
-function should_dest{A<:CompArrow}(port::Port{A}, arr::CompArrow)::Bool
-  if !(port in ports(arr))
-    "The port should be "
+function should_dest(port::Port, arr::CompArrow)::Bool
+  if !(port in sub_ports(arr))
+    errmsg = "Port $port not in ports of $(name(arr))"
+    println(errmsg)
     throw(DomainError())
   end
   if arr == port.arrow
