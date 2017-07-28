@@ -92,6 +92,8 @@ include("combinators/compose.jl")
 
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
+include("apply/interpret.jl")
+
 # include("library.jl")
 
 # include("smt_solvers/z3interface.jl")

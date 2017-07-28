@@ -18,9 +18,11 @@ function xy_plus_x()
   c
 end
 
+tf(x, y) = x * y + x
 arr = xy_plus_x()
 @test is_wired_ok(arr)
 @test is_wired_ok(wrap(arr))
+@test interpret(arr, 7, 8) == tf(7, 8)
 
 # function xy_plus_x_port_arith()
 #   c = CompArrow{2, 1}(:xyx)
@@ -78,5 +80,7 @@ function fibonnaci()
   c
 end
 
+fib(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
 f = fibonnaci()
+@test interpret(f, 4) == fib(4)
 @test is_wired_ok(f)

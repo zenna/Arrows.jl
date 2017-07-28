@@ -38,6 +38,20 @@ function PortAttrs(is_in_port::Bool, name::Symbol, typ::Type)
   PortAttrs(is_in_port, name, typ, Set{Symbol}())
 end
 
+"Does a vector of port attributes have I inports and O outports?"
+function is_valid_port_attrs(port_attrs::Vector{PortAttrs}, I::Integer, O::Integer)::Bool
+  ni = 0
+  no = 0
+  for port_attr in port_attrs
+    if is_in_port(port_attr)
+      ni += 1
+    elseif is_out_port(port_attr)
+      no += 1
+    end
+  end
+  ni == I && no == O
+end
+
 "Get the port attributes of `port` in arrow `arr`"
 port_attrs(port::Port) = port_attrs(port.arrow, port)
 
@@ -94,7 +108,8 @@ num_in_ports(arr::Arrow)::Integer = length(in_ports(arr))
 function string(p::Port)
   inps = is_in_port(p) ? "InPort" : "OutPort"
   pa = port_attrs(p)
-  "$inps-$(p.index)-$(pa.name):$(name(p.arrow))"
+  "$inps id:$(p.index) n:$(pa.name) arr:$(name(p.arrow))"
 end
 
 print(io::IO, p::Port) = print(io, string(p))
+show(io::IO, p::Port) = print(io, p)

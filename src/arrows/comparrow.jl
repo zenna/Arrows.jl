@@ -1,20 +1,6 @@
 import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
   weakly_connected_components
 
-"Does a vector of port attributes have I inports and O outports?"
-function is_valid_port_attrs(port_attrs::Vector{PortAttrs}, I::Integer, O::Integer)::Bool
-  ni = 0
-  no = 0
-  for port_attr in port_attrs
-    if is_in_port(port_attr)
-      ni += 1
-    elseif is_out_port(port_attr)
-      no += 1
-    end
-  end
-  ni == I && no == O
-end
-
 "Directed Composite Arrow"
 type CompArrow{I, O} <: Arrow{I, O}
   name::Symbol                  # name of CompArrow
@@ -57,7 +43,7 @@ function sub_arrows(arr::CompArrow)::Vector{Arrow}
   unique([port.arrow for port in arr.port_map if port.arrow != arr])
 end
 
-"Ports of "
+"All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
 sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LightGraphs.nv(arr.edges)]
 
 "Return all the sub_arrows of `arr` including arr itself"
@@ -156,7 +142,7 @@ out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.outdegree,
 "Return the number of ports which end at port p"
 in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.indegree, port, arr)
 
-"`port` is a source wrt to context `arr` if"
+"Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
 function should_src(port::Port, arr::CompArrow)::Bool
   # TODO: Is this check necessary?
   if !(port in sub_ports(arr))
@@ -171,6 +157,7 @@ function should_src(port::Port, arr::CompArrow)::Bool
   end
 end
 
+"Should `port` be a dest in context `arr` Possibly false iff is_wired_ok = false"
 function should_dest(port::Port, arr::CompArrow)::Bool
   if !(port in sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
@@ -184,15 +171,21 @@ function should_dest(port::Port, arr::CompArrow)::Bool
   end
 end
 
-should_src{A<:CompArrow}(port::Port{A}) = is_src(port, port.arrow)
-
-is_dest{A<:CompArrow}(port::Port{A}) = is_dest(port, port.arrow)
-
+"All neighbouring ports of `subarr`, each port connected to each outport"
+function out_neighbors(subarr::Arrow, arr::CompArrow)
+  ports = Port[]
+  for port in out_ports(subarr)
+    for neighport in out_neighbors(port, arr)
+      push!(ports, neighport)
+    end
+  end
+  ports
+end
 
 # Primitive
-is_src{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
+# is_src{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
 
-is_dest{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
+# is_dest{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
@@ -223,7 +216,7 @@ function is_wired_ok(arr::CompArrow)::Bool
   true
 end
 
-# FIXME: This can be done much more quickly with connece components on LG
+# FIXME: This can be done much more quickly with connected components on LG
 "Set of ports which are directly or indirectly connected to `port` within `arr`"
 function connected(port::Port, arr::CompArrow)::Set{Port}
   seen = Set{Port}()
