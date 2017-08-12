@@ -1,5 +1,5 @@
 import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
-  weakly_connected_components
+  weakly_connected_components, rem_edge!
 
 "Directed Composite Arrow"
 type CompArrow{I, O} <: Arrow{I, O}
@@ -45,6 +45,12 @@ end
 
 "All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
 sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LightGraphs.nv(arr.edges)]
+
+"All projecting sub_ports"
+src_sub_ports(arr::CompArrow) = filter(port->is_src(port, arr), sub_ports(arr))
+
+"All receiving sub_ports"
+dest_sub_ports(arr::CompArrow) = filter(port->is_dest(port, arr), sub_ports(arr))
 
 "Return all the sub_arrows of `arr` including arr itself"
 function all_sub_arrows(arr::CompArrow)::Vector{Arrow}
@@ -102,6 +108,13 @@ function link_ports!(c::CompArrow, l::Port, r::Port)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
   add_edge!(c.edges, l_idx, r_idx)
+end
+
+"Remove an edge in CompArrow from port `l` to port `r`"
+function unlink_ports!(c::CompArrow, l::Port, r::Port)
+  l_idx = port_index(c, l)
+  r_idx = port_index(c, r)
+  rem_edge!(c.edges, l_idx, r_idx)
 end
 
 # Graph traversal

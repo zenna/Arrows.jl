@@ -91,6 +91,23 @@ port_attrs(::CondArrow) =   [PortAttrs(true, :i, Array{Bool}),
 name(::CondArrow) = :cond
 CondArrow() = CondArrow(gen_id())
 
+
+# DuplArrow
+"Duplicates input `I` times dupl_n_(x) = (x,...x)"
+struct DuplArrow{I} <: PrimArrow{I, 1}
+  id::Symbol
+  function DuplArrow{I}(n::Integer, id::Symbol) where {I}
+    new{n}(id)
+  end
+end
+
+port_attrs{I}(::DuplArrow{I}) =
+  [PortAttrs(true, :x, Array{Any}),
+   [PortAttrs(false, Symbol(:y, i), Array{Any}) for i=1:I]...]
+
+name(::DuplArrow) = :dupl
+DuplArrow(n::Integer) = DuplArrow{n}(n, gen_id())
+
 # convert(Arrow, ::typeof(+)) = AddArrow
 # lift(f::Function) = convert(Arrow, f)
 # function +(x::Port, y::Port)
