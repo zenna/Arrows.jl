@@ -5,21 +5,14 @@ Values{T} = Set{T} where T<:Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value
-  arr::Arrow
-  port::Port
-end
-
-"Represents a `Value` with member `port::Port ∈ Value`"
-struct RepValue <: Value
   port::PortRef
 end
-
 
 # FIXME: This is a bad hash!
 hash(v::RepValue) = hash(v.arr)
 
 function isequal(v1::RepValue, v2::RepValue)::Bool
-  # Two values are only the same if there is an edge between the port_refs
+  # Two values are equal if there is an edge between the port_refs
   is_linked(v1.port_ref, v2.port_ref)
 end
 

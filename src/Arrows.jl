@@ -87,11 +87,15 @@ include("util.jl")
 include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
+include("arrows/address.jl")
 include("arrows/port_arith.jl")
 include("arrows/value.jl")
-include("arrows/address.jl")
 
-include("primitive/math.jl")
+# Library
+include("library/arithmetic.jl")
+include("library/common.jl")
+include("library/control.jl")
+
 include("combinators/compose.jl")
 
 include("apply/preddisp.jl")

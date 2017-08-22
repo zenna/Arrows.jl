@@ -5,7 +5,7 @@ import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
 type CompArrow{I, O} <: Arrow{I, O}
   name::Symbol                  # name of CompArrow
   id::Symbol                    # Unique id
-  edges::LightGraphs.DiGraph    # Graph over port indices - each port unique id
+  edges::LG.DiGraph    # Graph over port indices - each port unique id
   port_map::Vector{Port}        # port_map[i] is `Port` with index i in `edges`
   port_attrs::Vector{PortAttrs} # Mapping from border port to attributes
 
@@ -16,7 +16,7 @@ type CompArrow{I, O} <: Arrow{I, O}
     end
     c = new()
     nports = I + O
-    g = LightGraphs.DiGraph(nports)
+    g = LG.DiGraph(nports)
     port_map = [Port(c, i) for i=1:nports]
     c.name = name
     c.id = gen_id()
@@ -44,7 +44,7 @@ function sub_arrows(arr::CompArrow)::Vector{Arrow}
 end
 
 "All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
-sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LightGraphs.nv(arr.edges)]
+sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LG.nv(arr.edges)]
 
 "All projecting sub_ports"
 src_sub_ports(arr::CompArrow) = filter(port->is_src(port, arr), sub_ports(arr))
@@ -128,10 +128,10 @@ end
 
 # Graph traversal
 "is vertex `v` a destination, i.e. does it project more than 0 edges"
-is_dest(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.indegree(g, v) > 0
+is_dest(g::LG.DiGraph, v::Integer) = LG.indegree(g, v) > 0
 
 "is vertex `v` a source, i.e. does it receive more than 0 edges"
-is_src(g::LightGraphs.DiGraph, v::Integer) = LightGraphs.outdegree(g, v) > 0
+is_src(g::LG.DiGraph, v::Integer) = LG.outdegree(g, v) > 0
 
 #FIXME: Turn this into a macro for type stability
 "Helper function to translate LightGraph functions to Port functions"
@@ -150,19 +150,19 @@ is_dest(port::Port, arr::CompArrow) = lg_to_p(is_dest, port, arr)
 is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
 
 "Vector of all neighbors of `port`"
-neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.neighbors, port, arr)
+neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.neighbors, port, arr)
 
 "Vector of ports which `port` receives from"
-in_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.in_neighbors, port, arr)
+in_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.in_neighbors, port, arr)
 
 "Vector of ports which `port` projects to"
-out_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.out_neighbors, port, arr)
+out_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.out_neighbors, port, arr)
 
 "Return the number of ports which begin at port p"
-out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.outdegree, port, arr)
+out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.outdegree, port, arr)
 
 "Return the number of ports which end at port p"
-in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LightGraphs.indegree, port, arr)
+in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.indegree, port, arr)
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
 function should_src(port::Port, arr::CompArrow)::Bool
@@ -265,15 +265,15 @@ end
 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
-  for i = 1:LightGraphs.nv(arr.edges)
+  for i = 1:LG.nv(arr.edges)
     if should_dest(port_index(arr, i), arr)
       # If it should be a desination
-      if !(LightGraphs.indegree(arr.edges, i) == 1 &&
-           LightGraphs.outdegree(arr.edges, i) == 0)
+      if !(LG.indegree(arr.edges, i) == 1 &&
+           LG.outdegree(arr.edges, i) == 0)
       # TODO: replace error with lens
         errmsg = """vertex $i Port $(port_index(arr, i)) should be a dest but
-                    indeg is $(LightGraphs.indegree(arr.edges, i)) (notbe 1)
-                    outdeg is $(LightGraphs.outdegree(arr.edges, i) == 0)) (not 0)
+                    indeg is $(LG.indegree(arr.edges, i)) (notbe 1)
+                    outdeg is $(LG.outdegree(arr.edges, i) == 0)) (not 0)
                   """
         warn(errmsg)
         return false
@@ -281,9 +281,9 @@ function is_wired_ok(arr::CompArrow)::Bool
     end
     if should_src(port_index(arr, i), arr)
       # if it should be a source
-      if !(LightGraphs.outdegree(arr.edges, i) > 0 || LightGraphs.indegree(arr.edges) == 1)
+      if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
         errmsg = """vertex $i Port $(port_index(arr, i)) is source but out degree is
-        $(LightGraphs.outdegree(arr.edges, 1)) (should be >= 1)"""
+        $(LG.outdegree(arr.edges, 1)) (should be >= 1)"""
         warn(errmsg)
         return false
       end

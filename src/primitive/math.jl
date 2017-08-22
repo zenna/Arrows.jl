@@ -1,4 +1,4 @@
-"Primitive Math Arrow"
+"Primitive Math Arrows"
 
 function bin_arith_port_attrs()
   [PortAttrs(true, :x, Array{Real}),
@@ -8,41 +8,34 @@ end
 
 set_parent!{A <: PrimArrow}(arr::A, c_arr::CompArrow)::A = A(c_arr)
 
+"Addition"
 struct AddArrow <: PrimArrow{2, 1}
   id::Symbol
-  parent::Nullable{CompArrow}
 end
 name(::AddArrow)::Symbol = :+
 port_attrs(::AddArrow) = bin_arith_port_attrs()
-AddArrow() = AddArrow(gen_id(), Nullable{CompArrow}())
-AddArrow(parent::CompArrow) = AddArrow(gen_id(), parent)
+AddArrow() = AddArrow(gen_id())
 
 struct SubArrow <: PrimArrow{2, 1}
   id::Symbol
-  parent::Nullable{CompArrow}
 end
 name(::SubArrow)::Symbol = :-
 port_attrs(::SubArrow) = bin_arith_port_attrs()
-SubArrow() = SubArrow(gen_id(), Nullable{CompArrow}())
-SubArrow(parent::CompArrow) = AddArrow(gen_id(), parent)
+SubArrow() = SubArrow(gen_id())
 
 struct MulArrow <: PrimArrow{2, 1}
   id::Symbol
-  parent::Nullable{CompArrow}
 end
 name(::MulArrow)::Symbol = :*
 port_attrs(::MulArrow) = bin_arith_port_attrs()
-MulArrow() = MulArrow(gen_id(), Nullable{CompArrow}())
-MulArrow(parent::CompArrow) = MulArrow(gen_id(), parent)
+MulArrow() = MulArrow(gen_id())
 
 struct DivArrow <: PrimArrow{2, 1}
   id::Symbol
-  parent::Nullable{CompArrow}
 end
 name(::DivArrow)::Symbol = :/
 port_attrs(::DivArrow) = bin_arith_port_attrs()
-DivArrow() = DivArrow(gen_id(), Nullable{CompArrow}())
-DivArrow(parent::CompArrow) = DivArrow(gen_id(), parent)
+DivArrow() = DivArrow(gen_id())
 
 function unary_arith_port_attrs()
   [PortAttrs(true, :x, Array{Real}),
@@ -51,12 +44,10 @@ end
 
 struct SinArrow <: PrimArrow{1, 1}
   id::Symbol
-  parent::Nullable{CompArrow}
 end
 name(::SinArrow)::Symbol = :sin
 port_attrs(::SinArrow) = unary_arith_port_attrs()
-SinArrow() = SinArrow(gen_id(), Nullable{CompArrow}())
-SinArrow(parent::CompArrow) = SinArrow(gen_id(), parent)
+SinArrow() = SinArrow(gen_id())
 
 "Takes no input simple emits a `value::T`"
 struct SourceArrow{T} <: PrimArrow{0, 1}
@@ -122,8 +113,6 @@ name(::IdentityArrow) = :identity
 # convert(Arrow, ::typeof(+)) = AddArrow
 # lift(f::Function) = convert(Arrow, f)
 # function +(x::Port, y::Port)
-#   # Check all parent arrows are the same
-#   if !same((parent(p) for p in [x,y]))
 #     throw(DomainError())
 #   end
 #
