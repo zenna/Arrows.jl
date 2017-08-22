@@ -1,9 +1,9 @@
 using Arrows
-import Arrows: is_wired_ok, interpret, duplify!
+import Arrows: is_wired_ok, interpret, duplify!, add_sub_arr!
 using Base.Test
 
 "x * y + x"
-function xy_plus_x()
+function xy_plus_x_arr()
   c = CompArrow{2, 1}(:xyx)
   x, y, z = ports(c)
   mularr = MulArrow()
@@ -18,25 +18,18 @@ function xy_plus_x()
   c
 end
 
-tf(x, y) = x * y + x
-arr = xy_plus_x()
-@test is_wired_ok(arr)
-@test is_wired_ok(wrap(arr))
-@test interpret(arr, 7, 8)[1] == tf(7, 8)
-duplify!(arr)
+xy_plus_x_jl(x, y) = x * y + x
 
-# function xy_plus_x_port_arith()
-#   c = CompArrow{2, 1}(:xyx)
-#   x, y, z = ports(c)
-#   add_out_port = x * y + x
-#   link_ports!(c, add_out_port, z)
-#   c
-# end
-#
-# @test is_wired_ok(xy_plus_x_port_arith())
+function test_xy_plus_x()
+  arr = xy_plus_x()
+  @test is_wired_ok(arr)
+  @test is_wired_ok(wrap(arr))
+  @test interpret(arr, 7, 8)[1] == xy_plus_x_jl(7, 8)
+  @test is_wired_ok(duplify!(arr))
+end
 
 "f(x) = f(x)"
-function recursive_test()
+function recursive_arr()
   c = CompArrow{1, 1}(:recursive)
   c_wrap = add_sub_arr!(c, wrap(c))
   x, y = ports(c)
@@ -46,11 +39,13 @@ function recursive_test()
   c
 end
 
-arr = recursive_test()
-@test is_wired_ok(arr)
+function test_recursive()
+  arr = recursive_test()
+  @test is_wired_ok(arr)
+end
 
 "arrow that computes nth value of fibonnaci sequence"
-function fibonnaci()
+function fibonnaci_arr()
   c = CompArrow{1, 1}(:fib)
   c_wrap = add_sub_arr!(c, wrap(c))
   x, y = ports(c)
@@ -81,7 +76,53 @@ function fibonnaci()
   c
 end
 
-fib(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
-f = fibonnaci()
-@test interpret(f, 4)[1] == fib(4)
-@test is_wired_ok(f)
+fibonnaci_jl(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
+
+function test_fibonnaci()
+  f = fibonnaci_arr()
+  @test interpret(f, 4)[1] == fib(4)
+  @test is_wired_ok(f)
+end
+
+"f(x) = id(x), id(x)"
+function dupl_id_arr()
+  c = CompArrow{1, 2}(:dupl_id)
+  id1 = add_sub_arr!(c, IdentityArrow())
+  id2 = add_sub_arr!(c, IdentityArrow())
+  x, y, z = ports(c)
+  link_ports!(c, x, in_port(id1, 1))
+  link_ports!(c, x, in_port(id2, 1))
+  link_ports!(c, out_port(id1, 1), y)
+  link_ports!(c, out_port(id2, 1), z)
+  @assert is_wired_ok(c)
+  c
+end
+
+"f(x) = if p(x) then p(x), f(x)[1] else p(x), g(f(x)[2])"
+function det_policy_inner_arr()
+  c = CompArrow{1, 2}(:f)
+  f = add_sub_arr!(c, dupl_id_arr())
+  p = add_sub_arr!(c, IdentityArrow())
+  g = add_sub_arr!(c, IdentityArrow())
+  ite = add_sub_arr!(c, CondArrow())
+
+  link_ports!(c, c, 1, p, 1)
+  link_ports!(c, p, 1, c, 1)
+  link_ports!(c, p, 1, ite, 1)
+  link_ports!(c, c, 1, f, 1)
+  link_ports!(c, f, 1, ite, 2)
+  link_ports!(c, f, 2, g, 1)
+  link_ports!(c, g, 1, ite, 3)
+  link_ports!(c, ite, 1, c, 2)
+  @assert is_wired_ok(c)
+  c
+end
+
+"all test arrows"
+function all_test_arrows()
+  [xy_plus_x_arr(),
+   recursive_arr(),
+   fibonnaci_arr(),
+   dupl_id_arr(),
+   det_policy_inner_arr()]
+ end

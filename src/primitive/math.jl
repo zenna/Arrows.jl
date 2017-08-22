@@ -108,6 +108,17 @@ port_attrs{I}(::DuplArrow{I}) =
 name(::DuplArrow) = :dupl
 DuplArrow(n::Integer) = DuplArrow{n}(n, gen_id())
 
+"Identity id(x) = (x)"
+struct IdentityArrow <: PrimArrow{1, 1}
+  id::Symbol
+end
+
+port_attrs(::IdentityArrow) =
+  [PortAttrs(true, :x, Array{Any}), PortAttrs(false, :y, Array{Any})]
+
+IdentityArrow() = IdentityArrow(gen_id())
+name(::IdentityArrow) = :identity
+
 # convert(Arrow, ::typeof(+)) = AddArrow
 # lift(f::Function) = convert(Arrow, f)
 # function +(x::Port, y::Port)

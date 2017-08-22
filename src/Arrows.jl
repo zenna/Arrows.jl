@@ -9,11 +9,11 @@ using ZenUtils
 #                 TransformedParameter, parameters, FixedLenVarArray
 
 # using Distributions
-import LightGraphs
+import LightGraphs; const LG = LightGraphs
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, >>>, length, isequal, eltype
+  showcompact, >>>, length, isequal, eltype, hash, isequal, copy
 
 import Base:  ^,
               +,
@@ -78,7 +78,8 @@ export
   SourceArrow,
   CondArrow,
   EqualArrow,
-  SubArrow
+  SubArrow,
+  IdentityArrow
 
 include("util.jl")
 # include("types.jl")
@@ -87,12 +88,17 @@ include("arrows/arrow.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
 include("arrows/port_arith.jl")
+include("arrows/value.jl")
+include("arrows/address.jl")
+
 include("primitive/math.jl")
 include("combinators/compose.jl")
 
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
 include("apply/interpret.jl")
+include("apply/policy.jl")
+include("apply/depend.jl")
 
 include("transform/generic.jl")
 # include("library.jl")

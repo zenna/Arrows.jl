@@ -110,6 +110,15 @@ function link_ports!(c::CompArrow, l::Port, r::Port)
   add_edge!(c.edges, l_idx, r_idx)
 end
 
+""" Add edge in `c` `src_id`th projecting port of `src_arr` to
+`dest_id`receiving port of `dest_arr`"""
+function link_ports!(c::CompArrow, src_arr::Arrow, src_id::Integer,
+                     dest_arr::Arrow, dest_id::Integer)
+  src_port = src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
+  dest_port = dest_arr == c ? out_port(dest_arr, dest_id) : in_port(dest_arr, dest_id)
+  link_ports!(c, src_port, dest_port)
+end
+
 "Remove an edge in CompArrow from port `l` to port `r`"
 function unlink_ports!(c::CompArrow, l::Port, r::Port)
   l_idx = port_index(c, l)
@@ -143,7 +152,7 @@ is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
 "Vector of all neighbors of `port`"
 neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.neighbors, port, arr)
 
-"Vector of ports which `port` projects to"
+"Vector of ports which `port` receives from"
 in_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LightGraphs.in_neighbors, port, arr)
 
 "Vector of ports which `port` projects to"
@@ -170,7 +179,7 @@ function should_src(port::Port, arr::CompArrow)::Bool
   end
 end
 
-"Should `port` be a dest in context `arr` Possibly false iff is_wired_ok = false"
+"Should `port` be a dest in context `arr`? Maybe false iff is_wired_ok=false"
 function should_dest(port::Port, arr::CompArrow)::Bool
   if !(port in sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
@@ -195,10 +204,64 @@ function out_neighbors(subarr::Arrow, arr::CompArrow)
   ports
 end
 
-# Primitive
-# is_src{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_out_port(port)
+# FIXME: This can be done much more quickly with connected components on LG
+"Set of ports which are directly or indirectly connected to `port` within `arr`"
+function connected(port::Port, arr::CompArrow)::Set{Port}
+  seen = Set{Port}()
+  to_see = Set{Port}(port)
+  equiv = Set{Port}()
+  # import pdb; pdb.set_trace()
+  while length(to_see) > 0
+    port = pop!(to_see)
+    push!(seen, port)
+    for neigh in neighbors(port, arr)
+      add!(equiv, neigh)
+      if neigh ∉ seen
+          add!(to_see, neigh)
+        end
+      end
+    end
+  return equiv
+end
 
-# is_dest{A<:PrimArrow}(port::Port{A}, arr::CompArrow)::Bool = is_in_port(port)
+Components = Vector{Vector{Port}}
+
+"""Partition the ports into weakly connected equivalence classes"""
+function weakly_connected_components(arr::CompArrow)::Components
+  cc = weakly_connected_components(arr.edges)
+  pi = i->port_index(arr, i)
+  map(component->pi.(component), cc)
+end
+
+"Ports in `arr` weakly connected to `port`"
+function weakly_connected_component(arr::CompArrow, port::Port)::Vector{Port}
+  # TODO: Shouldn't need to compute all connected components just to compute
+  # connected component of `port`
+  weakly_connected_component(arr, port, weakly_connected_components(port.arrow))
+end
+
+# For efficiently (to avoid recomputing `components`)
+function weakly_connected_component(arr::CompArrow, port::Port,
+                          components::Components)::Vector{Port}
+  first((comp for comp in components if port ∈ comp))
+end
+
+# Edge trarversal
+"`src_port.arrow` such that `src_port -> port`"
+function src_arrow(arr::CompArrow, port::Port)::Arrow
+  src(arr, port).arrow
+end
+
+"`src_port` such that `src_port -> port`"
+function src(arr::CompArrow, port::Port)::Port
+  if is_src(port, arr)
+    port
+  else
+    in_neighs = in_neighbors(arr, port)
+    @assert length(in_neighs) == 1
+    first(in_neighs)
+  end
+end
 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
@@ -227,31 +290,4 @@ function is_wired_ok(arr::CompArrow)::Bool
     end
   end
   true
-end
-
-# FIXME: This can be done much more quickly with connected components on LG
-"Set of ports which are directly or indirectly connected to `port` within `arr`"
-function connected(port::Port, arr::CompArrow)::Set{Port}
-  seen = Set{Port}()
-  to_see = Set{Port}(port)
-  equiv = Set{Port}()
-  # import pdb; pdb.set_trace()
-  while length(to_see) > 0
-    port = pop!(to_see)
-    push!(seen, port)
-    for neigh in neighbors(port, arr)
-      add!(equiv, neigh)
-      if neigh ∉ seen
-          add!(to_see, neigh)
-        end
-      end
-    end
-  return equiv
-end
-
-"""Partition the ports into weakly connected equivalence classes"""
-function weakly_connected_components(arr::CompArrow)::Vector{Vector{Port}}
-  cc = weakly_connected_components(arr.edges)
-  pi = i->port_index(arr, i)
-  map(component->pi.(component), cc)
 end

@@ -7,17 +7,20 @@ interpret(::AddArrow, x, y) = (x + y,)
 interpret(::EqualArrow, x, y) = (x == y,)
 interpret(::CondArrow, i, t, e) = ((i ? t : e),)
 interpret(arr::SourceArrow) = (arr.value,)
-
-get_inputs(arr::Arrow, port_map::PortMap) =
-  [port_map[inp] for inp in in_ports(arr)]
-interpret(arr::Arrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
-interpret(arr::CompArrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
+interpret(::IdentityArrow, x) = (x,)
 
 function interpret(arr::CondArrow, port_map::PortMap)
   i, t, e = in_ports(arr)
   port_map[i] ? port_map[t] : port_map[e]
 end
 
+get_inputs(arr::Arrow, port_map::PortMap) =
+  [port_map[inp] for inp in in_ports(arr)]
+
+"unpack inputs of `arr` from `port_map` and interpret"
+unpack_interpret(arr::Arrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
+unpack_interpret(arr::CompArrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
+unpack_interpret(arr::CondArrow, port_map::PortMap) = interpret(arr, port_map)
 
 "Can we compute the out_ports of `arr` based on values in `port_map`?"
 can_compute(arr::Arrow, port_map) =
@@ -103,7 +106,7 @@ function interpret(arr::CompArrow, xs...)
     for sa in sub_arrows(arr)
       print_port_map(port_map)
       if can_compute(sa, port_map) && need_compute(sa, arr, port_map)
-        ys = interpret(sa, port_map)
+        ys = unpack_interpret(sa, port_map)
         merge_port_map!(sa, ys, port_map)
         print_port_map(port_map)
         for port in out_ports(sa)
