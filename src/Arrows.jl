@@ -33,34 +33,8 @@ import Base:  ^,
               parent
 
 export
-  # Combinators
   compose,
-  over,
-  under,
-  lift,
-  multiplex,
-  stack,
-  wrap,
-  inswitch,
-  init,
-
-  _,
-
   name,
-  conv2dfunc,
-  addfunc,
-  relu1dfunc,
-
-  inppintype,
-  outpintype,
-
-  typ,
-  dimtyp,
-  @shape,
-  @arrtype,
-  @intparams,
-  partial,
-  typeparams,
 
   CompArrow,
   link_ports!,
@@ -92,9 +66,10 @@ include("arrows/port_arith.jl")
 include("arrows/value.jl")
 
 # Library
-include("library/arithmetic.jl")
 include("library/common.jl")
+include("library/arithmetic.jl")
 include("library/control.jl")
+include("library/source.jl")
 
 include("combinators/compose.jl")
 

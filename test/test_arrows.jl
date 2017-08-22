@@ -1,6 +1,5 @@
 using Arrows
-import Arrows: is_wired_ok, interpret, duplify!, add_sub_arr!
-using Base.Test
+import Arrows: is_wired_ok, interpret, duplify!, add_sub_arr!, wrap
 
 "x * y + x"
 function xy_plus_x_arr()
@@ -18,15 +17,14 @@ function xy_plus_x_arr()
   c
 end
 
-xy_plus_x_jl(x, y) = x * y + x
+# a1 = xy_plus_x_arr()
+# # Arrows.DetPolicy(a1)
+# targets = out_values(a1)
+#
+# needed_ports(a1, targets)
+# methods(copy)
 
-function test_xy_plus_x()
-  arr = xy_plus_x()
-  @test is_wired_ok(arr)
-  @test is_wired_ok(wrap(arr))
-  @test interpret(arr, 7, 8)[1] == xy_plus_x_jl(7, 8)
-  @test is_wired_ok(duplify!(arr))
-end
+xy_plus_x_jl(x, y) = x * y + x
 
 "f(x) = f(x)"
 function recursive_arr()
@@ -37,11 +35,6 @@ function recursive_arr()
   link_ports!(c, x, x_wrap)
   link_ports!(c, y_wrap, y)
   c
-end
-
-function test_recursive()
-  arr = recursive_test()
-  @test is_wired_ok(arr)
 end
 
 "arrow that computes nth value of fibonnaci sequence"
@@ -78,12 +71,6 @@ end
 
 fibonnaci_jl(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
 
-function test_fibonnaci()
-  f = fibonnaci_arr()
-  @test interpret(f, 4)[1] == fib(4)
-  @test is_wired_ok(f)
-end
-
 "f(x) = id(x), id(x)"
 function dupl_id_arr()
   c = CompArrow{1, 2}(:dupl_id)
@@ -94,7 +81,6 @@ function dupl_id_arr()
   link_ports!(c, x, in_port(id2, 1))
   link_ports!(c, out_port(id1, 1), y)
   link_ports!(c, out_port(id2, 1), z)
-  @assert is_wired_ok(c)
   c
 end
 
@@ -114,7 +100,21 @@ function det_policy_inner_arr()
   link_ports!(c, f, 2, g, 1)
   link_ports!(c, g, 1, ite, 3)
   link_ports!(c, ite, 1, c, 2)
-  @assert is_wired_ok(c)
+  c
+end
+
+"f(x,y) = (x+y) + (x+y)"
+function triple_add()
+  c = CompArrow{2, 1}(:c)
+  x, y, z = ports(c)
+  a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
+  a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
+  a3 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
+  link_ports!(c, x, a1, 1)
+  link_ports!(c, x, a2, 1)
+  link_ports!(c, y, a1, 2)
+  link_ports!(c, y, a2, 2)
+  link_ports!(c, a3, 1, z)
   c
 end
 
