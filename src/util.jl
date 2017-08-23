@@ -2,6 +2,8 @@ curly(x::AbstractString) = string("{",x,"}")
 parens(x::AbstractString) = string("(",x,")")
 square(x::AbstractString) = string("[",x,"]")
 
+"Generate a unique arrow id"
+gen_id()::Symbol = gensym()
 
 "All elements in xs are the same?"
 function same(xs)::Bool

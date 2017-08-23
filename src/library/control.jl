@@ -14,7 +14,7 @@ port_attrs{I}(::DuplArrow{I}) =
    [PortAttrs(false, Symbol(:y, i), Array{Any}) for i=1:I]...]
 
 name(::DuplArrow) = :dupl
-DuplArrow(n::Integer) = DuplArrow{n}(n)
+DuplArrow(n::Integer) = DuplArrow{n}()
 
 "f(x) = (x,)"
 struct IdentityArrow <: PrimArrow{1, 1} end

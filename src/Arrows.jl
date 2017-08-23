@@ -59,6 +59,7 @@ include("util.jl")
 # include("types.jl")
 
 include("arrows/arrow.jl")
+include("arrows/port.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
 include("arrows/address.jl")

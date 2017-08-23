@@ -2,7 +2,7 @@ using Arrows
 using Base.Test
 
 tests = [
-    "arrows_tests"]
+    "arrow_tests"]
 
 print_with_color(:blue, "Running tests:\n")
 

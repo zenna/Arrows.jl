@@ -61,7 +61,6 @@ function in_port_required(port::Port{CondArrow}, port_map)::Bool
     true
   elseif i in keys(port_map)
     @assert (port in [t, e])
-    println("ok", port_map[i])
     return (port_map[i] && (port == t)) || (!port_map[i] && (port == e))
   else
     false

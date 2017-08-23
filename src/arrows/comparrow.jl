@@ -1,17 +1,20 @@
-import LightGraphs: Graph, add_edge!, add_vertex!, connected_components,
-  weakly_connected_components, rem_edge!
+import LightGraphs: weakly_connected_components
 
-"Directed Composite Arrow"
+"""Directed Composite Arrow
+
+A composite arrow is a akin to a function composition, i.e. a program.
+"""
 type CompArrow{I, O} <: Arrow{I, O}
-  name::Symbol                  # name of CompArrow
-  id::Symbol                    # Unique id
+  name::Symbol         # name of CompArrow
   edges::LG.DiGraph    # Graph over port indices - each port unique id
-  port_map::Vector{Port}        # port_map[i] is `Port` with index i in `edges`
-  port_attrs::Vector{PortAttrs} # Mapping from border port to attributes
+  port_map::Vector{Port}  # port_map[i] is `Port` with index i in `edges`
+  port_attrs::Vector{PortAttrs}    # Mapping from border port to attributes
+  sub_arrs::Vector{Union{CompArrow, PrimArrow}}
+  sub_arr_vertices::Vector{Vector{Int}}
 
-
-  function CompArrow{I, O}(name::Symbol, port_attrs::Vector{PortAttrs}) where{I, O}
-    if !is_valid_port_attrs(port_attrs, I, O)
+  function CompArrow{I, O}(name::Symbol,
+                           port_attrs::Vector{PortAttrs}) where{I, O}
+    if !is_valid(port_attrs, I, O)
       throw(DomainError())
     end
     c = new()
@@ -19,13 +22,17 @@ type CompArrow{I, O} <: Arrow{I, O}
     g = LG.DiGraph(nports)
     port_map = [Port(c, i) for i=1:nports]
     c.name = name
-    c.id = gen_id()
     c.port_map = port_map
     c.edges = g
     c.port_attrs = port_attrs
+    c.sub_arrs = [c]
+    c.sub_arr_vertices = [Vector{Int}(1:nports)]
     c
   end
 end
+
+"Not a reference"
+RealArrow = Union{CompArrow, PrimArrow}
 
 "Constructs CompArrow with Any"
 function CompArrow{I, O}(name::Symbol) where {I, O}
@@ -36,91 +43,168 @@ function CompArrow{I, O}(name::Symbol) where {I, O}
   CompArrow{I, O}(name, port_attrs)
 end
 
+"Port Attributes of *boundary* ports of arrow"
+port_attrs(arr::CompArrow) = arr.port_attrs
+
+"Name of a composite arrow"
 name(arr::CompArrow) = arr.name
 
-"Return all the sub_arrows of `arr` excluding arr itself"
-function sub_arrows(arr::CompArrow)::Vector{Arrow}
-  unique([port.arrow for port in arr.port_map if port.arrow != arr])
+"A referece to a `Port`"
+struct PortRef{T <: Integer} <: AbstractPort
+  arrow::CompArrow
+  vertex_id::T
 end
 
-"All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
-sub_ports(arr::CompArrow) = [port_index(arr, i) for i = 1:LG.nv(arr.edges)]
+"Find the vertex index of this port in `arr edges"
+port_index(arr::CompArrow, port::PortRef)::Integer = port.vertex_id
 
-"All projecting sub_ports"
-src_sub_ports(arr::CompArrow) = filter(port->is_src(port, arr), sub_ports(arr))
+port_attrs(portref::PortRef) = port_attrs(deref(portref))
 
-"All receiving sub_ports"
-dest_sub_ports(arr::CompArrow) = filter(port->is_dest(port, arr), sub_ports(arr))
-
-"Return all the sub_arrows of `arr` including arr itself"
-function all_sub_arrows(arr::CompArrow)::Vector{Arrow}
-  unique([port.arrow for port in arr.port_map])
-end
-
-"Find the index of this port in c edg es"
-function port_index(arr::CompArrow, port::Port)::Integer
-  index = findfirst(arr.port_map, port)
-  if index > 0
-    index
+"`PortRef` with vertex index `i` in arr.edges"
+function port_index(arr::CompArrow, i::Integer)::PortRef
+  nsubports = num_all_sub_ports(arr)
+  if 1 <= i <= nsubports
+    PortRef(arr, i)
   else
     throw(DomainError())
   end
 end
 
-"The Port with index `i` in arr.edges"
-port_index(arr::CompArrow, i::Integer)::Port = arr.port_map[i]
-
-function port_attrs(arr::CompArrow, port::Port)
-  arr.port_attrs[port_index(port.arrow, port)]
+"`id`th sub_arrow in (some kind of) ordering of sub_arrows of `arr`"
+struct SubArrowRef{I, O} <: ArrowRef{I, O}
+  parent::CompArrow
+  id::Int
 end
 
+"Dereference `arr` into `RealArrow`"
+function deref(arr::SubArrowRef)
+  newarr = arr.parent.sub_arrs[arr.id]
+  @assert !is_ref(newarr)
+  newarr
+end
+
+"Dereference `port`"
+function deref(port::PortRef)::Port
+  @assert is_ref(port)
+  port.arrow.port_map[port.vertex_id]
+end
+
+"ith sub arrow (reference) of `arr`"
+function sub_arrow(arr::CompArrow, i::Integer)::SubArrowRef
+  subarr = arr.sub_arrs[i]
+  SubArrowRef{num_in_ports(subarr), num_out_ports(subarr)}(arr, i)
+end
+
+"Return all the sub_arrows of `arr` excluding arr itself"
+sub_arrows(arr::CompArrow)::Vector{SubArrowRef} = all_sub_arrows(arr)[2:end]
+
+"Return all the sub_arrows of `arr` including arr itself"
+all_sub_arrows(arr::CompArrow)::Vector{SubArrowRef} =
+  [sub_arrow(i) for i = 1:num_all_sub_arrows]
+
+"Number of sub_ports (inclusuive of boundary)"
+num_all_sub_ports(arr::CompArrow) = length(arr.port_map)
+
+"Number of sub_ports (exclusive of boundary)"
+num_sub_ports{I, O}(arr::CompArrow{I, O}) = num_all_sub_ports(arr) - (I + O)
+
+"All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
+all_sub_ports(arr::CompArrow)::Vector{PortRef} =
+  [PortRef(arr, i) for i = 1:num_all_sub_ports(arr)]
+
+"All source (projecting) sub_ports"
+src_sub_ports(arr::CompArrow)::Vector{PortRef} =
+  filter(port->is_src(port, arr), sub_ports(arr))
+
+"All destination (receiving) sub_ports"
+dst_sub_ports(arr::CompArrow) = filter(port->is_dst(port, arr), sub_ports(arr))
+
+"is `port` a reference?"
+is_ref(port::PortRef) = true
+
 "Add a port inside the composite arrow"
-function add_port!(arr::CompArrow, port::Port)::Port
+function add_port!(arr::CompArrow, port)::Port
   push!(arr.port_map, port)
-  add_vertex!(arr.edges)
+  LG.add_vertex!(arr.edges)
   port
 end
 
-"Add a port to `arr` with same attributes as `port`"
-add_port_like!(arr::CompArrow, port::Port)::Port = add_port!(arr, port_attrs(port))
+"Is `port` within `arr`"
+function in(port::PortRef, arr::CompArrow)::Bool
+  if port.arrow == arr
+    nsubports = num_all_sub_ports(arr)
+    1 <= port.vertex_id <= nsubports
+  end
+  false
+end
 
 "Is `port` within `arr`"
-in(port::Port, arr::CompArrow)::Bool = port in arr.port_map
+function strictly_in{I, O}(port::PortRef, arr::CompArrow{I, O})::Bool
+  if port.arrow == arr
+    nsubports = num_sub_ports(arr)
+    return I + O < port.vertex_id <= I + O + nsubports
+  end
+  false
+end
 
-# FIXME this searches over many duplicates
 "Is `arr` a sub_arrow of composition `c_arr`"
-in(arr::Arrow, c_arr::CompArrow)::Bool = arr in (p.arrow for p in c_arr.port_map)
+in(arr::SubArrowRef, c_arr::CompArrow)::Bool = arr in all_sub_arrows(p)
+
+"Number of sub_arrows in `c_arr` including `c_arr`"
+num_all_sub_arrows(arr::CompArrow) = length(arr.sub_arrs)
+
+"Number of sub_arrows"
+num_sub_arrows(arr::CompArrow) = num_all_sub_arrows(arr) - 1
+
+"All ports(references) of a sub_arrow(reference)"
+ports(sarr::SubArrowRef)::Vector{PortRef} =
+  [PortRef(sarr.parent, v_id) for v_id in sarr.parent.sub_arr_vertices[sarr.id]]
 
 "Add a sub_arrow `arr` to composition `c_arr`"
-function add_sub_arr!(c_arr::CompArrow, arr::Arrow)::Arrow
-  if arr in c_arr
-    throw(DomainError())
-  else
-    for port in ports(arr)
-      add_port!(c_arr, port)
-    end
-    arr
+function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
+  last_index = num_all_sub_arrows(c_arr)
+  next_index = last_index + 1
+  v_id_start = c_arr.sub_arr_vertices[last_index][end] + 1
+  push!(c_arr.sub_arr_vertices, Vector{Int}(v_id_start:v_id_start+I+O-1))
+  push!(c_arr.sub_arrs, arr)
+  sarr = sub_arrow(c_arr, next_index)
+  for port in ports(arr)
+    add_port!(c_arr, port)
   end
+  sarr
 end
 
 "Add an edge in CompArrow from port `l` to port `r`"
-function link_ports!(c::CompArrow, l::Port, r::Port)
+function link_ports!(c::CompArrow, l::PortRef, r::PortRef)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
-  add_edge!(c.edges, l_idx, r_idx)
+  println("LINESMAN", l_idx, " ", r_idx)
+  LG.add_edge!(c.edges, l_idx, r_idx)
 end
 
-""" Add edge in `c` `src_id`th projecting port of `src_arr` to
-`dest_id`receiving port of `dest_arr`"""
-function link_ports!(c::CompArrow, src_arr::Arrow, src_id::Integer,
-                     dest_arr::Arrow, dest_id::Integer)
-  src_port = src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
-  dest_port = dest_arr == c ? out_port(dest_arr, dest_id) : in_port(dest_arr, dest_id)
-  link_ports!(c, src_port, dest_port)
+"Add an edge in CompArrow from port `l` to port `r`"
+function link_ports!(c::CompArrow, l::Port, r::PortRef)
+  @assert l.arrow == c
+  link_ports!(c, PortRef(c, l.index), r)
 end
+
+"Add an edge in CompArrow from port `l` to port `r`"
+function link_ports!(c::CompArrow, l::PortRef, r::Port)
+  @assert l.arrow == c
+  link_ports!(c, l, PortRef(c, r.index))
+end
+
+# """ Add edge in `c` `src_id`th projecting port of `src_arr` to
+# `dest_id`receiving port of `dest_arr`"""
+# function link_ports!(c::CompArrow, src_arr::Arrow, src_id::Integer,
+#                      dest_arr::Arrow, dest_id::Integer)
+#   src_port = src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
+#   dest_port = dest_arr == c ? out_port(dest_arr, dest_id) : in_port(dest_arr, dest_id)
+#   link_ports!(c, src_port, dest_port)
+# end
 
 "Remove an edge in CompArrow from port `l` to port `r`"
-function unlink_ports!(c::CompArrow, l::Port, r::Port)
+function unlink_ports!(c::CompArrow, l::PortRef, r::PortRef)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
   rem_edge!(c.edges, l_idx, r_idx)
@@ -128,7 +212,7 @@ end
 
 # Graph traversal
 "is vertex `v` a destination, i.e. does it project more than 0 edges"
-is_dest(g::LG.DiGraph, v::Integer) = LG.indegree(g, v) > 0
+is_dst(g::LG.DiGraph, v::Integer) = LG.indegree(g, v) > 0
 
 "is vertex `v` a source, i.e. does it receive more than 0 edges"
 is_src(g::LG.DiGraph, v::Integer) = LG.outdegree(g, v) > 0
@@ -144,7 +228,7 @@ function v_to_p(f::Function, port::Port, arr::Arrow)
 end
 
 "Is port a destination. i.e. does corresponding vertex project more than 0"
-is_dest(port::Port, arr::CompArrow) = lg_to_p(is_dest, port, arr)
+is_dst(port::Port, arr::CompArrow) = lg_to_p(is_dst, port, arr)
 
 "Is port a source,  i.e. does corresponding vertex receive more than 0"
 is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
@@ -165,31 +249,31 @@ out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.outdegree, port, ar
 in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.indegree, port, arr)
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
-function should_src(port::Port, arr::CompArrow)::Bool
+function should_src(port::PortRef, arr::CompArrow)::Bool
   # TODO: Is this check necessary?
-  if !(port in sub_ports(arr))
-    errmsg = "Port $port not in ports of $(name(arr))"
-    println(errmsg)
-    throw(DomainError())
-  end
-  if arr == port.arrow
-    is_in_port(port)
-  else
+  # if !(port in all_sub_ports(arr))
+  #   errmsg = "Port $port not in ports of $(name(arr))"
+  #   println(errmsg)
+  #   throw(DomainError())
+  # end
+  if strictly_in(port, port.arrow)
     is_out_port(port)
+  else
+    is_in_port(port)
   end
 end
 
 "Should `port` be a dest in context `arr`? Maybe false iff is_wired_ok=false"
-function should_dest(port::Port, arr::CompArrow)::Bool
-  if !(port in sub_ports(arr))
+function should_dst(port::PortRef, arr::CompArrow)::Bool
+  if !(port in all_sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
     println(errmsg)
     throw(DomainError())
   end
-  if arr == port.arrow
-    is_out_port(port)
-  else
+  if strictly_in(port, port.arrow)
     is_in_port(port)
+  else
+    is_out_port(port)
   end
 end
 
@@ -266,7 +350,7 @@ end
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
   for i = 1:LG.nv(arr.edges)
-    if should_dest(port_index(arr, i), arr)
+    if should_dst(port_index(arr, i), arr)
       # If it should be a desination
       if !(LG.indegree(arr.edges, i) == 1 &&
            LG.outdegree(arr.edges, i) == 0)
@@ -283,7 +367,7 @@ function is_wired_ok(arr::CompArrow)::Bool
       # if it should be a source
       if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
         errmsg = """vertex $i Port $(port_index(arr, i)) is source but out degree is
-        $(LG.outdegree(arr.edges, 1)) (should be >= 1)"""
+        $(LG.outdegree(arr.edges, i)) (should be >= 1)"""
         warn(errmsg)
         return false
       end

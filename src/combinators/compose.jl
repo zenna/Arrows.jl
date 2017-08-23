@@ -5,10 +5,10 @@ function wrap{I,O}(arr::Arrow{I,O})
 
   for i = 1:num_ports(arrc)
     if is_in_port(port(arrc, i))
-      println("for ith port making edge from wrapping to inner")
+      # println("for ith port making edge from wrapping to inner")
       link_ports!(arr_wrap, port(arr_wrap, i), port(arrc, i))
     else
-      println("for ith port making edge from inner to wrapping")
+      # println("for ith port making edge from inner to wrapping")
       link_ports!(arr_wrap, port(arrc, i), port(arr_wrap, i))
     end
   end

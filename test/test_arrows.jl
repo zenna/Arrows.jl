@@ -1,6 +1,16 @@
 using Arrows
 import Arrows: is_wired_ok, interpret, duplify!, add_sub_arr!, wrap
 
+"f(x) = x^2"
+function sin_arr()
+  c = CompArrow{1, 1}(:x2)
+  x, y = ports(c)
+  sinarr = add_sub_arr!(c, SinArrow())
+  link_ports!(c, x, in_port(sinarr, 1))
+  link_ports!(c, out_port(sinarr, 1), y)
+  c
+end
+
 "x * y + x"
 function xy_plus_x_arr()
   c = CompArrow{2, 1}(:xyx)
@@ -16,13 +26,6 @@ function xy_plus_x_arr()
   link_ports!(c, out_port(add_arr, 1), z)
   c
 end
-
-# a1 = xy_plus_x_arr()
-# # Arrows.DetPolicy(a1)
-# targets = out_values(a1)
-#
-# needed_ports(a1, targets)
-# methods(copy)
 
 xy_plus_x_jl(x, y) = x * y + x
 
@@ -105,16 +108,16 @@ end
 
 "f(x,y) = (x+y) + (x+y)"
 function triple_add()
-  c = CompArrow{2, 1}(:c)
+  c = CompArrow{2, 1}(:xyxy)
   x, y, z = ports(c)
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a3 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
-  link_ports!(c, x, a1, 1)
-  link_ports!(c, x, a2, 1)
-  link_ports!(c, y, a1, 2)
-  link_ports!(c, y, a2, 2)
-  link_ports!(c, a3, 1, z)
+  link_ports!(c, c, 1, a1, 1)
+  link_ports!(c, c, 1, a2, 1)
+  link_ports!(c, c, 2, a1, 2)
+  link_ports!(c, c, 2, a2, 2)
+  link_ports!(c, a3, 1, c, 1)
   c
 end
 
