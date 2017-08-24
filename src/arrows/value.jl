@@ -1,7 +1,7 @@
 "A value, corresponds to connected component of `Port`s"
 abstract type Value end
 
-Values{T} = Set{T} where T<:Value
+Values{T} = Set{T} where T <: Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value

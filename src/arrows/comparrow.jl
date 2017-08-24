@@ -55,7 +55,8 @@ struct SubPort{T <: Integer} <: AbstractPort
   vertex_id::T
 end
 
-parent(subport::SubPort) = subport.arrow
+"Parent of a `SubPort` is `parent` of attached `Arrow`"
+parent(subport::SubPort) = parent(subport.arrow)
 
 function is_linked(subport1::SubPort, subport2::SubPort)::Bool
   same_parent = parent(subport1) == parent(subport2)
@@ -119,9 +120,9 @@ end
 "Get (self) sub_arrow reference to `arr`"
 sub_arrow(arr::CompArrow) = sub_arrow(arr, 1)
 
-"sub_rrow which `port` is on"
+"sub_arrow which `port` is on"
 function sub_arrow(port::SubPort)::SubArrow
-  arr = parent(port)
+  arr = port.arrow
   pid = port_index(port)
   # FIXME: Could speed this up easily
   id = findfirst(verts->pid ∈ verts, arr.sub_arr_vertices)
@@ -297,27 +298,8 @@ function out_neighbors(subarr::Arrow, arr::CompArrow)
   ports
 end
 
-# FIXME: This can be done much more quickly with connected components on LG
-"Set of ports which are directly or indirectly connected to `port` within `arr`"
-function connected(port::SubPort, arr::CompArrow)::Set{SubPort}
-  seen = Set{Port}()
-  to_see = Set{Port}(port)
-  equiv = Set{Port}()
-  # import pdb; pdb.set_trace()
-  while length(to_see) > 0
-    port = pop!(to_see)
-    push!(seen, port)
-    for neigh in neighbors(port, arr)
-      add!(equiv, neigh)
-      if neigh ∉ seen
-          add!(to_see, neigh)
-        end
-      end
-    end
-  return equiv
-end
-
-Components = Vector{Vector{Port}}
+Component = Vector{SubPort}
+Components = Vector{Component}
 
 """Partition the ports into weakly connected equivalence classes"""
 function weakly_connected_components(arr::CompArrow)::Components
@@ -327,15 +309,10 @@ function weakly_connected_components(arr::CompArrow)::Components
 end
 
 "Ports in `arr` weakly connected to `port`"
-function weakly_connected_component(arr::CompArrow, port::Port)::Vector{Port}
+function weakly_connected_component(port::SubPort)::Component
   # TODO: Shouldn't need to compute all connected components just to compute
-  # connected component of `port`
-  weakly_connected_component(arr, port, weakly_connected_components(port.arrow))
-end
-
-# For efficiently (to avoid recomputing `components`)
-function weakly_connected_component(arr::CompArrow, port::Port,
-                          components::Components)::Vector{Port}
+  arr = parent(port)
+  components = weakly_connected_components(arr)
   first((comp for comp in components if port ∈ comp))
 end
 

@@ -8,7 +8,7 @@ Semantics of this model
 - There are a finite number of composite arrows, `CompArrow`
 - Each composite arrow is unique and uniquely identifiable by name, globally
 
-# `Ports`
+# `Port`
 - A `PrimArrow{I, O}` and `CompArrow{I, O}` has `I` and `O` input / output ports
 - These I+O Ports are the `boundary` ports of a `CompArrow`
 - a `SubPort` which is on a `SubArrow` is not a boundary
@@ -17,6 +17,7 @@ Semantics of this model
 - A composite arrow contains a finite number of components: `SubArrow`s
 - Each `SubArrow` is unique and uniquely identifiable by name within its parent
 - Each `SubArrow` contains a reference to another `PrimArrow` or `CompArrow`
+- We can `deref`erence a `SubArrow` to retrieve the `PrimArrow` or `CompArrow`
 - A `SubPort` is a port of `SubArrow`
 - We can `deref`erence it to get the corresponding port on CompArrow / PrimArrow
 
@@ -24,7 +25,7 @@ Semantics of this model
 - All `Port`s that are connected share the same `Value`
 - Often it is useful to talk about these `Values` individually
 - a `Value` is a set of `Port`s such that there exists an edge between each
-  `port ∈ Value`
+  `port ∈ Value`, i.e. a weakly connected component
 
 # `Trace`
 - SubArrows can refer to CompArrow's, even the same CompArrow

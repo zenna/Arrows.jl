@@ -63,9 +63,9 @@ include("arrows/arrow.jl")
 include("arrows/port.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
+include("arrows/value.jl")
 include("arrows/trace.jl")
 include("arrows/port_arith.jl")
-include("arrows/value.jl")
 
 # Library
 include("library/common.jl")

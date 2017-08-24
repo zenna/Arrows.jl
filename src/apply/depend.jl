@@ -1,5 +1,5 @@
-"Assigns a `true` or `false` to ports which are input_1 of `CondArrow`s"
-CondMap = Dict{SubPort, Bool}
+"Assigns `true` or `false` to traceports which are input_1 of `CondArrow`s"
+CondMap = Dict{TracePort, Bool}
 
 "Which values in `arr` are needed to compute outputs of `subarr`"
 function needed_values(arr::CompArrow, subarr::Arrow, cond_map::CondMap)
