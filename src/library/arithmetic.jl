@@ -4,9 +4,9 @@ name(::AddArrow)::Symbol = :+
 port_attrs(::AddArrow) = bin_arith_port_attrs()
 
 "x - y"
-struct SubArrow <: PrimArrow{2, 1} end
-name(::SubArrow)::Symbol = :-
-port_attrs(::SubArrow) = bin_arith_port_attrs()
+struct SubtractArrow <: PrimArrow{2, 1} end
+name(::SubtractArrow)::Symbol = :-
+port_attrs(::SubtractArrow) = bin_arith_port_attrs()
 
 "x * y"
 struct MulArrow <: PrimArrow{2, 1} end

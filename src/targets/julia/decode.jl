@@ -1,6 +1,6 @@
 interpret(::DivArrow, x, y) = (x / y,)
 interpret(::MulArrow, x, y) = (x * y,)
-interpret(::SubArrow, x, y) = (x - y,)
+interpret(::SubtractArrow, x, y) = (x - y,)
 interpret(::AddArrow, x, y) = (x + y,)
 interpret(::EqualArrow, x, y) = (x == y,)
 interpret(::CondArrow, i, t, e) = ((i ? t : e),)

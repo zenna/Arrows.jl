@@ -24,7 +24,7 @@ conv(a::DivArrow, args::Args, state::State)::Vector{Tensor} = [tf.div(*args)]
 #     return [tf.div(num, safe_den)]
 
 conv(a::SinArrow, args::Args, state::State)::Vector{Tensor} = [tf.sin(*args)]
-conv(a::SubArrow, args::Args, state::State)::Vector{Tensor} = [tf.subtract(*args)]
+conv(a::SubtractArrow, args::Args, state::State)::Vector{Tensor} = [tf.subtract(*args)]
 conv(a::CosArrow, args::Args, state::State)::Vector{Tensor} = [tf.cos(*args)]
 conv(a::ASinArrow, args::Args, state::State)::Vector{Tensor} = [tf.asin(*args)]
 conv(a::ACosArrow, args::Args, state::State)::Vector{Tensor} = [tf.acos(*args)]

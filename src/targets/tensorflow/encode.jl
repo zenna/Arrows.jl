@@ -1,7 +1,7 @@
 
 conv_Add(add_op::Operation) = AddArrow()
 
-conv_Sub(sub_op::Operation) = SubArrow()
+conv_Sub(sub_op::Operation) = SubtractArrow()
 
 conv_AddN(addm_op::Operation) = AddNArrow(length(addm_op.inputs))
 

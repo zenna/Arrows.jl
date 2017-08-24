@@ -52,7 +52,7 @@ export
   SourceArrow,
   CondArrow,
   EqualArrow,
-  SubArrow,
+  SubtractArrow,
   DivArrow,
   IdentityArrow
 
@@ -63,7 +63,7 @@ include("arrows/arrow.jl")
 include("arrows/port.jl")
 include("arrows/primarrow.jl")
 include("arrows/comparrow.jl")
-include("arrows/address.jl")
+include("arrows/trace.jl")
 include("arrows/port_arith.jl")
 include("arrows/value.jl")
 
@@ -78,8 +78,8 @@ include("combinators/compose.jl")
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
 include("apply/interpret.jl")
-include("apply/policy.jl")
 include("apply/depend.jl")
+include("apply/policy.jl")
 
 include("transform/generic.jl")
 # include("library.jl")

@@ -48,6 +48,7 @@ end
 "Is the policy structured correctly?"
 function is_valid(pol::DetPolicy)::Bool
   # one_start_node = ...
+  # FIXME:
   true
 end
 
@@ -71,10 +72,11 @@ end
 "Compile `arr` into a `Policy`"
 function DetPolicy(arr::CompArrow, known::Values, targets::Values)
   pol = DetPolicy() # new empty policy
-  cond_map = Dict{Port, Bool}()
+  cond_map = CondMap()
   extend_policy!(arr, pol, known, targets, cond_map)
 end
 
+"Create `DetPolicy` from `arr` assuming we want outputs and know inputs"
 function DetPolicy(arr::CompArrow)
   known = in_values(arr)
   targets = out_values(arr)
@@ -83,7 +85,7 @@ end
 
 "Extend the policy by adding either compute or branch node"
 function extend_policy!(arr::CompArrow, pol::Policy, known::Values,
-                        targets::Values, cond_map::Dict{Port, Bool})
+                        targets::Values, cond_map::CondMap)
   can_need = can_need_ports(arr, known, targets, cond_map)
   if isempty(can_need)
     alt_port = first((k for (k, v) in cond_map if v))

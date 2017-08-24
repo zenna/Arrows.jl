@@ -1,12 +1,12 @@
 "Assigns a `true` or `false` to ports which are input_1 of `CondArrow`s"
-CondMap = Dict{PortRef, Bool}
+CondMap = Dict{SubPort, Bool}
 
 "Which values in `arr` are needed to compute outputs of `subarr`"
 function needed_values(arr::CompArrow, subarr::Arrow, cond_map::CondMap)
   in_ports(arr, subarr)
 end
 
-"Which values in `arr` are needed to compute outputs of `subarr`"
+"Which `Value`s in `arr` are needed to compute outputs of `subarr`"
 function needed_ports(arr::CompArrow, subarr::Arrow, cond_map::CondMap)
   i, t, e = in_ports(arr, sub_arrows)
   if i in cond_map
@@ -20,14 +20,15 @@ function needed_ports(arr::CompArrow, subarr::Arrow, cond_map::CondMap)
   end
 end
 
-function needed_ports(arr::CompArrow, target::Value, cond_map::CondMap)
-  subarr = src_arrow(arr, target)
+"Which `Value's do we need to compute `target`"
+function needed_ports(arr::CompArrow, target::Value, cond_map::CondMap)::Values
+  subarr = src_arrow(target)
   needed_ports(arr, subarr, cond_map)
 end
 
-"Which port_classes do we (unambiguously) need to determine `targets`?"
+"Which values do we (unambiguously) need to determine `targets`?"
 function needed_ports(arr::CompArrow, targets::Values,
-                      cond_map::CondMap = CondMap())
+                      cond_map::CondMap = CondMap())::Values
   all_needed = Set{Value}()
   to_see = copy(targets)
   seen = Set{Value}()

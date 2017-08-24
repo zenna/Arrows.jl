@@ -11,15 +11,15 @@ end
 is_ref(port::Port) = false
 
 # "A reference to a `Port`"
-# PortRef{A, T} = Port{A, T} where A <: ArrowRef
-# PortRef{A, T} = Port{A, T} # A PortRef is a Port whose `arrow` is ArrowRef
+# SubPort{A, T} = Port{A, T} where A <: ArrowRef
+# SubPort{A, T} = Port{A, T} # A SubPort is a Port whose `arrow` is ArrowRef
 
 # "Is `port` a reference?"
 # is_ref{A}(port::Port{A}) = A <: ArrowRef
 
 """Port Attributes: properties instrinsic to a port.
 
-- `PortAttr`s are a property of an Arrow or SubArrow
+- `PortAttr`s are a property of an Arrow or SubtractArrow
 """
 struct PortAttrs
   is_in_port::Bool

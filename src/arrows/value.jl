@@ -5,7 +5,7 @@ Values{T} = Set{T} where T<:Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value
-  port::PortRef
+  port::SubPort
 end
 
 # FIXME: This is a bad hash!
@@ -22,16 +22,18 @@ function ports(value::RepValue)::Vector{Port}
 end
 
 "Get Set of InPort Values"
-function in_values(arr::SubArrowRef)::Values
+function in_values(arr::SubArrow)::Values
   Set(RepValue(port) for port in in_ports(arr))
 end
 
 in_values(arr::CompArrow) = in_values(sub_arrow(arr))
 
 "Get Set of OutPort Values"
-function out_values(arr::CompArrow)::Values
-  Set(RepValue(arr, port) for port in in_ports(arr))
+function out_values(arr::SubArrow)::Values
+  Set(RepValue(port) for port in  out_ports(arr))
 end
+
+out_values(arr::CompArrow) = out_values(sub_arrow(arr))
 
 "`subarr` such that `value` is an output of `subarr`"
 src_arrow(arr::CompArrow, value::Value) = src_arrow(arr, value.port)
