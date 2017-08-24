@@ -43,7 +43,7 @@ end
 "arrow that computes nth value of fibonnaci sequence"
 function fibonnaci_arr()
   c = CompArrow{1, 1}(:fib)
-  c_wrap = add_sub_arr!(c, wrap(c))
+  c_wrap = add_sub_arr!(c, c)
   x, y = ports(c)
   one = add_sub_arr!(c, SourceArrow(1))
   min = add_sub_arr!(c, SubArrow())

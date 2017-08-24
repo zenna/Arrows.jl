@@ -55,7 +55,7 @@ export
   SubArrow,
   IdentityArrow
 
-include("util.jl")
+include("util/misc.jl")
 # include("types.jl")
 
 include("arrows/arrow.jl")
@@ -82,6 +82,8 @@ include("apply/depend.jl")
 
 include("transform/generic.jl")
 # include("library.jl")
+
+include("compilation_targets//tensorflow.jl")
 
 # include("smt_solvers/z3interface.jl")
 # include("compilation_targets/theano.jl")

@@ -34,7 +34,7 @@ end
 "Not a reference"
 RealArrow = Union{CompArrow, PrimArrow}
 
-"Constructs CompArrow with Any"
+"Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow{I, O}(name::Symbol) where {I, O}
   # Default is for first I ports to be in_ports then next O oout_ports
   in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
@@ -178,7 +178,6 @@ end
 function link_ports!(c::CompArrow, l::PortRef, r::PortRef)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
-  println("LINESMAN", l_idx, " ", r_idx)
   LG.add_edge!(c.edges, l_idx, r_idx)
 end
 
@@ -218,64 +217,41 @@ is_dst(g::LG.DiGraph, v::Integer) = LG.indegree(g, v) > 0
 is_src(g::LG.DiGraph, v::Integer) = LG.outdegree(g, v) > 0
 
 #FIXME: Turn this into a macro for type stability
-"Helper function to translate LightGraph functions to Port functions"
-function lg_to_p(f::Function, port::Port, arr::CompArrow)
+"""
+Helper function to translate LightGraph functions to Port functions
+  f: LightGraph API function f(g::Graph, v::VertexId)
+  port: port corresponding to vertex to which f(v) is applied
+  arr: Parent Composite arrow
+"""
+function lg_to_p(f::Function, port::PortRef, arr::CompArrow)
   f(arr.edges, port_index(arr, port))
 end
 
-function v_to_p(f::Function, port::Port, arr::Arrow)
+"Helper for LightGraph API methods which return Vector{Port}, see `lg_to_p`"
+function v_to_p(f::Function, port::PortRef, arr::Arrow)
   map(i->port_index(arr, i), lg_to_p(f, port, arr))
 end
 
 "Is port a destination. i.e. does corresponding vertex project more than 0"
-is_dst(port::Port, arr::CompArrow) = lg_to_p(is_dst, port, arr)
+is_dst(port::PortRef, arr::CompArrow) = lg_to_p(is_dst, port, arr)
 
 "Is port a source,  i.e. does corresponding vertex receive more than 0"
-is_src(port::Port, arr::CompArrow) = lg_to_p(is_src, port, arr)
+is_src(port::PortRef, arr::CompArrow) = lg_to_p(is_src, port, arr)
 
 "Vector of all neighbors of `port`"
-neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.neighbors, port, arr)
+neighbors(port::PortRef, arr::CompArrow)::Vector{PortRef} = v_to_p(LG.neighbors, port, arr)
 
 "Vector of ports which `port` receives from"
-in_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.in_neighbors, port, arr)
+in_neighbors(port::PortRef, arr::CompArrow)::Vector{PortRef} = v_to_p(LG.in_neighbors, port, arr)
 
 "Vector of ports which `port` projects to"
-out_neighbors(port::Port, arr::CompArrow)::Vector{Port} = v_to_p(LG.out_neighbors, port, arr)
+out_neighbors(port::PortRef, arr::CompArrow)::Vector{PortRef} = v_to_p(LG.out_neighbors, port, arr)
 
 "Return the number of ports which begin at port p"
-out_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.outdegree, port, arr)
+out_degree(port::PortRef, arr::CompArrow)::Integer = lg_to_p(LG.outdegree, port, arr)
 
 "Return the number of ports which end at port p"
-in_degree(port::Port, arr::CompArrow)::Integer = lg_to_p(LG.indegree, port, arr)
-
-"Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
-function should_src(port::PortRef, arr::CompArrow)::Bool
-  # TODO: Is this check necessary?
-  # if !(port in all_sub_ports(arr))
-  #   errmsg = "Port $port not in ports of $(name(arr))"
-  #   println(errmsg)
-  #   throw(DomainError())
-  # end
-  if strictly_in(port, port.arrow)
-    is_out_port(port)
-  else
-    is_in_port(port)
-  end
-end
-
-"Should `port` be a dest in context `arr`? Maybe false iff is_wired_ok=false"
-function should_dst(port::PortRef, arr::CompArrow)::Bool
-  if !(port in all_sub_ports(arr))
-    errmsg = "Port $port not in ports of $(name(arr))"
-    println(errmsg)
-    throw(DomainError())
-  end
-  if strictly_in(port, port.arrow)
-    is_in_port(port)
-  else
-    is_out_port(port)
-  end
-end
+in_degree(port::PortRef, arr::CompArrow)::Integer = lg_to_p(LG.indegree, port, arr)
 
 "All neighbouring ports of `subarr`, each port connected to each outport"
 function out_neighbors(subarr::Arrow, arr::CompArrow)
@@ -290,7 +266,7 @@ end
 
 # FIXME: This can be done much more quickly with connected components on LG
 "Set of ports which are directly or indirectly connected to `port` within `arr`"
-function connected(port::Port, arr::CompArrow)::Set{Port}
+function connected(port::PortRef, arr::CompArrow)::Set{PortRef}
   seen = Set{Port}()
   to_see = Set{Port}(port)
   equiv = Set{Port}()
@@ -344,6 +320,36 @@ function src(arr::CompArrow, port::Port)::Port
     in_neighs = in_neighbors(arr, port)
     @assert length(in_neighs) == 1
     first(in_neighs)
+  end
+end
+
+# Sanity
+
+"Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
+function should_src(port::PortRef, arr::CompArrow)::Bool
+  if !(port in all_sub_ports(arr))
+    errmsg = "Port $port not in ports of $(name(arr))"
+    println(errmsg)
+    throw(DomainError())
+  end
+  if strictly_in(port, port.arrow)
+    is_out_port(port)
+  else
+    is_in_port(port)
+  end
+end
+
+"Should `port` be a dest in context `arr`? Maybe false iff is_wired_ok=false"
+function should_dst(port::PortRef, arr::CompArrow)::Bool
+  if !(port in all_sub_ports(arr))
+    errmsg = "Port $port not in ports of $(name(arr))"
+    println(errmsg)
+    throw(DomainError())
+  end
+  if strictly_in(port, port.arrow)
+    is_in_port(port)
+  else
+    is_out_port(port)
   end
 end
 

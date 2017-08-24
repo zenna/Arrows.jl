@@ -18,10 +18,25 @@ struct DivArrow <: PrimArrow{2, 1} end
 name(::DivArrow)::Symbol = :/
 port_attrs(::DivArrow) = bin_arith_port_attrs()
 
+"exp(x)"
+struct ExpArrow <: PrimArrow{1, 1} end
+name(::ExpArrow)::Symbol = :sin
+port_attrs(::ExpArrow) = unary_arith_port_attrs()
+
 "sin(x)"
 struct SinArrow <: PrimArrow{1, 1} end
 name(::SinArrow)::Symbol = :sin
 port_attrs(::SinArrow) = unary_arith_port_attrs()
+
+"log(b, x)"
+struct LogBaseArrow <: PrimArrow{2, 1} end
+name(::LogBaseArrow)::Symbol = :logbase
+port_attrs(::LogBaseArrow) = unary_arith_port_attrs()
+
+"-x"
+struct NegArrow <: PrimArrow{1, 1} end
+name(::NegArrow)::Symbol = :sin
+port_attrs(::NegArrow) = unary_arith_port_attrs()
 
 "Takes no input simple emits a `value::T`"
 struct EqualArrow <: PrimArrow{2, 1} end
