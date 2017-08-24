@@ -25,11 +25,3 @@ end
 function parent(trace::TraceArrowRef)
   @assert false
 end
-
-parent(portref::PortRef) = parent(portref.arrref)
-
-function is_linked(portref1::PortRef, portref2::PortRef)
-  same_parent = parent(portref1) == parent(portref2)
-  # Find vertex corresponding to port_ref1 and port_reef 2 and see if they are
-  # connected
-end

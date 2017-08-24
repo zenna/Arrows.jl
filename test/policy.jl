@@ -1,10 +1,9 @@
 import Arrows
-include("test_arrows.jl")
+using Arrows.TestArrows
 
 function test_policy()
-  arr = det_policy_inner_arr()
+  arr = xy_plus_x_arr()
   pol = Arrows.DetPolicy(arr)
 end
 
-a1 = all_test_arrows()[1]
-Arrows.DetPolicy(a1)
+test_policy()

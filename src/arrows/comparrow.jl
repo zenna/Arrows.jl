@@ -55,8 +55,28 @@ struct PortRef{T <: Integer} <: AbstractPort
   vertex_id::T
 end
 
+parent(portref::PortRef) = portref.arrow
+
+function is_linked(portref1::PortRef, portref2::PortRef)::Bool
+  same_parent = parent(portref1) == parent(portref2)
+  if same_parent
+    v1 = port_index(portref1)
+    v2 = port_index(portref2)
+    components = LG.weakly_connected_components(portref1.arrow.edges)
+    v1_component = filter(c->v1 ∈ c, components)
+    @assert length(v1_component) == 1
+    v2 ∈ v1_component
+  else
+    false
+  end
+end
+
 "Find the vertex index of this port in `arr edges"
 port_index(arr::CompArrow, port::PortRef)::Integer = port.vertex_id
+# FIXME: is above necessary? doesn't use `arr`
+
+"Find the vertex index of this port in `arr edges"
+port_index(port::PortRef)::Integer = port.vertex_id
 
 port_attrs(portref::PortRef) = port_attrs(deref(portref))
 
@@ -94,6 +114,9 @@ function sub_arrow(arr::CompArrow, i::Integer)::SubArrowRef
   subarr = arr.sub_arrs[i]
   SubArrowRef{num_in_ports(subarr), num_out_ports(subarr)}(arr, i)
 end
+
+"Get sub_arrow reference to `arr`"
+sub_arrow(arr::CompArrow) = sub_arrow(arr, 1)
 
 "Return all the sub_arrows of `arr` excluding arr itself"
 sub_arrows(arr::CompArrow)::Vector{SubArrowRef} = all_sub_arrows(arr)[2:end]

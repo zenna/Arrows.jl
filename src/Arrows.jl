@@ -53,6 +53,7 @@ export
   CondArrow,
   EqualArrow,
   SubArrow,
+  DivArrow,
   IdentityArrow
 
 include("util/misc.jl")
@@ -83,10 +84,10 @@ include("apply/depend.jl")
 include("transform/generic.jl")
 # include("library.jl")
 
-include("compilation_targets//tensorflow.jl")
+include("targets/julia/julia.jl")
+# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+
+include("../test/TestArrows.jl")
 
 # include("smt_solvers/z3interface.jl")
-# include("compilation_targets/theano.jl")
-# include("compilation_targets/stan.jl")
-# using Arrows.Library
 end

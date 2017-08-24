@@ -1,5 +1,7 @@
+"Various test (example) arrows and generators of test_arrows"
+module TestArrows
 using Arrows
-import Arrows: is_wired_ok, interpret, duplify!, add_sub_arr!, wrap
+import Arrows: add_sub_arr!, wrap
 
 "f(x) = x^2"
 function sin_arr()
@@ -128,4 +130,13 @@ function all_test_arrows()
    fibonnaci_arr(),
    dupl_id_arr(),
    det_policy_inner_arr()]
- end
+end
+
+export xy_plus_x_arr,
+       recursive_arr,
+       fibonnaci_arr,
+       dupl_id_arr,
+       det_policy_inner_arr,
+       sin_arr,
+       all_test_arrows
+end
