@@ -51,19 +51,19 @@ name(arr::CompArrow) = arr.name
 
 "A referece to a `Port`"
 struct SubPort{T <: Integer} <: AbstractPort
-  arrow::CompArrow
+  parent::CompArrow # Parent arrow of arrow subport is attached to
   vertex_id::T
 end
 
 "Parent of a `SubPort` is `parent` of attached `Arrow`"
-parent(subport::SubPort) = parent(subport.arrow)
+parent(subport::SubPort) = subport.parent
 
 function is_linked(subport1::SubPort, subport2::SubPort)::Bool
   same_parent = parent(subport1) == parent(subport2)
   if same_parent
     v1 = port_index(subport1)
     v2 = port_index(subport2)
-    components = LG.weakly_connected_components(subport1.arrow.edges)
+    components = LG.weakly_connected_components(parent(subport1).edges)
     v1_component = filter(c->v1 ∈ c, components)
     @assert length(v1_component) == 1
     v2 ∈ v1_component
@@ -108,7 +108,7 @@ end
 "Dereference `port`"
 function deref(port::SubPort)::Port
   @assert is_ref(port)
-  port.arrow.port_map[port.vertex_id]
+  parent(port).port_map[port.vertex_id]
 end
 
 "ith sub arrow (reference) of `arr`"
@@ -122,7 +122,7 @@ sub_arrow(arr::CompArrow) = sub_arrow(arr, 1)
 
 "sub_arrow which `port` is on"
 function sub_arrow(port::SubPort)::SubArrow
-  arr = port.arrow
+  arr = parent(port)
   pid = port_index(port)
   # FIXME: Could speed this up easily
   id = findfirst(verts->pid ∈ verts, arr.sub_arr_vertices)
@@ -165,7 +165,7 @@ end
 
 "Is `port` within `arr`"
 function in(port::SubPort, arr::CompArrow)::Bool
-  if port.arrow == arr
+  if parent(port) == arr
     nsubports = num_all_sub_ports(arr)
     1 <= port.vertex_id <= nsubports
   end
@@ -174,7 +174,7 @@ end
 
 "Is `port` within `arr` but not on boundary"
 function strictly_in{I, O}(port::SubPort, arr::CompArrow{I, O})::Bool
-  if port.arrow == arr
+  if parent(arrow) == arr
     nsubports = num_sub_ports(arr)
     return I + O < port.vertex_id <= I + O + nsubports
   end
@@ -217,13 +217,15 @@ end
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(c::CompArrow, l::Port, r::SubPort)
-  @assert l.arrow == c
+  # TODO: Check here and below that Port is valid boundary, i.e. port.arrow = c
+  # TODO: DomainError not assert
+  @assert parent(r) == c
   link_ports!(c, SubPort(c, l.index), r)
 end
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(c::CompArrow, l::SubPort, r::Port)
-  @assert l.arrow == c
+  @assert parent(l) == c
   link_ports!(c, l, SubPort(c, r.index))
 end
 
@@ -341,7 +343,7 @@ function should_src(port::SubPort, arr::CompArrow)::Bool
     println(errmsg)
     throw(DomainError())
   end
-  if strictly_in(port, port.arrow)
+  if strictly_in(port, parent(port))
     is_out_port(port)
   else
     is_in_port(port)
@@ -355,7 +357,7 @@ function should_dst(port::SubPort, arr::CompArrow)::Bool
     println(errmsg)
     throw(DomainError())
   end
-  if strictly_in(port, port.arrow)
+  if strictly_in(port, parent(port))
     is_in_port(port)
   else
     is_out_port(port)

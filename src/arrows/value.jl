@@ -9,7 +9,7 @@ struct RepValue <: Value
 end
 
 # FIXME: This is a bad hash!
-hash(v::RepValue) = hash(v.port.arrow)
+hash(v::RepValue) = hash(parent(v.port))
 
 function isequal(v1::RepValue, v2::RepValue)::Bool
   # Two values are equal if there is an edge between the port_refs
