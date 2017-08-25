@@ -56,7 +56,10 @@ export
   EqualArrow,
   SubtractArrow,
   DivArrow,
-  IdentityArrow
+  IdentityArrow,
+  ExpArrow,
+  NegArrow,
+  GatherNdArrow
 
 include("util/misc.jl")
 # include("types.jl")
@@ -74,6 +77,8 @@ include("library/common.jl")
 include("library/arithmetic.jl")
 include("library/control.jl")
 include("library/source.jl")
+include("library/array.jl")
+
 
 include("combinators/compose.jl")
 

@@ -48,23 +48,16 @@ num_outputs(op::PyOperation) = length(get_outputs(op))
 
 op_type_name(op::PyOperation) = op.op[:type]
 op_node_name(op::PyOperation) = op.op[:name]
-get_graph(op::PyOperation)::PyGraph = pyop.op[:graph]
+get_graph(op::PyOperation)::PyGraph = op.op[:graph]
 consumers(ten::PyTensor)::Vector{PyOperation} = ten.ten[:consumers]()
 
 get_op(ten::PyTensor)::PyOperation = ten.ten[:op]
 value_index(ten::PyTensor) = ten.ten[:value_index]
 
-function test_decode()
-  x = pytf.placeholder("float32")
-  y = x + x
-  input_tensors = PyTensor[x]
-  output_tensors = PyTensor[y]
-  graph::PyGraph = pytf.get_default_graph()
-  graph_to_arrow(:test, input_tensors, output_tensors, graph)
+function get_const_op_value(op::PyOperation)
+  graph = get_graph(op)
+  sess = pytf.Session(graph=graph.graph)
+  value = op.op[:outputs][1][:eval](session=sess)
+  sess[:close]()
+  value
 end
-
-AbstractTensor = Union{PyTensor, Tensor}
-AbstractOperation = Union{PyOperation, Operation}
-AbstractGraph = Union{PyGraph, Graph}
-AbstractGraph = Union{PyGraph, Graph}
-AbstractGraph

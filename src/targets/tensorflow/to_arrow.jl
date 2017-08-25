@@ -1,5 +1,3 @@
-# Update this to use PyCall
-
 conv_Add(add_op::AbstractOperation) = AddArrow()
 
 conv_Sub(sub_op::AbstractOperation) = SubtractArrow()
@@ -54,9 +52,7 @@ Op_Type_To_Arrow = Dict{String, Function}(
 function arrow_from_op(c::CompArrow,
                        op::AbstractOperation,
                        op_to_arrow::Dict{AbstractOperation, Arrow})::Arrow
-  # println("Type", typeof(op))
-  # println("Node ", op_node_name(op), " Op name ", op_type_name(op))
-  # println("Length", length(op_to_arrow))
+
   if op in keys(op_to_arrow)
     # println("RECALLING")
     op_to_arrow[op]
@@ -124,17 +120,12 @@ function graph_to_arrow(name::Symbol,
   to_see_tens = copy(out_tens)
 
   while !isempty(to_see_tens)
-    println("Done one loop!")
-    # graphs = (t->t.op.graph).(to_see_tens)
-    # println(graphs, "\n\n")
-
     ten = pop!(to_see_tens)
     # println("TENATTR ", ten.op.graph, "\n")
     push!(seen_tens, ten)
     if is_input_ten(ten)
       # print(ten_in_port)
       left_port = ten_in_port[ten]
-      println("FOUND HTE LEFT PORT", left_port)
       # set_port_shape(left_port, const_to_tuple(ten.get_shape().as_list()))
     else
       out_port_id = value_index(ten) + 1
@@ -143,15 +134,9 @@ function graph_to_arrow(name::Symbol,
       update_seen!(get_op(ten), seen_tens, to_see_tens)
     end
 
-    # graphs = (o->tf.get(o.graph)).(collect(get_safe_ops(res.graph)))
-    # println(graphs, "sma\n\n")
-    print("Tensor has ", length(consumers(ten)), "consuemrs")
-
     for rec_op in consumers(ten)
       the_inputs = get_inputs(rec_op)
       for (i, input_ten) in enumerate(the_inputs)
-        # println("checking!", ten, input_ten)
-        # println("EQUAL?!", ten == input_ten)
         if ten == input_ten
           in_port_id = i
           right_arrow = arrow_from_op(c, rec_op, op_to_arrow)

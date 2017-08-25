@@ -11,7 +11,13 @@ import Base.convert
 
 include("extensions.jl")
 include("python.jl")
-include("encode.jl")
+include("types.jl")
+include("to_arrow.jl")
 # include("decode.jl")
+
+export graph_to_arrow,
+       PyTensor,
+       PyOperation,
+       PyGraph
 
 end
