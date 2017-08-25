@@ -55,3 +55,5 @@ end
 function get_const_op_value(const_op::Operation)
   eval_const_tensor(get_outputs(const_op))
 end
+
+value_index(ten::Tensor) = ten.value_index

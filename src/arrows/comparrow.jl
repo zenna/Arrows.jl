@@ -174,7 +174,7 @@ end
 
 "Is `port` within `arr` but not on boundary"
 function strictly_in{I, O}(port::SubPort, arr::CompArrow{I, O})::Bool
-  if parent(arrow) == arr
+  if parent(port) == arr
     nsubports = num_sub_ports(arr)
     return I + O < port.vertex_id <= I + O + nsubports
   end

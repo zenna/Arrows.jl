@@ -1,6 +1,4 @@
 module Arrows
-using Compat
-using PyCall
 using ZenUtils
 # using SMTBase
 # using Z3
@@ -36,6 +34,9 @@ export
   compose,
   name,
 
+  Arrow,
+  Port,
+
   CompArrow,
   link_ports!,
   add_sub_arr!,
@@ -46,6 +47,7 @@ export
   port,
   ports,
   propagate,
+  is_wired_ok,
 
   AddArrow,
   MulArrow,
@@ -85,7 +87,7 @@ include("transform/generic.jl")
 # include("library.jl")
 
 include("targets/julia/julia.jl")
-# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("../test/TestArrows.jl")
 

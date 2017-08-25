@@ -20,7 +20,7 @@ function needed_ports(arr::CompArrow, subarr::Arrow, cond_map::CondMap)
   end
 end
 
-"Which `Value's do we need to compute `target`"
+"Which `Value's do we need to compute `target`?"
 function needed_ports(arr::CompArrow, target::Value, cond_map::CondMap)::Values
   subarr = src_arrow(target)
   needed_ports(arr, subarr, cond_map)
@@ -42,12 +42,12 @@ function needed_ports(arr::CompArrow, targets::Values,
   all_needed
 end
 
-"Which port_classes in `arr` can we compute, given we know `known`"
+"Which `Value` in `arr` can we compute, given we know `known`?"
 computable_ports(arr::Arrow, known::Values) =
   all((inp in keys(port_map) for inp in in_ports(arr)))
 
-"Port classes in `arr` we both can and need to determine `targets`"
+"Values in `arr` we both can compute and need to determine `targets`"
 function can_need_ports(arr::CompArrow, known::Values, targets::Values,
                         cond_map::CondMap)
-  needed_ports(arr, targets) ∪ computable_ports(arr, known)
+  needed_ports(arr, targets) ∩ computable_ports(arr, known)
 end
