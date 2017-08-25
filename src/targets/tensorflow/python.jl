@@ -1,4 +1,4 @@
-import Base: convert, hash, isequal
+import Base: convert, hash, isequal, ==
 using PyCall
 @pyimport tensorflow as pytf
 
@@ -7,6 +7,7 @@ struct PyTensor
   ten::PyObject
 end
 
+==(x::PyTensor, y::PyTensor) = x.ten == y.ten
 isequal(x::PyTensor, y::PyTensor) = x.ten == y.ten
 hash(x::PyTensor) = hash(x.ten)
 
@@ -19,6 +20,7 @@ struct PyOperation
   op::PyObject
 end
 
+==(x::PyOperation, y::PyOperation) = x.op == y.op
 isequal(x::PyOperation, y::PyOperation) = x.op == y.op
 hash(x::PyOperation) = hash(x.op)
 
@@ -31,6 +33,7 @@ struct PyGraph
   graph::PyObject
 end
 
+==(x::PyGraph, y::PyGraph) = x.graph == y.graph
 isequal(x::PyGraph, y::PyGraph) = x.graph == y.graph
 hash(x::PyGraph) = hash(x.graph)
 
@@ -59,38 +62,6 @@ function test_decode()
   graph::PyGraph = pytf.get_default_graph()
   graph_to_arrow(:test, input_tensors, output_tensors, graph)
 end
-
-# test_decode()
-
-# tester(x::Array{<:AbstractTensor}) = 10
-#|
-
-
-# a = PyTensor(x)
-#
-#
-# b = PyTensor(y)
-# Set([a, a])
-#
-# q = a.ten[:op][:outputs][1]
-# qq = PyTensor(q)
-# qq.ten == a.ten
-# @which qq == a
-# qq.ten == a.ten
-#
-#
-# qq
-# a
-# @which isequal(qq, a)
-#
-# x = pytf.placeholder("float32")
-# y = x + x
-# test_decode()
-# #
-# # x = pytf.placeholder("float32")
-# # PyTensor[x]
-# PyTensor[PyTensor(x)]
-
 
 AbstractTensor = Union{PyTensor, Tensor}
 AbstractOperation = Union{PyOperation, Operation}

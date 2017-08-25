@@ -54,14 +54,14 @@ Op_Type_To_Arrow = Dict{String, Function}(
 function arrow_from_op(c::CompArrow,
                        op::AbstractOperation,
                        op_to_arrow::Dict{AbstractOperation, Arrow})::Arrow
-  println("Type", typeof(op))
-  println("Node ", op_node_name(op), " Op name ", op_type_name(op))
-  println("Length", length(op_to_arrow))
+  # println("Type", typeof(op))
+  # println("Node ", op_node_name(op), " Op name ", op_type_name(op))
+  # println("Length", length(op_to_arrow))
   if op in keys(op_to_arrow)
-    println("RECALLING")
+    # println("RECALLING")
     op_to_arrow[op]
   else
-    println("MAKING NEW ", op_type_name(op))
+    # println("MAKING NEW ", op_type_name(op))
     # tf.get_def(op).op
     conv_op = Op_Type_To_Arrow[op_type_name(op)]
     arrow = conv_op(op)
@@ -111,7 +111,6 @@ function graph_to_arrow(name::Symbol,
   for inp in inp_tens
     ten_in_port[inp]
   end
-  # @assert false
   # set_port_shape(in_port, const_to_tuple(ten.get_shape().as_list()))
 
   # Make an out_port for every output ten
@@ -133,8 +132,9 @@ function graph_to_arrow(name::Symbol,
     # println("TENATTR ", ten.op.graph, "\n")
     push!(seen_tens, ten)
     if is_input_ten(ten)
-      print(ten_in_port)
+      # print(ten_in_port)
       left_port = ten_in_port[ten]
+      println("FOUND HTE LEFT PORT", left_port)
       # set_port_shape(left_port, const_to_tuple(ten.get_shape().as_list()))
     else
       out_port_id = value_index(ten) + 1
@@ -145,9 +145,13 @@ function graph_to_arrow(name::Symbol,
 
     # graphs = (o->tf.get(o.graph)).(collect(get_safe_ops(res.graph)))
     # println(graphs, "sma\n\n")
+    print("Tensor has ", length(consumers(ten)), "consuemrs")
 
     for rec_op in consumers(ten)
-      for (i, input_ten) in enumerate(get_inputs(rec_op))
+      the_inputs = get_inputs(rec_op)
+      for (i, input_ten) in enumerate(the_inputs)
+        # println("checking!", ten, input_ten)
+        # println("EQUAL?!", ten == input_ten)
         if ten == input_ten
           in_port_id = i
           right_arrow = arrow_from_op(c, rec_op, op_to_arrow)
