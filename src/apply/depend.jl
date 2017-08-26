@@ -85,10 +85,10 @@ end
 "`Value`s we both can compute and need to determine `targets`"
 function can_need_values(known::Values, targets::Values, cond_map::CondMap)::Values
   @assert same((parent(value) for value in (known ∪ targets)))
-  println("Target ", targets)
-  println("Needed ", needed_values(targets, cond_map))
-  println("Known ", known)
-  println("Computable ", computable_values(known, cond_map))
+  # println("Target ", targets)
+  # println("Needed ", needed_values(targets, cond_map))
+  # println("Known ", known)
+  # println("Computable ", computable_values(known, cond_map))
   intersect(setdiff(needed_values(targets, cond_map), known),
             computable_values(known, cond_map))
 end

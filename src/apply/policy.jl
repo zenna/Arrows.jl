@@ -41,16 +41,17 @@ until curr_node is end_node:
 end
 ```
 """
-struct DetPolicy <: Policy
+mutable struct DetPolicy <: Policy
   edges::LG.DiGraph
   node_type_labels::Vector{NodeType}
   node_port_labels::Vector{Union{Port, Value}}
   curr_node::Vertex
+  function DetPolicy()
+    new(LG.DiGraph(), [], [], 0)
+  end
 end
 
-function DetPolicy()
-  DetPolicy(LG.DiGraph(), [], [])
-end
+isfresh(pol::DetPolicy) = pol.curr_node == 0
 
 "Is the policy structured correctly?"
 function is_valid(pol::DetPolicy)::Bool
@@ -103,52 +104,56 @@ end
 "If we know `know`, what other values must be know"
 function known_values_if_know(know::Value)::Values
   # Assume we know one output value we know them all
-  out_values(src_arrow(known))
+  out_values(src_arrow(know))
 end
 
-"is `value` a switch predicate (i.e. input to at least one i of ite cond)"
-function switch_predicate(value::Value)::Bool
-end
-
-function uncertain_switch(value::Value, cond_map::CondMap)::Bool
-  switch_predicate(value) && value ∉ keys(cond_map)
-end
+# "is `value` a switch predicate (i.e. input to at least one i of ite cond)"
+# function switch_predicate(value::Value)::Bool
+# end
+#
+# function uncertain_switch(value::Value, cond_map::CondMap)::Bool
+#   switch_predicate(value) && value ∉ keys(cond_map)
+# end
 
 "Extend the policy by adding either `Compute` or `Branch` node"
 function extend_policy!(pol::Policy, known::Values,
                         targets::Values, cond_map::CondMap)::Policy
   can_need = can_need_values(known, targets, cond_map)
-  conditionals = (value for value in known if uncertain_switch(value, cond_map))
-
-  # Invariants
   all_known = all(value ∈ known for value in targets)
-  @assert isempty(can_need) = all_known # if targets is known, nothing to do!
-
-  if isempty(can_need)
-    alt_port = first((k for (k, v) in cond_map if v))
-
-    add_branch_node!(pol, alt_port)
-    link_nodes!(pol, curr, pg)
-    curr = pg
-
-    # consider the case when it is true
-    cond_map[alt_port] = true
-    push!(known, alt_port)
-    extend_policy!(pol, known, cond_map)
-
-    # Consider the case when it is false
-    cond_map[alt_port] = true
-    push!(known, alt_port)
-    extend_policy!(pol, known, cond_map)
-  else
+  # conditionals = (value for value in known if uncertain_switch(value, cond_map))
+  #
+  # # Invariants
+  @assert isempty(can_need) == all_known "Known: $known \n can_need: $can_need"# if targets is known, nothing to do!
+  if !isempty(can_need)
     next_value = first(can_need)
     # Add node to graph, make it the current node, label it with next_node
     # and update known
-    curr = add_compute_node!(pol, next_node)
-    link_nodes!(pol, curr)
+    curr = add_compute_node!(pol, next_value)
+    if !isfresh(pol)
+      link_nodes!(pol, curr)
+    end
     update_current!(pol, curr)
     known = known_values_if_know(next_value) ∪ known
-    extend_policy!(curr, pol, known, targets, cond_map)
+    extend_policy!(pol, known, targets, cond_map)
   end
+  # if isempty(can_need)
+  #   alt_port = first((k for (k, v) in cond_map if v))
+  #
+  #   add_branch_node!(pol, alt_port)
+  #   link_nodes!(pol, curr, pg)
+  #   curr = pg
+  #
+  #   # consider the case when it is true
+  #   cond_map[alt_port] = true
+  #   push!(known, alt_port)
+  #   extend_policy!(pol, known, cond_map)
+  #
+  #   # Consider the case when it is false
+  #   cond_map[alt_port] = true
+  #   push!(known, alt_port)
+  #   extend_policy!(pol, known, cond_map)
+  # else
+  #
+  # end
   pol
 end
