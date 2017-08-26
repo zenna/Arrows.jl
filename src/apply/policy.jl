@@ -82,7 +82,7 @@ function link_nodes!(pol::DetPolicy, src::Vertex, dst::Vertex)
 end
 
 "Link node `src` to `dst`"
-link_nodes!(pol::DetPolicy, dst::Vertex) = link_nodes(pol, pol.curr_node, dst)
+link_nodes!(pol::DetPolicy, dst::Vertex) = link_nodes!(pol, pol.curr_node, dst)
 
 "Update current node of `pol to `curr``"
 update_current!(pol::DetPolicy, curr::Vertex) = pol.curr_node = curr

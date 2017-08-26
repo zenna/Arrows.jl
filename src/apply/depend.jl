@@ -26,9 +26,9 @@ function needed_values(target::Value, cond_map::CondMap)::Values
   needed_values(deref(subarr), subarr, cond_map)
 end
 
-"`Value`s do we (unambiguously) need in order to determine `targets`"
+"`Value`s do we (unambiguously) need in order to determine `targets` inclusive"
 function needed_values(targets::Values, cond_map::CondMap = CondMap())::Values
-  all_needed = Set{RepValue}()
+  all_needed = copy(targets)
   to_see = copy(targets)
   seen = Set{RepValue}()
   while !isempty(to_see)
