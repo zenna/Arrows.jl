@@ -30,11 +30,21 @@ function in_values(arr::SubArrow)::Values
   Set(RepValue(port) for port in in_ports(arr))
 end
 
+"Get Vector of InPort Values"
+function in_values_vec(arr::SubArrow)::Vector{Value}
+  [RepValue(port) for port in in_ports(arr)]
+end
+
 in_values(arr::CompArrow) = in_values(sub_arrow(arr))
 
 "Get Set of OutPort Values"
 function out_values(arr::SubArrow)::Values
   Set(RepValue(port) for port in  out_ports(arr))
+end
+
+"Get Set of OutPort Values"
+function out_values_vec(arr::SubArrow)::Vector{Value}
+  [RepValue(port) for port in  out_ports(arr)]
 end
 
 out_values(arr::CompArrow) = out_values(sub_arrow(arr))

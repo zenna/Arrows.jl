@@ -44,13 +44,15 @@ end
 mutable struct DetPolicy <: Policy
   edges::LG.DiGraph
   node_type_labels::Vector{NodeType}
-  node_port_labels::Vector{Union{Port, Value}}
+  node_port_labels::Vector{Union{SubPort, Value}}
   curr_node::Vertex
   function DetPolicy()
     new(LG.DiGraph(), [], [], 0)
   end
 end
 
+"Composite Arrow which this is a policy for"
+comp_arrow(pol::DetPolicy) = parent(first(pol.node_port_labels))
 isfresh(pol::DetPolicy) = pol.curr_node == 0
 
 "Is the policy structured correctly?"
@@ -156,4 +158,48 @@ function extend_policy!(pol::Policy, known::Values,
   #
   # end
   pol
+end
+
+start_node(det::DetPolicy) = 1
+end_node(det::DetPolicy, curr::Vertex)::Bool =
+  LG.outdegree(det.edges, curr) == 0
+curr_value(pol::DetPolicy, node::Vertex)::Value = pol.node_port_labels[node]
+function next_node(pol::DetPolicy, node::Vertex)
+  warn("will break for branching")
+  node + 1 #FIXME: WILL BREAK FOR
+end
+
+interpret(::MulArrow, x, y) = (x * y,)
+interpret(::SubtractArrow, x, y) = (x - y,)
+interpret(::AddArrow, x, y) = (x + y,)
+
+"Evaluate an arrow using a `pol` on `args`: comp_arrow(pol)(args...)"
+function interpret(pol::DetPolicy, args...)
+  arr = comp_arrow(pol)
+  if length(args) != num_in_ports(arr)
+    throw(DomainError())
+  end
+  vals = Dict{Value, Any}(zip(in_values(arr), args))
+  curr_node = start_node(pol)
+  while true  # Stop when reach end node
+    val = curr_value(pol, curr_node)
+    sarr = src_arrow(val)
+    println("Computing ", deref(sarr))
+    invals = in_values_vec(sarr)
+    outvals = out_values_vec(sarr)
+    valvals = [vals[val] for val in invals]
+    ops = interpret(deref(sarr), valvals...)
+    # opdate vals with outputs
+    for (i, op) in enumerate(ops)
+      vals[outvals[i]] = ops[i]
+    end
+    if end_node(pol, curr_node)
+      break
+    else
+      curr_node = next_node(pol, curr_node)
+    end
+  end
+  sarr = sub_arrow(arr)
+  outvals = out_values_vec(sarr)
+  [vals[val] for val in outvals]
 end

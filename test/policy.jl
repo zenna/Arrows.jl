@@ -6,4 +6,10 @@ function test_policy()
   pol = Arrows.DetPolicy(arr)
 end
 
-test_policy()
+pol = test_policy()
+interpret(pol, 10, 2)
+
+DetPolicy()
+
+
+LG.outdegree
