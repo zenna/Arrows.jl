@@ -11,14 +11,18 @@ end
 # FIXME: This is a bad hash!
 hash(v::RepValue) = hash(parent(v.port))
 
+parent(v::RepValue) = parent(v.port)
+
 function isequal(v1::RepValue, v2::RepValue)::Bool
   # Two values are equal if there is an edge between the port_refs
   is_linked(v1.port, v2.port)
 end
 
+(==)(v1::RepValue, v2::RepValue) = isequal(v1, v2)
+
 "Which ports are represented in `value`"
-function ports(value::RepValue)::Vector{Port}
-  weakly_connected_component(value.arr, value.port)
+function sub_ports(value::RepValue)::Vector{SubPort}
+  weakly_connected_component(value.port)
 end
 
 "Get Set of InPort Values"
@@ -36,4 +40,8 @@ end
 out_values(arr::CompArrow) = out_values(sub_arrow(arr))
 
 "`subarr` such that `value` is an output of `subarr`"
-src_arrow(arr::CompArrow, value::Value) = src_arrow(arr, value.port)
+src_arrow(value::Value) = src_arrow(value.port)
+
+string(v::Value) = string("Value ", sort(port_index.(sub_ports(v))))
+print(io::IO, v::Value) = print(io, string(v))
+show(io::IO, v::Value) = print(io, v)

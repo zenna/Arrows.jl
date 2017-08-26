@@ -1,3 +1,9 @@
+Vertex = Int
+# What's wrong?
+# - We need to say values connected to source nodes are known
+# - We may have to resolve a condition before we can compute anything
+# - I think I need to copy known
+
 "Describes execution `Policy` of an `Arrow`: which sub_arrows to execute when"
 abstract type Policy end
 
@@ -37,8 +43,9 @@ end
 """
 struct DetPolicy <: Policy
   edges::LG.DiGraph
-  node_type_laberrowsls::Vector{NodeType}
+  node_type_labels::Vector{NodeType}
   node_port_labels::Vector{Union{Port, Value}}
+  curr_node::Vertex
 end
 
 function DetPolicy()
@@ -53,40 +60,70 @@ function is_valid(pol::DetPolicy)::Bool
 end
 
 "Add a `Compute` node to `pol`"
-function add_node!(pol::DetPolicy, port::Value, ::Type{Compute})
-  LG.add_vertex(pol.edges)
-  push!(pol.node_labels, Compute)
+function add_compute_node!(pol::DetPolicy, value::Value)::Vertex
+  v = LG.add_vertex!(pol.edges)
+  push!(pol.node_type_labels, Compute)
+  push!(pol.node_port_labels, value)
+  v
 end
 
 "Add a `Branch` node to a `pol`"
-function add_node!(pol::DetPolicy, port::Port, ::Type{Branch})
-  add_vertex(pol.edges)
-  push!(pol.node_labels, Branch)
+function add_branch_node!(pol::DetPolicy, subport::SubPort)::Vertex
+  v = LG.add_vertex!(pol.edges)
+  push!(pol.node_type_labels, Branch)
+  push!(pol.node_port_labels, subport)
+  v
 end
 
-"Link node `src` to `dest`"
-function link_nodes!(pol::DetPolicy, src, dest)
-  LG.add_edge!(pol.edges, src, dest)
+"Link node `src` to `dst`"
+function link_nodes!(pol::DetPolicy, src::Vertex, dst::Vertex)
+  LG.add_edge!(pol.edges, src, dst)
 end
+
+"Link node `src` to `dst`"
+link_nodes!(pol::DetPolicy, dst::Vertex) = link_nodes(pol, pol.curr_node, dst)
+
+"Update current node of `pol to `curr``"
+update_current!(pol::DetPolicy, curr::Vertex) = pol.curr_node = curr
 
 "Compile `arr` into a `Policy`"
-function DetPolicy(arr::CompArrow, known::Values, targets::Values)
+function DetPolicy(known::Values, targets::Values)
   pol = DetPolicy() # new empty policy
   cond_map = CondMap()
-  extend_policy!(arr, pol, known, targets, cond_map)
+  extend_policy!(pol, known, targets, cond_map)
 end
 
-"Create `DetPolicy` from `arr` assuming we want outputs and know inputs"
+"Create `DetPolicy` from `arr` assuming we want all outputs and know all inputs"
 function DetPolicy(arr::CompArrow)
   known = in_values(arr)
   targets = out_values(arr)
-  DetPolicy(arr, known, targets)
+  DetPolicy(known, targets)
 end
 
-"Extend the policy by adding either compute or branch node"
-function extend_policy!(arr::CompArrow, pol::Policy, known::Values,
-                        targets::Values, cond_map::CondMap)
-  can_need = can_need_ports(arr, known, targets, cond_map)
+"If we know `know`, what other values must be know"
+function known_values_if_know(know::Value)::Values
+  # Assume we know one output value we know them all
+  out_values(src_arrow(known))
+end
+
+"is `value` a switch predicate (i.e. input to at least one i of ite cond)"
+function switch_predicate(value::Value)::Bool
+end
+
+function uncertain_switch(value::Value, cond_map::CondMap)::Bool
+  switch_predicate(value) && value ∉ keys(cond_map)
+end
+
+"Extend the policy by adding either `Compute` or `Branch` node"
+function extend_policy!(pol::Policy, known::Values,
+                        targets::Values, cond_map::CondMap)::Policy
+  can_need = can_need_values(known, targets, cond_map)
+  conditionals = (value for value in known if uncertain_switch(value, cond_map))
+
+  # Invariants
+  all_known = all(value ∈ known for value in targets)
+  @assert isempty(can_need) = all_known # if targets is known, nothing to do!
+
   if isempty(can_need)
     alt_port = first((k for (k, v) in cond_map if v))
 
@@ -97,18 +134,21 @@ function extend_policy!(arr::CompArrow, pol::Policy, known::Values,
     # consider the case when it is true
     cond_map[alt_port] = true
     push!(known, alt_port)
-    extend_policy!(arr, pol, known, cond_map)
+    extend_policy!(pol, known, cond_map)
 
     # Consider the case when it is false
     cond_map[alt_port] = true
     push!(known, alt_port)
-    extend_policy!(arr, pol, known, cond_map)
+    extend_policy!(pol, known, cond_map)
   else
-    pg = first(can_need)
-    add_compute_node!(pol, pg)
-    link_nodes!(pol, curr, pg)
-    # update known
-    curr = pg
+    next_value = first(can_need)
+    # Add node to graph, make it the current node, label it with next_node
+    # and update known
+    curr = add_compute_node!(pol, next_node)
+    link_nodes!(pol, curr)
+    update_current!(pol, curr)
+    known = known_values_if_know(next_value) ∪ known
+    extend_policy!(curr, pol, known, targets, cond_map)
   end
   pol
 end

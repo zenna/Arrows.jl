@@ -63,9 +63,7 @@ function is_linked(subport1::SubPort, subport2::SubPort)::Bool
   if same_parent
     v1 = port_index(subport1)
     v2 = port_index(subport2)
-    components = LG.weakly_connected_components(parent(subport1).edges)
-    v1_component = filter(c->v1 ∈ c, components)
-    @assert length(v1_component) == 1
+    v1_component = weakly_connected_component(parent(subport1).edges, v1)
     v2 ∈ v1_component
   else
     false
@@ -134,7 +132,7 @@ sub_arrows(arr::CompArrow)::Vector{SubArrow} = all_sub_arrows(arr)[2:end]
 
 "Return all the sub_arrows of `arr` including arr itself"
 all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [sub_arrow(i) for i = 1:num_all_sub_arrows]
+  [sub_arrow(arr, i) for i = 1:num_all_sub_arrows(arr)]
 
 "Number of sub_ports (inclusuive of boundary)"
 num_all_sub_ports(arr::CompArrow) = length(arr.port_map)
@@ -147,11 +145,10 @@ all_sub_ports(arr::CompArrow)::Vector{SubPort} =
   [SubPort(arr, i) for i = 1:num_all_sub_ports(arr)]
 
 "All source (projecting) sub_ports"
-src_sub_ports(arr::CompArrow)::Vector{SubPort} =
-  filter(port->is_src(port, arr), sub_ports(arr))
+src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
 
 "All destination (receiving) sub_ports"
-dst_sub_ports(arr::CompArrow) = filter(port->is_dst(port, arr), sub_ports(arr))
+dst_sub_ports(arr::CompArrow)::Vector{SubPorts} = filter(is_dst, sub_ports(arr))
 
 "is `port` a reference?"
 is_ref(port::SubPort) = true
@@ -259,41 +256,42 @@ Helper function to translate LightGraph functions to Port functions
   port: port corresponding to vertex to which f(v) is applied
   arr: Parent Composite arrow
 """
-function lg_to_p(f::Function, port::SubPort, arr::CompArrow)
-  f(arr.edges, port_index(arr, port))
+function lg_to_p(f::Function, port::SubPort)
+  f(parent(port).edges, port_index(port))
 end
 
 "Helper for LightGraph API methods which return Vector{Port}, see `lg_to_p`"
-function v_to_p(f::Function, port::SubPort, arr::Arrow)
-  map(i->port_index(arr, i), lg_to_p(f, port, arr))
+function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
+  arr = parent(port)
+  map(i->port_index(arr, i), lg_to_p(f, port))
 end
 
 "Is port a destination. i.e. does corresponding vertex project more than 0"
-is_dst(port::SubPort, arr::CompArrow) = lg_to_p(is_dst, port, arr)
+is_dst(port::SubPort) = lg_to_p(is_dst, port)
 
 "Is port a source,  i.e. does corresponding vertex receive more than 0"
-is_src(port::SubPort, arr::CompArrow) = lg_to_p(is_src, port, arr)
+is_src(port::SubPort) = lg_to_p(is_src, port)
 
 "Vector of all neighbors of `port`"
-neighbors(port::SubPort, arr::CompArrow)::Vector{SubPort} = v_to_p(LG.neighbors, port, arr)
+neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.neighbors, port)
 
 "Vector of ports which `port` receives from"
-in_neighbors(port::SubPort, arr::CompArrow)::Vector{SubPort} = v_to_p(LG.in_neighbors, port, arr)
+in_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.in_neighbors, port)
 
 "Vector of ports which `port` projects to"
-out_neighbors(port::SubPort, arr::CompArrow)::Vector{SubPort} = v_to_p(LG.out_neighbors, port, arr)
+out_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.out_neighbors, port)
 
 "Return the number of ports which begin at port p"
-out_degree(port::SubPort, arr::CompArrow)::Integer = lg_to_p(LG.outdegree, port, arr)
+out_degree(port::SubPort)::Integer = lg_to_p(LG.outdegree, port)
 
 "Return the number of ports which end at port p"
-in_degree(port::SubPort, arr::CompArrow)::Integer = lg_to_p(LG.indegree, port, arr)
+in_degree(port::SubPort)::Integer = lg_to_p(LG.indegree, port)
 
 "All neighbouring ports of `subarr`, each port connected to each outport"
-function out_neighbors(subarr::Arrow, arr::CompArrow)
+function out_neighbors(subarr::Arrow)
   ports = Port[]
   for port in out_ports(subarr)
-    for neighport in out_neighbors(port, arr)
+    for neighport in out_neighbors(port)
       push!(ports, neighport)
     end
   end
@@ -310,6 +308,12 @@ function weakly_connected_components(arr::CompArrow)::Components
   map(component->pi.(component), cc)
 end
 
+"""Partition the ports into weakly connected equivalence classes"""
+function weakly_connected_component(edges::LG.DiGraph, i::Integer)::Vector{Int}
+  cc = weakly_connected_components(edges)
+  filter(comp -> i ∈ comp, cc)[1]
+end
+
 "Ports in `arr` weakly connected to `port`"
 function weakly_connected_component(port::SubPort)::Component
   # TODO: Shouldn't need to compute all connected components just to compute
@@ -319,16 +323,14 @@ function weakly_connected_component(port::SubPort)::Component
 end
 
 "`src_port.arrow` such that `src_port -> port`"
-function src_arrow(arr::CompArrow, port::Port)::Arrow
-  src(arr, port).arrow
-end
+src_arrow(port::SubPort)::SubArrow = sub_arrow(src(port))
 
 "`src_port` such that `src_port -> port`"
-function src(arr::CompArrow, port::Port)::Port
-  if is_src(port, arr)
+function src(port::SubPort)::SubPort
+  if is_src(port)
     port
   else
-    in_neighs = in_neighbors(arr, port)
+    in_neighs = in_neighbors(port)
     @assert length(in_neighs) == 1
     first(in_neighs)
   end
