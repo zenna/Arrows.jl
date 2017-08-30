@@ -67,7 +67,7 @@ function add_compute_node!(pol::DetPolicy, value::Value)::Vertex
   v = LG.add_vertex!(pol.edges)
   push!(pol.node_type_labels, Compute)
   push!(pol.node_port_labels, value)
-  v
+  LG.nv(pol.edges)
 end
 
 "Add a `Branch` node to a `pol`"
@@ -75,7 +75,7 @@ function add_branch_node!(pol::DetPolicy, subport::SubPort)::Vertex
   v = LG.add_vertex!(pol.edges)
   push!(pol.node_type_labels, Branch)
   push!(pol.node_port_labels, subport)
-  v
+  LG.nv(pol.edges)
 end
 
 "Link node `src` to `dst`"
@@ -160,18 +160,54 @@ function extend_policy!(pol::Policy, known::Values,
   pol
 end
 
+function is_compute_node(pol::DetPolicy, node::Vertex)::Bool
+  pol.node_type_labels[node] == Compute
+end
+
+function is_branch_node(pol::DetPolicy, node::Vertex)::Bool
+  pol.node_type_labels[node] == Branch
+end
+
+"Is `pol` well formed"
+function is_valid(pol::DetPolicy)
+  s = start_node(pol) = 1
+
+  function correct_branching(node)::Bool
+    if is_compute_node(pol, node)
+      println(node, "  !!  ", LG.outdegree(pol.edges, node))
+      LG.outdegree(pol.edges, node) ∈ [1, 0]
+    else
+      @assert is_branch_node(pol, node)
+      LG.outdegree(pol.edges, node) == 2
+    end
+  end
+
+  # All nodes should have correct branch
+  if !all(correct_branching(node) for node in LG.vertices(pol.edges))
+    println("Incorrect branching")
+    return false
+  end
+
+  if !LG.is_weakly_connected(pol.edges)
+    println("Not connected!")
+    return false
+  end
+
+  if LG.indegree(pol.edges, start_node(pol)) != 0
+    println("Start node broken!")
+    return false
+  end
+  return true
+end
+
 start_node(det::DetPolicy) = 1
 end_node(det::DetPolicy, curr::Vertex)::Bool =
   LG.outdegree(det.edges, curr) == 0
 curr_value(pol::DetPolicy, node::Vertex)::Value = pol.node_port_labels[node]
 function next_node(pol::DetPolicy, node::Vertex)
-  warn("will break for branching")
+  # warn("will break for branching")
   node + 1 #FIXME: WILL BREAK FOR
 end
-
-interpret(::MulArrow, x, y) = (x * y,)
-interpret(::SubtractArrow, x, y) = (x - y,)
-interpret(::AddArrow, x, y) = (x + y,)
 
 "Evaluate an arrow using a `pol` on `args`: comp_arrow(pol)(args...)"
 function interpret(pol::DetPolicy, args...)
@@ -182,9 +218,10 @@ function interpret(pol::DetPolicy, args...)
   vals = Dict{Value, Any}(zip(in_values(arr), args))
   curr_node = start_node(pol)
   while true  # Stop when reach end node
+    println("LOOP!")
     val = curr_value(pol, curr_node)
     sarr = src_arrow(val)
-    println("Computing ", deref(sarr))
+    # println(" ", deref(sarr))
     invals = in_values_vec(sarr)
     outvals = out_values_vec(sarr)
     valvals = [vals[val] for val in invals]

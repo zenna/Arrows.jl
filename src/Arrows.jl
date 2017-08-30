@@ -84,7 +84,7 @@ include("combinators/compose.jl")
 
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
-include("apply/interpret.jl")
+# include("apply/interpret.jl")
 include("apply/depend.jl")
 include("apply/policy.jl")
 

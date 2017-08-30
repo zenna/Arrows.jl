@@ -7,9 +7,8 @@ function test_policy()
 end
 
 pol = test_policy()
-interpret(pol, 10, 2)
-
-DetPolicy()
-
-
-LG.outdegree
+is_valid(pol)
+interpret(pol, 10, 20)
+collect(LG.edges(pol.edges))
+# - Might want to interpret with Symbol, in Julia, in San
+# -
