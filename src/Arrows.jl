@@ -79,6 +79,8 @@ include("library/control.jl")
 include("library/source.jl")
 include("library/array.jl")
 
+include("library/inv_control.jl")
+include("library/inv_arith.jl")
 
 include("combinators/compose.jl")
 

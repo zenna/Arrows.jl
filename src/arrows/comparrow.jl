@@ -31,6 +31,7 @@ type CompArrow{I, O} <: Arrow{I, O}
   end
 end
 
+
 "Not a reference"
 RealArrow = Union{CompArrow, PrimArrow}
 
@@ -144,11 +145,21 @@ num_sub_ports{I, O}(arr::CompArrow{I, O}) = num_all_sub_ports(arr) - (I + O)
 all_sub_ports(arr::CompArrow)::Vector{SubPort} =
   [SubPort(arr, i) for i = 1:num_all_sub_ports(arr)]
 
+"All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
+sub_ports(arr::CompArrow)::Vector{SubPort} = all_sub_ports(arr)[2:end]
+
 "All source (projecting) sub_ports"
 src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
 
+"All source (projecting) sub_ports"
+all_src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, all_sub_ports(arr))
+
 "All destination (receiving) sub_ports"
 dst_sub_ports(arr::CompArrow)::Vector{SubPorts} = filter(is_dst, sub_ports(arr))
+
+"All source (projecting) sub_ports"
+all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
+
 
 "is `port` a reference?"
 is_ref(port::SubPort) = true
@@ -205,6 +216,11 @@ function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
   sarr
 end
 
+
+"Replace `sarr` with arr"
+update_sub_arr!(sarr::SubArrow, arr::RealArrow) =
+  sarr.parent.sub_arrs[sarr.id] = arr
+
 "Edge between ports with a `CompArrow` for function composition"
 Link = Tuple{SubPort, SubPort}
 
@@ -224,6 +240,9 @@ link_ports!(arr::CompArrow, l, r) =
   link_ports!(arr, promote_left_port(arr, l), promote_right_port(arr, r))
 
 promote_port(arr::CompArrow, port::Port) = SubPort(arr, port.index)
+promote_port(arr::CompArrow, port::SubPort) = port
+promote_left_port(arr::CompArrow, port::SubPort) = promote_port(arr, port)
+promote_right_port(arr::CompArrow, port::SubPort) = promote_port(arr, port)
 promote_left_port(arr::CompArrow, port::Port) = promote_port(arr, port)
 promote_right_port(arr::CompArrow, port::Port) = promote_port(arr, port)
 
@@ -243,7 +262,7 @@ promote_right_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = dst_port(arr,
 function unlink_ports!(c::CompArrow, l::SubPort, r::SubPort)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
-  rem_edge!(c.edges, l_idx, r_idx)
+  LG.rem_edge!(c.edges, l_idx, r_idx)
 end
 
 # Graph traversal
