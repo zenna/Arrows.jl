@@ -20,7 +20,6 @@ function same(xs)::Bool
   return true
 end
 
-
 "Given a `partition` return a mapping from elements to the cell (integer id)"
 function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
   element_to_class = Dict{T, Int}()
@@ -29,4 +28,15 @@ function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
     element_to_class[element] = i
   end
   element_to_class
+end
+
+"If (x, y) if p(x) else (y, x)"
+function switch(p, x, y)
+  if p(x)
+    @assert !p(y)
+    x, y
+  else
+    @assert p(y)
+    y, x
+  end
 end

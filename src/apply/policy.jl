@@ -55,13 +55,6 @@ end
 comp_arrow(pol::DetPolicy) = parent(first(pol.node_port_labels))
 isfresh(pol::DetPolicy) = pol.curr_node == 0
 
-"Is the policy structured correctly?"
-function is_valid(pol::DetPolicy)::Bool
-  # one_start_node = ...
-  # FIXME:
-  true
-end
-
 "Add a `Compute` node to `pol`"
 function add_compute_node!(pol::DetPolicy, value::Value)::Vertex
   v = LG.add_vertex!(pol.edges)
@@ -169,7 +162,7 @@ function is_branch_node(pol::DetPolicy, node::Vertex)::Bool
 end
 
 "Is `pol` well formed"
-function is_valid(pol::DetPolicy)
+function is_valid(pol::DetPolicy)::Bool
   s = start_node(pol) = 1
 
   function correct_branching(node)::Bool

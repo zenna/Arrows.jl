@@ -205,35 +205,39 @@ function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
   sarr
 end
 
+"Edge between ports with a `CompArrow` for function composition"
+Link = Tuple{SubPort, SubPort}
+
+"All directed `Link`s (src_port, dst_port)"
+function links(arr::CompArrow)::Vector{Link}
+  es = LG.edges(arr.edges)
+  map(e -> (port_index(arr, e.src), port_index(arr, e.dst)), LG.edges(arr.edges))
+end
+
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(c::CompArrow, l::SubPort, r::SubPort)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
   LG.add_edge!(c.edges, l_idx, r_idx)
 end
+link_ports!(arr::CompArrow, l, r) =
+  link_ports!(arr, promote_left_port(arr, l), promote_right_port(arr, r))
 
-"Add an edge in CompArrow from port `l` to port `r`"
-function link_ports!(c::CompArrow, l::Port, r::SubPort)
-  # TODO: Check here and below that Port is valid boundary, i.e. port.arrow = c
-  # TODO: DomainError not assert
-  @assert parent(r) == c
-  link_ports!(c, SubPort(c, l.index), r)
-end
+promote_port(arr::CompArrow, port::Port) = SubPort(arr, port.index)
+promote_left_port(arr::CompArrow, port::Port) = promote_port(arr, port)
+promote_right_port(arr::CompArrow, port::Port) = promote_port(arr, port)
 
-"Add an edge in CompArrow from port `l` to port `r`"
-function link_ports!(c::CompArrow, l::SubPort, r::Port)
-  @assert parent(l) == c
-  link_ports!(c, l, SubPort(c, r.index))
-end
+# # TODO: Check here and below that Port is valid boundary, i.e. port.arrow = c
+# # TODO: DomainError not assert
+# @assert parent(r) == c
+src_port(c, src_arr, src_id) =
+  src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
 
-# """ Add edge in `c` `src_id`th projecting port of `src_arr` to
-# `dest_id`receiving port of `dest_arr`"""
-# function link_ports!(c::CompArrow, src_arr::Arrow, src_id::Integer,
-#                      dest_arr::Arrow, dest_id::Integer)
-#   src_port = src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
-#   dest_port = dest_arr == c ? out_port(dest_arr, dest_id) : in_port(dest_arr, dest_id)
-#   link_ports!(c, src_port, dest_port)
-# end
+dst_port(c, dst_arr, dst_id) =
+  dst_arr == c ? out_port(dst_arr, dst_id) : in_port(dst_arr, dst_id)
+
+promote_left_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = src_port(arr, pid...)
+promote_right_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = dst_port(arr, pid...)
 
 "Remove an edge in CompArrow from port `l` to port `r`"
 function unlink_ports!(c::CompArrow, l::SubPort, r::SubPort)
@@ -352,7 +356,7 @@ function should_src(port::SubPort, arr::CompArrow)::Bool
   end
 end
 
-"Should `port` be a dest in context `arr`? Maybe false iff is_wired_ok=false"
+"Should `port` be a dst in context `arr`? Maybe false iff is_wired_ok=false"
 function should_dst(port::SubPort, arr::CompArrow)::Bool
   if !(port in all_sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
@@ -374,7 +378,7 @@ function is_wired_ok(arr::CompArrow)::Bool
       if !(LG.indegree(arr.edges, i) == 1 &&
            LG.outdegree(arr.edges, i) == 0)
       # TODO: replace error with lens
-        errmsg = """vertex $i Port $(port_index(arr, i)) should be a dest but
+        errmsg = """vertex $i Port $(port_index(arr, i)) should be a dst but
                     indeg is $(LG.indegree(arr.edges, i)) (notbe 1)
                     outdeg is $(LG.outdegree(arr.edges, i) == 0)) (not 0)
                   """

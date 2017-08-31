@@ -89,6 +89,8 @@ include("apply/depend.jl")
 include("apply/policy.jl")
 
 include("transform/generic.jl")
+include("transform/invert.jl")
+
 # include("library.jl")
 
 include("targets/julia/julia.jl")
