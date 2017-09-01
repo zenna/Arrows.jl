@@ -1,10 +1,10 @@
-function bin_arith_port_attrs()
-  [PortAttrs(true, :x, Array{Real}),
-   PortAttrs(true, :y, Array{Real}),
-   PortAttrs(false, :z, Array{Real})]
+function bin_arith_port_props()
+  [PortProps(true, :x, Array{Real}),
+   PortProps(true, :y, Array{Real}),
+   PortProps(false, :z, Array{Real})]
 end
 
-function unary_arith_port_attrs()
-  [PortAttrs(true, :x, Array{Real}),
-   PortAttrs(false, :y, Array{Real})]
+function unary_arith_port_props()
+  [PortProps(true, :x, Array{Real}),
+   PortProps(false, :y, Array{Real})]
 end

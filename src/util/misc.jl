@@ -5,7 +5,7 @@ square(x::AbstractString) = string("[",x,"]")
 "Generate a unique arrow id"
 gen_id()::Symbol = gensym()
 
-"All elements in xs are the same?"
+"All elements in `xs` are the same?"
 function same(xs)::Bool
   if isempty(xs)
     return true

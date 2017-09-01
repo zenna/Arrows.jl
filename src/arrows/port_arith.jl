@@ -1,5 +1,5 @@
 "Port Arithmetic"
-function binary_arith{T<:Arrow}(x::Port, y::Port, ArrowType::Type{T})
+function binary_arith{T<:Arrow}(x::SubPort, y::SubPort, ArrowType::Type{T})
   c = self_parent(x)
   arr = ArrowType()
   added = add_sub_arr!(arr, c)

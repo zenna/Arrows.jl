@@ -90,7 +90,8 @@ include("apply/propagate.jl")
 include("apply/depend.jl")
 include("apply/policy.jl")
 
-include("transform/generic.jl")
+include("transform/walk.jl")
+include("transform/duplify.jl")
 include("transform/invert.jl")
 
 # include("library.jl")

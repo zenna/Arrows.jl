@@ -1,6 +1,6 @@
 "Wrap an arrow in another arrow - behaves identically to original arrow"
 function wrap{I,O}(arr::Arrow{I,O})
-  arr_wrap = CompArrow{I,O}(Symbol(arr.name, :_wrap), arr.port_attrs)
+  arr_wrap = CompArrow{I,O}(Symbol(arr.name, :_wrap), arr.port_props)
   arrc = add_sub_arr!(arr_wrap, arr)
 
   for i = 1:num_ports(arrc)

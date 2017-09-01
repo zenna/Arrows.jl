@@ -1,6 +1,6 @@
 import LightGraphs: weakly_connected_components
 
-"""Directed Composite Arrow
+"""Composite Arrow
 
 A composite arrow is a akin to a function composition, i.e. a program.
 """
@@ -8,13 +8,16 @@ type CompArrow{I, O} <: Arrow{I, O}
   name::Symbol         # name of CompArrow
   edges::LG.DiGraph    # Graph over port indices - each port unique id
   port_map::Vector{Port}  # port_map[i] is `Port` with index i in `edges`
-  port_attrs::Vector{PortAttrs}    # Mapping from border port to attributes
+  port_props::Vector{PortProps}    # Mapping from border port to attributes
   sub_arrs::Vector{Union{CompArrow, PrimArrow}}
   sub_arr_vertices::Vector{Vector{Int}}
 
+  # Invariants
+  # length(sub_arrs) == length(sub_arr_vertices)
+
   function CompArrow{I, O}(name::Symbol,
-                           port_attrs::Vector{PortAttrs}) where{I, O}
-    if !is_valid(port_attrs, I, O)
+                           port_props::Vector{PortProps}) where{I, O}
+    if !is_valid(port_props, I, O)
       throw(DomainError())
     end
     c = new()
@@ -24,13 +27,12 @@ type CompArrow{I, O} <: Arrow{I, O}
     c.name = name
     c.port_map = port_map
     c.edges = g
-    c.port_attrs = port_attrs
+    c.port_props = port_props
     c.sub_arrs = [c]
     c.sub_arr_vertices = [Vector{Int}(1:nports)]
     c
   end
 end
-
 
 "Not a reference"
 RealArrow = Union{CompArrow, PrimArrow}
@@ -40,15 +42,15 @@ function CompArrow{I, O}(name::Symbol,
                         inp_names=[Symbol(:inp_, i) for i=1:I],
                         out_names=[Symbol(:out_, i) for i=1:O]) where {I, O}
   # Default is for first I ports to be in_ports then next O oout_ports
-  in_port_attrs = [PortAttrs(true, inp_names[i], Any) for i = 1:I]
-  out_port_attrs = [PortAttrs(false, out_names[i], Any) for i = 1:O]
-  port_attrs = vcat(in_port_attrs, out_port_attrs)
-  CompArrow{I, O}(name, port_attrs)
+  in_port_props = [PortProps(true, inp_names[i], Any) for i = 1:I]
+  out_port_props = [PortProps(false, out_names[i], Any) for i = 1:O]
+  port_props = vcat(in_port_props, out_port_props)
+  CompArrow{I, O}(name, port_props)
 end
 
 
-"Port Attributes of *boundary* ports of arrow"
-port_attrs(arr::CompArrow) = arr.port_attrs
+"port properties of *boundary* ports of arrow"
+port_props(arr::CompArrow) = arr.port_props
 
 "Name of a composite arrow"
 name(arr::CompArrow) = arr.name
@@ -71,6 +73,7 @@ show(io::IO, p::SubPort) = print(io, p)
 "Parent of a `SubPort` is `parent` of attached `Arrow`"
 parent(subport::SubPort) = subport.parent
 
+"Is there a path between `sub_port1` and `sub_port2`"
 function is_linked(subport1::SubPort, subport2::SubPort)::Bool
   same_parent = parent(subport1) == parent(subport2)
   if same_parent
@@ -84,14 +87,10 @@ function is_linked(subport1::SubPort, subport2::SubPort)::Bool
 end
 
 "Find the vertex index of this port in `arr edges"
-port_index(arr::CompArrow, port::SubPort)::Integer = port.vertex_id
-# FIXME: is above necessary? doesn't use `arr`
-
-"Find the vertex index of this port in `arr edges"
 port_index(port::SubPort)::Integer = port.vertex_id
 
-"`PortAttr`s of `subport` are `PortAttr`s of `Port` it refers to"
-port_attrs(subport::SubPort) = port_attrs(deref(subport))
+"`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
+port_props(subport::SubPort) = port_props(deref(subport))
 
 "`SubPort` with vertex index `i` in arr.edges"
 function port_index(arr::CompArrow, i::Integer)::SubPort
@@ -103,11 +102,13 @@ function port_index(arr::CompArrow, i::Integer)::SubPort
   end
 end
 
-"`id`th sub_arrow in (some kind of) ordering of sub_arrows of `arr`"
+"A component within a `CompArrow`"
 struct SubArrow{I, O} <: ArrowRef{I, O}
   parent::CompArrow
-  id::Int
+  id::Int # `id`th sub_arrow in (some kind of) ordering of sub_arrows of `arr`
 end
+
+parent(sarr::SubArrow) = sarr.parent
 
 "Dereference `arr` into `RealArrow`"
 function deref(arr::SubArrow)
@@ -172,22 +173,21 @@ dst_sub_ports(arr::CompArrow)::Vector{SubPorts} = filter(is_dst, sub_ports(arr))
 "All source (projecting) sub_ports"
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
 
-
 "is `port` a reference?"
 is_ref(port::SubPort) = true
 
 "Add a port inside the composite arrow"
-function add_port!(arr::CompArrow, port)::Port
+function add_port!(arr::CompArrow, port::Port)::Port
   push!(arr.port_map, port)
   LG.add_vertex!(arr.edges)
   port
 end
 
-"Is `port` within `arr`"
-function in(port::SubPort, arr::CompArrow)::Bool
-  if parent(port) == arr
+"Is `sport` a port on one of the `SubArrow`s within `arr`"
+function in(sport::SubPort, arr::CompArrow)::Bool
+  if parent(sport) == arr
     nsubports = num_all_sub_ports(arr)
-    1 <= port.vertex_id <= nsubports
+    1 <= sport.vertex_id <= nsubports
   end
   false
 end
@@ -210,12 +210,24 @@ num_all_sub_arrows(arr::CompArrow) = length(arr.sub_arrs)
 "Number of sub_arrows"
 num_sub_arrows(arr::CompArrow) = num_all_sub_arrows(arr) - 1
 
+#FIXME Should this be `sub_ports`?
 "All ports(references) of a sub_arrow(reference)"
 ports(sarr::SubArrow)::Vector{SubPort} =
   [SubPort(sarr.parent, v_id) for v_id in sarr.parent.sub_arr_vertices[sarr.id]]
 
+  #FIXME Should this be `sub_port`?
 "Ith SubPort on `arr`"
 port(arr::SubArrow, i::Integer)::SubPort = ports(arr)[i]
+
+#FIXME Should this be `sub_port`?
+"Ith SubPort on `arr`"
+port(arr::SubArrow, name::Symbol)::SubPort = port(arr, port_id(name))
+
+"Ensore we find the port"
+must_find(i) = i == 0 ? throw(DomainError()) : i
+
+"Get the id of a port from its name"
+port_id(port::Arrow, name::Symbol) = must_find(findfirst(port_names(arr), name))
 
 "Add a sub_arrow `arr` to composition `c_arr`"
 function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
@@ -231,7 +243,6 @@ function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
   sarr
 end
 
-
 "Replace `sarr` with arr"
 update_sub_arr!(sarr::SubArrow, arr::RealArrow) =
   sarr.parent.sub_arrs[sarr.id] = arr
@@ -245,51 +256,61 @@ function links(arr::CompArrow)::Vector{Link}
   map(e -> (port_index(arr, e.src), port_index(arr, e.dst)), LG.edges(arr.edges))
 end
 
+"Get parent of any `x ∈ xs` and check they all have the same parent"
+function anyparent(xs::Vararg{<:Union{SubArrow, SubPort}})::CompArrow
+  if !same(parent.(xs))
+    println("Different parents!")
+    throw(DomainError())
+  end
+  @show typeof(xs)
+  parent(first(xs))
+end
+
 "Add an edge in CompArrow from port `l` to port `r`"
-function link_ports!(c::CompArrow, l::SubPort, r::SubPort)
-  # FIXME: Remove c
-  l_idx = port_index(c, l)
-  r_idx = port_index(c, r)
+function link_ports!(l::SubPort, r::SubPort)
+  c = anyparent(l, r)
+  l_idx = port_index(l)
+  r_idx = port_index(r)
   LG.add_edge!(c.edges, l_idx, r_idx)
 end
 
-link_ports!(arr::CompArrow, l, r) =
-  link_ports!(arr, promote_left_port(arr, l), promote_right_port(arr, r))
+"Is this `SubArrow` the parent of itself?"
+self_parent(sarr::SubArrow) = parent(sarr) == deref(sarr)
 
-promote_port(arr::CompArrow, port::Port) = SubPort(arr, port.index)
-promote_port(arr::CompArrow, port::SubPort) = port
-promote_left_port(arr::CompArrow, port::SubPort) = promote_port(arr, port)
-promote_right_port(arr::CompArrow, port::SubPort) = promote_port(arr, port)
-promote_left_port(arr::CompArrow, port::Port) = promote_port(arr, port)
-promote_right_port(arr::CompArrow, port::Port) = promote_port(arr, port)
+link_ports!(l, r) =
+  link_ports!(promote_left_port(l), promote_right_port(r))
+
+promote_port(port::Port{<:CompArrow}) = SubPort(port.arrow, port.index)
+promote_port(port::SubPort) = port
+
+promote_left_port(port::SubPort) = promote_port(port)
+promote_right_port(port::SubPort) = promote_port(port)
+promote_left_port(port::Port) = promote_port(port)
+promote_right_port(port::Port) = promote_port(port)
 
 # # TODO: Check here and below that Port is valid boundary, i.e. port.arrow = c
 # # TODO: DomainError not assert
 # @assert parent(r) == c
-src_port(c, src_arr, src_id) =
-  src_arr == c ? in_port(src_arr, src_id) : out_port(src_arr, src_id)
+src_port(srcarr, src_id) =
+  self_parent(srcarr) ? in_port(srcarr, src_id) : out_port(srcarr, src_id)
 
-dst_port(c, dst_arr, dst_id) =
-  dst_arr == c ? out_port(dst_arr, dst_id) : in_port(dst_arr, dst_id)
+dst_port(dst_arr, dst_id) =
+  self_parent(dst_arr) ? out_port(dst_arr, dst_id) : in_port(dst_arr, dst_id)
 
-promote_left_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = src_port(arr, pid...)
-promote_right_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = dst_port(arr, pid...)
+promote_left_port(pid::Tuple{SubArrow, <:Integer}) = src_port(pid...)
+promote_right_port(pid::Tuple{SubArrow, <:Integer}) = dst_port(pid...)
 
 "Remove an edge in CompArrow from port `l` to port `r`"
 function unlink_ports!(c::CompArrow, l::SubPort, r::SubPort)
-  l_idx = port_index(c, l)
-  r_idx = port_index(c, r)
+  l_idx = port_index(l)
+  r_idx = port_index(r)
   LG.rem_edge!(c.edges, l_idx, r_idx)
 end
 
 function unlink_ports!(l::SubPort, r::SubPort)
-  if parent(l) != parent(r)
-    println("Can't link subports of different parents")
-    throw(DomainError())
-  end
-  c = parent(l)
-  l_idx = port_index(c, l)
-  r_idx = port_index(c, r)
+  c = anyparent(l, r)
+  l_idx = port_index(l)
+  r_idx = port_index(r)
   LG.rem_edge!(c.edges, l_idx, r_idx)
 end
 
@@ -317,28 +338,28 @@ function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
   map(i->port_index(arr, i), lg_to_p(f, port))
 end
 
-"Is port a destination. i.e. does corresponding vertex project more than 0"
+"Is `port` a destination. i.e. does corresponding vertex project more than 0"
 is_dst(port::SubPort) = lg_to_p(is_dst, port)
 
-"Is port a source,  i.e. does corresponding vertex receive more than 0"
+"Is `port` a source,  i.e. does corresponding vertex receive more than 0 edge"
 is_src(port::SubPort) = lg_to_p(is_src, port)
 
-"Vector of all neighbors of `port`"
+"All neighbors of `port`"
 neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.neighbors, port)
 
-"Vector of ports which `port` receives from"
+"`Subport`s of ports which `port` receives from"
 in_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.in_neighbors, port)
 
-"Vector of ports which `port` projects to"
+"`Subport`s which `port` projects to"
 out_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.out_neighbors, port)
 
-"Return the number of ports which begin at port p"
+"Return the number of `SubPort`s which begin at `port`"
 out_degree(port::SubPort)::Integer = lg_to_p(LG.outdegree, port)
 
-"Return the number of ports which end at port p"
+"Number of `SubPort`s which end at `port`"
 in_degree(port::SubPort)::Integer = lg_to_p(LG.indegree, port)
 
-"All neighbouring ports of `subarr`, each port connected to each outport"
+"All neighbouring `SubPort`s of `subarr`, each port connected to each outport"
 function out_neighbors(subarr::Arrow)
   ports = Port[]
   for port in out_ports(subarr)
@@ -386,8 +407,6 @@ function src(port::SubPort)::SubPort
     first(in_neighs)
   end
 end
-
-# Sanity
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
 function should_src(port::SubPort, arr::CompArrow)::Bool

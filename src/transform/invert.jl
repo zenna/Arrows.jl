@@ -3,6 +3,7 @@
 # FIXME: Switch to symbols instead of numbers
 # TODO: Add is_valid for These portmaps to check
 const BIN_PORT_MAP = Dict(1 => 3, 2 => 4, 3 => 1)
+const SYMB_BIN_PORT_MAP = Dict(:x => :x, :y => :y, :z => :z)
 inv{O}(arr::DuplArrow{O}) =
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 inv(arr::AddArrow) = (inv_add(), BIN_PORT_MAP)
@@ -38,6 +39,8 @@ function fix_link!(link::Link)
 end
 
 function invert_io{I, O}(arr::CompArrow{I, O})
+  arr
+  # CompArrow{O, I}(arr.name, arr., arr., arr.)
 end
 
 "`fix_link` all the links in `arr`"
@@ -55,6 +58,6 @@ Returns:
   will be corresponding ith out_port error_ports and param_ports will follow"""
 function invert(arr::CompArrow)::CompArrow
   check_reuse(arr)
-  outer(arr) = link_loose_ports(fix_links!(invert_io(arr)))
+  outer = link_loose_ports ∘ fix_links! ∘ invert_io
   walk(inv, outer, arr)
 end

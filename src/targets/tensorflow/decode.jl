@@ -91,9 +91,9 @@ end
 function conv(a::TfArrow, args::Args, state::State)::Vector{Tensor}
   # import pdb; pdb.set_trace()
   # FIXME: Is the correspondance correct here?
-  port_attr = state['port_attr']
-  inp_shapes = [get_port_shape(p, port_attr) for p in a.in_ports()]
-  out_shapes = [get_port_shape(p, port_attr) for p in a.out_ports()]
+  port_prop = state['port_prop']
+  inp_shapes = [get_port_shape(p, port_prop) for p in a.in_ports()]
+  out_shapes = [get_port_shape(p, port_prop) for p in a.out_ports()]
   with tf.name_scope("TfArrow"):
       template = a.template
       options = a.options
@@ -147,7 +147,7 @@ function arrow_to_graph(arr::CompArrow, input_tensors::Vector{Tensor},
                         port_grab::Dict{Port, Any} = Dict())
   # inputs need to be wrapped in identiy
   input_tensors_wrapped = tf.identity(input_tensors)
-  port_attr = propagate(comp_arrow)
-  state = {'port_attr': port_attr}
+  port_prop = propagate(comp_arrow)
+  state = {'port_prop': port_prop}
   interpret(conv, comp_arrow, input_tensors_wrapped, state, port_grab)
 end

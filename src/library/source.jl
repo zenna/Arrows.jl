@@ -4,4 +4,4 @@ struct SourceArrow{T} <: PrimArrow{0, 1}
 end
 
 name(::SourceArrow) = :source
-port_attrs{T}(::SourceArrow{T}) =  [PortAttrs(false, :x, Array{T})]
+port_props{T}(::SourceArrow{T}) =  [PortProps(false, :x, Array{T})]

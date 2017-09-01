@@ -17,45 +17,45 @@ is_ref(port::Port) = false
 # "Is `port` a reference?"
 # is_ref{A}(port::Port{A}) = A <: ArrowRef
 
-"""Port Attributes: properties instrinsic to a port.
+"""port properties: properties instrinsic to a port.
 
-- `PortAttr`s are a property of an Arrow or SubtractArrow
+- `PortProp`s are a property of an Arrow or SubtractArrow
 """
-struct PortAttrs
+struct PortProps
   is_in_port::Bool
   name::Symbol
   typ::Type
 end
 
 
-"Does a vector of port attributes have I inports and O outports?"
-function is_valid(port_attrs::Vector{PortAttrs}, I::Integer, O::Integer)::Bool
+"Does a vector of port properties have I inports and O outports?"
+function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
   ni = 0
   no = 0
-  for port_attr in port_attrs
-    if is_in_port(port_attr)
+  for port_prop in port_props
+    if is_in_port(port_prop)
       ni += 1
-    elseif is_out_port(port_attr)
+    elseif is_out_port(port_prop)
       no += 1
     end
   end
   ni == I && no == O
 end
 
-"Get the port attributes of `port` in arrow `arr`"
-port_attrs(port::Port) = port_attrs(port.arrow)[port.index]
+"Get the port properties of `port` in arrow `arr`"
+port_props(port::Port) = port_props(port.arrow)[port.index]
 
 "Is `port` an `out_port`"
-is_out_port(port_attrs::PortAttrs)::Bool = !port_attrs.is_in_port
+is_out_port(port_props::PortProps)::Bool = !port_props.is_in_port
 
 "Is `port` an `out_port`"
-is_out_port(port::AbstractPort)::Bool = is_out_port(port_attrs(port))
+is_out_port(port::AbstractPort)::Bool = is_out_port(port_props(port))
 
 "Is `port` an `in_port`"
-is_in_port(port_attrs::PortAttrs)::Bool = port_attrs.is_in_port
+is_in_port(port_props::PortProps)::Bool = port_props.is_in_port
 
 "Is `port` an `in_port`"
-is_in_port(port::AbstractPort)::Bool = is_in_port(port_attrs(port))
+is_in_port(port::AbstractPort)::Bool = is_in_port(port_props(port))
 
 "`i`th port of arrow"
 function port(arr::Arrow, i::Integer)::Port
@@ -95,9 +95,15 @@ num_out_ports{I, O}(arr::Arrow{I, O})::Integer = O
 "How many in ports does `arr` have"
 num_in_ports{I, O}(arr::Arrow{I, O})::Integer = I
 
+name(pa::PortProps) = pa.name
+name(port::Port) = name(port_props(port))
+
+"Names of each port of `arr`"
+port_names(arr::Arrow) = name.(ports(arr))
+
 function string(p::Port)
   inps = is_in_port(p) ? "InPort" : "OutPort"
-  pa = port_attrs(p)
+  pa = port_props(p)
   "$inps id:$(p.index) n:$(pa.name) arr:$(name(p.arrow))"
 end
 
