@@ -38,21 +38,12 @@ function fix_link!(link::Link)
 end
 
 function invert_io{I, O}(arr::CompArrow{I, O})
-  ...
 end
 
 "`fix_link` all the links in `arr`"
 function fix_links!(arr::CompArrow)::CompArrow
   foreach(fix_link!, links(arr))
   arr
-end
-  # Rhen, rewire edges accoring to port_maps
-  for (src_port, dst_port) in links(arr)
-    left_repl = replace_port(src_port, arr_to_port_map)
-    right_repl = replace_port(dst_port, arr_to_port_map)
-    link_ports!(replarr, src_port, dst_port)
-  end
-  replarr
 end
 
 """Construct a parametric inverse of `arr`

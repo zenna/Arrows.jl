@@ -36,13 +36,16 @@ end
 RealArrow = Union{CompArrow, PrimArrow}
 
 "Constructs CompArrow with where all input and output types are `Any`"
-function CompArrow{I, O}(name::Symbol) where {I, O}
+function CompArrow{I, O}(name::Symbol,
+                        inp_names=[Symbol(:inp_, i) for i=1:I],
+                        out_names=[Symbol(:out_, i) for i=1:O]) where {I, O}
   # Default is for first I ports to be in_ports then next O oout_ports
-  in_port_attrs = [PortAttrs(true, Symbol(:inp_, i), Any) for i = 1:I]
-  out_port_attrs = [PortAttrs(false, Symbol(:out_, i), Any) for i = 1:O]
+  in_port_attrs = [PortAttrs(true, inp_names[i], Any) for i = 1:I]
+  out_port_attrs = [PortAttrs(false, out_names[i], Any) for i = 1:O]
   port_attrs = vcat(in_port_attrs, out_port_attrs)
   CompArrow{I, O}(name, port_attrs)
 end
+
 
 "Port Attributes of *boundary* ports of arrow"
 port_attrs(arr::CompArrow) = arr.port_attrs
@@ -50,11 +53,20 @@ port_attrs(arr::CompArrow) = arr.port_attrs
 "Name of a composite arrow"
 name(arr::CompArrow) = arr.name
 
-"A referece to a `Port`"
+"A `Port` on a SubArrow"
 struct SubPort{T <: Integer} <: AbstractPort
   parent::CompArrow # Parent arrow of arrow subport is attached to
   vertex_id::T
 end
+
+function string(port::SubPort)
+  a = "SubArrow $(port.vertex_id) of $(name(parent(port))) - "
+  b = string(deref(port))
+  string(a, b)
+end
+
+print(io::IO, p::SubPort) = print(io, string(p))
+show(io::IO, p::SubPort) = print(io, p)
 
 "Parent of a `SubPort` is `parent` of attached `Arrow`"
 parent(subport::SubPort) = subport.parent
@@ -146,7 +158,7 @@ all_sub_ports(arr::CompArrow)::Vector{SubPort} =
   [SubPort(arr, i) for i = 1:num_all_sub_ports(arr)]
 
 "All ports w/in `arr`: `⋃([ports(sa) for sa in all_sub_arrows(arr)])`"
-sub_ports(arr::CompArrow)::Vector{SubPort} = all_sub_ports(arr)[2:end]
+sub_ports{I, O}(arr::CompArrow{I, O})::Vector{SubPort} = all_sub_ports(arr)[I+O+1:end]
 
 "All source (projecting) sub_ports"
 src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
