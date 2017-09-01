@@ -202,6 +202,9 @@ num_sub_arrows(arr::CompArrow) = num_all_sub_arrows(arr) - 1
 ports(sarr::SubArrow)::Vector{SubPort} =
   [SubPort(sarr.parent, v_id) for v_id in sarr.parent.sub_arr_vertices[sarr.id]]
 
+"Ith SubPort on `arr`"
+port(arr::SubArrow, i::Integer)::SubPort = ports(arr)[i]
+
 "Add a sub_arrow `arr` to composition `c_arr`"
 function add_sub_arr!{I, O}(c_arr::CompArrow, arr::Arrow{I, O})::Arrow
   last_index = num_all_sub_arrows(c_arr)
@@ -232,10 +235,12 @@ end
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(c::CompArrow, l::SubPort, r::SubPort)
+  # FIXME: Remove c
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
   LG.add_edge!(c.edges, l_idx, r_idx)
 end
+
 link_ports!(arr::CompArrow, l, r) =
   link_ports!(arr, promote_left_port(arr, l), promote_right_port(arr, r))
 
@@ -260,6 +265,17 @@ promote_right_port(arr::CompArrow, pid::Tuple{Arrow, <:Integer}) = dst_port(arr,
 
 "Remove an edge in CompArrow from port `l` to port `r`"
 function unlink_ports!(c::CompArrow, l::SubPort, r::SubPort)
+  l_idx = port_index(c, l)
+  r_idx = port_index(c, r)
+  LG.rem_edge!(c.edges, l_idx, r_idx)
+end
+
+function unlink_ports!(l::SubPort, r::SubPort)
+  if parent(l) != parent(r)
+    println("Can't link subports of different parents")
+    throw(DomainError())
+  end
+  c = parent(l)
   l_idx = port_index(c, l)
   r_idx = port_index(c, r)
   LG.rem_edge!(c.edges, l_idx, r_idx)
