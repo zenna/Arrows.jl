@@ -4,14 +4,16 @@ Semantics of this model
 
 # `Arrow`
 - There are a finite number of primitive arrows, `PrimArrow`
-- Each primitive arrow is unique and uniquely identifiable by a name, globally
+- Each `parr::PrimArrow` is unique and uniquely identifiable by a name, globally
 - There are a finite number of composite arrows, `CompArrow`
-- Each composite arrow is unique and uniquely identifiable by name, globally
+- Each `CompArrow` is unique and uniquely identifiable by `name(arr)` globally
 
 # `Port`
-- A `PrimArrow{I, O}` and `CompArrow{I, O}` has `I` and `O` input / output ports
-- These I+O Ports are the `boundary` ports of a `CompArrow`
-- a `SubPort` which is on a `SubArrow` is not a boundary
+- An `Arrow{I, O}` has `I` and `O` input / output ports
+- These `I+O` Ports are the `boundary` ports of a `CompArrow`
+- `Port`s are named `name(port)` and uniquely identifiable w.r.t. Arrow
+- `Port`s on `Arrow{I, O}` are ordered `1:I+O` but
+   ordering is independent of whther is_in_port or is_out_port
 
 # `SubArrow`
 - A composite arrow contains a finite number of components: `SubArrow`s
@@ -20,6 +22,7 @@ Semantics of this model
 - We can `deref`erence a `SubArrow` to retrieve the `PrimArrow` or `CompArrow`
 - A `SubPort` is a port of `SubArrow`
 - We can `deref`erence it to get the corresponding port on CompArrow / PrimArrow
+- a `SubPort` which is on a `SubArrow` is not a boundary
 
 # `Value`
 - All `Port`s that are connected share the same `Value`
@@ -30,11 +33,6 @@ Semantics of this model
 # `Trace`
 - SubArrows can refer to CompArrow's, even the same CompArrow
 - In execution and other contexts, it is useful be refer to nested
-
-- In ssummary, three issues
-- Arrow = {CompArrow, PrimArrow}
-- Component
-- Ref
 """
 abstract type Arrow{I, O} end
 

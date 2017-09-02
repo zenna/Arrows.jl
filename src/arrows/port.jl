@@ -27,7 +27,6 @@ struct PortProps
   typ::Type
 end
 
-
 "Does a vector of port properties have I inports and O outports?"
 function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
   ni = 0

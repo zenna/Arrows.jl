@@ -16,7 +16,7 @@ type CompArrow{I, O} <: Arrow{I, O}
   # length(sub_arrs) == length(sub_arr_vertices)
 
   function CompArrow{I, O}(name::Symbol,
-                           port_props::Vector{PortProps}) where{I, O}
+                           port_props::Vector{PortProps}) where {I, O}
     if !is_valid(port_props, I, O)
       throw(DomainError())
     end
@@ -48,7 +48,6 @@ function CompArrow{I, O}(name::Symbol,
   CompArrow{I, O}(name, port_props)
 end
 
-
 "port properties of *boundary* ports of arrow"
 port_props(arr::CompArrow) = arr.port_props
 
@@ -73,18 +72,55 @@ show(io::IO, p::SubPort) = print(io, p)
 "Parent of a `SubPort` is `parent` of attached `Arrow`"
 parent(subport::SubPort) = subport.parent
 
-"Is there a path between `sub_port1` and `sub_port2`"
-function is_linked(subport1::SubPort, subport2::SubPort)::Bool
-  same_parent = parent(subport1) == parent(subport2)
+"Is there a path between `SubPort`s `sport1` and `sport2`?"
+function is_linked(sport1::SubPort, sport2::SubPort)::Bool
+  same_parent = parent(sport1) == parent(sport2)
   if same_parent
-    v1 = port_index(subport1)
-    v2 = port_index(subport2)
-    v1_component = weakly_connected_component(parent(subport1).edges, v1)
+    v1 = port_index(sport1)
+    v2 = port_index(sport2)
+    v1_component = weakly_connected_component(parent(sport1).edges, v1)
     v2 ∈ v1_component
   else
     false
   end
 end
+
+## Port Transformations
+# function CompArrow{I, O}(arr::CompArrow{I2, O2})
+#   if I + O == I2 + O2
+#     CompArrow{I, O}{arr.name, arr }
+#     # same edges::LG.DiGraph    # Graph over port indices - each port unique id
+#     # same port_map::Vector{Port}  # port_map[i] is `Port` with index i in `edges`
+#     # DIFF port_props::Vector{PortProps}    # Mapping from border port to attributes
+#     # same sub_arrs::Vector{Union{CompArrow, PrimArrow}}
+#     # same sub_arr_v
+#   else
+#     println("Can only make arrow from arrow if num port same")
+#     throw(DomainError())
+#   end
+# end
+#
+# "Arrow where Port is in_port"
+# function make_in_port(port::Port)::CompArrow
+#   arr = port.arrow
+#   if is_out_port(port)
+#     CompArrow{I+1, O-1}(arr)
+#   else
+#     println("port is already in_port")
+#     throw(DomainError())
+#   end
+# end
+#
+# "Arrow where Port is in_port"
+# function make_out_port(port::Port)::CompArrow
+#   arr = port.arrow
+#   if is_in_port(port)
+#     CompArrow{I-1, O+1}(arr)
+#   else
+#     println("port is already out_port")
+#     throw(DomainError())
+#   end
+# end
 
 "Find the vertex index of this port in `arr edges"
 port_index(port::SubPort)::Integer = port.vertex_id
