@@ -40,3 +40,14 @@ function switch(p, x, y)
     y, x
   end
 end
+
+## Data Structures ##
+"`l` s.t. `dict[l] == r`. If many `l` map to `r` output is nondeterminsitic"
+function rev{L, R}(dict::Associative{L, R}, r::R)
+  for (k, v) in dict
+    if v == r
+      return k
+    end
+  end
+  throw(KeyError(key))
+end
