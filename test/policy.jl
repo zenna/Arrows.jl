@@ -1,14 +1,25 @@
 import Arrows
 using Arrows.TestArrows
+using Base.Test
 
 function test_policy()
-  arr = TestArrows.xy_plus_x_arr()
-  pol = Arrows.DetPolicy(arr)
+  for arr in Arrows.TestArrows.plain_arrows()
+    println("Testing policy: ", name(arr))
+    pol = Arrows.DetPolicy(arr)
+    @test is_valid(pol)
+  end
 end
 
-pol = test_policy()
-is_valid(pol)
-interpret(pol, 10, 20)
-collect(LG.edges(pol.edges))
-# - Might want to interpret with Symbol, in Julia, in San
-# -
+rand_input(arr) = rand(num_in_ports(arr))
+
+function test_interpret()
+  for arr in Arrows.TestArrows.plain_arrows()
+    println("Testing interpret: ", name(arr))
+    pol = Arrows.DetPolicy(arr)
+    output = interpret(pol, rand_input(arr)...)
+    println("Got: ", output)
+  end
+end
+
+test_policy()
+test_interpret()

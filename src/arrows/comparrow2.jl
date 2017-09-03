@@ -176,6 +176,19 @@ function unlink_ports!(l::SubPort, r::SubPort)
   # TODO: error handling
 end
 
+"Is there a path between `SubPort`s `sport1` and `sport2`?"
+function is_linked(sport1::SubPort, sport2::SubPort)::Bool
+  same_parent = parent(sport1) == parent(sport2)
+  if same_parent
+    v1 = vertex_id(sport1)
+    v2 = vertex_id(sport2)
+    v1_component = weakly_connected_component(parent(sport1).edges, v1)
+    v2 ∈ v1_component
+  else
+    false
+  end
+end
+
 ## Sub Arrow ##
 num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
 num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
@@ -210,7 +223,7 @@ end
 "Helper for LightGraph API methods which return Vector{Port}, see `lg_to_p`"
 function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
   arr = parent(port)
-  map(i->vertex_id(arr, i), lg_to_p(f, port))
+  map(i->sub_port(arr, i), lg_to_p(f, port))
 end
 
 "`sport` is number `port_id(sport)` `SubPort` on `sub_arrow(sport)`"

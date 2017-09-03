@@ -14,6 +14,7 @@ interpret(::CondArrow, i, t, e) = ((i ? t : e),)
 interpret(arr::SourceArrow) = (arr.value,)
 interpret(::IdentityArrow, x) = (x,)
 interpret(::ExpArrow, x) = (exp(x),)
+interpret(::SinArrow, x) = (sin(x),)
 
 function interpret(::GatherNdArrow, params::Array, indices::Array{<:Integer})
   # convert from TensorFlow array indexing!

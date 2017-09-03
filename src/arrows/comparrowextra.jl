@@ -119,12 +119,6 @@ function weakly_connected_components(arr::CompArrow)::Components
   map(component->pi.(component), cc)
 end
 
-"""Partition the ports into weakly connected equivalence classes"""
-function weakly_connected_component(edges::LG.DiGraph, i::Integer)::Vector{Int}
-  cc = weakly_connected_components(edges)
-  filter(comp -> i ∈ comp, cc)[1]
-end
-
 "Ports in `arr` weakly connected to `port`"
 function weakly_connected_component(port::SubPort)::Component
   # TODO: Shouldn't need to compute all connected components just to compute

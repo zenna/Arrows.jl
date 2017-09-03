@@ -43,10 +43,15 @@ export
   in_ports,
   out_port,
   out_ports,
+  num_in_ports,
+  num_out_ports,
+  num_ports,
   port,
   ports,
   propagate,
   is_wired_ok,
+  is_valid,
+  interpret,
 
   AddArrow,
   MulArrow,
@@ -58,9 +63,12 @@ export
   IdentityArrow,
   ExpArrow,
   NegArrow,
-  GatherNdArrow
+  GatherNdArrow,
+  SinArrow
 
 include("util/misc.jl")
+include("util/lightgraphs.jl")
+
 # include("types.jl")
 
 include("arrows/arrow.jl")

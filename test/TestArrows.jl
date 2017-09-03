@@ -124,6 +124,16 @@ function all_test_arrows()
    sin_arr()]
 end
 
+function is_plain(arr::CompArrow)
+  CondArrow() ∉ values(arr.sarr_name_to_arrow)
+end
+
+"Test Arrows without recursion or control flow"
+function plain_arrows()
+  collect(filter(is_plain, all_test_arrows()))
+end
+
+
 export xy_plus_x_arr,
        recursive_arr,
        fibonnaci_arr,
