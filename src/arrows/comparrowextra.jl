@@ -1,6 +1,3 @@
-"Get (self) sub_arrow reference to `arr`"
-sub_arrow(arr::CompArrow) = sub_arrow(arr, 1)
-
 "All source (projecting) sub_ports"
 src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
 
@@ -17,44 +14,13 @@ all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_port
 is_ref(sport::SubPort) = true
 
 "Is `sport` a port on one of the `SubArrow`s within `arr`"
-function in(sport::SubPort, arr::CompArrow)::Bool
-  if parent(sport) == arr
-    nsubports = num_all_sub_ports(arr)
-    1 <= sport.vertex_id <= nsubports
-  end
-  false
-end
+in(sport::SubPort, arr::CompArrow) = sport ∈ all_sub_ports(arr)
 
 "Is `port` within `arr` but not on boundary"
-function strictly_in{I, O}(port::SubPort, arr::CompArrow{I, O})::Bool
-  if parent(port) == arr
-    nsubports = num_sub_ports(arr)
-    return I + O < port.vertex_id <= I + O + nsubports
-  end
-  false
-end
+strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
 
 "Is `arr` a sub_arrow of composition `c_arr`"
-in(arr::SubArrow, c_arr::CompArrow)::Bool = arr in all_sub_arrows(p)
-
-"Number of sub_arrows in `c_arr` including `c_arr`"
-num_all_sub_arrows(arr::CompArrow) = length(arr.sub_arrs)
-
-"Number of sub_arrows"
-num_sub_arrows(arr::CompArrow) = num_all_sub_arrows(arr) - 1
-
-#FIXME Should this be `sub_ports`?
-"All ports(references) of a sub_arrow(reference)"
-ports(sarr::SubArrow)::Vector{SubPort} =
-  [SubPort(sarr.parent, v_id) for v_id in sarr.parent.sub_arr_vertices[sarr.id]]
-
-  #FIXME Should this be `sub_port`?
-"Ith SubPort on `arr`"
-port(arr::SubArrow, i::Integer)::SubPort = ports(arr)[i]
-
-#FIXME Should this be `sub_port`?
-"Ith SubPort on `arr`"
-port(arr::SubArrow, name::Symbol)::SubPort = port(arr, port_id(name))
+in(arr::SubArrow, c_arr::CompArrow)::Bool = arr ∈ all_sub_arrows(p)
 
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 port_props(subport::SubPort) = port_props(deref(subport))
@@ -71,7 +37,6 @@ function anyparent(xs::Vararg{<:Union{SubArrow, SubPort}})::CompArrow
     println("Different parents!")
     throw(DomainError())
   end
-  @show typeof(xs)
   parent(first(xs))
 end
 
@@ -80,10 +45,9 @@ self_parent(sarr::SubArrow) = parent(sarr) == deref(sarr)
 
 link_ports!(l, r) =
   link_ports!(promote_left_port(l), promote_right_port(r))
-
-promote_port(port::Port{<:CompArrow}) = SubPort(port.arrow, port.index)
+promote_port(port::Port{<:CompArrow}) = SubPort(sub_arrow(port.arrow),
+                                                port.index)
 promote_port(port::SubPort) = port
-
 promote_left_port(port::SubPort) = promote_port(port)
 promote_right_port(port::SubPort) = promote_port(port)
 promote_left_port(port::Port) = promote_port(port)
@@ -92,14 +56,19 @@ promote_right_port(port::Port) = promote_port(port)
 # # TODO: Check here and below that Port is valid boundary, i.e. port.arrow = c
 # # TODO: DomainError not assert
 # @assert parent(r) == c
-src_port(srcarr, src_id) =
-  self_parent(srcarr) ? in_port(srcarr, src_id) : out_port(srcarr, src_id)
+src_port(src_arr::SubArrow, src_id) =
+  self_parent(src_arr) ? in_sub_port(src_arr, src_id) : out_sub_port(src_arr, src_id)
 
-dst_port(dst_arr, dst_id) =
-  self_parent(dst_arr) ? out_port(dst_arr, dst_id) : in_port(dst_arr, dst_id)
+dst_port(dst_arr::SubArrow, dst_id) =
+  self_parent(dst_arr) ? out_sub_port(dst_arr, dst_id) : in_sub_port(dst_arr, dst_id)
 
 promote_left_port(pid::Tuple{SubArrow, <:Integer}) = src_port(pid...)
 promote_right_port(pid::Tuple{SubArrow, <:Integer}) = dst_port(pid...)
+promote_left_port(pid::Tuple{CompArrow, <:Integer}) =
+  src_port(sub_arrow(pid[1]), pid[2])
+promote_right_port(pid::Tuple{CompArrow, <:Integer}) =
+  dst_port(sub_arrow(pid[1]), pid[2])
+
 
 # Graph traversal
 "is vertex `v` a destination, i.e. does it project more than 0 edges"
@@ -179,7 +148,8 @@ function src(port::SubPort)::SubPort
 end
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
-function should_src(port::SubPort, arr::CompArrow)::Bool
+function should_src(port::SubPort)::Bool
+  arr = parent(port)
   if !(port in all_sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
     println(errmsg)
@@ -193,7 +163,8 @@ function should_src(port::SubPort, arr::CompArrow)::Bool
 end
 
 "Should `port` be a dst in context `arr`? Maybe false iff is_wired_ok=false"
-function should_dst(port::SubPort, arr::CompArrow)::Bool
+function should_dst(port::SubPort)::Bool
+  arr = parent(port)
   if !(port in all_sub_ports(arr))
     errmsg = "Port $port not in ports of $(name(arr))"
     println(errmsg)
@@ -209,12 +180,12 @@ end
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
   for i = 1:LG.nv(arr.edges)
-    if should_dst(port_index(arr, i), arr)
+    if should_dst(sub_port(arr, i))
       # If it should be a desination
       if !(LG.indegree(arr.edges, i) == 1 &&
            LG.outdegree(arr.edges, i) == 0)
       # TODO: replace error with lens
-        errmsg = """vertex $i Port $(port_index(arr, i)) should be a dst but
+        errmsg = """vertex $i Port $i should be a dst but
                     indeg is $(LG.indegree(arr.edges, i)) (notbe 1)
                     outdeg is $(LG.outdegree(arr.edges, i) == 0)) (not 0)
                   """
@@ -222,10 +193,10 @@ function is_wired_ok(arr::CompArrow)::Bool
         return false
       end
     end
-    if should_src(port_index(arr, i), arr)
+    if should_src(sub_port(arr, i))
       # if it should be a source
       if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
-        errmsg = """vertex $i Port $(port_index(arr, i)) is source but out degree is
+        errmsg = """vertex $i Port $i is source but out degree is
         $(LG.outdegree(arr.edges, i)) (should be >= 1)"""
         warn(errmsg)
         return false
@@ -236,15 +207,11 @@ function is_wired_ok(arr::CompArrow)::Bool
 end
 
 ## Printing ##
-
 function string(port::SubPort)
-  a = "SubArrow $(port.vertex_id) of $(name(parent(port))) - "
+  a = "SubArrow $(name(parent(port))) of $(name(parent(port))) - "
   b = string(deref(port))
   string(a, b)
 end
 
 print(io::IO, p::SubPort) = print(io, string(p))
 show(io::IO, p::SubPort) = print(io, p)
-
-"Parent of a `SubPort` is `parent` of attached `Arrow`"
-parent(subport::SubPort) = subport.parent

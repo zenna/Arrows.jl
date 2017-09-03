@@ -1,4 +1,5 @@
-ArrowName = name
+
+ArrowName = Symbol
 # Need ProxyPort because julia has no cyclical types, otherwise use `Port`
 ProxyPort = Tuple{ArrowName, Integer}
 VertexId = Integer
@@ -7,46 +8,137 @@ mutable struct CompArrow{I, O} <: Arrow{I, O}
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
-  sarr_name_to_arrow::Dict{ArrowName, RealArrow}
+  sarr_name_to_arrow::Dict{ArrowName, Union{CompArrow, PrimArrow}}
   port_props::Vector{PortProps}
-end
 
-function CompArrow{I, O}(name::Symbol, port_props::Vector{PortProps})
-  if !is_valid(port_props, I, O)
-    throw(DomainError())
+  function CompArrow{I, O}(name::Symbol,
+                           port_props::Vector{PortProps}) where {I, O}
+    if !is_valid(port_props, I, O)
+      throw(DomainError())
+    end
+    c = new()
+    nports = I + O
+    g = LG.DiGraph(nports)
+    c.name = name
+    c.edges = g
+    c.port_to_vtx_id = Dict((name, i) => i for i = 1:I+O)
+    c.sarr_name_to_arrow = Dict(name => c)
+    c.port_props = port_props
+    c
   end
-  c = new()
-  nports = I + O
-  g = LG.DiGraph(nports)
-  c.name = name
-  c.edges = g
-  c.port_to_vtx_id = Dict((name, i) => i for i = 1:I+O)
-  c.sarr_name_to_arrow = Dict(name => c)
-  c.port_props = port_props
 end
 
+"A component within a `CompArrow`"
+struct SubArrow{I, O} <: ArrowRef{I, O}
+  parent::CompArrow
+  name::ArrowName
+  function SubArrow{I, O}(parent::CompArrow, name::ArrowName) where {I, O}
+    sarr = new{I, O}(parent, name)
+    if !is_valid(sarr)
+      throw(DomainError())
+    end
+    sarr
+  end
+end
+
+"sarr is valid if its name exists in its parent and `I` `O`"
+function is_valid{I, O}(sarr::SubArrow{I, O})::Bool
+  arr = deref(sarr)
+  I == num_in_ports(arr) && O == num_out_ports(arr)
+end
+
+function SubArrow(carr::CompArrow, name::ArrowName)
+  arr = arrow(carr, name)
+  SubArrow{num_in_ports(arr), num_out_ports(arr)}(carr, name)
+end
+
+"A `Port` on a `SubArrow`"
+struct SubPort <: AbstractPort
+  sub_arrow::SubArrow  # Parent arrow of arrow sport is attached to
+  port_id::Integer     # this is ith `port` of parent
+  function SubPort(sarr::SubArrow, port_id::Integer)
+    if 0 < port_id <= num_ports(sarr)
+      new(sarr, port_id)
+    else
+      println("Invalid port_id: ", port_id)
+      throw(DomainError())
+    end
+  end
+end
+
+Link = Tuple{SubPort, SubPort}
+
+## CompArrow constructors
+"Constructs CompArrow with where all input and output types are `Any`"
+function CompArrow{I, O}(name::Symbol,
+                        inp_names=[Symbol(:inp_, i) for i=1:I],
+                        out_names=[Symbol(:out_, i) for i=1:O]) where {I, O}
+  # Default is for first I ports to be in_ports then next O oout_ports
+  in_port_props = [PortProps(true, inp_names[i], Any) for i = 1:I]
+  out_port_props = [PortProps(false, out_names[i], Any) for i = 1:O]
+  port_props = vcat(in_port_props, out_port_props)
+  CompArrow{I, O}(name, port_props)
+end
+
+port_props(arr::CompArrow) = arr.port_props
+port_props(sarr::SubArrow) = port_props(deref(sarr))
+
+"Not a reference"
+RealArrow = Union{CompArrow, PrimArrow}
+deref(sport::SubPort)::Port = port(deref(sport.sub_arrow), port_id(sport))
+deref(sarr::SubArrow)::RealArrow = arrow(parent(sarr), sarr.name)
+"Get `Arrow` in `arr` with name `n`"
+arrow(arr::CompArrow, n::ArrowName)::RealArrow = arr.sarr_name_to_arrow[n]
+
+## Naming ##
 unique_sub_arrow_name()::ArrowName = gen_id()
 name(arr::CompArrow)::ArrowName = arr.name
+"Names of all `SubArrows` in `arr`, inclusive"
+all_names(arr::CompArrow)::Vector{ArrowName} =
+  collect(keys(arr.sarr_name_to_arrow))
+"Names of all `SubArrows` in `arr`, exclusive of `arr`"
+names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
+
 SubPort(arr::CompArrow, pxport::ProxyPort)::SubPort =
   SubPort(SubArrow(arr, pxport[1]), pxport[2])
 
+## SubPort(s) constructors
+
 "`SubPort` of `arr` with vertex id `vtx_id`"
-function sub_port(arr::CompArrow, vtx_id::VertexId)::SubPort
+sub_port(arr::CompArrow, vtx_id::VertexId)::SubPort =
   SubPort(arr, rev(arr.port_to_vtx_id, vtx_id))
-end
+"`SubPort` of `sarr` of number `port_id`"
+sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
+sub_ports(sarr::SubArrow)::Vector{SubPort} =
+  [SubPort(sarr, i) for i=1:num_ports(sarr)]
+all_sub_ports(arr::CompArrow)::Vector{SubPort} =
+  [SubPort(SubArrow(arr, n), id) for (n, id) in keys(arr.port_to_vtx_id)]
+inner_sub_ports(arr::CompArrow)::Vector{SubPort} =
+  filter(sport -> !on_boundary(sport), all_sub_ports(arr))
+num_all_sub_ports(arr::CompArrow) = length(arr.port_to_vtx_id)
+num_sub_ports(arr::CompArrow) = num_all_sub_ports(arr) - num_ports(arr)
+in_sub_ports(sarr::SubArrow)::Vector{SubPort} = filter(is_in_port, sub_ports(sarr))
+out_sub_ports(sarr::SubArrow)::Vector{SubPort} = filter(is_out_port, sub_ports(sarr))
+in_sub_port(sarr::SubArrow, i) = in_sub_ports(sarr)[i]
+out_sub_port(sarr::SubArrow, i) = out_sub_ports(sarr)[i]
+
+"is `sport` a boundary port?"
+on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport))
+
+## Add link remove SubArrs / Links ##
 
 "Add a `SubArrow` `arr` to `CompArrow` `carr`"
-function add_sub_arr!{I, O}(carr::CompArrow, arr::RealArrow{I, O})::Arrow
+function add_sub_arr!(carr::CompArrow, arr::RealArrow)::SubArrow
   # TODO: FINISH!
   newname = unique_sub_arrow_name()
   carr.sarr_name_to_arrow[newname] = arr
-  for port in ports(arr)
+  for (i, port) in enumerate(ports(arr))
     LG.add_vertex!(carr.edges)
     vtx_id = LG.nv(carr.edges)
     pxport = (newname, i)
-    carr.port_to_vtx_id[pxport] = pxport
+    carr.port_to_vtx_id[pxport] = vtx_id
   end
-  carr
+  SubArrow(carr, newname)
 end
 
 "Remove a `SubArrow` from a `CompArrow`"
@@ -55,36 +147,16 @@ function rem_sub_arr!(carr::CompArrow, sarr::SubArrow)::CompArrow
     println("Cannot remove subarrow because its not in composition")
   end
   delete!(carr.sub_arrow_index[sarr.name])
-  delete!(carr.sub_arrow_arrow[sarr.name])
+  delete!(carr.sarr_name_to_arrow[sarr.name])
   # Delete the edges sub_arrow_index[sarr.name] .. + ndhada
   carr
 end
-
-Link = Tuple{SubPort, SubPort}
 
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}
   es = LG.edges(arr.edges)
   map(e -> (sub_port(arr, e.src), sub_port(arr, e.dst)), LG.edges(arr.edges))
 end
-
-# Not minimal
-num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
-num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
-
-"A component within a `CompArrow`"
-struct SubArrow
-  parent::CompArrow
-  name::ArrowName
-end
-
-parent(sarr::SubArrow) = sarr.parent
-name(sarr::SubArrow) = sarr.name
-deref(sarr::SubArrow) = sarr.parent.sub_arrow_arrow[sarr.name]
-all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [SubArrow(arr, n) for n in keys(arr.sub_arrow_index)]
-
-sub_arrows(arr::CompArrow)::Vector{SubArrow} = @assert false # [SubArrow(arr, n) for n in keys(arr.sub_arrow_index)]
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(l::SubPort, r::SubPort)
@@ -104,6 +176,27 @@ function unlink_ports!(l::SubPort, r::SubPort)
   # TODO: error handling
 end
 
+## Sub Arrow ##
+num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
+num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
+
+name(sarr::SubArrow)::ArrowName = sarr.name
+"`SubArrow` of `arr` with name `n`"
+sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)
+"All `SubArrows` within `arr`, inclusive"
+all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
+  [SubArrow(arr, n) for n in all_names(arr)]
+"All `SubArrow`s within `arr` exlusive of `arr`"
+sub_arrows(arr::CompArrow)::Vector{SubArrow} =
+  [SubArrow(arr, n) for n in names(arr)]
+"`SubArrow` which `sport` is 'attached' to"
+sub_arrow(sport::SubPort)::SubArrow = sport.sub_arrow
+"(self) sub_arrow reference to `arr`"
+sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
+
+parent(sarr::SubArrow)::CompArrow = sarr.parent
+parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
+
 """
 Helper function to translate LightGraph functions to Port functions
   f: LightGraph API function f(g::Graph, v::VertexId)
@@ -120,21 +213,9 @@ function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
   map(i->vertex_id(arr, i), lg_to_p(f, port))
 end
 
-# Not minimal ##################################################
-in(sarr::SubArrow, arr::CompArrow) = sarr ∈ sub_arrows(arr)
-
-"A `Port` on a `SubArrow`"
-struct SubPort <: AbstractPort
-  sub_arrow::SubArrow # Parent arrow of arrow sport is attached to
-  port_id::T     # this is ith `port` of parent
-end
-
-port_id(sport::SubPort)::Integer = sarr.port_id
-sub_arrow(sport::SubPort)::SubArrow = sub_arrow.sub_arrow
-"Get (self) sub_arrow reference to `arr`"
-sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
+"`sport` is number `port_id(sport)` `SubPort` on `sub_arrow(sport)`"
+port_id(sport::SubPort)::Integer = sport.port_id
 
 # Not in minimal integeral #########################################
-parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
-vertex_id(sport::SubPort)::Integer = parent(sport) + sport.port_id - 1
-deref(sport::SubPort)::Port = port(deref(parent(sport)), port_id(sport))
+vertex_id(sport::SubPort)::VertexId =
+  parent(sport).port_to_vtx_id[(sport.sub_arrow.name, sport.port_id)]

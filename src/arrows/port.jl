@@ -10,13 +10,6 @@ end
 "Is `port` a reference?"
 is_ref(port::Port) = false
 
-# "A reference to a `Port`"
-# SubPort{A, T} = Port{A, T} where A <: ArrowRef
-# SubPort{A, T} = Port{A, T} # A SubPort is a Port whose `arrow` is ArrowRef
-
-# "Is `port` a reference?"
-# is_ref{A}(port::Port{A}) = A <: ArrowRef
-
 """port properties: properties instrinsic to a port.
 
 - `PortProp`s are a property of an Arrow or SubtractArrow
@@ -86,13 +79,13 @@ in_port(arr::Arrow, i::Integer)::AbstractPort = in_ports(arr)[i]
 
 ## Num_ports
 "How many ports does `arr` have"
-num_ports{I, O}(arr::Arrow{I, O})::Integer = I + O
+num_ports{I, O}(arr::AbstractArrow{I, O})::Integer = I + O
 
 "How many out ports does `arr` have"
-num_out_ports{I, O}(arr::Arrow{I, O})::Integer = O
+num_out_ports{I, O}(arr::AbstractArrow{I, O})::Integer = O
 
 "How many in ports does `arr` have"
-num_in_ports{I, O}(arr::Arrow{I, O})::Integer = I
+num_in_ports{I, O}(arr::AbstractArrow{I, O})::Integer = I
 
 name(pa::PortProps) = pa.name
 name(port::Port) = name(port_props(port))

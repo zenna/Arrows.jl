@@ -1,15 +1,15 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, wrap
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port
 
 "f(x) = x^2"
 function sin_arr()
   c = CompArrow{1, 1}(:x2)
   x, y = ports(c)
-  sinarr = add_sub_arr!(c, SinArrow())
-  link_ports!(x, in_port(sinarr, 1))
-  link_ports!(out_port(sinarr, 1), y)
+  sinarr = add_sub_arr!(c, Arrows.SinArrow())
+  link_ports!(x, in_sub_port(sinarr, 1))
+  link_ports!(out_sub_port(sinarr, 1), y)
   c
 end
 
@@ -19,28 +19,17 @@ function xy_plus_x_arr()
   x, y, z = ports(c)
   mularr = MulArrow()
   m2 = add_sub_arr!(c, mularr)
-  link_ports!(x, in_port(m2, 1))
-  link_ports!(y, in_port(m2, 2))
+  link_ports!(x, in_sub_port(m2, 1))
+  link_ports!(y, in_sub_port(m2, 2))
   add_arr = AddArrow()
   add_arr = add_sub_arr!(c, add_arr)
-  link_ports!(out_port(m2, 1), in_port(add_arr, 1))
-  link_ports!(x, in_port(add_arr, 2))
-  link_ports!(out_port(add_arr, 1), z)
+  link_ports!(out_sub_port(m2, 1), in_sub_port(add_arr, 1))
+  link_ports!(x, in_sub_port(add_arr, 2))
+  link_ports!(out_sub_port(add_arr, 1), z)
   c
 end
 
 xy_plus_x_jl(x, y) = x * y + x
-
-"f(x) = f(x)"
-function recursive_arr()
-  c = CompArrow{1, 1}(:recursive)
-  c_wrap = add_sub_arr!(c, wrap(c))
-  x, y = ports(c)
-  x_wrap, y_wrap = ports(c_wrap)
-  link_ports!(x, x_wrap)
-  link_ports!(y_wrap, y)
-  c
-end
 
 "arrow that computes nth value of fibonnaci sequence"
 function fibonnaci_arr()
@@ -54,23 +43,23 @@ function fibonnaci_arr()
   add = add_sub_arr!(c, AddArrow())
 
   # if x == 1
-  link_ports!(x, in_port(eq, 1))
-  link_ports!(out_port(one, 1), in_port(eq, 2))
-  link_ports!(out_port(eq, 1), in_port(ite, 1))
+  link_ports!(x, in_sub_port(eq, 1))
+  link_ports!(out_sub_port(one, 1), in_sub_port(eq, 2))
+  link_ports!(out_sub_port(eq, 1), in_sub_port(ite, 1))
 
   # return x
-  link_ports!(out_port(one, 1), in_port(ite, 2))
+  link_ports!(out_sub_port(one, 1), in_sub_port(ite, 2))
 
   # f(x - 1)
-  link_ports!(x, in_port(min, 1))
-  link_ports!(out_port(one, 1), in_port(min, 2))
-  link_ports!(out_port(min, 1), in_port(c_wrap, 1))
+  link_ports!(x, in_sub_port(min, 1))
+  link_ports!(out_sub_port(one, 1), in_sub_port(min, 2))
+  link_ports!(out_sub_port(min, 1), in_sub_port(c_wrap, 1))
 
   # x + f(x - 1)
-  link_ports!(out_port(c_wrap, 1), in_port(add, 1))
-  link_ports!(x, in_port(add, 2))
-  link_ports!(out_port(add, 1), in_port(ite, 3))
-  link_ports!(out_port(ite, 1), y)
+  link_ports!(out_sub_port(c_wrap, 1), in_sub_port(add, 1))
+  link_ports!(x, in_sub_port(add, 2))
+  link_ports!(out_sub_port(add, 1), in_sub_port(ite, 3))
+  link_ports!(out_sub_port(ite, 1), y)
   c
 end
 
@@ -82,10 +71,10 @@ function dupl_id_arr()
   id1 = add_sub_arr!(c, IdentityArrow())
   id2 = add_sub_arr!(c, IdentityArrow())
   x, y, z = ports(c)
-  link_ports!(x, in_port(id1, 1))
-  link_ports!(x, in_port(id2, 1))
-  link_ports!(out_port(id1, 1), y)
-  link_ports!(out_port(id2, 1), z)
+  link_ports!(x, in_sub_port(id1, 1))
+  link_ports!(x, in_sub_port(id2, 1))
+  link_ports!(out_sub_port(id1, 1), y)
+  link_ports!(out_sub_port(id2, 1), z)
   c
 end
 
@@ -97,14 +86,14 @@ function det_policy_inner_arr()
   g = add_sub_arr!(c, IdentityArrow())
   ite = add_sub_arr!(c, CondArrow())
 
-  link_ports!(c, 1, p, 1)
-  link_ports!(p, 1, c, 1)
-  link_ports!(p, 1, ite, 1)
-  link_ports!(c, 1, f, 1)
-  link_ports!(f, 1, ite, 2)
-  link_ports!(f, 2, g, 1)
-  link_ports!(g, 1, ite, 3)
-  link_ports!(ite, 1, c, 2)
+  link_ports!((c, 1), (p, 1))
+  link_ports!((p, 1), (c, 1))
+  link_ports!((p, 1), (ite, 1))
+  link_ports!((c, 1), (f, 1))
+  link_ports!((f, 1), (ite, 2))
+  link_ports!((f, 2), (g, 1))
+  link_ports!((g, 1), (ite, 3))
+  link_ports!((ite, 1), (c, 2))
   c
 end
 
@@ -115,21 +104,24 @@ function triple_add()
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a3 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
-  link_ports!(c, 1, a1, 1)
-  link_ports!(c, 1, a2, 1)
-  link_ports!(c, 2, a1, 2)
-  link_ports!(c, 2, a2, 2)
-  link_ports!(a3, 1, c, 1)
+  link_ports!((c, 1), (a1, 1))
+  link_ports!((c, 1), (a2, 1))
+  link_ports!((c, 2), (a1, 2))
+  link_ports!((c, 2), (a2, 2))
+  link_ports!((a1, 1), (a3, 1))
+  link_ports!((a2, 1), (a3, 2))
+  link_ports!((a3, 1), (c, 1))
   c
 end
 
 "all test arrows"
 function all_test_arrows()
   [xy_plus_x_arr(),
-   recursive_arr(),
    fibonnaci_arr(),
    dupl_id_arr(),
-   det_policy_inner_arr()]
+   det_policy_inner_arr(),
+   triple_add(),
+   sin_arr()]
 end
 
 export xy_plus_x_arr,

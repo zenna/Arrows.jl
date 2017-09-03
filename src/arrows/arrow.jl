@@ -34,9 +34,14 @@ Semantics of this model
 - SubArrows can refer to CompArrow's, even the same CompArrow
 - In execution and other contexts, it is useful be refer to nested
 """
-abstract type Arrow{I, O} end
 
-abstract type ArrowRef{I, O} <: Arrow{I, O} end
+abstract type AbstractArrow{I, O} end
+
+abstract type Arrow{I, O} <: AbstractArrow{I, O} end
+
+abstract type ArrowRef{I, O} <: AbstractArrow{I, O} end
+
+# abstract type ArrowRef{I, O} <: Arrow{I, O} end
 
 "Is `arr` a reference?"
 is_ref(arr::Arrow) = isa(arr, ArrowRef)

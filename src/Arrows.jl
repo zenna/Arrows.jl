@@ -22,14 +22,13 @@ import Base:  ^,
               >=,
               <=,
               <,
-              ==,
               !=,
+              ==,
               |,
               &,
               !,
               in,
               parent
-
 export
   compose,
   name,
@@ -67,7 +66,8 @@ include("util/misc.jl")
 include("arrows/arrow.jl")
 include("arrows/port.jl")
 include("arrows/primarrow.jl")
-include("arrows/comparrow.jl")
+include("arrows/comparrow2.jl")
+include("arrows/comparrowextra.jl")
 include("arrows/value.jl")
 include("arrows/trace.jl")
 include("arrows/port_arith.jl")

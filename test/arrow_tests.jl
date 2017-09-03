@@ -1,24 +1,11 @@
 using Base.Test
-include("test_arrows.jl")
+using Arrows.TestArrows
 
-function test_xy_plus_x()
-  arr = xy_plus_x_arr()
-  @test is_wired_ok(arr)
-  @test interpret(arr, 7, 8)[1] == xy_plus_x_jl(7, 8)
-  duplify!(arr)
-  @test is_wired_ok(arr)
+function test_valid()
+  for arr in Arrows.TestArrows.all_test_arrows()
+    println("Testing ", name(arr))
+    @test is_wired_ok(arr)
+  end
 end
 
-function test_recursive()
-  arr = recursive_arr()
-  @test is_wired_ok(arr)
-end
-
-function test_fibonnaci()
-  f = fibonnaci_arr()
-  @test interpret(f, 4)[1] == fib(4)
-  @test is_wired_ok(f)
-end
-
-test_xy_plus_x()
-test_recursive()
+test_valid()
