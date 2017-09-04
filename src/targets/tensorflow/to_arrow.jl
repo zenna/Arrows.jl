@@ -51,7 +51,7 @@ Op_Type_To_Arrow = Dict{String, Function}(
 """Return an arrow from a list or create one if haven't done already"""
 function arrow_from_op(c::CompArrow,
                        op::AbstractOperation,
-                       op_to_arrow::Dict{AbstractOperation, Arrow})::Arrow
+                       op_to_arrow::Dict{AbstractOperation, SubArrow})::SubArrow
 
   if op in keys(op_to_arrow)
     # println("RECALLING")
@@ -97,13 +97,13 @@ function graph_to_arrow(name::Symbol,
                         inp_tens::Vector{<:AbstractTensor},
                         out_tens::Vector{<:AbstractTensor},
                         graph::AbstractGraph)::CompArrow
-  op_to_arrow = Dict{AbstractOperation, Arrow}()
+  op_to_arrow = Dict{AbstractOperation, SubArrow}()
   seen_tens = Set{AbstractTensor}()
   I, O = length(inp_tens), length(out_tens)
   c = CompArrow{I, O}(name)
 
   # Make an in_port for every input ten
-  ten_in_port = Dict{AbstractTensor, Port}(zip(inp_tens, in_ports(c)))
+  ten_in_port = Dict{AbstractTensor, SubPort}(zip(inp_tens, in_sub_ports(c)))
   for inp in inp_tens
     ten_in_port[inp]
   end
@@ -112,8 +112,8 @@ function graph_to_arrow(name::Symbol,
   # Make an out_port for every output ten
   for (id, ten) in enumerate(out_tens)
     arrow = arrow_from_op(c, get_op(ten), op_to_arrow)
-    left = out_port(arrow, value_index(ten) + 1)
-    link_ports!(c, left, out_port(c, id))
+    left = out_sub_port(arrow, value_index(ten) + 1)
+    link_ports!(left, out_sub_port(c, id))
   end
 
   # Starting from outputs
@@ -130,7 +130,7 @@ function graph_to_arrow(name::Symbol,
     else
       out_port_id = value_index(ten) + 1
       left_arrow = arrow_from_op(c, get_op(ten), op_to_arrow)
-      left_port = out_port(left_arrow, out_port_id)
+      left_port = out_sub_port(left_arrow, out_port_id)
       update_seen!(get_op(ten), seen_tens, to_see_tens)
     end
 
@@ -140,7 +140,7 @@ function graph_to_arrow(name::Symbol,
         if ten == input_ten
           in_port_id = i
           right_arrow = arrow_from_op(c, rec_op, op_to_arrow)
-          link_ports!(c, left_port, in_port(right_arrow, in_port_id))
+          link_ports!(left_port, in_sub_port(right_arrow, in_port_id))
         end
       end
     end

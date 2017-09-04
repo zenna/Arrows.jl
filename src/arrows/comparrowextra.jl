@@ -174,7 +174,7 @@ end
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
   for i = 1:LG.nv(arr.edges)
-    if should_dst(sub_port(arr, i))
+    if should_dst(sub_port_vtx(arr, i))
       # If it should be a desination
       if !(LG.indegree(arr.edges, i) == 1 &&
            LG.outdegree(arr.edges, i) == 0)
@@ -187,7 +187,7 @@ function is_wired_ok(arr::CompArrow)::Bool
         return false
       end
     end
-    if should_src(sub_port(arr, i))
+    if should_src(sub_port_vtx(arr, i))
       # if it should be a source
       if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
         errmsg = """vertex $i Port $i is source but out degree is

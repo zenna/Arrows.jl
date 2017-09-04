@@ -20,7 +20,7 @@ function render_arrow()
 end
 
 "Render voxels to an image"
-function render_images(pol::Policy, slice)
+function render_images(pol::Arrows.Policy, slice)
   flat_images = Arrows.interpret(vpol, slice)[1]
   images = reshape(flat_images, batch_size, 128, 128)
 end

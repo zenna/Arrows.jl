@@ -105,22 +105,37 @@ SubPort(arr::CompArrow, pxport::ProxyPort)::SubPort =
 ## SubPort(s) constructors
 
 "`SubPort` of `arr` with vertex id `vtx_id`"
-sub_port(arr::CompArrow, vtx_id::VertexId)::SubPort =
+sub_port_vtx(arr::CompArrow, vtx_id::VertexId)::SubPort =
   SubPort(arr, rev(arr.port_to_vtx_id, vtx_id))
+
 "`SubPort` of `sarr` of number `port_id`"
 sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
+
+"`SubPort`s connected to `sarr`"
 sub_ports(sarr::SubArrow)::Vector{SubPort} =
   [SubPort(sarr, i) for i=1:num_ports(sarr)]
+
+"All the `SubPort`s of all `SubArrow`s on and within `arr`"
 all_sub_ports(arr::CompArrow)::Vector{SubPort} =
   [SubPort(SubArrow(arr, n), id) for (n, id) in keys(arr.port_to_vtx_id)]
+
+"`SubPort`s from `SubArrow`s within `arr` but not boundary"
 inner_sub_ports(arr::CompArrow)::Vector{SubPort} =
   filter(sport -> !on_boundary(sport), all_sub_ports(arr))
+
+"Number `SubPort`s within on on `arr`"
 num_all_sub_ports(arr::CompArrow) = length(arr.port_to_vtx_id)
+
+"Number `SubPort`s within on on `arr`"
 num_sub_ports(arr::CompArrow) = num_all_sub_ports(arr) - num_ports(arr)
-in_sub_ports(sarr::SubArrow)::Vector{SubPort} = filter(is_in_port, sub_ports(sarr))
-out_sub_ports(sarr::SubArrow)::Vector{SubPort} = filter(is_out_port, sub_ports(sarr))
-in_sub_port(sarr::SubArrow, i) = in_sub_ports(sarr)[i]
-out_sub_port(sarr::SubArrow, i) = out_sub_ports(sarr)[i]
+
+"Number `SubPort`s within on on `arr`"
+in_sub_ports(sarr::AbstractArrow)::Vector{SubPort} = filter(is_in_port, sub_ports(sarr))
+out_sub_ports(sarr::AbstractArrow)::Vector{SubPort} = filter(is_out_port, sub_ports(sarr))
+in_sub_port(sarr::AbstractArrow, i) = in_sub_ports(sarr)[i]
+out_sub_port(sarr::AbstractArrow, i) = out_sub_ports(sarr)[i]
+
+sub_ports(arr::CompArrow, port_id::Integer) = sub_ports(sub_arrow(arr), port_id)
 
 "is `sport` a boundary port?"
 on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport))
@@ -155,7 +170,7 @@ end
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}
   es = LG.edges(arr.edges)
-  map(e -> (sub_port(arr, e.src), sub_port(arr, e.dst)), LG.edges(arr.edges))
+  map(e -> (sub_port_vtx(arr, e.src), sub_port_vtx(arr, e.dst)), LG.edges(arr.edges))
 end
 
 "Add an edge in CompArrow from port `l` to port `r`"
@@ -223,7 +238,7 @@ end
 "Helper for LightGraph API methods which return Vector{Port}, see `lg_to_p`"
 function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
   arr = parent(port)
-  map(i->sub_port(arr, i), lg_to_p(f, port))
+  map(i->sub_port_vtx(arr, i), lg_to_p(f, port))
 end
 
 "`sport` is number `port_id(sport)` `SubPort` on `sub_arrow(sport)`"

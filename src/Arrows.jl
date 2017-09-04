@@ -35,10 +35,18 @@ export
 
   Arrow,
   Port,
+  SubPort,
 
   CompArrow,
+  SubArrow,
   link_ports!,
   add_sub_arr!,
+  out_sub_port,
+  out_sub_ports,
+  sub_ports,
+  in_sub_port,
+  in_sub_ports,
+  in_ports,
   in_port,
   in_ports,
   out_port,
