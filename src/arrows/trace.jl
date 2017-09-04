@@ -6,7 +6,7 @@ end
 "Which `SubArrow` does `tracearrow` trace to"
 sub_arrow(tracearrow::TraceArrow)::SubArrow = last(tracearrow.arrs)
 
-deref(trace::TraceArrow)::RealArrow = deref(last(trace.arrs))
+deref(trace::TraceArrow)::Arrow = deref(last(trace.arrs))
 
 "A port of a `TraceArrow`"
 struct TracePort{T <: Integer} <: AbstractPort

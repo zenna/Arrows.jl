@@ -3,10 +3,10 @@ PortIdMap = Dict{Int, Int}
 PortSymbMap = Dict{Symbol, Symbol}
 SubPortMap = Dict{SubPort, SubPort}
 
-symb_iden_port_map(arr::RealArrow) = Dict{Symbol, Symbol}(zip(port_names(arr)))
-iden_port_map(arr::RealArrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
-portmapize(arr::RealArrow, portmap::PortIdMap) = (arr, portmap)
-portmapize(arr::RealArrow) = (arr, iden_port_map(arr))
+symb_iden_port_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(port_names(arr)))
+iden_port_map(arr::Arrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
+portmapize(arr::Arrow, portmap::PortIdMap) = (arr, portmap)
+portmapize(arr::Arrow) = (arr, iden_port_map(arr))
 
 sub_port_map(sarr::SubArrow, subportmap::SubPortMap) = subportmap
 sub_port_map(sarr::SubArrow, portmap::PortIdMap) =

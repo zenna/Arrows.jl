@@ -13,11 +13,11 @@ function duplify!(arr::CompArrow)
       # add a link from port to dupl
       dupl = DuplArrow(length(in_ports))
       dupl = add_sub_arr!(arr, dupl)
-      link_ports!(src_port, in_port(dupl, 1))
+      link_ports!(src_port, in_sub_port(dupl, 1))
       # replace each edge src -> p with dupl_i -> p
       for (i, neigh_port) in enumerate(in_ports)
         unlink_ports!(src_port, neigh_port)
-        link_ports!(out_port(dupl, i), neigh_port)
+        link_ports!(out_sub_port(dupl, i), neigh_port)
       end
     end
   end

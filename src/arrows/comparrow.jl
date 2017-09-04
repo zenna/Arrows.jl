@@ -35,7 +35,7 @@ type CompArrow{I, O} <: Arrow{I, O}
 end
 
 "Not a reference"
-RealArrow = Union{CompArrow, PrimArrow}
+Arrow = Union{CompArrow, PrimArrow}
 
 "Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow{I, O}(name::Symbol,
@@ -136,7 +136,7 @@ end
 
 parent(sarr::SubArrow) = sarr.parent
 
-"Dereference `arr` into `RealArrow`"
+"Dereference `arr` into `Arrow`"
 function deref(arr::SubArrow)
   newarr = arr.parent.sub_arrs[arr.id]
   @assert !is_ref(newarr)

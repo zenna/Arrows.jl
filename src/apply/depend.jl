@@ -2,7 +2,7 @@
 CondMap = Dict{SubPort, Bool}
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
-function needed_values(::RealArrow, subarr::SubArrow, cond_map::CondMap)::Values
+function needed_values(::Arrow, subarr::SubArrow, cond_map::CondMap)::Values
   Set(RepValue.(in_sub_ports(subarr)))
 end
 
@@ -45,7 +45,7 @@ function computable_values(::CondArrow, known::Values, subarr::SubArrow)::Values
   @assert false "not implemented"
 end
 
-function computable_values(::RealArrow, known::Values, subarr::SubArrow)::Values
+function computable_values(::Arrow, known::Values, subarr::SubArrow)::Values
   needed_values = in_values(subarr)
   # println("ARR is", deref(subarr))
   # println("Neede for ARR is ", needed_values)

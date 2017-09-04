@@ -1,4 +1,3 @@
-
 ArrowName = Symbol
 # Need ProxyPort because julia has no cyclical types, otherwise use `Port`
 ProxyPort = Tuple{ArrowName, Integer}
@@ -8,7 +7,7 @@ mutable struct CompArrow{I, O} <: Arrow{I, O}
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
-  sarr_name_to_arrow::Dict{ArrowName, Union{CompArrow, PrimArrow}}
+  sarr_name_to_arrow::Dict{ArrowName, Arrow}
   port_props::Vector{PortProps}
 
   function CompArrow{I, O}(name::Symbol,
@@ -84,11 +83,10 @@ port_props(arr::CompArrow) = arr.port_props
 port_props(sarr::SubArrow) = port_props(deref(sarr))
 
 "Not a reference"
-RealArrow = Union{CompArrow, PrimArrow}
 deref(sport::SubPort)::Port = port(deref(sport.sub_arrow), port_id(sport))
-deref(sarr::SubArrow)::RealArrow = arrow(parent(sarr), sarr.name)
+deref(sarr::SubArrow)::Arrow = arrow(parent(sarr), sarr.name)
 "Get `Arrow` in `arr` with name `n`"
-arrow(arr::CompArrow, n::ArrowName)::RealArrow = arr.sarr_name_to_arrow[n]
+arrow(arr::CompArrow, n::ArrowName)::Arrow = arr.sarr_name_to_arrow[n]
 
 ## Naming ##
 unique_sub_arrow_name()::ArrowName = gen_id()
@@ -108,12 +106,15 @@ SubPort(arr::CompArrow, pxport::ProxyPort)::SubPort =
 sub_port_vtx(arr::CompArrow, vtx_id::VertexId)::SubPort =
   SubPort(arr, rev(arr.port_to_vtx_id, vtx_id))
 
-"`SubPort` of `sarr` of number `port_id`"
-sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
+"`SubPort`s on boundary of `arr`"
+sub_ports(arr::CompArrow) = sub_ports(sub_arrow(arr))
 
 "`SubPort`s connected to `sarr`"
 sub_ports(sarr::SubArrow)::Vector{SubPort} =
   [SubPort(sarr, i) for i=1:num_ports(sarr)]
+
+"`SubPort` of `sarr` of number `port_id`"
+sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
 
 "All the `SubPort`s of all `SubArrow`s on and within `arr`"
 all_sub_ports(arr::CompArrow)::Vector{SubPort} =
@@ -129,13 +130,10 @@ num_all_sub_ports(arr::CompArrow) = length(arr.port_to_vtx_id)
 "Number `SubPort`s within on on `arr`"
 num_sub_ports(arr::CompArrow) = num_all_sub_ports(arr) - num_ports(arr)
 
-"Number `SubPort`s within on on `arr`"
 in_sub_ports(sarr::AbstractArrow)::Vector{SubPort} = filter(is_in_port, sub_ports(sarr))
 out_sub_ports(sarr::AbstractArrow)::Vector{SubPort} = filter(is_out_port, sub_ports(sarr))
 in_sub_port(sarr::AbstractArrow, i) = in_sub_ports(sarr)[i]
 out_sub_port(sarr::AbstractArrow, i) = out_sub_ports(sarr)[i]
-
-sub_ports(arr::CompArrow, port_id::Integer) = sub_ports(sub_arrow(arr), port_id)
 
 "is `sport` a boundary port?"
 on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport))
@@ -143,7 +141,7 @@ on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport)
 ## Add link remove SubArrs / Links ##
 
 "Add a `SubArrow` `arr` to `CompArrow` `carr`"
-function add_sub_arr!(carr::CompArrow, arr::RealArrow)::SubArrow
+function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   # TODO: FINISH!
   newname = unique_sub_arrow_name()
   carr.sarr_name_to_arrow[newname] = arr
