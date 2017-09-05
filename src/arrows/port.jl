@@ -4,7 +4,7 @@ abstract type AbstractPort end
 
 struct Port{A <: Arrow, T <: Integer} <: AbstractPort
   arrow::A
-  index::T
+  port_id::T
 end
 
 "Is `port` a reference?"
@@ -14,7 +14,7 @@ is_ref(port::Port) = false
 
 - `PortProp`s are a property of an Arrow or SubtractArrow
 """
-struct PortProps
+mutable struct PortProps
   is_in_port::Bool
   name::Symbol
   typ::Type
@@ -35,7 +35,7 @@ function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
 end
 
 "Get the port properties of `port` in arrow `arr`"
-port_props(port::Port) = port_props(port.arrow)[port.index]
+port_props(port::Port) = port_props(port.arrow)[port.port_id]
 
 "Is `port` an `out_port`"
 is_out_port(port_props::PortProps)::Bool = !port_props.is_in_port
@@ -96,7 +96,7 @@ port_names(arr::Arrow) = name.(ports(arr))
 function string(p::Port)
   inps = is_in_port(p) ? "InPort" : "OutPort"
   pa = port_props(p)
-  "$inps id:$(p.index) n:$(pa.name) arr:$(name(p.arrow))"
+  "$inps id:$(p.port_id) n:$(pa.name) arr:$(name(p.arrow))"
 end
 
 print(io::IO, p::Port) = print(io, string(p))

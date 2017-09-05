@@ -38,17 +38,21 @@ function fix_link!(link::Link)
   end
 end
 
-"Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
-function invert_all_ports{I, O}(arr::CompArrow{I, O})::CompArrow
-  CompArrow{O, I}(arr.name, arr, arr, arr)
-  portmap = symb_iden_port_map(arr)
-end
-
 "`fix_link` all the links in `arr`"
 function fix_links!(arr::CompArrow)::CompArrow
   foreach(fix_link!, links(arr))
   arr
 end
+
+"Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
+function invert_all_ports!{I, O}(arr::CompArrow{I, O})::CompArrow
+  inports = in_ports(arr)
+  outports = out_ports(arr)
+  foreach(make_out_port!, inports)
+  foreach(make_in_port!, outports)
+  CompArrow{O, I}(arr)
+end
+
 
 """Construct a parametric inverse of `arr`
 Args:
@@ -59,6 +63,6 @@ Returns:
   will be corresponding ith out_port error_ports and param_ports will follow"""
 function invert(arr::CompArrow)::CompArrow
   check_reuse(arr)
-  outer = link_loose_ports ∘ fix_links! ∘ invert_all_ports
-  walk(inv, outer, arr)
+  outer = link_loose_ports ∘ fix_links! ∘ invert_all_ports!
+  walk!(inv, outer, arr)
 end

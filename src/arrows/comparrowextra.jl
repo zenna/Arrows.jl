@@ -51,7 +51,7 @@ self_parent(sarr::SubArrow) = parent(sarr) == deref(sarr)
 link_ports!(l, r) =
   link_ports!(promote_left_port(l), promote_right_port(r))
 promote_port(port::Port{<:CompArrow}) = SubPort(sub_arrow(port.arrow),
-                                                port.index)
+                                                port.port_id)
 promote_port(port::SubPort) = port
 promote_left_port(port::SubPort) = promote_port(port)
 promote_right_port(port::SubPort) = promote_port(port)

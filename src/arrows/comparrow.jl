@@ -50,6 +50,7 @@ function is_valid{I, O}(sarr::SubArrow{I, O})::Bool
   I == num_in_ports(arr) && O == num_out_ports(arr)
 end
 
+"`Subarrow` in `carr` with name `name`"
 function SubArrow(carr::CompArrow, name::ArrowName)
   arr = arrow(carr, name)
   SubArrow{num_in_ports(arr), num_out_ports(arr)}(carr, name)
@@ -89,8 +90,27 @@ function CompArrow{I, O}(name::Symbol,
   CompArrow{I, O}(name, port_props)
 end
 
+"Create a composite arrow from another one"
+function CompArrow{I, O}(arr::CompArrow) where {I, O}
+  ...
+end
+
+## Port Properties
+
 port_props(arr::CompArrow) = arr.port_props
 port_props(sarr::SubArrow) = port_props(deref(sarr))
+
+"Make `port` an in_port"
+function make_in_port!(port::Port{<:CompArrow})
+  port.arrow.port_props[port.port_id].is_in_port = true
+end
+
+"Make `port` an in_port"
+function make_out_port!(port::Port{<:CompArrow})
+  port.arrow.port_props[port.port_id].is_in_port = false
+end
+
+## Dereference ##
 
 "Not a reference"
 deref(sport::SubPort)::Port = port(deref(sport.sub_arrow), port_id(sport))
