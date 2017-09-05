@@ -1,8 +1,3 @@
-PortMap = Dict{Port, Port}
-PortIdMap = Dict{Int, Int}
-PortSymbMap = Dict{Symbol, Symbol}
-SubPortMap = Dict{SubPort, SubPort}
-
 symb_iden_port_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(port_names(arr)))
 iden_port_map(arr::Arrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
 portmapize(arr::Arrow, portmap::PortIdMap) = (arr, portmap)
@@ -52,10 +47,7 @@ Returns
 function walk!{I, O}(inner, outer, arr::CompArrow{I, O})
   for sub_arrow in sub_arrows(arr)
     replarr, port_map = portmapize(inner(sub_arrow)...)
-    update_sub_arr!(sub_arrow, replarr)
-    println(sub_arrow)
-    subportmap = sub_port_map(sub_arrow, port_map)
-    rewire!(port_map)
+    replace_sub_arr!(sub_arrow, port_map)
   end
 
   replarr, port_map = outer(arr)

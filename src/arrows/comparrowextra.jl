@@ -14,7 +14,10 @@ all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_port
 is_ref(sport::SubPort) = true
 
 "Is `sport` a port on one of the `SubArrow`s within `arr`"
-in(sport::SubPort, arr::CompArrow) = sport ∈ all_sub_ports(arr)
+in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
+
+"Is `link` one of the links in `arr`?"
+in(link::Link, arr::CompArrow) = link ∈ links(arr)
 
 "Is `port` within `arr` but not on boundary"
 strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
@@ -43,6 +46,8 @@ end
 "Is this `SubArrow` the parent of itself?"
 self_parent(sarr::SubArrow) = parent(sarr) == deref(sarr)
 
+## Graph Modification ##
+
 link_ports!(l, r) =
   link_ports!(promote_left_port(l), promote_right_port(r))
 promote_port(port::Port{<:CompArrow}) = SubPort(sub_arrow(port.arrow),
@@ -69,6 +74,37 @@ promote_left_port(pid::Tuple{CompArrow, <:Integer}) =
 promote_right_port(pid::Tuple{CompArrow, <:Integer}) =
   dst_port(sub_arrow(pid[1]), pid[2])
 
+""
+function sub_port_map(from::SubArrow, to::SubArrow, portmap::PortIdMap)::SubPortMap
+  SubPortMap(SubPort(from, fromid) => SubPort(to, toid) for (fromid, toid) in portmap)
+end
+
+"""Replaces `sarr` in `parent(sarr)` with `arr`
+# Arguments:
+- `sarr`: `SubArrow` to be replaced
+- `arr`: `Arrow` to replace it with
+# Returns:
+- SubArrow that replaced `sarr`
+"""
+function replace_sub_arr!(sarr::SubArrow, arr::Arrow, portidmap::PortIdMap)::SubArrow
+  if self_parent(sarr)
+    println("Cannot replace parent subarrow")
+    throw(DomainError())
+  end
+  parr = parent(sarr)
+  replarr = add_sub_arr!(parr, arr)
+  subportmap = sub_port_map(sarr, replarr, portidmap)
+  for sport in sub_ports(sarr)
+    for (l, r) in in_links(sport)
+      link_ports!(l, subportmap[r])
+    end
+    for (l, r) in out_links(sport)
+      link_ports!(subportmap[l], r)
+    end
+  end
+  rem_sub_arr!(sarr)
+  replarr
+end
 
 # Graph traversal
 "is vertex `v` a destination, i.e. does it project more than 0 edges"
@@ -97,6 +133,17 @@ out_degree(port::SubPort)::Integer = lg_to_p(LG.outdegree, port)
 
 "Number of `SubPort`s which end at `port`"
 in_degree(port::SubPort)::Integer = lg_to_p(LG.indegree, port)
+
+"Links that end at `sport`"
+in_links(sport::SubPort)::Vector{Link} =
+  [Link((neigh, sport)) for neigh in in_neighbors(sport)]
+
+"Links that end at `sport`"
+out_links(sport::SubPort)::Vector{Link} =
+  [Link((sport, neigh)) for neigh in out_neighbors(sport)]
+
+"`in_links` and `out_links` of `sport`"
+all_links(sport::SubPort)::Vector{Link} = vcat(in_links(sport), out_links(sport))
 
 "All neighbouring `SubPort`s of `subarr`, each port connected to each outport"
 function out_neighbors(subarr::Arrow)
@@ -140,6 +187,8 @@ function src(port::SubPort)::SubPort
     first(in_neighs)
   end
 end
+
+## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
 function should_src(port::SubPort)::Bool
@@ -206,6 +255,9 @@ function string(port::SubPort)
   b = string(deref(port))
   string(a, b)
 end
-
 print(io::IO, p::SubPort) = print(io, string(p))
 show(io::IO, p::SubPort) = print(io, p)
+
+string(pxport::ProxyPort) = "ProxyPort $(pxport.arrname):$(pxport.port_id)"
+print(io::IO, p::ProxyPort) = print(io, string(p))
+show(io::IO, p::ProxyPort) = print(io, p)

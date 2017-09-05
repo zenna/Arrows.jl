@@ -60,6 +60,7 @@ export
   is_wired_ok,
   is_valid,
   interpret,
+  invert,
 
   AddArrow,
   MulArrow,
@@ -72,7 +73,8 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
-  SinArrow
+  SinArrow,
+  CosArrow
 
 include("util/misc.jl")
 include("util/lightgraphs.jl")
@@ -82,7 +84,7 @@ include("util/lightgraphs.jl")
 include("arrows/arrow.jl")
 include("arrows/port.jl")
 include("arrows/primarrow.jl")
-include("arrows/comparrow2.jl")
+include("arrows/comparrow.jl")
 include("arrows/comparrowextra.jl")
 include("arrows/value.jl")
 include("arrows/trace.jl")

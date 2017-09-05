@@ -49,5 +49,5 @@ function rev{L, R}(dict::Associative{L, R}, r::R)
       return k
     end
   end
-  throw(KeyError(key))
+  throw(KeyError(r))
 end

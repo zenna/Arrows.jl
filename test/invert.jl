@@ -1,15 +1,18 @@
 using Arrows
-import Arrows.TestArrows
-
 using Arrows.TestArrows
+using Base.Test
 
-arr = Arrows.TestArrows.xy_plus_x_arr()
-duplify!(arr)
-no_reuse(arr)
-inv_arr = Arrows.invert(arr)
+function pre_test(arr::Arrow)
+  println("Testing arrow ", name(arr))
+  arr
+end
 
-inv(DuplArrow(3))
+function test_invert(arr)
+  duplify!(arr)
+  inv_arr = invert(arr)
+  @test is_wired_ok(inv_arr)
+end
 
-@assert false, "hello"
+foreach(test_invert ∘ pre_test, plain_arrows())
 
-port
+invert(duplify!(ain_arrows()[1]))

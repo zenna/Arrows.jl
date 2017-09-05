@@ -2,8 +2,9 @@ using Arrows
 using Base.Test
 
 tests = [
-    "arrow_tests",
-    "policy"]
+    "comp_arrow.jl",
+    "arrow_tests.jl",
+    "policy.jl"]
 
 print_with_color(:blue, "Running tests:\n")
 
@@ -30,7 +31,7 @@ print_with_color(:blue, "Running tests:\n")
 # Single thread
 srand(345679)
 res = map(tests) do t
-  include(t*".jl")
+  include(t)
   nothing
 end
 

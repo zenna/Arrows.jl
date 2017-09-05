@@ -28,6 +28,11 @@ struct SinArrow <: PrimArrow{1, 1} end
 name(::SinArrow)::Symbol = :sin
 port_props(::SinArrow) = unary_arith_port_props()
 
+"cos(x)"
+struct CosArrow <: PrimArrow{1, 1} end
+name(::CosArrow)::Symbol = :cos
+port_props(::CosArrow) = unary_arith_port_props()
+
 "log(b, x)"
 struct LogBaseArrow <: PrimArrow{2, 1} end
 name(::LogBaseArrow)::Symbol = :logbase

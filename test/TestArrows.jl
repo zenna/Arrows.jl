@@ -133,12 +133,12 @@ function plain_arrows()
   collect(filter(is_plain, all_test_arrows()))
 end
 
-
 export xy_plus_x_arr,
        recursive_arr,
        fibonnaci_arr,
        dupl_id_arr,
        det_policy_inner_arr,
        sin_arr,
-       all_test_arrows
+       all_test_arrows,
+       plain_arrows
 end
