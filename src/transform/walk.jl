@@ -50,7 +50,5 @@ function walk!(inner, outer, arr::CompArrow)
     replace_sub_arr!(sub_arrow, replarr, port_map)
   end
 
-  replarr, port_map = outer(arr)
-  rewire!(port_map)
-  arr
+  outer(arr)
 end

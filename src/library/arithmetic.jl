@@ -20,8 +20,14 @@ port_props(::DivArrow) = bin_arith_port_props()
 
 "exp(x)"
 struct ExpArrow <: PrimArrow end
-name(::ExpArrow)::Symbol = :sin
+name(::ExpArrow)::Symbol = :exp
 port_props(::ExpArrow) = unary_arith_port_props()
+
+"log(x)"
+struct LogArrow <: PrimArrow end
+name(::LogArrow)::Symbol = :log
+port_props(::LogArrow) = unary_arith_port_props()
+
 
 "sin(x)"
 struct SinArrow <: PrimArrow end

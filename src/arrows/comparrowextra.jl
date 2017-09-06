@@ -19,6 +19,7 @@ in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
 "Is `link` one of the links in `arr`?"
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
 
+
 "Is `port` within `arr` but not on boundary"
 strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
 
@@ -188,6 +189,23 @@ function src(port::SubPort)::SubPort
   end
 end
 
+"Create a new port in `parent(sport)` and link `sport` to it"
+function link_to_parent!(sport::SubPort)
+  if on_boundary(sport)
+    println("invalid on boundary ports")
+    throw(DomainError())
+  end
+  arr = parent(sport)
+  newport = add_port_like!(arr, deref(sport))
+  if is_out_port(sport)
+    link_ports(sport, newport)
+  else
+    @assert is_in_port(sport)
+    link_ports!(newport, sport)
+  end
+  newport
+end
+
 ## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
@@ -230,7 +248,7 @@ function is_wired_ok(arr::CompArrow)::Bool
       # TODO: replace error with lens
         errmsg = """vertex $i Port $i should be a dst but
                     indeg is $(LG.indegree(arr.edges, i)) (notbe 1)
-                    outdeg is $(LG.outdegree(arr.edges, i) == 0)) (not 0)
+                    outdeg is $(LG.outdegree(arr.edges, i)) (not 0)
                   """
         warn(errmsg)
         return false
@@ -250,6 +268,21 @@ function is_wired_ok(arr::CompArrow)::Bool
 end
 
 ## Printing ##
+portprod(pts) = join(name.(pts), " × ")
+
+function sig_string(arr::Arrow)
+  portprod(in_ports(arr)) * " → " * portprod(out_ports(arr))
+end
+
+function string(carr::CompArrow)
+  """$(name(carr)) : $(sig_string(carr))
+  $(num_sub_arrows(carr)) sub arrows
+  wired_ok? $(is_wired_ok(carr))"""
+end
+
+print(io::IO, carr::CompArrow) = print(io, string(carr))
+show(io::IO, carr::CompArrow) = print(io, carr)
+
 function string(port::SubPort)
   a = "SubArrow $(name(parent(port))) of $(name(parent(port))) - "
   b = string(deref(port))

@@ -120,8 +120,7 @@ function all_test_arrows()
    fibonnaci_arr(),
    dupl_id_arr(),
    det_policy_inner_arr(),
-   triple_add(),
-   sin_arr()]
+   triple_add()]
 end
 
 function is_plain(arr::CompArrow)

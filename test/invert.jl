@@ -14,5 +14,3 @@ function test_invert(arr)
 end
 
 foreach(test_invert ∘ pre_test, plain_arrows())
-
-invert(duplify!(plain_arrows()[1]))

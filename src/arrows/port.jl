@@ -10,6 +10,9 @@ end
 "Is `port` a reference?"
 is_ref(port::Port) = false
 
+Label = Symbol
+
+
 """port properties: properties instrinsic to a port.
 
 - `PortProp`s are a property of an Arrow or SubtractArrow
@@ -18,7 +21,10 @@ mutable struct PortProps
   is_in_port::Bool
   name::Symbol
   typ::Type
+  labels::Set{Label}
 end
+
+PortProps(is_in_port, name, typ) = PortProps(is_in_port, name, typ, Set())
 
 "Does a vector of port properties have I inports and O outports?"
 function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
@@ -94,6 +100,26 @@ name(port::Port) = name(port_props(port))
 "Names of each port of `arr`"
 port_names(arr::Arrow) = name.(ports(arr))
 
+"Make `prop` parameter"
+function set_error_port!(pprop::PortProps)
+  is_out_port(pprop) || throw(DomainError())
+  push!(pprop.labels, :error)
+end
+is_error_port(pprop::PortProps) = :error ∈ pprop.labels
+is_error_port(port::Port) = is_error_port(port_props(port))
+set_error_port!(port::Port) = set_error_port!(port_props(port))
+
+"Make `prop` parameter"
+function set_parameter_port!(pprop::PortProps)
+  is_in_port(pprop) || throw(DomainError())
+  push!(pprop.labels, :parameter)
+end
+
+is_parameter_port(pprop::PortProps) = :parameter ∈ pprop.labels
+is_parameter_port(port::Port) = is_parameter_port(port_props(port))
+set_parameter_port!(port::Port) = set_parameter_port!(port_props(port))
+
+## Printing ##
 function string(p::Port)
   inps = is_in_port(p) ? "InPort" : "OutPort"
   pa = port_props(p)
