@@ -23,7 +23,7 @@ in(link::Link, arr::CompArrow) = link ∈ links(arr)
 strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
 
 "Is `arr` a sub_arrow of composition `c_arr`"
-in(arr::SubArrow, c_arr::CompArrow)::Bool = arr ∈ all_sub_arrows(p)
+in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
 
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 port_props(subport::SubPort) = port_props(deref(subport))

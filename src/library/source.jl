@@ -1,7 +1,7 @@
 "Takes no input simple emits a `value::T`"
-struct SourceArrow{T} <: PrimArrow{0, 1}
+struct SourceArrow{T} <: PrimArrow
   value::T
 end
 
 name(::SourceArrow) = :source
-port_props{T}(::SourceArrow{T}) =  [PortProps(false, :x, Array{T})]
+port_props(::SourceArrow) =  [PortProps(false, :x, Array)]

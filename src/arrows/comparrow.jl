@@ -7,24 +7,21 @@ struct ProxyPort
   port_id::Int        # Position on arrow
 end
 
-mutable struct CompArrow{I, O} <: Arrow{I, O}
+mutable struct CompArrow <: Arrow
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
   port_props::Vector{PortProps}
 
-  function CompArrow{I, O}(name::Symbol,
-                           port_props::Vector{PortProps}) where {I, O}
-    if !is_valid(port_props, I, O)
-      throw(DomainError())
-    end
+  function CompArrow(name::Symbol,
+                     port_props::Vector{PortProps})
     c = new()
-    nports = I + O
+    nports = length(port_props)
     g = LG.DiGraph(nports)
     c.name = name
     c.edges = g
-    c.port_to_vtx_id = Dict(ProxyPort(name, i) => i for i = 1:I+O)
+    c.port_to_vtx_id = Dict(ProxyPort(name, i) => i for i = 1:nports)
     c.sarr_name_to_arrow = Dict(name => c)
     c.port_props = port_props
     c
@@ -32,11 +29,11 @@ mutable struct CompArrow{I, O} <: Arrow{I, O}
 end
 
 "A component within a `CompArrow`"
-struct SubArrow{I, O} <: ArrowRef{I, O}
+struct SubArrow <: ArrowRef
   parent::CompArrow
   name::ArrowName
-  function SubArrow{I, O}(parent::CompArrow, name::ArrowName) where {I, O}
-    sarr = new{I, O}(parent, name)
+  function SubArrow(parent::CompArrow, name::ArrowName)
+    sarr = new(parent, name)
     if !is_valid(sarr)
       throw(DomainError())
     end
@@ -44,17 +41,8 @@ struct SubArrow{I, O} <: ArrowRef{I, O}
   end
 end
 
-"sarr is valid if its name exists in its parent and `I` `O`"
-function is_valid{I, O}(sarr::SubArrow{I, O})::Bool
-  arr = deref(sarr)
-  I == num_in_ports(arr) && O == num_out_ports(arr)
-end
-
-"`Subarrow` in `carr` with name `name`"
-function SubArrow(carr::CompArrow, name::ArrowName)
-  arr = arrow(carr, name)
-  SubArrow{num_in_ports(arr), num_out_ports(arr)}(carr, name)
-end
+"`sarr` valid if it exists in its parent"
+is_valid(sarr::SubArrow) = name(sarr) ∈ all_names(parent(sarr))
 
 "A `Port` on a `SubArrow`"
 struct SubPort <: AbstractPort
@@ -80,22 +68,15 @@ SubPortMap = Dict{SubPort, SubPort}
 
 ## CompArrow constructors
 "Constructs CompArrow with where all input and output types are `Any`"
-function CompArrow{I, O}(name::Symbol,
-                        inp_names=[Symbol(:inp_, i) for i=1:I],
-                        out_names=[Symbol(:out_, i) for i=1:O]) where {I, O}
+function CompArrow(name::Symbol, I::Integer, O::Integer)
   # Default is for first I ports to be in_ports then next O oout_ports
+  inp_names = [Symbol(:inp_, i) for i=1:I]
+  out_names = [Symbol(:out_, i) for i=1:O]
   in_port_props = [PortProps(true, inp_names[i], Any) for i = 1:I]
   out_port_props = [PortProps(false, out_names[i], Any) for i = 1:O]
   port_props = vcat(in_port_props, out_port_props)
-  CompArrow{I, O}(name, port_props)
+  CompArrow(name, port_props)
 end
-
-"Create a composite arrow from another one"
-function CompArrow{I, O}(arr::CompArrow) where {I, O}
-  ...
-end
-
-## Port Properties
 
 port_props(arr::CompArrow) = arr.port_props
 port_props(sarr::SubArrow) = port_props(deref(sarr))
@@ -115,10 +96,12 @@ end
 "Not a reference"
 deref(sport::SubPort)::Port = port(deref(sport.sub_arrow), port_id(sport))
 deref(sarr::SubArrow)::Arrow = arrow(parent(sarr), sarr.name)
+
 "Get `Arrow` in `arr` with name `n`"
 arrow(arr::CompArrow, n::ArrowName)::Arrow = arr.sarr_name_to_arrow[n]
 
 ## Naming ##
+
 unique_sub_arrow_name()::ArrowName = gen_id()
 name(arr::CompArrow)::ArrowName = arr.name
 "Names of all `SubArrows` in `arr`, inclusive"
@@ -197,7 +180,6 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
     throw(DomainError())
   end
   arr = parent(sarr)
-  delete!(arr.sarr_name_to_arrow, name(sarr))
 
   # Remove every
   last_id = LG.nv(arr.edges)
@@ -218,6 +200,9 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
     end
     last_id -= 1
   end
+
+  delete!(arr.sarr_name_to_arrow, name(sarr))
+
   arr
 end
 

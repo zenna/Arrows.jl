@@ -9,10 +9,10 @@ Semantics of this model
 - Each `CompArrow` is unique and uniquely identifiable by `name(arr)` globally
 
 # `Port`
-- An `Arrow{I, O}` has `I` and `O` input / output ports
+- An `Arrow` has `I` and `O` input / output ports
 - These `I+O` Ports are the `boundary` ports of a `CompArrow`
 - `Port`s are named `name(port)` and uniquely identifiable w.r.t. Arrow
-- `Port`s on `Arrow{I, O}` are ordered `1:I+O` but
+- `Port`s on `Arrow` are ordered `1:I+O` but
    ordering is independent of whther is_in_port or is_out_port
 
 # `SubArrow`
@@ -35,13 +35,13 @@ Semantics of this model
 - In execution and other contexts, it is useful be refer to nested
 """
 
-abstract type AbstractArrow{I, O} end
+abstract type AbstractArrow end
 
-abstract type Arrow{I, O} <: AbstractArrow{I, O} end
+abstract type Arrow <: AbstractArrow end
 
-abstract type ArrowRef{I, O} <: AbstractArrow{I, O} end
+abstract type ArrowRef <: AbstractArrow end
 
-# abstract type ArrowRef{I, O} <: Arrow{I, O} end
+# abstract type ArrowRef <: Arrow end
 
 "Is `arr` a reference?"
 is_ref(arr::Arrow) = isa(arr, ArrowRef)

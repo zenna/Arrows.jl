@@ -1,7 +1,7 @@
 ## Primitive Arrow
 ## ===============
 
-abstract type PrimArrow{I, O} <: Arrow{I, O} end
+abstract type PrimArrow <: Arrow end
 port_props(arr::PrimArrow, port::Port) = port_props(arr)[port.port_id]
 
 name(x::PrimArrow) = error("interface: children should implement name")

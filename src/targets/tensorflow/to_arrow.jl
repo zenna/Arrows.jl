@@ -100,7 +100,7 @@ function graph_to_arrow(name::Symbol,
   op_to_arrow = Dict{AbstractOperation, SubArrow}()
   seen_tens = Set{AbstractTensor}()
   I, O = length(inp_tens), length(out_tens)
-  c = CompArrow{I, O}(name)
+  c = CompArrow(name, I, O)
 
   # Make an in_port for every input ten
   ten_in_port = Dict{AbstractTensor, SubPort}(zip(inp_tens, in_sub_ports(c)))

@@ -1,4 +1,4 @@
-import Arrows
+import Arrows: name, is_valid, interpret
 using Arrows.TestArrows
 using Base.Test
 
@@ -10,7 +10,7 @@ function test_policy()
   end
 end
 
-rand_input(arr) = rand(num_in_ports(arr))
+rand_input(arr) = rand(Arrows.num_in_ports(arr))
 
 function test_interpret()
   for arr in Arrows.TestArrows.plain_arrows()

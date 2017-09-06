@@ -5,7 +5,7 @@ import Arrows: add_sub_arr!, in_sub_port, out_sub_port
 
 "f(x) = x^2"
 function sin_arr()
-  c = CompArrow{1, 1}(:x2)
+  c = CompArrow(:x2, 1, 1)
   x, y = ports(c)
   sinarr = add_sub_arr!(c, Arrows.SinArrow())
   link_ports!(x, in_sub_port(sinarr, 1))
@@ -15,7 +15,7 @@ end
 
 "x * y + x"
 function xy_plus_x_arr()
-  c = CompArrow{2, 1}(:xyx)
+  c = CompArrow(:xyx, 2, 1)
   x, y, z = ports(c)
   mularr = MulArrow()
   m2 = add_sub_arr!(c, mularr)
@@ -33,7 +33,7 @@ xy_plus_x_jl(x, y) = x * y + x
 
 "arrow that computes nth value of fibonnaci sequence"
 function fibonnaci_arr()
-  c = CompArrow{1, 1}(:fib)
+  c = CompArrow(:fib, 1, 1)
   c_wrap = add_sub_arr!(c, c)
   x, y = ports(c)
   one = add_sub_arr!(c, SourceArrow(1))
@@ -67,7 +67,7 @@ fibonnaci_jl(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
 
 "f(x) = id(x), id(x)"
 function dupl_id_arr()
-  c = CompArrow{1, 2}(:dupl_id)
+  c = CompArrow(:dupl_id, 1, 2)
   id1 = add_sub_arr!(c, IdentityArrow())
   id2 = add_sub_arr!(c, IdentityArrow())
   x, y, z = ports(c)
@@ -80,7 +80,7 @@ end
 
 "f(x) = if p(x) then p(x), f(x)[1] else p(x), g(f(x)[2])"
 function det_policy_inner_arr()
-  c = CompArrow{1, 2}(:f)
+  c = CompArrow(:f, 1, 2)
   f = add_sub_arr!(c, dupl_id_arr())
   p = add_sub_arr!(c, IdentityArrow())
   g = add_sub_arr!(c, IdentityArrow())
@@ -99,7 +99,7 @@ end
 
 "f(x,y) = (x+y) + (x+y)"
 function triple_add()
-  c = CompArrow{2, 1}(:xyxy)
+  c = CompArrow(:xyxy, 2, 1)
   x, y, z = ports(c)
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())

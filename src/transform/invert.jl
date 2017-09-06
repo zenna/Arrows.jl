@@ -19,14 +19,11 @@ function check_reuse(arr)
 end
 
 "Link `n` unlinked ports in arr{I, O} to yield `ret_arr{I, O + n}``"
-function link_loose_ports{I}(arr::CompArrow{I})
+function link_loose_ports(arr::CompArrow)
   arr
   # is_loose_port(sub_port::SubPort) = should_src(subport) && !is_src(sub_port)
   # loose_ports = filter(is_loose_port, sub_ports(arr))
-  # arr = CompArrow{I, O + length(loose_ports)}
 end
-
-inv{I, O}(arr::CompArrow{I, O}) = CompArrow{O, I}(Symbol(:inv_, name(arr)))
 
 "Reorient an edge such that it goes from source to dst"
 fix_link(link::Link)::Link = Link(switch(is_src, link...))
@@ -45,12 +42,12 @@ function fix_links!(arr::CompArrow)::CompArrow
 end
 
 "Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
-function invert_all_ports!{I, O}(arr::CompArrow{I, O})::CompArrow
+function invert_all_ports!(arr::CompArrow)::CompArrow
   inports = in_ports(arr)
   outports = out_ports(arr)
   foreach(make_out_port!, inports)
   foreach(make_in_port!, outports)
-  CompArrow{O, I}(arr)
+  CompArrow(arr)
 end
 
 

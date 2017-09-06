@@ -79,13 +79,14 @@ in_port(arr::Arrow, i::Integer)::AbstractPort = in_ports(arr)[i]
 
 ## Num_ports
 "How many ports does `arr` have"
-num_ports{I, O}(arr::AbstractArrow{I, O})::Integer = I + O
+# num_ports(arr::AbstractArrow)::Integer = length(ports(arr))
+num_ports(arr::AbstractArrow) = length(port_props(arr))
 
 "How many out ports does `arr` have"
-num_out_ports{I, O}(arr::AbstractArrow{I, O})::Integer = O
+num_out_ports(arr::AbstractArrow)::Integer = length(out_ports(arr))
 
 "How many in ports does `arr` have"
-num_in_ports{I, O}(arr::AbstractArrow{I, O})::Integer = I
+num_in_ports(arr::AbstractArrow)::Integer = length(in_ports(arr))
 
 name(pa::PortProps) = pa.name
 name(port::Port) = name(port_props(port))

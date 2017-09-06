@@ -1,5 +1,5 @@
 "Takes no input simple emits a `value::T`"
-struct CondArrow <: PrimArrow{3, 1} end
+struct CondArrow <: PrimArrow end
 port_props(::CondArrow) =   [PortProps(true, :i, Array{Bool}),
                              PortProps(true, :t, Array{Real}),
                              PortProps(true, :e, Array{Real}),
@@ -7,7 +7,7 @@ port_props(::CondArrow) =   [PortProps(true, :i, Array{Bool}),
 name(::CondArrow) = :cond
 
 "Duplicates input `O` times dupl_n_(x) = (x,...x)"
-struct DuplArrow{O} <: PrimArrow{1, O} end
+struct DuplArrow{O} <: PrimArrow end
 
 port_props{O}(::DuplArrow{O}) =
   [PortProps(true, :x, Array{Any}),
@@ -17,7 +17,7 @@ name(::DuplArrow) = :dupl
 DuplArrow(n::Integer) = DuplArrow{n}()
 
 "f(x) = (x,)"
-struct IdentityArrow <: PrimArrow{1, 1} end
+struct IdentityArrow <: PrimArrow end
 
 port_props(::IdentityArrow) =
   [PortProps(true, :x, Array{Any}), PortProps(false, :y, Array{Any})]

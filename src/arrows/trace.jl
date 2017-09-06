@@ -1,5 +1,5 @@
 "A trace within an arrow uniquely defines a trace `sub_arrow`"
-struct TraceArrow{I, O} <: ArrowRef{I, O}
+struct TraceArrow <: ArrowRef
   arrs::Vector{SubArrow}
 end
 
