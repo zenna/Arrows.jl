@@ -100,6 +100,15 @@ name(port::Port) = name(port_props(port))
 "Names of each port of `arr`"
 port_names(arr::Arrow) = name.(ports(arr))
 
+## Label ##
+"out_ports of arr"
+function ports(arr::Arrow, lb::Label)::Vector{<:AbstractPort}
+  collect(filter(p -> has_port_label(p, lb), ports(arr)))
+end
+
+"Does `port` have `label` `lb`?"
+has_port_label(port::Port, lb::Label) = lb ∈ port_prop(port).labels
+
 "Make `prop` parameter"
 function set_error_port!(pprop::PortProps)
   is_out_port(pprop) || throw(DomainError())

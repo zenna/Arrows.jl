@@ -5,12 +5,12 @@ Values{T} = Set{T} where T <: Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value
-  port::SubPort
+  port::SubPort   # FIXME: Thsi will be a lot more efficient if I choose
+                  # src_sub_port(RepValue) only to be representative port
 end
 
 # FIXME: This is a bad hash!
 hash(v::RepValue) = hash(parent(v.port))
-
 parent(v::RepValue) = parent(v.port)
 
 function isequal(v1::RepValue, v2::RepValue)::Bool
@@ -19,6 +19,12 @@ function isequal(v1::RepValue, v2::RepValue)::Bool
 end
 
 (==)(v1::RepValue, v2::RepValue) = isequal(v1, v2)
+
+"Name of value.  Should be unique within parent `CompArrow`"
+function name(val::RepValue)
+  src_sarname
+  Symbol(sarrname, )
+end
 
 "Which ports are represented in `value`"
 function sub_ports(value::RepValue)::Vector{SubPort}
@@ -50,8 +56,17 @@ end
 out_values(arr::CompArrow) = out_values(sub_arrow(arr))
 
 "`subarr` such that `value` is an output of `subarr`"
-src_arrow(value::Value) = src_arrow(value.port)
+src_sub_arrow(value::Value)::SubArrow = src_sub_arrow(value.port)
 
-string(v::Value) = string("Value ", sort(port_index.(sub_ports(v))))
+"What is the source `SubPort` of `value`"
+function src_sub_port(val::Value)::SubPort
+  # FIXME: Ew. Do FIXME for RepValue then get rid of this mess
+  ss = [sp for sp in sub_ports(val) if sub_arrow(sp) == src_sub_arrow(val)]
+  @assert length(ss) == 1
+  ss[1]
+end
+
+## Printing
+string(v::Value) = string("Value ", sort(port_id.(sub_ports(v))))
 print(io::IO, v::Value) = print(io, string(v))
 show(io::IO, v::Value) = print(io, v)

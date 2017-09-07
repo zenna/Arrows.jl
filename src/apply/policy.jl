@@ -99,7 +99,7 @@ end
 "If we know `know`, what other values must be know"
 function known_values_if_know(know::Value)::Values
   # Assume we know one output value we know them all
-  out_values(src_arrow(know))
+  out_values(src_sub_arrow(know))
 end
 
 # "is `value` a switch predicate (i.e. input to at least one i of ite cond)"
@@ -208,21 +208,32 @@ function interpret(pol::DetPolicy, args...)
   if length(args) != num_in_ports(arr)
     throw(DomainError())
   end
+  # Map frin `Value` to arguments, init with inputs
   vals = Dict{Value, Any}(zip(in_values(arr), args))
   curr_node = start_node(pol)
-  while true  # Stop when reach end node
-    println("LOOP!")
+
+  # Until we reach the end node ...
+  while true
+    # 1. Find out which subarrow we need to compute to compute curr_node
     val = curr_value(pol, curr_node)
-    sarr = src_arrow(val)
-    # println(" ", deref(sarr))
+    sarr = src_sub_arrow(val)
+
+    # FIXME: dont repeat execution of sarr if we already have `val`
+
+    # 2. Find both input and output values for this subarrow
     invals = in_values_vec(sarr)
     outvals = out_values_vec(sarr)
+
+    # 3. Extract actual values for these `Values` and execute subarrow on this
     valvals = [vals[val] for val in invals]
     ops = interpret(deref(sarr), valvals...)
-    # opdate vals with outputs
+
+    # 4. Update all outputs of subarrow with value
     for (i, op) in enumerate(ops)
       vals[outvals[i]] = ops[i]
     end
+
+    # Stop if we reach the end node
     if end_node(pol, curr_node)
       break
     else
@@ -232,4 +243,77 @@ function interpret(pol::DetPolicy, args...)
   sarr = sub_arrow(arr)
   outvals = out_values_vec(sarr)
   [vals[val] for val in outvals]
+end
+
+"Evaluate an arrow using a `pol` on `args`: comp_arrow(pol)(args...)"
+function pinterpret(pol::DetPolicy, f, args...)
+  arr = comp_arrow(pol)
+  if length(args) != num_in_ports(arr)
+    @show length(args), num_in_ports(arr)
+    throw(DomainError())
+  end
+  # Map frin `Value` to arguments, init with inputs
+  vals = Dict{Value, Any}(zip(in_values(arr), args))
+  curr_node = start_node(pol)
+
+  # Until we reach the end node ...
+  while true
+    # 1. Find out which subarrow we need to compute to compute curr_node
+    val = curr_value(pol, curr_node)
+    sarr = src_sub_arrow(val)
+
+    # FIXME: dont repeat execution of sarr if we already have `val`
+
+    # 2. Find both input and output values for this subarrow
+    invals = in_values_vec(sarr)
+    outvals = out_values_vec(sarr)
+
+    # 3. Extract actual values for these `Values` and execute subarrow on this
+    valvals = [vals[val] for val in invals]
+    ops = f(sarr, valvals...)
+
+    # 4. Update all outputs of subarrow with value
+    for (i, op) in enumerate(ops)
+      vals[outvals[i]] = ops[i]
+    end
+
+    # Stop if we reach the end node
+    if end_node(pol, curr_node)
+      break
+    else
+      curr_node = next_node(pol, curr_node)
+    end
+  end
+  sarr = sub_arrow(arr)
+  outvals = out_values_vec(sarr)
+  [vals[val] for val in outvals]
+end
+
+"Convert a policy into a julia program"
+function pol_to_julia(pol::Policy)
+  carr = comp_arrow(pol)
+  argnames = map(name, in_values_vec(sub_arrow(carr)))
+  outnames = map(name, out_values_vec(sub_arrow(carr)))
+  calls = Vector{Expr}()
+  outputs = Vector{Expr}()
+  function f(sarr::SubArrow, args...)
+    arr = deref(sarr)
+    outnames = map(name, tuple(out_values_vec(sarr)...))
+    push!(outputs, Expr(:tuple, outnames...))
+    push!(calls, Expr(:call, name(arr), args...))
+    outnames
+  end
+  pinterpret(pol, f, argnames...)
+
+  #
+  outcalls = map((out, call) -> Expr(:(=), out, call), outputs, calls)
+  @show retargs = Expr(:tuple, outnames...)
+  @show ret = Expr(:return, retargs)
+  # Function head
+  @show funcname = name(carr)
+  @show funchead = Expr(:call, funcname, argnames...)
+  # function block
+  @show funcblock = Expr(:block, outcalls..., ret)
+  # All together
+  Expr(:function, funchead, funcblock)
 end

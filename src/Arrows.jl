@@ -60,7 +60,8 @@ export
   is_wired_ok,
   is_valid,
   interpret,
-  invert,
+  invert!,
+  duplify!,
 
   AddArrow,
   MulArrow,

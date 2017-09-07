@@ -19,6 +19,8 @@ in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
 "Is `link` one of the links in `arr`?"
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
 
+"Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
+is_boundary(sport::SubPort) = sport ∈ sub_ports(sub_arrow(sport))
 
 "Is `port` within `arr` but not on boundary"
 strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
@@ -162,8 +164,8 @@ Components = Vector{Component}
 
 """Partition the ports into weakly connected equivalence classes"""
 function weakly_connected_components(arr::CompArrow)::Components
-  cc = weakly_connected_components(arr.edges)
-  pi = i->port_index(arr, i)
+  cc = LG.weakly_connected_components(arr.edges)
+  pi = i->sub_port_vtx(arr, i)
   map(component->pi.(component), cc)
 end
 
@@ -176,7 +178,7 @@ function weakly_connected_component(port::SubPort)::Component
 end
 
 "`src_port.arrow` such that `src_port -> port`"
-src_arrow(port::SubPort)::SubArrow = sub_arrow(src(port))
+src_sub_arrow(port::SubPort)::SubArrow = sub_arrow(src(port))
 
 "`src_port` such that `src_port -> port`"
 function src(port::SubPort)::SubPort

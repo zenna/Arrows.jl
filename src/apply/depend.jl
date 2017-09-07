@@ -22,7 +22,7 @@ end
 
 "`Value's do we need to compute `target`"
 function needed_values(target::Value, cond_map::CondMap)::Values
-  subarr = src_arrow(target)
+  subarr = src_sub_arrow(target)
   needed_values(deref(subarr), subarr, cond_map)
 end
 

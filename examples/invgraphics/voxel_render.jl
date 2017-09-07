@@ -35,6 +35,11 @@ function random_slice(batch_size)
   slice = voxel_data[rand_indices, :]
 end
 
+"invert renderer"
+function invert_render(renderarr::Arrows.Arrow)
+  inv_render = invert(renderarr)
+end
+
 batch_size = 128
 arr = render_arrow()
 vpol = Arrows.DetPolicy(arr)
@@ -42,3 +47,11 @@ vpol = Arrows.DetPolicy(arr)
 slice = random_slice(batch_size)
 img_batch = render_images(vpol, slice)
 colorview(Gray, img_batch[rand(1:128),:,:])
+
+duplify!(arr)
+invrender = invert_render(arr)
+
+typeof(arr)
+isa(arr, Arrows.Arrow)
+
+typeof(Arrow)

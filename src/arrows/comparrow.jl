@@ -126,7 +126,6 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   # TODO make the name of the arrow fixed and remove this
   # That is, differentiate between arrname and subarrname
   # TODO CHECK NO NAME CONFLICTS
-  carr.name = n
   arr = carr.sarr_name_to_arrow[carr.name]
   carr.sarr_name_to_arrow[carr.name]
   for (pxport, vtxid) in arr.port_to_vtx_id
@@ -137,6 +136,7 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   end
   delete!(arr.sarr_name_to_arrow, carr.name)
   carr.sarr_name_to_arrow[n] = arr
+  carr.name = n
   carr
 end
 ## SubPort(s) constructors ##
@@ -277,11 +277,15 @@ function is_linked(sport1::SubPort, sport2::SubPort)::Bool
   end
 end
 
+## Naming ##
+name(sarr::SubArrow)::ArrowName = sarr.name
+name(sport::SubPort) = Symbol(name(sub_arrow(sport)), :_, port_id(sport))
+
 ## Sub Arrow ##
 num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
 num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
 
-name(sarr::SubArrow)::ArrowName = sarr.name
+
 "`SubArrow` of `arr` with name `n`"
 sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)
 

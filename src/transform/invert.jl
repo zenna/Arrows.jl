@@ -11,6 +11,7 @@ inv(arr::SubArrow) = inv(deref(arr))
 inv(arr::NegArrow) = (NegArrow(),  Dict(1 => 2, 2 => 1))
 inv(arr::ExpArrow) = (LogArrow(),  Dict(1 => 2, 2 => 1))
 inv(arr::IdentityArrow) = (IdentityArrow(),  Dict(1 => 2, 2 => 1))
+
 # inv(arr::Gather) = (GatherNdArrow())
 
 function check_reuse(arr)
@@ -84,7 +85,7 @@ Args:
 Returns:
   A (approximate) parametric inverse of `arrow`. The ith in_port of comp_arrow
   will be corresponding ith out_port error_ports and param_ports will follow"""
-function invert(arr::CompArrow)::CompArrow
+function invert!(arr::CompArrow)::CompArrow
   check_reuse(arr)
   outer = inv_rename! ∘ link_loose_ports! ∘ fix_links! ∘ invert_all_ports!
   walk!(inv, outer, arr)
