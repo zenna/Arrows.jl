@@ -1,7 +1,7 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
 
 "f(x) = x^2"
 function sin_arr()
@@ -30,6 +30,27 @@ function xy_plus_x_arr()
 end
 
 xy_plus_x_jl(x, y) = x * y + x
+
+function inv_xy_plus_x()
+  carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
+  z, θ, x, y = sub_ports(carr)
+  invadd = add_sub_arr!(carr, inv_add())
+  invmul = add_sub_arr!(carr, inv_mul())
+  invdupl = add_sub_arr!(carr, InvDuplArrow(2))
+
+  addz, addθ, addx, addy = sub_ports(invadd)
+  mulz, mulθ, mulx, muly = sub_ports(invmul)
+  sub_ports(invdupl)
+  link_ports!(z, addz)
+  link_ports!(addx, mulz)
+  link_ports!(θ, addθ)
+  link_ports!(addy, (invdupl, 1))
+  link_ports!(mulx, y)
+  link_ports!((invdupl, 1), x)
+  link_ports!(muly, (invdupl, 2))
+  link_ports!(θ, mulθ)
+  carr
+end
 
 "arrow that computes nth value of fibonnaci sequence"
 function fibonnaci_arr()

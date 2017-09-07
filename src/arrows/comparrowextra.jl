@@ -181,31 +181,14 @@ end
 src_sub_arrow(port::SubPort)::SubArrow = sub_arrow(src(port))
 
 "`src_port` such that `src_port -> port`"
-function src(port::SubPort)::SubPort
-  if is_src(port)
-    port
+function src(sport::SubPort)::SubPort
+  if is_src(sport)
+    sport
   else
-    in_neighs = in_neighbors(port)
+    in_neighs = in_neighbors(sport)
     @assert length(in_neighs) == 1
     first(in_neighs)
   end
-end
-
-"Create a new port in `parent(sport)` and link `sport` to it"
-function link_to_parent!(sport::SubPort)
-  if on_boundary(sport)
-    println("invalid on boundary ports")
-    throw(DomainError())
-  end
-  arr = parent(sport)
-  newport = add_port_like!(arr, deref(sport))
-  if is_out_port(sport)
-    link_ports(sport, newport)
-  else
-    @assert is_in_port(sport)
-    link_ports!(newport, sport)
-  end
-  newport
 end
 
 ## Validation ##

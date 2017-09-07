@@ -11,7 +11,7 @@ import LightGraphs; const LG = LightGraphs
 import Base.Collections: PriorityQueue, dequeue!, peek
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, >>>, length, isequal, eltype, hash, isequal, copy
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘
 
 import Base:  ^,
               +,
@@ -28,7 +28,9 @@ import Base:  ^,
               &,
               !,
               in,
-              parent
+              parent,
+              >>,
+              <<
 export
   compose,
   name,
@@ -75,7 +77,12 @@ export
   NegArrow,
   GatherNdArrow,
   SinArrow,
-  CosArrow
+  CosArrow,
+
+  # Inverse Arrows
+  InvDuplArrow,
+  inv_add,
+  inv_mul
 
 include("util/misc.jl")
 include("util/lightgraphs.jl")

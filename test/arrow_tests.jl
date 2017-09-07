@@ -8,5 +8,3 @@ function test_valid()
     @test is_wired_ok(arr)
   end
 end
-
-test_valid()

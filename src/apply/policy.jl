@@ -1,3 +1,10 @@
+# TODO: Make sure names are unique
+# TODO: `polcies` to recursively get policy
+# remove redundant interpret
+# handle control flow
+# make expr building abstract
+
+
 Vertex = Int
 # What's wrong?
 # - We need to say values connected to source nodes are known
@@ -52,7 +59,7 @@ mutable struct DetPolicy <: Policy
 end
 
 "Composite Arrow which this is a policy for"
-comp_arrow(pol::DetPolicy) = parent(first(pol.node_port_labels))
+arrow(pol::DetPolicy) = parent(first(pol.node_port_labels))
 isfresh(pol::DetPolicy) = pol.curr_node == 0
 
 "Add a `Compute` node to `pol`"
@@ -109,6 +116,26 @@ end
 # function uncertain_switch(value::Value, cond_map::CondMap)::Bool
 #   switch_predicate(value) && value ∉ keys(cond_map)
 # end
+
+add_policies!(parr::PrimArrow, pols::Vector{<:Policy}, seen::Set{ArrowName}) = nothing
+
+function add_policies!(carr::CompArrow, pols::Vector{<:Policy}, seen::Set{ArrowName})
+  if name(carr) ∉ seen
+    push!(pols, DetPolicy(carr))
+    push!(seen, name(carr))
+    for sarr in all_sub_arrows(carr)
+      add_policies!(deref(sarr), pols, seen)
+    end
+  end
+end
+
+"Recursively get all the policies of `carr`"
+function policies(carr::CompArrow)::Vector{<:Policy}
+  pols = DetPolicy[]
+  seen = Set{ArrowName}()
+  add_policies!(carr, pols, seen)
+  pols
+end
 
 "Extend the policy by adding either `Compute` or `Branch` node"
 function extend_policy!(pol::Policy, known::Values,
@@ -202,9 +229,9 @@ function next_node(pol::DetPolicy, node::Vertex)
   node + 1 #FIXME: WILL BREAK FOR
 end
 
-"Evaluate an arrow using a `pol` on `args`: comp_arrow(pol)(args...)"
+"Evaluate an arrow using a `pol` on `args`: arrow(pol)(args...)"
 function interpret(pol::DetPolicy, args...)
-  arr = comp_arrow(pol)
+  arr = arrow(pol)
   if length(args) != num_in_ports(arr)
     throw(DomainError())
   end
@@ -245,9 +272,9 @@ function interpret(pol::DetPolicy, args...)
   [vals[val] for val in outvals]
 end
 
-"Evaluate an arrow using a `pol` on `args`: comp_arrow(pol)(args...)"
+"Evaluate an arrow using a `pol` on `args`: arrow(pol)(args...)"
 function pinterpret(pol::DetPolicy, f, args...)
-  arr = comp_arrow(pol)
+  arr = arrow(pol)
   if length(args) != num_in_ports(arr)
     @show length(args), num_in_ports(arr)
     throw(DomainError())
@@ -291,9 +318,9 @@ end
 
 "Convert a policy into a julia program"
 function pol_to_julia(pol::Policy)
-  carr = comp_arrow(pol)
+  carr = arrow(pol)
   argnames = map(name, in_values_vec(sub_arrow(carr)))
-  outnames = map(name, out_values_vec(sub_arrow(carr)))
+  coutnames = map(name, out_values_vec(sub_arrow(carr)))
   calls = Vector{Expr}()
   outputs = Vector{Expr}()
   function f(sarr::SubArrow, args...)
@@ -307,7 +334,7 @@ function pol_to_julia(pol::Policy)
 
   #
   outcalls = map((out, call) -> Expr(:(=), out, call), outputs, calls)
-  @show retargs = Expr(:tuple, outnames...)
+  @show retargs = Expr(:tuple, coutnames...)
   @show ret = Expr(:return, retargs)
   # Function head
   @show funcname = name(carr)

@@ -67,8 +67,11 @@ PortSymbMap = Dict{Symbol, Symbol}
 SubPortMap = Dict{SubPort, SubPort}
 
 ## CompArrow constructors
+"Empty `CompArrow`"
+CompArrow(name::ArrowName) = CompArrow(name, PortProps[])
+
 "Constructs CompArrow with where all input and output types are `Any`"
-function CompArrow(name::Symbol, I::Integer, O::Integer)
+function CompArrow(name::ArrowName, I::Integer, O::Integer)
   # Default is for first I ports to be in_ports then next O oout_ports
   inp_names = [Symbol(:inp_, i) for i=1:I]
   out_names = [Symbol(:out_, i) for i=1:O]
@@ -158,6 +161,12 @@ sub_ports(sarr::SubArrow)::Vector{SubPort} =
 
 "`SubPort` of `sarr` of number `port_id`"
 sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
+
+"`SubPort` of `sarr` which is `port`"
+function sub_port(sarr::SubArrow, port::Port)::SubPort
+  port.arrow == deref(sarr) || throw(DomainError())
+  sub_port(sarr, port.port_id)
+end
 
 "All the `SubPort`s of all `SubArrow`s on and within `arr`"
 all_sub_ports(arr::CompArrow)::Vector{SubPort} =

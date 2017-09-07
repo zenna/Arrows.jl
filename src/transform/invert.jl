@@ -21,20 +21,6 @@ function check_reuse(arr)
   end
 end
 
-"Projecting (dst) port has no outgoing edges"
-loose_dst(sport::SubPort)::Bool = should_dst(sport) && !is_dst(sport)
-
-"Link `n` unlinked ports in arr{I, O} to yield `ret_arr{I, O + n}`"
-function link_loose_ports!(arr::CompArrow)::CompArrow
-  for sport in inner_sub_ports(arr)
-    if loose_dst(sport)
-      @assert is_parameter_port(deref(sport)) sport
-      link_to_parent!(sport)
-    end
-  end
-  arr
-end
-
 "Do I need to switch this `link`"
 function need_switch(l::Link)
   # TODO: Handle other cases
@@ -83,7 +69,7 @@ Args:
   `arr`: Arrow to invert
   `dispatch`: Dict mapping arrow class to invert function
 Returns:
-  A (approximate) parametric inverse of `arrow`. The ith in_port of comp_arrow
+  A (approximate) parametric inverse of `arrow`. The ith in_port of arr
   will be corresponding ith out_port error_ports and param_ports will follow"""
 function invert!(arr::CompArrow)::CompArrow
   check_reuse(arr)

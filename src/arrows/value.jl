@@ -5,6 +5,7 @@ Values{T} = Set{T} where T <: Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value
+  # FIXME rename sport
   port::SubPort   # FIXME: Thsi will be a lot more efficient if I choose
                   # src_sub_port(RepValue) only to be representative port
 end
@@ -55,13 +56,8 @@ out_values(arr::CompArrow) = out_values(sub_arrow(arr))
 "`subarr` such that `value` is an output of `subarr`"
 src_sub_arrow(value::Value)::SubArrow = src_sub_arrow(value.port)
 
-"What is the source `SubPort` of `value`"
-function src_sub_port(val::Value)::SubPort
-  # FIXME: Ew. Do FIXME for RepValue then get rid of this mess
-  ss = [sp for sp in sub_ports(val) if sub_arrow(sp) == src_sub_arrow(val)]
-  @assert length(ss) == 1
-  ss[1]
-end
+"Source `SubPort` of `val`, ∀ sport ∈ val, ∃ `Link` source -> sport"
+src_sub_port(val::RepValue)::SubPort = src(val.port)
 
 ## Printing
 string(v::Value) = string("Value ", sort(port_id.(sub_ports(v))))

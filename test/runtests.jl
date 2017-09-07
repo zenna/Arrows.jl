@@ -5,7 +5,9 @@ include("common.jl")
 tests = [
     "comp_arrow.jl",
     "arrow_tests.jl",
-    "policy.jl"]
+    "policy.jl",
+    "compose.jl",
+    "misc.jl"]
 
 print_with_color(:blue, "Running tests:\n")
 
