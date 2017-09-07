@@ -107,7 +107,7 @@ function ports(arr::Arrow, lb::Label)::Vector{<:AbstractPort}
 end
 
 "Does `port` have `label` `lb`?"
-has_port_label(port::Port, lb::Label) = lb ∈ port_prop(port).labels
+has_port_label(port::Port, lb::Label) = lb ∈ port_props(port).labels
 
 "Make `prop` parameter"
 function set_error_port!(pprop::PortProps)

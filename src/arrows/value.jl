@@ -21,10 +21,7 @@ end
 (==)(v1::RepValue, v2::RepValue) = isequal(v1, v2)
 
 "Name of value.  Should be unique within parent `CompArrow`"
-function name(val::RepValue)
-  src_sarname
-  Symbol(sarrname, )
-end
+name(val::RepValue) = Symbol(:val, :_, name(src_sub_port(val)))
 
 "Which ports are represented in `value`"
 function sub_ports(value::RepValue)::Vector{SubPort}

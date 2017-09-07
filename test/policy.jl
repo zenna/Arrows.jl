@@ -1,6 +1,11 @@
-import Arrows: name, is_valid, interpret
+import Arrows: name, is_valid, interpret, pol_to_julia
 using Arrows.TestArrows
 using Base.Test
+
+include("common.jl")
+
+
+rand_input(arr) = rand(Arrows.num_in_ports(arr))
 
 function test_policy()
   for arr in Arrows.TestArrows.plain_arrows()
@@ -10,7 +15,7 @@ function test_policy()
   end
 end
 
-rand_input(arr) = rand(Arrows.num_in_ports(arr))
+test_pol_to_julia(arr) = pol_to_julia(Arrows.DetPolicy(arr))
 
 function test_interpret()
   for arr in Arrows.TestArrows.plain_arrows()
@@ -21,5 +26,6 @@ function test_interpret()
   end
 end
 
+foreach(test_pol_to_julia ∘ pre_test, plain_arrows())
 test_policy()
 test_interpret()

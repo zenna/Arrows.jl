@@ -1,5 +1,6 @@
 using Arrows
 using Base.Test
+include("common.jl")
 
 tests = [
     "comp_arrow.jl",
