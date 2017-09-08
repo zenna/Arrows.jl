@@ -115,10 +115,14 @@ include("apply/propagate.jl")
 # include("apply/interpret.jl")
 include("apply/depend.jl")
 include("apply/policy.jl")
+include("apply/compile.jl")
+
 
 include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
+
+include("optim/loss.jl")
 
 # include("library.jl")
 

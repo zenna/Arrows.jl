@@ -10,6 +10,7 @@ InvDuplArrow(n::Integer) = InvDuplArrow{n}()
 
 "f(x, x) = (x,)"
 function inv_dupl(x, y)
-  @assert x == y, x, y
+  @show x y
+  @assert x == y
   x
 end
