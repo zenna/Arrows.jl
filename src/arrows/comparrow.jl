@@ -7,6 +7,7 @@ struct ProxyPort
   port_id::Int        # Position on arrow
 end
 
+"""A Composite Arrow: An `Arrow` composed of multiple `Arrow`s"""
 mutable struct CompArrow <: Arrow
   name::ArrowName
   edges::LG.DiGraph
@@ -41,6 +42,8 @@ struct SubArrow <: ArrowRef
   end
 end
 
+## Validation ##
+
 "`sarr` valid if it exists in its parent"
 is_valid(sarr::SubArrow) = name(sarr) ∈ all_names(parent(sarr))
 
@@ -66,7 +69,7 @@ PortIdMap = Dict{Int, Int}
 PortSymbMap = Dict{Symbol, Symbol}
 SubPortMap = Dict{SubPort, SubPort}
 
-## CompArrow constructors
+## CompArrow constructors ##
 "Empty `CompArrow`"
 CompArrow(name::ArrowName) = CompArrow(name, PortProps[])
 
@@ -90,11 +93,14 @@ function CompArrow(name::Symbol, inames::Vector{Symbol}, onames::Vector{Symbol})
   CompArrow(name, port_props)
 end
 
+"Port Properties of all ports of `arr`"
 port_props(arr::CompArrow) = arr.port_props
+
+"Port Properties of all ports of `sarr`"
 port_props(sarr::SubArrow) = port_props(deref(sarr))
 
 "Make `port` an in_port"
-function make_in_port!(port::Port{<:CompArrow})
+function set_in_port!(port::Port{<:CompArrow})
   port.arrow.port_props[port.port_id].is_in_port = true
 end
 
@@ -105,19 +111,24 @@ end
 
 ## Dereference ##
 
-"Not a reference"
+"`Port` that `sport` is reference to"
 deref(sport::SubPort)::Port = port(deref(sport.sub_arrow), port_id(sport))
+
+"`Arrow` that `sarr` is reference to"
 deref(sarr::SubArrow)::Arrow = arrow(parent(sarr), sarr.name)
 
-"Get `Arrow` in `arr` with name `n`"
+"`Arrow` in `arr` with name `n`"
 arrow(arr::CompArrow, n::ArrowName)::Arrow = arr.sarr_name_to_arrow[n]
 
 ## Naming ##
 
+"globally unique `ArrowName`"
 unique_sub_arrow_name()::ArrowName = gen_id()
-name(arr::CompArrow)::ArrowName = arr.name
-"Names of all `SubArrows` in `arr`, inclusive"
 
+"ArrowName of `carr`"
+name(carr::CompArrow)::ArrowName = carr.name
+
+"Names of all `SubArrows` in `arr`, inclusive"
 all_names(arr::CompArrow)::Vector{ArrowName} =
   collect(keys(arr.sarr_name_to_arrow))
 
@@ -142,6 +153,7 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   carr.name = n
   carr
 end
+
 ## SubPort(s) constructors ##
 
 "Construct a `SubPort` from a `ProxyPort`"
@@ -191,6 +203,7 @@ out_sub_port(sarr::AbstractArrow, i) = out_sub_ports(sarr)[i]
 on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport))
 
 ## Proxy Ports ##
+
 all_proxy_ports(arr::CompArrow)::Vector{ProxyPort} = keys(arr.port_to_vtx_id)
 proxy_ports(sarr::SubArrow) = [ProxyPort(name(sarr), i) for i=1:num_ports(sarr)]
 
@@ -293,7 +306,6 @@ name(sport::SubPort) = Symbol(name(sub_arrow(sport)), :_, port_id(sport))
 ## Sub Arrow ##
 num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
 num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
-
 
 "`SubArrow` of `arr` with name `n`"
 sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)

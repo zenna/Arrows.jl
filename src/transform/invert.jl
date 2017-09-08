@@ -58,7 +58,7 @@ end
 
 "Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
 function invert_all_ports!(arr::CompArrow)::CompArrow
-  foreach(p -> is_in_port(p) ? make_out_port!(p) : make_in_port!(p), ports(arr))
+  foreach(p -> is_in_port(p) ? make_out_port!(p) : set_in_port!(p), ports(arr))
   arr
 end
 

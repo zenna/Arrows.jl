@@ -1,3 +1,7 @@
+# Helpers 1#
+pfx(prefix::Symbol, name::Symbol) = Symbol(:prefix_, name)
+pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
+
 ## Loose Port ##
 "Receiving (dst) port has no incoming edges"
 loose_dst(sport::SubPort)::Bool = should_dst(sport) && !is_dst(sport)
@@ -33,7 +37,7 @@ function link_loose_ports!(arr::CompArrow)::CompArrow
   arr
 end
 
-""
+"Link `parent(sarr) -> sport` ∀ `sport` is loose in_port of sarr"
 function link_loose_in_ports!(sarr::SubArrow)
   for sport in in_sub_ports(sarr)
     if loose_dst(sport)
@@ -42,6 +46,7 @@ function link_loose_in_ports!(sarr::SubArrow)
   end
 end
 
+"Link `sport -> parent(sarr)` ∀ `sport` is loose in_port of sarr"
 function link_loose_out_ports!(sarr::SubArrow)
   for sport in out_sub_ports(sarr)
     if loose_src(sport)
@@ -51,6 +56,7 @@ function link_loose_out_ports!(sarr::SubArrow)
 end
 
 ## Compose ##
+
 "Compose the names of `arr1` and `arr2`"
 compname(arr1::Arrow, arr2::Arrow) = Symbol(name(arr2), :_to_, name(arr1))
 
@@ -68,7 +74,8 @@ composeall(f::Arrow, g::Arrow)::PortMap = PortMap(zip(out_ports(g), in_ports(f))
   Any  loose `in_ports(f)` will become in_ports of res, after `in_ports(g)`
   Any loose `out_ports(g)` will become out_ports of res, after `out_ports(f)`
 """
-function compose(f::Arrow, g::Arrow,
+function compose(f::Arrow,
+                 g::Arrow,
                  portmap::PortMap=composeall(f, g),
                  name=compname(f, g))
   # Make empty comparrow th
@@ -90,5 +97,38 @@ end
 "Compose `g` with `f` `to the right` (f ∘ g)"
 ∘(f::Arrow, g::Arrow) = compose(f, g)
 
+"Right compose: f >> g. (f ∘ g)"
 >>(f, g) = compose(g, f)
+
+"Right compose: g >> f. (g ∘ f)"
 <<(f, g) = compose(f, g)
+
+"""Create a stack of arrows, inputs in order"""
+function stack(arrs::Vector{<:Arrow})::CompArrow
+  carr = CompArrow(name)
+  for arr in arrs
+    sarr = add_sub_arr!(carr, arr)
+    link_loose_in_ports!(sarr)
+    link_loose_out_ports(sarr)
+  end
+  carr
+end
+
+
+"""dupl first Project Inputs to Output
+# Arguments
+- `arr: x_1 × ⋯ × x_n -> y_1 ⋯ × y_n`
+# Returns
+- `res: x_1 × ⋯ × x_n -> x_1 × ⋯ × x_n × y_1 ⋯ × y_n
+"""
+function top(arr::Arrow, name+)
+  carr = CompArrow(name)
+  sarr = add_sub_arr!!(carr, arr)
+  link_loose_in_ports!(sarr)
+  link_loose_out_ports!(sarr)
+  for lsport in in_sub_port(carr)
+    rsport = add_out_port_like!(sport)
+    link_ports!(lsport, rsport)
+  end
+  carr
+end

@@ -236,7 +236,7 @@ function interpret(pol::DetPolicy, args...)
     throw(DomainError())
   end
   # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values(arr), args))
+  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
   curr_node = start_node(pol)
 
   # Until we reach the end node ...
@@ -280,7 +280,8 @@ function pinterpret(pol::DetPolicy, f, args...)
     throw(DomainError())
   end
   # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values(arr), args))
+  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
+  @show vals
   curr_node = start_node(pol)
 
   # Until we reach the end node ...
@@ -334,13 +335,13 @@ function pol_to_julia(pol::Policy)
 
   #
   outcalls = map((out, call) -> Expr(:(=), out, call), outputs, calls)
-  @show retargs = Expr(:tuple, coutnames...)
-  @show ret = Expr(:return, retargs)
+  retargs = Expr(:tuple, coutnames...)
+  ret = Expr(:return, retargs)
   # Function head
-  @show funcname = name(carr)
-  @show funchead = Expr(:call, funcname, argnames...)
+  funcname = name(carr)
+  funchead = Expr(:call, funcname, argnames...)
   # function block
-  @show funcblock = Expr(:block, outcalls..., ret)
+  funcblock = Expr(:block, outcalls..., ret)
   # All together
   Expr(:function, funchead, funcblock)
 end

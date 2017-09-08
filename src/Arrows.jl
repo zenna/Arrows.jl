@@ -77,6 +77,8 @@ export
   NegArrow,
   GatherNdArrow,
   SinArrow,
+  SqrArrow,
+  SqrtArrow,
   CosArrow,
 
   # Inverse Arrows

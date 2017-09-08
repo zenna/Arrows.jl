@@ -15,14 +15,12 @@ end
 
 "x * y + x"
 function xy_plus_x_arr()
-  c = CompArrow(:xyx, 2, 1)
+  c = CompArrow(:xyx, [:x, :y], [:z])
   x, y, z = ports(c)
-  mularr = MulArrow()
-  m2 = add_sub_arr!(c, mularr)
+  m2 = add_sub_arr!(c, MulArrow())
+  add_arr = add_sub_arr!(c, AddArrow())
   link_ports!(x, in_sub_port(m2, 1))
   link_ports!(y, in_sub_port(m2, 2))
-  add_arr = AddArrow()
-  add_arr = add_sub_arr!(c, add_arr)
   link_ports!(out_sub_port(m2, 1), in_sub_port(add_arr, 1))
   link_ports!(x, in_sub_port(add_arr, 2))
   link_ports!(out_sub_port(add_arr, 1), z)
@@ -31,7 +29,7 @@ end
 
 xy_plus_x_jl(x, y) = x * y + x
 
-function inv_xy_plus_x()
+function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
   z, θ, x, y = sub_ports(carr)
   invadd = add_sub_arr!(carr, inv_add())

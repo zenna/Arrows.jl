@@ -39,6 +39,18 @@ struct CosArrow <: PrimArrow end
 name(::CosArrow)::Symbol = :cos
 port_props(::CosArrow) = unary_arith_port_props()
 
+"sqrt(x)"
+struct SqrtArrow <: PrimArrow end
+name(::SqrtArrow)::Symbol = :sqrt
+port_props(::SqrtArrow) = unary_arith_port_props()
+
+"sqr(x)"
+struct SqrArrow <: PrimArrow end
+name(::SqrArrow)::Symbol = :sqr
+port_props(::SqrArrow) = unary_arith_port_props()
+
+sqr(x) = (x^2,)
+
 "log(b, x)"
 struct LogBaseArrow <: PrimArrow end
 name(::LogBaseArrow)::Symbol = :logbase
