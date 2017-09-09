@@ -23,16 +23,6 @@ end
 
 "Do I need to switch this `link`"
 function need_switch(l::Link)
-  # TODO: Handle other cases
-  println(l[1])
-  println(l[2])
-
-  println("src ", should_src(l[1]), " ", is_src(l[1]))
-  println("src ", should_src(l[2]), " ", is_src(l[2]))
-
-  println("dst ", should_dst(l[1]), " ", is_dst(l[1]))
-  println("dst ", should_dst(l[2]), " ", is_dst(l[2]))
-
   needswitch1 = should_src(l[1]) ⊻ is_src(l[1])
   needswitch2 = should_dst(l[2]) ⊻ is_dst(l[2])
   @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2"
@@ -41,11 +31,8 @@ end
 
 function fix_link!(link::Link)
   if need_switch(link)
-    println("Switching")
     unlink_ports!(link...)
     link_ports!(link[2], link[1])
-  else
-    println("Not switching!")
   end
   nothing
 end
@@ -78,3 +65,4 @@ function invert!(arr::CompArrow)::CompArrow
 end
 
 invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))
+approx_invert(arr::CompArrow) = approx_totalize!(invert(arr))

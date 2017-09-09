@@ -281,7 +281,6 @@ function pinterpret(pol::DetPolicy, f, args...)
   end
   # Map frin `Value` to arguments, init with inputs
   vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
-  @show vals
   curr_node = start_node(pol)
 
   # Until we reach the end node ...

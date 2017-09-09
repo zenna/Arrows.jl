@@ -46,8 +46,6 @@ Returns
 """
 function walk!(inner, outer, arr::CompArrow)
   for sarr in sub_arrows(arr)
-    @show sarr
-    @show inner(sarr)
     replarr, port_map = portmapize(inner(sarr)...)
     replace_sub_arr!(sarr, replarr, port_map)
   end

@@ -5,7 +5,7 @@ function compile(arr::Arrow)
   ret = Expr(:return, Expr(:tuple, names...))
   block = Expr(:block, codes..., ret)
   expr = Expr(:function, :(()), block)
-  @show expr
+  expr
 end
 
 function do_compile(arr::CompArrow)
