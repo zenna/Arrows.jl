@@ -63,6 +63,7 @@ export
   is_valid,
   interpret,
   invert!,
+  invert,
   duplify!,
 
   AddArrow,

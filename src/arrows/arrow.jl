@@ -60,6 +60,6 @@ function func_decl(aarr::AbstractArrow; kwargs...)
    string(string(name(aarr)), " : ", sig(aarr; kwargs...))
 end
 
-string(aarr::AbstractArrow) = mann(aarr)
+string(aarr::AbstractArrow) = func_decl(aarr)
 print(io::IO, aarr::AbstractArrow) = print(io, string(aarr))
 show(io::IO, aarr::AbstractArrow) = print(io, aarr)
