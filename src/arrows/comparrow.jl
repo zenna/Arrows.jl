@@ -167,6 +167,9 @@ sub_port_vtx(arr::CompArrow, vtx_id::VertexId)::SubPort =
 "`SubPort`s on boundary of `arr`"
 sub_ports(arr::CompArrow) = sub_ports(sub_arrow(arr))
 
+"i`th `SubPort` on boundary of `arr`"
+sub_port(carr::CompArrow, i::Integer)::SubPort = sub_ports(carr)[i]
+
 "`SubPort`s connected to `sarr`"
 sub_ports(sarr::SubArrow)::Vector{SubPort} =
   [SubPort(sarr, i) for i=1:num_ports(sarr)]

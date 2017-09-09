@@ -102,7 +102,7 @@ end
 in_port(arr::Arrow, i::Integer)::AbstractPort = in_ports(arr)[i]
 
 ## Num_ports
-"How many ports does `arr` have"
+"How manny ports does `arr` have"
 # num_ports(arr::AbstractArrow)::Integer = length(ports(arr))
 num_ports(arr::AbstractArrow) = length(port_props(arr))
 
@@ -146,12 +146,23 @@ is_parameter_port(pprop::PortProps) = :parameter ∈ pprop.labels
 is_parameter_port(port::Port) = is_parameter_port(port_props(port))
 set_parameter_port!(port::Port) = set_parameter_port!(port_props(port))
 
+mann(is_in_port::Bool) = is_in_port ? "🡪" : "🡨"
+
 ## Printing ##
-function string(p::Port)
-  inps = is_in_port(p) ? "InPort" : "OutPort"
-  pa = port_props(p)
-  "$inps id:$(p.port_id) n:$(pa.name) arr:$(name(p.arrow))"
+function mann(prt::Port; show_name=true,
+                            show_port_id=true,
+                            show_is_in_port=true,
+                            show_typ=true,
+                            show_arrow=true,
+                            kwargs...)
+  res = ""
+  if show_is_in_port res *= mann(is_in_port(prt)) end
+  if show_name res *= string(name(prt)) end
+  if show_port_id res *= "@$(prt.port_id)" end
+  if show_typ res *= string("::", typ(prt); kwargs...) end
+  res
 end
 
-print(io::IO, p::Port) = print(io, string(p))
-show(io::IO, p::Port) = print(io, p)
+string(prt::Port) = mann(prt)
+print(io::IO, prt::Port) = print(io, string(prt))
+show(io::IO, prt::Port) = print(io, prt)

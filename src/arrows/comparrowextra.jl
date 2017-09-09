@@ -307,18 +307,13 @@ function link_loose_out_ports!(sarr::SubArrow)
 end
 
 ## Printing ##
-portprod(pts) = join(name.(pts), " × ")
-
-function sig_string(arr::Arrow)
-  portprod(in_ports(arr)) * " → " * portprod(out_ports(arr))
-end
-
-function string(carr::CompArrow)
-  """$(name(carr)) : $(sig_string(carr))
+function mann(carr::CompArrow; kwargs...)
+  """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows
   wired_ok? $(is_wired_ok(carr))"""
 end
 
+string(carr::CompArrow) = mann(carr)
 print(io::IO, carr::CompArrow) = print(io, string(carr))
 show(io::IO, carr::CompArrow) = print(io, carr)
 
