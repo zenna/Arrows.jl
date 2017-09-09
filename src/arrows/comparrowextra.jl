@@ -252,6 +252,60 @@ function is_wired_ok(arr::CompArrow)::Bool
   true
 end
 
+
+## Loose Port ##
+"Receiving (dst) port has no incoming edges"
+loose_dst(sport::SubPort)::Bool = should_dst(sport) && !is_dst(sport)
+
+"Receiving (src) port has no outgoing edges"
+loose_src(sport::SubPort)::Bool = should_src(sport) && !is_src(sport)
+
+"Create a new port in `parent(sport)` and link `sport` to it"
+function link_to_parent!(sport::SubPort)
+  if on_boundary(sport)
+    println("invalid on boundary ports")
+    throw(DomainError())
+  end
+  arr = parent(sport)
+  newport = add_port_like!(arr, deref(sport))
+  if is_out_port(sport)
+    link_ports!(sport, newport)
+  else
+    @assert is_in_port(sport)
+    link_ports!(newport, sport)
+  end
+  newport
+end
+
+"Link `n` unlinked ports in arr{I, O} to yield `ret_arr{I, O + n}`"
+function link_loose_ports!(arr::CompArrow)::CompArrow
+  for sport in inner_sub_ports(arr)
+    if loose_dst(sport)
+      @assert is_parameter_port(deref(sport)) sport
+      link_to_parent!(sport)
+    end
+  end
+  arr
+end
+
+"Link `parent(sarr) -> sport` ∀ `sport` is loose in_port of sarr"
+function link_loose_in_ports!(sarr::SubArrow)
+  for sport in in_sub_ports(sarr)
+    if loose_dst(sport)
+      link_to_parent!(sport)
+    end
+  end
+end
+
+"Link `sport -> parent(sarr)` ∀ `sport` is loose in_port of sarr"
+function link_loose_out_ports!(sarr::SubArrow)
+  for sport in out_sub_ports(sarr)
+    if loose_src(sport)
+      link_to_parent!(sport)
+    end
+  end
+end
+
 ## Printing ##
 portprod(pts) = join(name.(pts), " × ")
 

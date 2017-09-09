@@ -45,9 +45,11 @@ Returns
   and any edge which connects to p1 in orig will connect to p2 in new.
 """
 function walk!(inner, outer, arr::CompArrow)
-  for sub_arrow in sub_arrows(arr)
-    replarr, port_map = portmapize(inner(sub_arrow)...)
-    replace_sub_arr!(sub_arrow, replarr, port_map)
+  for sarr in sub_arrows(arr)
+    @show sarr
+    @show inner(sarr)
+    replarr, port_map = portmapize(inner(sarr)...)
+    replace_sub_arr!(sarr, replarr, port_map)
   end
 
   outer(arr)

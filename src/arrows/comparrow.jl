@@ -255,7 +255,7 @@ function add_port!(carr::CompArrow, pprop::PortProps)::Port
   LG.add_vertex!(carr.edges)
   vtx_id = LG.nv(carr.edges)
   carr.port_to_vtx_id[ProxyPort(name(carr), port_id)] = vtx_id
-  push!(carr.port_props, pprop)
+  push!(carr.port_props, deepcopy(pprop))
   Port(carr, port_id)
 end
 

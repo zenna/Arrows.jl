@@ -76,3 +76,5 @@ function invert!(arr::CompArrow)::CompArrow
   outer = inv_rename! ∘ link_loose_ports! ∘ fix_links! ∘ invert_all_ports!
   walk!(inv, outer, arr)
 end
+
+invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))

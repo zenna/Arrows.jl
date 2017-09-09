@@ -18,3 +18,10 @@ function (arr::CompArrow)(args...)
   f = do_compile(arr)
   Base.invokelatest(f, args...)
 end
+
+# TODO: Switch to generated function
+# @generated
+# function (arr::CompArrow)(args...)
+#   compile(arr)
+#   Base.invokelatest(f, args...)
+# end

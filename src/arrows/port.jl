@@ -24,6 +24,15 @@ mutable struct PortProps
   labels::Set{Label}
 end
 
+"Make a copy of `PortProps`, assign partial fields"
+function PortProps(pprops;
+                   is_in_port::Bool = pprops.is_in_port,
+                   name::Symbol = pprops.name,
+                   typ::Type = pprops.typ,
+                   labels::Set{Label} = pprops.labels)
+  deepcopy(PortProps(is_in_port, name, typ, labels))
+end
+
 PortProps(is_in_port, name, typ) = PortProps(is_in_port, name, typ, Set())
 
 "Does a vector of port properties have I inports and O outports?"
@@ -52,8 +61,17 @@ is_out_port(port::AbstractPort)::Bool = is_out_port(port_props(port))
 "Is `port` an `in_port`"
 is_in_port(port_props::PortProps)::Bool = port_props.is_in_port
 
+"Type of port"
+typ(pprops::PortProps) = pprops.typ
+
 "Is `port` an `in_port`"
 is_in_port(port::AbstractPort)::Bool = is_in_port(port_props(port))
+
+"labels of `aport`, e.g. `:parametric, :error`"
+labels(aport::AbstractPort) = labels(port_props(aport))
+
+"Type of a `aport`"
+typ(aport::AbstractPort) = typ(port_props(aport))
 
 "`i`th port of arrow"
 function port(arr::Arrow, i::Integer)::Port

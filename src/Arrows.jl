@@ -109,6 +109,7 @@ include("library/array.jl")
 
 include("library/inv_control.jl")
 include("library/inv_arith.jl")
+include("library/statistics.jl")
 
 include("combinators/compose.jl")
 
@@ -123,6 +124,8 @@ include("apply/compile.jl")
 include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
+include("transform/totalize.jl")
+
 
 include("optim/loss.jl")
 
