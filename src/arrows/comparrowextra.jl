@@ -191,6 +191,26 @@ function src(sport::SubPort)::SubPort
   end
 end
 
+maprecur!(f, parr::PrimArrow, outputs::Vector, seen::Set{ArrowName}) = nothing
+
+function maprecur!(f, carr::CompArrow, outputs::Vector, seen::Set{ArrowName})
+  if name(carr) ∉ seen
+    push!(outputs, f(carr))
+    push!(seen, name(carr))
+    for sarr in all_sub_arrows(carr)
+      maprecur!(f, deref(sarr), outputs, seen)
+    end
+  end
+end
+
+"Recursively apply `f` to each subarrow of `carr`"
+function maprecur(f, carr::CompArrow)::Vector
+  outputs = []
+  seen = Set{ArrowName}()
+  maprecur!(f, carr, outputs, seen)
+  outputs
+end
+
 ## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"

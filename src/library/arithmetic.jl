@@ -1,7 +1,13 @@
+# Order alphabetically
 "x + y"
 struct AddArrow <: PrimArrow end
 name(::AddArrow)::Symbol = :+
 port_props(::AddArrow) = bin_arith_port_props()
+
+"x / y"
+struct DivArrow <: PrimArrow end
+name(::DivArrow)::Symbol = :/
+port_props(::DivArrow) = bin_arith_port_props()
 
 "x - y"
 struct SubtractArrow <: PrimArrow end
@@ -13,10 +19,6 @@ struct MulArrow <: PrimArrow end
 name(::MulArrow)::Symbol = :*
 port_props(::MulArrow) = bin_arith_port_props()
 
-"x / y"
-struct DivArrow <: PrimArrow end
-name(::DivArrow)::Symbol = :/
-port_props(::DivArrow) = bin_arith_port_props()
 
 "exp(x)"
 struct ExpArrow <: PrimArrow end
@@ -28,6 +30,10 @@ struct LogArrow <: PrimArrow end
 name(::LogArrow)::Symbol = :log
 port_props(::LogArrow) = unary_arith_port_props()
 
+"asin(x)"
+struct ASinArrow <: PrimArrow end
+name(::ASinArrow)::Symbol = :asin
+port_props(::ASinArrow) = unary_arith_port_props()
 
 "sin(x)"
 struct SinArrow <: PrimArrow end
@@ -38,6 +44,11 @@ port_props(::SinArrow) = unary_arith_port_props()
 struct CosArrow <: PrimArrow end
 name(::CosArrow)::Symbol = :cos
 port_props(::CosArrow) = unary_arith_port_props()
+
+"acos(x)"
+struct ACosArrow <: PrimArrow end
+name(::ACosArrow)::Symbol = :acos
+port_props(::ACosArrow) = unary_arith_port_props()
 
 "sqrt(x)"
 struct SqrtArrow <: PrimArrow end

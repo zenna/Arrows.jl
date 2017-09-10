@@ -82,6 +82,9 @@ export
   SqrtArrow,
   CosArrow,
 
+  # Compound
+  addn,
+
   # Inverse Arrows
   InvDuplArrow,
   inv_add,
@@ -107,6 +110,7 @@ include("library/arithmetic.jl")
 include("library/control.jl")
 include("library/source.jl")
 include("library/array.jl")
+include("library/compound.jl")
 
 include("library/inv_control.jl")
 include("library/inv_arith.jl")
@@ -136,6 +140,7 @@ include("targets/julia/julia.jl")
 include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("../test/TestArrows.jl")
+include("../examples/ExampleArrows.jl")
 
 # include("smt_solvers/z3interface.jl")
 end

@@ -13,17 +13,9 @@ test_inv_xy_plus_x()
 
 function test_approx_inverse()
   fwdarr = TestArrows.xy_plus_x_arr()
-  invarr = invert(fwdarr)
-  approx_totalize!(invarr)
+  invarr = Arrows.approx_invert(fwdarr)
   lossarr = Arrows.iden_loss(fwdarr, invarr)
-  @test lossarr(1.0, 2.0, 1.0)[1] == 0
+  @test is_wired_ok(lossarr)
 end
 
 test_approx_inverse()
-
-
-
-fwdarr = TestArrows.xy_plus_x_arr()
-invarr = invert(fwdarr)
-lossarr = Arrows.iden_loss(fwdarr, invarr)
-lossarr(1.0, 1.0, 1.0)

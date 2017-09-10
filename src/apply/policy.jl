@@ -117,25 +117,9 @@ end
 #   switch_predicate(value) && value ∉ keys(cond_map)
 # end
 
-add_policies!(parr::PrimArrow, pols::Vector{<:Policy}, seen::Set{ArrowName}) = nothing
-
-function add_policies!(carr::CompArrow, pols::Vector{<:Policy}, seen::Set{ArrowName})
-  if name(carr) ∉ seen
-    push!(pols, DetPolicy(carr))
-    push!(seen, name(carr))
-    for sarr in all_sub_arrows(carr)
-      add_policies!(deref(sarr), pols, seen)
-    end
-  end
-end
-
+# FIXME, fix maprecur so can add return typep to this of ::Vector{<:Policy}
 "Recursively get all the policies of `carr`"
-function policies(carr::CompArrow)::Vector{<:Policy}
-  pols = DetPolicy[]
-  seen = Set{ArrowName}()
-  add_policies!(carr, pols, seen)
-  pols
-end
+policies(carr::CompArrow) = maprecur(DetPolicy, carr)
 
 "Extend the policy by adding either `Compute` or `Branch` node"
 function extend_policy!(pol::Policy, known::Values,

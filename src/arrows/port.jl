@@ -149,15 +149,28 @@ set_parameter_port!(port::Port) = set_parameter_port!(port_props(port))
 mann(is_in_port::Bool) = is_in_port ? "🡪" : "🡨"
 
 ## Printing ##
+const label_to_superscript = Dict{Symbol, Symbol}(
+  :parameter => :ᶿ,
+  :error => :ᵋ)
+
 function mann(prt::Port; show_name=true,
-                            show_port_id=true,
-                            show_is_in_port=true,
-                            show_typ=true,
-                            show_arrow=true,
-                            kwargs...)
+                         show_port_id=true,
+                         show_is_in_port=true,
+                         show_typ=true,
+                         show_arrow=true,
+                         show_labels=true,
+                         kwargs...)
   res = ""
   if show_is_in_port res *= mann(is_in_port(prt)) end
-  if show_name res *= string(name(prt)) end
+  if show_name
+    res *= string(name(prt))
+    if show_labels
+      for label in port_props(prt).labels
+        @show res
+        res *= string(label_to_superscript[label])
+      end
+    end
+  end
   if show_port_id res *= "@$(prt.port_id)" end
   if show_typ res *= string("::", typ(prt); kwargs...) end
   res

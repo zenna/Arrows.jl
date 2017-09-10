@@ -1,18 +1,22 @@
 # FIXME: Switch to symbols instead of numbers
 # TODO: Add is_valid for These portmaps to check
 const BIN_PORT_MAP = Dict(1 => 3, 2 => 4, 3 => 1)
+# FIXME: Is this correct?
 const SYMB_BIN_PORT_MAP = Dict(:x => :x, :y => :y, :z => :z)
 inv{O}(arr::DuplArrow{O}) =
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 inv(arr::AddArrow) = (inv_add(), BIN_PORT_MAP)
+inv(arr::CosArrow) = (ACosArrow(), Dict(1 => 2, 2 => 1))
 inv(arr::MulArrow) = (inv_mul(), BIN_PORT_MAP)
 inv(arr::SourceArrow) = (SourceArrow(arr.value), Dict(1 => 1))
-inv(arr::SubArrow) = inv(deref(arr))
+inv(arr::SinArrow) = (ASinArrow(), Dict(1 => 2, 2 => 1))
 inv(arr::NegArrow) = (NegArrow(),  Dict(1 => 2, 2 => 1))
 inv(arr::ExpArrow) = (LogArrow(),  Dict(1 => 2, 2 => 1))
 inv(arr::IdentityArrow) = (IdentityArrow(),  Dict(1 => 2, 2 => 1))
 
-# inv(arr::Gather) = (GatherNdArrow())
+inv(arr::SubArrow) = inv(deref(arr))
+# FIXME? is it ok to use invert!, what about source
+inv(arr::CompArrow) = (invert(arr), iden_port_map(arr))
 
 function check_reuse(arr)
   if !no_reuse(arr)
