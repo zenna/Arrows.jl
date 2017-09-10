@@ -42,6 +42,8 @@ export
   CompArrow,
   SubArrow,
   link_ports!,
+  ⥅,
+  ⥆,
   add_sub_arr!,
   out_sub_port,
   out_sub_ports,

@@ -8,10 +8,8 @@ function compile(arr::Arrow)
   expr
 end
 
-function do_compile(arr::CompArrow)
-  lambda = eval(compile(arr))
-  Base.invokelatest(lambda)[1]
-end
+"Adds arrow `arr` and any CompArrows is contains to global new space"
+compile!(arr::Arrow) = foreach(eval ∘ pol_to_julia, policies(arr))
 
 "Apply `arr(args...)"
 function (arr::CompArrow)(args...)
@@ -19,9 +17,11 @@ function (arr::CompArrow)(args...)
   Base.invokelatest(f, args...)
 end
 
-# TODO: Switch to generated function
-# @generated
-# function (arr::CompArrow)(args...)
-#   compile(arr)
-#   Base.invokelatest(f, args...)
-# end
+function do_compile(arr::CompArrow)
+  lambda = eval(compile(arr))
+  Base.invokelatest(lambda)[1]
+end
+
+function julia(arr::CompArrow)
+  f = do_compile(arr)
+end

@@ -180,7 +180,6 @@ function drawpath(points)
     color = randomhue()
     sethue(color)
     x, y = points[1, i], points[2, i]
-    println("XY", x, " ", y)
     point = Luxor.Point(x, y)
     line(curr, point, :stroke)
     curr = point
