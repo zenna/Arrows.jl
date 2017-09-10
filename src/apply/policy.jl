@@ -1,10 +1,3 @@
-# TODO: Make sure names are unique
-# TODO: `polcies` to recursively get policy
-# remove redundant interpret
-# handle control flow
-# make expr building abstract
-
-
 Vertex = Int
 # What's wrong?
 # - We need to say values connected to source nodes are known

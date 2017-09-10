@@ -3,13 +3,13 @@ module TestArrows
 using Arrows
 import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, set_parameter_port!
 
-"f(x) = x^2"
+"f(x) = sin(x)"
 function sin_arr()
   c = CompArrow(:x2, 1, 1)
   x, y = ports(c)
   sinarr = add_sub_arr!(c, Arrows.SinArrow())
-  link_ports!(x, in_sub_port(sinarr, 1))
-  link_ports!(out_sub_port(sinarr, 1), y)
+  x ⥅ (sinarr, 1)
+  (sinarr, 1) ⥅ y
   c
 end
 
@@ -26,6 +26,13 @@ function xy_plus_x_arr()
   link_ports!(out_sub_port(add_arr, 1), z)
   c
 end
+
+arr = xy_plus_x_arr()
+invert(arr)
+
+arr(1.0, 2.0)
+
+Arrows.compile(arr)
 
 xy_plus_x_jl(x, y) = x * y + x
 

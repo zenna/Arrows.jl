@@ -12,8 +12,8 @@ mutable struct CompArrow <: Arrow
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
-  sarr_name_to_arrow::Dict{ArrowName, Arrow}
   port_props::Vector{PortProps}
+  sarr_name_to_arrow::Dict{ArrowName, Arrow}
 
   function CompArrow(name::Symbol,
                      port_props::Vector{PortProps})
@@ -279,6 +279,9 @@ function link_ports!(l::SubPort, r::SubPort)
   LG.add_edge!(c.edges, l_idx, r_idx)
   # TODO: error handling
 end
+
+⥅(l, r) = link_ports!(l, r)
+⥆(l, r) = link_ports!(r, l)
 
 "Remove an edge in CompArrow from port `l` to port `r`"
 function unlink_ports!(l::SubPort, r::SubPort)

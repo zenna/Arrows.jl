@@ -141,6 +141,7 @@ include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("../test/TestArrows.jl")
 include("../examples/ExampleArrows.jl")
+include("../analysis/plots.jl")
 
 # include("smt_solvers/z3interface.jl")
 end

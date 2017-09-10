@@ -246,23 +246,24 @@ end
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
   for i = 1:LG.nv(arr.edges)
-    if should_dst(sub_port_vtx(arr, i))
+    sarr = sub_port_vtx(arr, i)
+    if should_dst(sarr)
       # If it should be a desination
       if !(LG.indegree(arr.edges, i) == 1 &&
            LG.outdegree(arr.edges, i) == 0)
       # TODO: replace error with lens
-        errmsg = """vertex $i Port $i should be a dst but
-                    indeg is $(LG.indegree(arr.edges, i)) (notbe 1)
-                    outdeg is $(LG.outdegree(arr.edges, i)) (not 0)
+        errmsg = """vertex $i Port $(sarr) should be a dst but
+                    indeg is $(LG.indegree(arr.edges, i)) (should be 1)
+                    outdeg is $(LG.outdegree(arr.edges, i)) (should be 0)
                   """
         warn(errmsg)
         return false
       end
     end
-    if should_src(sub_port_vtx(arr, i))
+    if should_src(sarr)
       # if it should be a source
       if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
-        errmsg = """vertex $i Port $i is source but out degree is
+        errmsg = """vertex $i Port $(sarr) is source but out degree is
         $(LG.outdegree(arr.edges, i)) (should be >= 1)"""
         warn(errmsg)
         return false
@@ -338,7 +339,7 @@ print(io::IO, carr::CompArrow) = print(io, string(carr))
 show(io::IO, carr::CompArrow) = print(io, carr)
 
 function string(port::SubPort)
-  a = "SubArrow $(name(parent(port))) of $(name(parent(port))) - "
+  a = "SubPort $(name(port)) "
   b = string(deref(port))
   string(a, b)
 end
