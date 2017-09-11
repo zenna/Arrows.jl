@@ -10,9 +10,6 @@ dst_sub_ports(arr::CompArrow)::Vector{SubPorts} = filter(is_dst, sub_ports(arr))
 "All source (projecting) sub_ports"
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
 
-"is `port` a reference?"
-is_ref(sport::SubPort) = true
-
 "Is `sport` a port on one of the `SubArrow`s within `arr`"
 in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
 

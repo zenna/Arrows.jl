@@ -7,7 +7,6 @@ function inv(arr::CompArrow, const_in)
 end
 function inv(sarr::SubArrow)
   carr = deref(sarr)
-  @show parent(sarr)
   const_in = map(is_src_source, in_sub_ports(sarr))
   for sprt in in_sub_ports(sarr)
     arr = deref(src(sprt)).arrow

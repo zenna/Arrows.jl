@@ -92,3 +92,9 @@ function can_need_values(known::Values, targets::Values, cond_map::CondMap)::Val
   intersect(setdiff(needed_values(targets, cond_map), known),
             computable_values(known, cond_map))
 end
+
+"If we know `know`, what other values must be know"
+function known_values_if_know(know::Value)::Values
+  # Assume we know one output value we know them all
+  out_values(src_sub_arrow(know))
+end

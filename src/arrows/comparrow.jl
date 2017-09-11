@@ -214,8 +214,10 @@ on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport)
 all_proxy_ports(arr::CompArrow)::Vector{ProxyPort} = keys(arr.port_to_vtx_id)
 proxy_ports(sarr::SubArrow) = [ProxyPort(name(sarr), i) for i=1:num_ports(sarr)]
 
-## Add link remove SubArrs / Links ##
+## Ports of SubArrows ##
+ports(sarr::SubArrow)::Vector{Port} = ports(deref(sarr))
 
+## Add link remove SubArrs / Links ##
 "Add a `SubArrow` `arr` to `CompArrow` `carr`"
 function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   # TODO: FINISH!

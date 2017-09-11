@@ -41,11 +41,6 @@ abstract type Arrow <: AbstractArrow end
 
 abstract type ArrowRef <: AbstractArrow end
 
-# abstract type ArrowRef <: Arrow end
-
-"Is `arr` a reference?"
-is_ref(arr::Arrow) = isa(arr, ArrowRef)
-
 ## Printing ##
 "String for cartesian product of ports"
 port_prod(prts; kwargs...) = join([mann(prt; kwargs...) for prt in prts], " × ")

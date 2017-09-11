@@ -1,8 +1,22 @@
+"""Learning and inference with a P.L. twist
+
+## Code conventions
+
+- Use the following argument names
+
+- `prt`: `Port`
+- `sprt`: `SubPort`
+- `aarr`: `AbstractArrow`
+- `arr`: `Arrow`
+- `carr`: `CompArrow`
+- `sarr`: `SubArrow`
+
+"""
 module Arrows
 using ZenUtils
 
 import LightGraphs; const LG = LightGraphs
-import Base.Collections: PriorityQueue, dequeue!, peek
+import DataStructures: PriorityQueue, peek, dequeue!
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘
@@ -148,6 +162,8 @@ include("apply/propagate.jl")
 include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
+include("compile/imperative.jl")
+include("compile/simplepolicy.jl")
 
 include("apply/call.jl")
 # include("apply/interpret.jl")

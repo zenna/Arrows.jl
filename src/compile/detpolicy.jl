@@ -40,6 +40,8 @@ mutable struct DetPolicy <: Policy
   end
 end
 
+# DetPolicy Interface #
+
 "Composite Arrow which this is a policy for"
 arrow(pol::DetPolicy) = parent(first(pol.node_port_labels))
 isfresh(pol::DetPolicy) = pol.curr_node == 0
@@ -71,6 +73,14 @@ link_nodes!(pol::DetPolicy, dst::Vertex) = link_nodes!(pol, pol.curr_node, dst)
 "Update current node of `pol to `curr``"
 update_current!(pol::DetPolicy, curr::Vertex) = pol.curr_node = curr
 
+"Is `node` a `Compute` node?"
+is_compute_node(pol::DetPolicy, node::Vertex)::Bool =
+  pol.node_type_labels[node] == Compute
+
+"is `node` a `Branch node`?"
+is_branch_node(pol::DetPolicy, node::Vertex)::Bool =
+  pol.node_type_labels[node] == Branch
+
 "Compile `arr` into a `Policy`"
 function DetPolicy(known::Values, targets::Values)
   pol = DetPolicy() # new empty policy
@@ -85,21 +95,6 @@ function DetPolicy(arr::CompArrow)
   DetPolicy(known, targets)
 end
 
-"If we know `know`, what other values must be know"
-function known_values_if_know(know::Value)::Values
-  # Assume we know one output value we know them all
-  out_values(src_sub_arrow(know))
-end
-
-# "is `value` a switch predicate (i.e. input to at least one i of ite cond)"
-# function switch_predicate(value::Value)::Bool
-# end
-#
-# function uncertain_switch(value::Value, cond_map::CondMap)::Bool
-#   switch_predicate(value) && value ∉ keys(cond_map)
-# end
-
-# FIXME, fix maprecur so can add return typep to this of ::Vector{<:Policy}
 "Recursively get all the policies of `carr`"
 policies(carr::CompArrow) = maprecur(DetPolicy, carr)
 
@@ -111,7 +106,8 @@ function extend_policy!(pol::Policy, known::Values,
   # conditionals = (value for value in known if uncertain_switch(value, cond_map))
   #
   # # Invariants
-  @assert isempty(can_need) == all_known "Known: $known \n can_need: $can_need"# if targets is known, nothing to do!
+  # if targets is known, nothing to do!
+  @assert isempty(can_need) == all_known "Known: $known \n can_need: $can_need"
   if !isempty(can_need)
     next_value = first(can_need)
     # Add node to graph, make it the current node, label it with next_node
@@ -124,192 +120,5 @@ function extend_policy!(pol::Policy, known::Values,
     known = known_values_if_know(next_value) ∪ known
     extend_policy!(pol, known, targets, cond_map)
   end
-  # if isempty(can_need)
-  #   alt_port = first((k for (k, v) in cond_map if v))
-  #
-  #   add_branch_node!(pol, alt_port)
-  #   link_nodes!(pol, curr, pg)
-  #   curr = pg
-  #
-  #   # consider the case when it is true
-  #   cond_map[alt_port] = true
-  #   push!(known, alt_port)
-  #   extend_policy!(pol, known, cond_map)
-  #
-  #   # Consider the case when it is false
-  #   cond_map[alt_port] = true
-  #   push!(known, alt_port)
-  #   extend_policy!(pol, known, cond_map)
-  # else
-  #
-  # end
   pol
-end
-
-function is_compute_node(pol::DetPolicy, node::Vertex)::Bool
-  pol.node_type_labels[node] == Compute
-end
-
-function is_branch_node(pol::DetPolicy, node::Vertex)::Bool
-  pol.node_type_labels[node] == Branch
-end
-
-"Is `pol` well formed"
-function is_valid(pol::DetPolicy)::Bool
-  s = start_node(pol) = 1
-
-  function correct_branching(node)::Bool
-    if is_compute_node(pol, node)
-      println(node, "  !!  ", LG.outdegree(pol.edges, node))
-      LG.outdegree(pol.edges, node) ∈ [1, 0]
-    else
-      @assert is_branch_node(pol, node)
-      LG.outdegree(pol.edges, node) == 2
-    end
-  end
-
-  # All nodes should have correct branch
-  if !all(correct_branching(node) for node in LG.vertices(pol.edges))
-    println("Incorrect branching")
-    return false
-  end
-
-  if !LG.is_weakly_connected(pol.edges)
-    println("Not connected!")
-    return false
-  end
-
-  if LG.indegree(pol.edges, start_node(pol)) != 0
-    println("Start node broken!")
-    return false
-  end
-  return true
-end
-
-start_node(det::DetPolicy) = 1
-end_node(det::DetPolicy, curr::Vertex)::Bool =
-  LG.outdegree(det.edges, curr) == 0
-curr_value(pol::DetPolicy, node::Vertex)::Value = pol.node_port_labels[node]
-function next_node(pol::DetPolicy, node::Vertex)
-  # warn("will break for branching")
-  node + 1 #FIXME: WILL BREAK FOR
-end
-
-"Evaluate an arrow using a `pol` on `args`: arrow(pol)(args...)"
-function interpret(pol::DetPolicy, args...)
-  arr = arrow(pol)
-  if length(args) != num_in_ports(arr)
-    throw(DomainError())
-  end
-  # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
-  curr_node = start_node(pol)
-
-  # Until we reach the end node ...
-  while true
-    # 1. Find out which subarrow we need to compute to compute curr_node
-    val = curr_value(pol, curr_node)
-    sarr = src_sub_arrow(val)
-
-    # FIXME: dont repeat execution of sarr if we already have `val`
-
-    # 2. Find both input and output values for this subarrow
-    invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
-
-    # 3. Extract actual values for these `Values` and execute subarrow on this
-    valvals = [vals[val] for val in invals]
-    ops = interpret(deref(sarr), valvals...)
-
-    # 4. Update all outputs of subarrow with value
-    for (i, op) in enumerate(ops)
-      vals[outvals[i]] = ops[i]
-    end
-
-    # Stop if we reach the end node
-    if end_node(pol, curr_node)
-      break
-    else
-      curr_node = next_node(pol, curr_node)
-    end
-  end
-  sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
-  [vals[val] for val in outvals]
-end
-
-"Evaluate an arrow using a `pol` on `args`: arrow(pol)(args...)"
-function pinterpret(pol::DetPolicy, f, args...)
-  arr = arrow(pol)
-  if length(args) != num_in_ports(arr)
-    @show length(args), num_in_ports(arr)
-    throw(DomainError())
-  end
-  # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
-  curr_node = start_node(pol)
-
-  # Until we reach the end node ...
-  while true
-    # 1. Find out which subarrow we need to compute to compute curr_node
-    val = curr_value(pol, curr_node)
-    sarr = src_sub_arrow(val)
-
-    # FIXME: dont repeat execution of sarr if we already have `val`
-
-    # 2. Find both input and output values for this subarrow
-    invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
-
-    # 3. Extract actual values for these `Values` and execute subarrow on this
-    valvals = [vals[val] for val in invals]
-    ops = f(sarr, valvals...)
-
-    # 4. Update all outputs of subarrow with value
-    for (i, op) in enumerate(ops)
-      vals[outvals[i]] = ops[i]
-    end
-
-    # Stop if we reach the end node
-    if end_node(pol, curr_node)
-      break
-    else
-      curr_node = next_node(pol, curr_node)
-    end
-  end
-  sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
-  [vals[val] for val in outvals]
-end
-
-expr(arr::SourceArrow, args...) = arr.value
-expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
-
-"Convert a policy into a julia program"
-function pol_to_julia(pol::Policy)
-  carr = arrow(pol)
-  argnames = map(name, in_values_vec(sub_arrow(carr)))
-  coutnames = map(name, out_values_vec(sub_arrow(carr)))
-  assigns = Vector{Expr}()
-  ouputs = Vector{Expr}()
-  function f(sarr::SubArrow, args...)
-    arr = deref(sarr)
-    outnames = map(name, tuple(out_values_vec(sarr)...))
-    lhs = Expr(:tuple, outnames...)
-    rhs = expr(arr, args...)
-    push!(assigns, Expr(:(=), lhs, rhs))
-    outnames
-  end
-  pinterpret(pol, f, argnames...)
-
-  #
-  retargs = Expr(:tuple, coutnames...)
-  ret = Expr(:return, retargs)
-  # Function head
-  funcname = name(carr)
-  funchead = Expr(:call, funcname, argnames...)
-  # function block
-  funcblock = Expr(:block, assigns..., ret)
-  # All together
-  Expr(:function, funchead, funcblock)
 end

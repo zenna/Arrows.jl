@@ -7,16 +7,10 @@ struct Port{A <: Arrow, T <: Integer} <: AbstractPort
   port_id::T
 end
 
-"Is `port` a reference?"
-is_ref(port::Port) = false
-
+"Barebone mechanism to add attributes to a `Port`: it either has label or not"
 Label = Symbol
 
-
-"""port properties: properties instrinsic to a port.
-
-- `PortProp`s are a property of an Arrow or SubtractArrow
-"""
+"""Port Properties: properties instrinsic to a port."""
 mutable struct PortProps
   is_in_port::Bool
   name::Symbol
@@ -85,43 +79,42 @@ end
 "all ports of arrow"
 ports(arr::Arrow)::Vector{Port} = [Port(arr, i) for i = 1:num_ports(arr)]
 
-"out_ports of arr"
-function out_ports(arr::Arrow)::Vector{<:AbstractPort}
-  collect(filter(p -> is_out_port(p), ports(arr)))
-end
+"out_ports of `aarr`"
+out_ports(aarr::AbstractArrow)::Vector{Port} = filter(is_out_port, ports(aarr))
 
 "`i`th out_port of `arr`"
-out_port(arr::Arrow, i::Integer)::AbstractPort = out_ports(arr)[i]
+out_port(aarr::AbstractArrow, i::Integer)::Port = out_ports(aarr)[i]
 
 "in_ports of arr"
-function in_ports(arr::Arrow)::Vector{<:AbstractPort}
-  collect(filter(p -> is_in_port(p), ports(arr)))
-end
+in_ports(aarr::AbstractArrow)::Vector{Port} = filter(is_in_port, ports(aarr))
 
 "`i`th in_port of `arr`"
-in_port(arr::Arrow, i::Integer)::AbstractPort = in_ports(arr)[i]
+in_port(aarr::AbstractArrow, i::Integer)::Port = in_ports(aarr)[i]
 
-## Num_ports
-"How manny ports does `arr` have"
-# num_ports(arr::AbstractArrow)::Integer = length(ports(arr))
-num_ports(arr::AbstractArrow) = length(port_props(arr))
+## Num_ports ##
 
-"How many out ports does `arr` have"
-num_out_ports(arr::AbstractArrow)::Integer = length(out_ports(arr))
+"How manny ports does `aarr` have"
+num_ports(aarr::AbstractArrow) = length(port_props(aarr))
 
-"How many in ports does `arr` have"
-num_in_ports(arr::AbstractArrow)::Integer = length(in_ports(arr))
+"How many out ports does `aarr` have"
+num_out_ports(aarr::AbstractArrow)::Integer = length(out_ports(aarr))
 
+"How many in ports does `aarr` have"
+num_in_ports(aarr::AbstractArrow)::Integer = length(in_ports(aarr))
+
+"Name of `port` where `pa == port_props(port)`"
 name(pa::PortProps) = pa.name
+
+"Name of `port`"
 name(port::Port) = name(port_props(port))
 
-"Names of each port of `arr`"
+"Ordered Names of each port of `arr`"
 port_names(arr::Arrow) = name.(ports(arr))
 
 ## Label ##
-"out_ports of arr"
-function ports(arr::Arrow, lb::Label)::Vector{<:AbstractPort}
-  collect(filter(p -> has_port_label(p, lb), ports(arr)))
+"ports in `arr` with label"
+function ports(aarr::AbstractArrow, lb::Label)::Vector{Port}
+  collect(filter(p -> has_port_label(p, lb), ports(aarr)))AbstractArrow
 end
 
 "Does `port` have `label` `lb`?"
