@@ -130,7 +130,7 @@ name(carr::CompArrow)::ArrowName = carr.name
 
 "Names of all `SubArrows` in `arr`, inclusive"
 all_names(arr::CompArrow)::Vector{ArrowName} =
-  collect(keys(arr.sarr_name_to_arrow))
+  sort(collect(keys(arr.sarr_name_to_arrow)))
 
 "Names of all `SubArrows` in `arr`, exclusive of `arr`"
 names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
@@ -184,8 +184,12 @@ function sub_port(sarr::SubArrow, port::Port)::SubPort
 end
 
 "All the `SubPort`s of all `SubArrow`s on and within `arr`"
-all_sub_ports(arr::CompArrow)::Vector{SubPort} =
-  [SubPort(SubArrow(arr, pxp.arrname), pxp.port_id) for pxp in keys(arr.port_to_vtx_id)]
+function all_sub_ports(arr::CompArrow)::Vector{SubPort}
+  # TODO: Make subarrow sorting more principled
+  sorted_keys = sort(collect(keys(arr.port_to_vtx_id)),
+                     lt=(p1, p2) -> p1.arrname < p2.arrname)
+  [SubPort(SubArrow(arr, pxp.arrname), pxp.port_id) for pxp in sorted_keys]
+end
 
 "`SubPort`s from `SubArrow`s within `arr` but not boundary"
 inner_sub_ports(arr::CompArrow)::Vector{SubPort} =

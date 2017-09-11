@@ -1,7 +1,12 @@
 "Benchmark example arrows"
 module ExampleArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, set_parameter_port!
+import Arrows: add_sub_arr!,
+               in_sub_port,
+               out_sub_port,
+               inv_add,
+               inv_mul,
+               set_parameter_port!
 
 include("kinematics/kinematics.jl")
 include("invgraphics/voxel_render.jl")

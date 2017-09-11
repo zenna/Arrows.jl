@@ -1,4 +1,3 @@
-
 ### Testing Drawing
 function example_data_angles(path_length::Integer)
   angles = rand(path_length) * 2π
@@ -14,20 +13,87 @@ function test_draw()
   drawscene(angles, obstacles, x_target, y_target)
 end
 
-# Tests #
-function example_data(path_length::Integer)
-  # obstacles = [Circle([5.0, 5.0], 3.0)]
-  obstacles = [Circle([5.0, 5.0], 1.0)]
-  points = mvuniform(0, 10, 2, path_length)
-  origin = Rectangle([0.0 0.0
-                      0.2 0.2])
-  dest = Rectangle([9.9 9.9
-                    10.0 10.0])
-  points, origin, dest, obstacles
+function test_invert()
+  arr = fwd_2d_linkage_obs(3)
+  invarr = Arrows.approx_invert(arr)
+  num_in_ports(invarr)
+  invarr(1.0, 1.0, rand(18)...)
 end
 
-function test_mp2d(path_length = 4, nsamples = 1)
-  points, origin, dest, obstacles = example_data(path_length)
-  good_path = validpath(points, obstacles, origin, dest)
-  sample = rand(points, good_path, nsamples; precision = 0.01, parallel = true, ncores = nprocs() - 1) / 10.0
+"Compute vertices from angles"
+function vertices(angles::Vector)
+  xs = [0.0]
+  ys = [0.0]
+  total = 0.0
+  sin_total = 0.0
+  cos_total = 0.0
+  for i = 1:length(angles)
+    total = total + angles[i]
+    sin_total += sin(total)
+    xs = vcat(xs, [sin_total])
+    cos_total += cos(total)
+    ys = vcat(ys, [cos_total])
+  end
+  permutedims(hcat(xs, ys), (2, 1))
 end
+
+function analyze_kinematics(nlinks = 3)
+  fwd = fwd_2d_linkage(nlinks)
+  invarr = Arrows.approx_invert(fwd)
+  @show invarr = approx_invert(fwd)
+  invloss = Arrows.iden_loss(fwd, invarr)
+  @show nparams = num_in_ports(invloss) - 2
+  @show invlossjl = Arrows.julia(invloss)
+  @show invarrjl = Arrows.julia(invarr)
+
+  x, y = 1.0, 1.0
+  i = 0
+  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3)]
+  function invlossf(θs::Vector, grad::Vector)
+    loss = invlossjl(x, y, θs...)[1]
+    angles = invarrjl(x, y, θs...)
+    pointmat = ExampleArrows.vertices([angles...])
+    if (i % 100 == 0) && (loss < 0.001)
+      ExampleArrows.drawscene(pointmat, obstacles, x, y)
+    end
+    i += 1
+    @show loss
+  end
+
+  Arrows.hist_compare(fwd, invlossf, nparams; nsamples=1000)
+end
+
+analyze_kinematics(2)
+0.373882, 0.394303, 0.772134
+nlinks = 2
+fwd = fwd_2d_linkage(nlinks)
+invarr = Arrows.approx_invert(fwd)
+invarr(1.0, 1.0, 0.373882, 0.394303, 0.772134)
+invloss = Arrows.iden_loss(fwd, invarr)
+invloss(1.0, 1.0, 1.02221, 0.205185, 0.828272)
+
+fwd(0.5999993467050988, 0.373882)
+
+fwd = fwd_2d_linkage(nlinks)
+invarr = Arrows.approx_invert(fwd)
+@show invarr = approx_invert(fwd)
+invloss = Arrows.iden_loss(fwd, invarr)
+@show nparams = num_in_ports(invloss) - 2
+@show invlossjl = Arrows.julia(invloss)
+@show invarrjl = Arrows.julia(invarr)
+x, y = 1.0, 1.0
+i = 0
+obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3)]
+function invlossf(θs::Vector, grad::Vector)
+  loss = invlossjl(x, y, θs...)[1]
+  angles = invarrjl(x, y, θs...)
+  pointmat = ExampleArrows.vertices([angles...])
+  ExampleArrows.drawscene(pointmat, obstacles, x, y)
+  loss
+end
+
+invlossf([1.02221, 0.205185, 0.828272], [])
+
+
+ExampleArrows
+Arrows.hist_compare()

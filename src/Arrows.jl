@@ -101,7 +101,11 @@ export
   # Inverse Arrows
   InvDuplArrow,
   inv_add,
-  inv_mul
+  inv_mul,
+
+  # Optim
+  julia,
+  iden_loss
 
 include("util/misc.jl")
 include("util/lightgraphs.jl")
@@ -162,9 +166,11 @@ include("optim/loss.jl")
 include("targets/julia/julia.jl")
 include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
-# include("../test/TestArrows.jl")
+include("../test/TestArrows.jl")
 # include("../examples/ExampleArrows.jl")
-# include("../analysis/plots.jl")
+
+# Analysis
+include("../analysis/plots.jl")
 
 # include("smt_solvers/z3interface.jl")
 end

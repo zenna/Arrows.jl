@@ -189,17 +189,6 @@ function fwd_2d_linkage_obs(nlinks::Integer)
   carr
 end
 
-arr = fwd_2d_linkage_obs(2)
-invarr = Arrows.approx_invert(arr)
-num_in_ports(invarr)
-invarr(1.0, 1.0, rand(18)...)
-
-
-adds = filter(sarr -> isa(Arrows.deref(sarr), CompArrow), Arrows.sub_arrows(arr))
-map(Arrows.is_src_source, in_sub_ports(adds[2]))
-
-Arrows.consadds[1]
-1+1
 ## Drawing ##
 "Draw a circle"
 function draw(c::Circle)
