@@ -144,10 +144,13 @@ include("combinators/compose.jl")
 # Compilation and application of an arrow #
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
+
+include("compile/policy.jl")
+include("compile/depend.jl")
+include("compile/detpolicy.jl")
+
+include("apply/call.jl")
 # include("apply/interpret.jl")
-include("apply/depend.jl")
-include("apply/policy.jl")
-include("apply/compile.jl")
 
 # Graph Transformations #
 include("transform/walk.jl")
