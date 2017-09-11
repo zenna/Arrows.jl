@@ -67,7 +67,7 @@ end
 - `res: x_1 × ⋯ × x_n -> x_1 × ⋯ × x_n × y_1 ⋯ × y_n
 """
 function dupl_first(arr::Arrow, pass=in_ports(arr), name=pfx(:dupl_first, arr))
-  carr = CompArrow(:name)
+  carr = CompArrow(:dupl_first)
   sarr = add_sub_arr!(carr, arr)
   link_loose_in_ports!(sarr)
   link_loose_out_ports!(sarr)
