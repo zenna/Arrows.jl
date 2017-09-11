@@ -34,6 +34,10 @@ function ParametricEdge(e::Edge)
   ParametricEdge(hcat(origin,dir))
 end
 
+dot(a::Vector{<:SubPort}, b) = sum(a .* b)
+dot(a, b::Vector{<:SubPort}) = sum(a .* b)
+dot(a::Vector{<:SubPort}, b::Vector{<:SubPort}) = sum(a .* b)
+
 "Where - if anywhere - along `p` does it intersect segment"
 function intersect_segments(ppos::Point, pdir::Vec, qpos::Point, qdir::Vec)
   @show ppos
@@ -67,25 +71,27 @@ function intersects(e1::ParametricEdge, circle::Circle)
   raydir = e1.coords[:,2]
   r = circle.r
   f = rayorig - circle.center # Vector from center sphere to ray start
+  @show raydir
+  @show f
   a = dot(raydir, raydir)
   b = 2.0 * dot(f, raydir)
   c = dot(f, f) - r*r
 
   # discriminant
-  b * b - 4 * a * c < 0
+  constraint = b * b - 4 * a * c < 0
+  Arrows.assert!(constraint)
 end
 
 intersects(e1::ParametricEdge, e2::Edge) = intersects(e1, ParametricEdge(e2))
 
 "Do `points` avoid `obs`tacles?"
-function pairwisecompare(edges::Vector, obs)
+function pairwisecompare!(edges::Vector, obs)
   @show edges
   @show obs
   @show conditions = [intersects(e, o) for e in edges, o in obs]
-  (&)(conditions...)
+  # (&)(conditions...)
 end
 
-import Base.convert
 function to_param_edge(points)
   [ParametricEdge([points[:,i] (points[:,i+1] - points[:,i])])
            for i = 1:size(points,2)-1]
@@ -93,7 +99,7 @@ end
 
 function validpath(points, obstacles)
   param_edges = to_param_edge(points)
-  avoids_obstacles = pairwisecompare(param_edges, obstacles)
+  avoids_obstacles = pairwisecompare!(param_edges, obstacles)
   avoids_obstacles
 end
 
@@ -170,26 +176,30 @@ function fwd_2d_linkage_obs(nlinks::Integer)
   x, y = out_sub_ports(carr)
   link_ports!((total_sin, 1), x)
   link_ports!((total_cos, 1), y)
-  Arrows.link_loose_out_ports!(carr)
-  carr, midsumxs, midsumys
+
+  ## Assert constraints
+  points = Matrix{SubPort}(2, nlinks)
+  for i = 1:length(midsumxs)
+    points[1, i] = midsumxs[i]
+    points[2, i] = midsumys[i]
+  end
+  obstacles = [Circle([5.0, 5.0], 1.0)]
+  constraint = validpath(points, obstacles)
+
+  carr
 end
 
-# function tester()
-carr, midsumxs, midsumys = fwd_2d_linkage_obs(3)
-points = Matrix{SubPort}(2, 3)
-# for i = 1:length(midsumxs)
-#   points[1, i] = midsumxs[i]
-#   points[2, i] = midsumys[i]
-# end
-# points = [[midsumxs[i], midsumys[i]] for i = 1:length(midsumxs)]
-# points'[:, 1]
-# obstacles = [Circle([5.0, 5.0], 1.0)]
-obstacles = [Circle([SourceArrow(5.0), SourceArrow(5.0)],
-                     SourceArrow(1.0))]
-#
-# validpath(points, obstacles)
-# end
+arr = fwd_2d_linkage_obs(2)
+invarr = Arrows.approx_invert(arr)
+num_in_ports(invarr)
+invarr(1.0, 1.0, rand(18)...)
 
+
+adds = filter(sarr -> isa(Arrows.deref(sarr), CompArrow), Arrows.sub_arrows(arr))
+map(Arrows.is_src_source, in_sub_ports(adds[2]))
+
+Arrows.consadds[1]
+1+1
 ## Drawing ##
 "Draw a circle"
 function draw(c::Circle)
@@ -218,6 +228,7 @@ function drawpath(points)
   end
 end
 
+"Draw all the obstacles"
 drawobstacles(obstacles) = foreach(draw, obstacles)
 
 "Draw the path, target and obstacles"
@@ -233,19 +244,4 @@ function drawscene(points, obstacles, x, y)
 
   finish()
   preview()
-end
-
-"`line` does not collide with `rec`"
-function no_collide(line, rec::Rectangle)
-end
-
-# I want to verify that each link is not colliding with objects
-function does_collide(points::Vector, obstacles)
-  line_segments = [(points[i], points[i+1]) for i = 1:lengh(points) - 1]
-  no_collide = []
-  for line in line_segments
-    for obs in obstacles
-      nocollide = no_collide(line, obs)
-    end
-  end
 end

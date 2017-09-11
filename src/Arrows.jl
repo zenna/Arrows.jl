@@ -29,9 +29,12 @@ import Base:  ^,
               exp,
               in,
               sqrt,
+              abs,
               parent,
               >>,
-              <<
+              <<,
+              dot,
+              identity
 export
   compose,
   name,
@@ -48,6 +51,8 @@ export
   add_sub_arr!,
   out_sub_port,
   out_sub_ports,
+  sub_arrow,
+  sub_arrows,
   sub_ports,
   in_sub_port,
   in_sub_ports,
@@ -67,11 +72,16 @@ export
   interpret,
   invert!,
   invert,
+  approx_invert,
   duplify!,
+  assert!,
+  deref,
+
+  SourceArrow,
+  AssertArrow,
 
   AddArrow,
   MulArrow,
-  SourceArrow,
   CondArrow,
   EqualArrow,
   SubtractArrow,
@@ -109,10 +119,13 @@ include("arrows/trace.jl")
 
 # Library #
 include("library/common.jl")
+
+include("library/assert.jl")
+include("library/source.jl")
+
 include("library/arithmetic.jl")
 include("library/inequalities.jl")
 include("library/control.jl")
-include("library/source.jl")
 include("library/array.jl")
 include("library/compound.jl")
 
@@ -136,6 +149,7 @@ include("apply/compile.jl")
 include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
+include("transform/invprim.jl")
 include("transform/totalize.jl")
 
 # Integration of arrow with julia #
@@ -148,9 +162,9 @@ include("optim/loss.jl")
 include("targets/julia/julia.jl")
 include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
-include("../test/TestArrows.jl")
-include("../examples/ExampleArrows.jl")
-include("../analysis/plots.jl")
+# include("../test/TestArrows.jl")
+# include("../examples/ExampleArrows.jl")
+# include("../analysis/plots.jl")
 
 # include("smt_solvers/z3interface.jl")
 end

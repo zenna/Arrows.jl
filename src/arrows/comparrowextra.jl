@@ -343,6 +343,8 @@ string(carr::CompArrow) = mann(carr)
 print(io::IO, carr::CompArrow) = print(io, string(carr))
 show(io::IO, carr::CompArrow) = print(io, carr)
 
+string(sarr::SubArrow) = """$(name(sarr)) ∈ $(deref(sarr))"""
+
 function string(port::SubPort)
   a = "SubPort $(name(port)) "
   b = string(deref(port))

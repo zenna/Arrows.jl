@@ -60,6 +60,11 @@ struct SqrArrow <: PrimArrow end
 name(::SqrArrow)::Symbol = :sqr
 port_props(::SqrArrow) = unary_arith_port_props()
 
+"abs(x)"
+struct AbsArrow <: PrimArrow end
+name(::AbsArrow)::Symbol = :abs
+port_props(::AbsArrow) = unary_arith_port_props()
+
 sqr(x) = (x^2,)
 
 "log(b, x)"

@@ -28,28 +28,22 @@ const ignoretyp = Set([DuplArrow,
                       EqualArrow,
                       MeanArrow])
 for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, subtypes(PrimArrow))
-  opa = name(parrtyp())
-  # @show arrowname = Symbol(parrtyp)
-  eval(
-  quote
-  ($opa)(xs::Vararg{SubPort}) = inner($parrtyp, xs...)
-  ($opa)(x::SubPort, y) = ($opa)(x, promote_constant(parent(x), y))
-  ($opa)(x, y::SubPort) = ($opa)(promote_constant(parent(y), x), y)
-  ($opa)(x::SubPort, y::SubPort) = inner($parrtyp, x, y)
-  end)
+  arr = parrtyp()
+  opa = name(arr)
+
+  if num_in_ports(arr) == 1
+    eval(
+    quote
+    ($opa)(x::SubPort) = inner($parrtyp, x)
+    end)
+  elseif num_in_ports(arr) == 2
+    # @show arrowname = Symbol(parrtyp)
+    eval(
+    quote
+    # ($opa)(xs::Vararg{SubPort}) = inner($parrtyp, xs...)
+    ($opa)(x::SubPort, y) = ($opa)(x, promote_constant(parent(x), y))
+    ($opa)(x, y::SubPort) = ($opa)(promote_constant(parent(y), x), y)
+    ($opa)(x::SubPort, y::SubPort) = inner($parrtyp, x, y)
+    end)
+  end
 end
-
-# 1 + 1
-
-# @show Arrows.MulArrow
-# ```
-# for Typ in subtypes(MyType)
-#   typname = Symbol(Typ)
-#   eval(
-#   quote
-#   function f(x)
-#     x = $typname()
-#   end
-#   end)
-# end
-# ```

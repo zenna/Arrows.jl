@@ -33,12 +33,13 @@ function analyze_kinematics(nlinks = 3)
 
   x, y = 1.0, 1.0
   i = 0
+  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3)]
   function invlossf(θs::Vector, grad::Vector)
     loss = invlossjl(x, y, θs...)[1]
     angles = invarrjl(x, y, θs...)
     pointmat = vertices([angles...])
     if i % 100 == 0
-      ExampleArrows.drawscene(pointmat, [], x, y)
+      ExampleArrows.drawscene(pointmat, obstacles, x, y)
     end
     i += 1
     loss
@@ -47,4 +48,4 @@ function analyze_kinematics(nlinks = 3)
   hist_compare(fwd, invlossf, nparams; nsamples=1000)
 end
 
-analyze_kinematics(8)
+analyze_kinematics(4)

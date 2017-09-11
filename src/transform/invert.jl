@@ -1,23 +1,25 @@
-# FIXME: Switch to symbols instead of numbers
-# TODO: Add is_valid for These portmaps to check
-const BIN_PORT_MAP = Dict(1 => 3, 2 => 4, 3 => 1)
-# FIXME: Is this correct?
-const SYMB_BIN_PORT_MAP = Dict(:x => :x, :y => :y, :z => :z)
-inv{O}(arr::DuplArrow{O}) =
-  (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
-inv(arr::AddArrow) = (inv_add(), BIN_PORT_MAP)
-inv(arr::CosArrow) = (ACosArrow(), Dict(1 => 2, 2 => 1))
-inv(arr::MulArrow) = (inv_mul(), BIN_PORT_MAP)
-inv(arr::SourceArrow) = (SourceArrow(arr.value), Dict(1 => 1))
-inv(arr::SinArrow) = (ASinArrow(), Dict(1 => 2, 2 => 1))
-inv(arr::NegArrow) = (NegArrow(),  Dict(1 => 2, 2 => 1))
-inv(arr::ExpArrow) = (LogArrow(),  Dict(1 => 2, 2 => 1))
-inv(arr::IdentityArrow) = (IdentityArrow(),  Dict(1 => 2, 2 => 1))
-
-inv(arr::SubArrow) = inv(deref(arr))
+"Is `sport` (function of) output of `SourceArrow`, i.e. constant"
+is_src_source(sport::SubPort) = isa(deref(src(sport)).arrow, SourceArrow)
+function inv(arr::CompArrow, const_in)
+  @show arr
+  @assert !any(const_in)
+  (invert(arr), iden_port_map(arr))
+end
+function inv(sarr::SubArrow)
+  carr = deref(sarr)
+  @show parent(sarr)
+  const_in = map(is_src_source, in_sub_ports(sarr))
+  for sprt in in_sub_ports(sarr)
+    arr = deref(src(sprt)).arrow
+    if isa(arr, SourceArrow)
+      @show arr.value
+    end
+  end
+  inv(deref(sarr), const_in)
+end
 # FIXME? is it ok to use invert!, what about source
-inv(arr::CompArrow) = (invert(arr), iden_port_map(arr))
 
+"Check that no subports with more than out outgoing edge"
 function check_reuse(arr)
   if !no_reuse(arr)
     print("Must eliminate reuse of values before `invert`, use `duplify`")
@@ -33,6 +35,7 @@ function need_switch(l::Link)
   needswitch1
 end
 
+"If a link is backwards, unlink reverse the direction"
 function fix_link!(link::Link)
   if need_switch(link)
     unlink_ports!(link...)
@@ -42,10 +45,7 @@ function fix_link!(link::Link)
 end
 
 "`fix_link` all the links in `arr`"
-function fix_links!(arr::CompArrow)::CompArrow
-  foreach(fix_link!, links(arr))
-  arr
-end
+fix_links!(arr::CompArrow)::CompArrow = (foreach(fix_link!, links(arr)); arr)
 
 "Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
 function invert_all_ports!(arr::CompArrow)::CompArrow
@@ -53,6 +53,7 @@ function invert_all_ports!(arr::CompArrow)::CompArrow
   arr
 end
 
+"Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
 """Construct a parametric inverse of `arr`
