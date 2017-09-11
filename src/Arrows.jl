@@ -1,12 +1,6 @@
 module Arrows
 using ZenUtils
-# using SMTBase
-# using Z3
-# import SMTBase: Variable, ParameterExpr, Parameter, ConstraintSet, ParameterSet,
-#                 ConstantVar, nonnegparam, IndexedParameter, shape, VarArray, ConstrainedParameter,
-#                 TransformedParameter, parameters, FixedLenVarArray
 
-# using Distributions
 import LightGraphs; const LG = LightGraphs
 import Base.Collections: PriorityQueue, dequeue!, peek
 
@@ -27,7 +21,14 @@ import Base:  ^,
               |,
               &,
               !,
+              cos,
+              acos,
+              sin,
+              asin,
+              log,
+              exp,
               in,
+              sqrt,
               parent,
               >>,
               <<
@@ -97,6 +98,7 @@ include("util/lightgraphs.jl")
 
 # include("types.jl")
 
+# Core Arrow Data structures #
 include("arrows/arrow.jl")
 include("arrows/port.jl")
 include("arrows/primarrow.jl")
@@ -104,11 +106,11 @@ include("arrows/comparrow.jl")
 include("arrows/comparrowextra.jl")
 include("arrows/value.jl")
 include("arrows/trace.jl")
-include("arrows/port_arith.jl")
 
-# Library
+# Library #
 include("library/common.jl")
 include("library/arithmetic.jl")
+include("library/inequalities.jl")
 include("library/control.jl")
 include("library/source.jl")
 include("library/array.jl")
@@ -117,9 +119,12 @@ include("library/compound.jl")
 include("library/inv_control.jl")
 include("library/inv_arith.jl")
 include("library/statistics.jl")
+include("library/boolean.jl")
 
+# Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
 
+# Compilation and application of an arrow #
 include("apply/preddisp.jl")
 include("apply/propagate.jl")
 # include("apply/interpret.jl")
@@ -127,17 +132,19 @@ include("apply/depend.jl")
 include("apply/policy.jl")
 include("apply/compile.jl")
 
-
+# Graph Transformations #
 include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/totalize.jl")
 
+# Integration of arrow with julia #
+include("host/overload.jl")
 
+# Optimziation and Learning #
 include("optim/loss.jl")
 
-# include("library.jl")
-
+# Examples, etc #
 include("targets/julia/julia.jl")
 include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 

@@ -293,31 +293,34 @@ function pinterpret(pol::DetPolicy, f, args...)
   [vals[val] for val in outvals]
 end
 
+expr(arr::SourceArrow, args...) = arr.value
+expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
+
 "Convert a policy into a julia program"
 function pol_to_julia(pol::Policy)
   carr = arrow(pol)
   argnames = map(name, in_values_vec(sub_arrow(carr)))
   coutnames = map(name, out_values_vec(sub_arrow(carr)))
-  calls = Vector{Expr}()
-  outputs = Vector{Expr}()
+  assigns = Vector{Expr}()
+  ouputs = Vector{Expr}()
   function f(sarr::SubArrow, args...)
     arr = deref(sarr)
     outnames = map(name, tuple(out_values_vec(sarr)...))
-    push!(outputs, Expr(:tuple, outnames...))
-    push!(calls, Expr(:call, name(arr), args...))
+    lhs = Expr(:tuple, outnames...)
+    rhs = expr(arr, args...)
+    push!(assigns, Expr(:(=), lhs, rhs))
     outnames
   end
   pinterpret(pol, f, argnames...)
 
   #
-  outcalls = map((out, call) -> Expr(:(=), out, call), outputs, calls)
   retargs = Expr(:tuple, coutnames...)
   ret = Expr(:return, retargs)
   # Function head
   funcname = name(carr)
   funchead = Expr(:call, funcname, argnames...)
   # function block
-  funcblock = Expr(:block, outcalls..., ret)
+  funcblock = Expr(:block, assigns..., ret)
   # All together
   Expr(:function, funchead, funcblock)
 end

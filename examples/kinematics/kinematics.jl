@@ -9,12 +9,12 @@ abstract type Shape{N} end
 
 "2D Rectangle"
 immutable Rectangle <: Shape{2}
-  bounds::Mat{Float64}
+  bounds::Mat
 end
 
 "Circle"
 immutable Circle <: Shape{2}
-  center::Vec{Float64}
+  center::Vec
   r
 end
 
@@ -54,7 +54,6 @@ end
 "Parametric Edges from angles"
 function anglestoedge(angles::Vector)
   ps = vertices(angles)
-  println("PS", ps)
   dirs = directions(ps)
   ps = ps[:, 1:end-1]
   @assert length(ps) == length(dirs)
@@ -69,19 +68,33 @@ function intersects(e1::ParametricEdge, circle::Circle)
   r = circle.r
   f = rayorig - circle.center # Vector from center sphere to ray start
   a = dot(raydir, raydir)
-  b = 2.0 * dot(f,raydir)
-  c = dot(f,f) - r*r
+  b = 2.0 * dot(f, raydir)
+  c = dot(f, f) - r*r
 
   # discriminant
-  b*b-4*a*c < 0
+  b * b - 4 * a * c < 0
 end
 
 intersects(e1::ParametricEdge, e2::Edge) = intersects(e1, ParametricEdge(e2))
 
 "Do `points` avoid `obs`tacles?"
 function pairwisecompare(edges::Vector, obs)
-  conditions = [intersects(e, o) for e in edges, o in obs]
+  @show edges
+  @show obs
+  @show conditions = [intersects(e, o) for e in edges, o in obs]
   (&)(conditions...)
+end
+
+import Base.convert
+function to_param_edge(points)
+  [ParametricEdge([points[:,i] (points[:,i+1] - points[:,i])])
+           for i = 1:size(points,2)-1]
+end
+
+function validpath(points, obstacles)
+  param_edges = to_param_edge(points)
+  avoids_obstacles = pairwisecompare(param_edges, obstacles)
+  avoids_obstacles
 end
 
 "Forward kinematics of 2D robot arm"
@@ -120,19 +133,10 @@ function fwd_2d_linkage(nlinks::Integer)
 end
 
 "Forward kinematics of 2D robot arm"
-function fwd_2d_linkage_points(nlinks::Integer)
-  inp_names = [Symbol(:ϕ, i) for i=1:nlinks]
-  xs = [Symbol(:x, i) for i = 1:nlinks]
-  ys = [Symbol(:y, i) for i = 1:nlinks]
-  carr = CompArrow(:fwd_kin, inp_names, vcat(xs, ys))
+function fwd_2d_linkage_obs(nlinks::Integer)
+  inp_names = [Symbol(:ϕ_, i) for i=1:nlinks]
+  carr = CompArrow(:fwd_kin, inp_names, [:x, :y])
   angles = in_sub_ports(carr)
-  xsys = out_sub_ports(carr)
-  @show length(xsys)
-  mid = Int(length(xsys)/2)
-  xs = xsys[1:mid]
-  ys = xsys[mid+1:end]
-  @assert length(xs) == length(ys)
-
   curr_angle = first(angles)
   sum_angles = [curr_angle]
   for i = 2:nlinks
@@ -143,22 +147,50 @@ function fwd_2d_linkage_points(nlinks::Integer)
     push!(sum_angles, curr_angle)
   end
 
+  total_sin = add_sub_arr!(carr, Arrows.addn_accum_linke(length(sum_angles)))
   for (i, angle) in enumerate(sum_angles)
     sinarr = add_sub_arr!(carr, SinArrow())
     link_ports!(angle, (sinarr, 1))
-    link_ports!((sinarr, 1), xs[i])
+    link_ports!((sinarr, 1), (total_sin, i))
   end
 
+  midsumxs = out_sub_ports(total_sin)[2:end]
+
+  total_cos = add_sub_arr!(carr, Arrows.addn_accum_linke(length(sum_angles)))
   for (i, angle) in enumerate(sum_angles)
-    cos = add_sub_arr!(carr, CosArrow())
-    link_ports!(angle, (cos, 1))
-    link_ports!((cos, 1), ys[i])
+    cosarr = add_sub_arr!(carr, CosArrow())
+    link_ports!(angle, (cosarr, 1))
+    link_ports!((cosarr, 1), (total_cos, i))
   end
-  carr
+
+  midsumys = out_sub_ports(total_cos)[2:end]
+
+  @show midsumys, midsumxs
+
+  x, y = out_sub_ports(carr)
+  link_ports!((total_sin, 1), x)
+  link_ports!((total_cos, 1), y)
+  Arrows.link_loose_out_ports!(carr)
+  carr, midsumxs, midsumys
 end
 
-## Drawing ##
+# function tester()
+carr, midsumxs, midsumys = fwd_2d_linkage_obs(3)
+points = Matrix{SubPort}(2, 3)
+# for i = 1:length(midsumxs)
+#   points[1, i] = midsumxs[i]
+#   points[2, i] = midsumys[i]
+# end
+# points = [[midsumxs[i], midsumys[i]] for i = 1:length(midsumxs)]
+# points'[:, 1]
+# obstacles = [Circle([5.0, 5.0], 1.0)]
+obstacles = [Circle([SourceArrow(5.0), SourceArrow(5.0)],
+                     SourceArrow(1.0))]
+#
+# validpath(points, obstacles)
+# end
 
+## Drawing ##
 "Draw a circle"
 function draw(c::Circle)
   sethue("black")

@@ -6,7 +6,6 @@ function test_xyx()
   hist_compare(fwd, invlossf, 10.0)
 end
 
-
 "Compute vertices from angles"
 function vertices(angles::Vector)
   xs = [0.0]
@@ -26,14 +25,11 @@ end
 
 function analyze_kinematics(nlinks = 3)
   fwd = ExampleArrows.fwd_2d_linkage(nlinks)
-  fwdpoints = ExampleArrows.fwd_2d_linkage_points(nlinks)
-  invarr = approx_invert(fwd)
+  @show invarr = approx_invert(fwd)
   invloss = iden_loss(fwd, invarr)
   nparams = num_in_ports(invloss) - 2
-  invarrjl = julia(invarr)
-  invlossjl = julia(invloss)
-  invarrjl = julia(invarr)
-  fwdpointsjl = julia(fwdpoints)
+  @show invlossjl = julia(invloss)
+  @show invarrjl = julia(invarr)
 
   x, y = 1.0, 1.0
   i = 0
@@ -51,4 +47,4 @@ function analyze_kinematics(nlinks = 3)
   hist_compare(fwd, invlossf, nparams; nsamples=1000)
 end
 
-analyze_kinematics(4)
+analyze_kinematics(8)

@@ -186,7 +186,7 @@ function src(sport::SubPort)::SubPort
     sport
   else
     in_neighs = in_neighbors(sport)
-    @assert length(in_neighs) == 1
+    @assert length(in_neighs) == 1 length(in_neighs)
     first(in_neighs)
   end
 end
@@ -300,9 +300,10 @@ end
 
 "Link `n` unlinked ports in arr{I, O} to yield `ret_arr{I, O + n}`"
 function link_loose_ports!(arr::CompArrow)::CompArrow
+  # FIXME: Change name to linnk_loose_ourt_ports
   for sport in inner_sub_ports(arr)
     if loose_dst(sport)
-      @assert is_parameter_port(deref(sport)) sport
+      # @assert is_parameter_port(deref(sport)) sport
       link_to_parent!(sport)
     end
   end
@@ -326,6 +327,10 @@ function link_loose_out_ports!(sarr::SubArrow)
     end
   end
 end
+
+"Link loose outports for each subarrow"
+link_loose_out_ports!(carr::CompArrow) =
+  foreach(link_loose_out_ports!, sub_arrows(carr))
 
 ## Printing ##
 function mann(carr::CompArrow; kwargs...)

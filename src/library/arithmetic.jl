@@ -69,13 +69,5 @@ port_props(::LogBaseArrow) = unary_arith_port_props()
 
 "-x"
 struct NegArrow <: PrimArrow end
-name(::NegArrow)::Symbol = :sin
+name(::NegArrow)::Symbol = :-
 port_props(::NegArrow) = unary_arith_port_props()
-
-"Takes no input simple emits a `value::T`"
-struct EqualArrow <: PrimArrow end
-
-name(::EqualArrow) = :(=)
-port_props(::EqualArrow) =  [PortProps(true, :x, Array{Real}),
-                             PortProps(true, :y, Array{Real}),
-                             PortProps(false, :z, Array{Bool})]
