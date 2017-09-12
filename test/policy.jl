@@ -22,7 +22,6 @@ function test_interpret()
     println("Testing interpret: ", name(arr))
     pol = Arrows.DetPolicy(arr)
     output = interpret(pol, rand_input(arr)...)
-    println("Got: ", output)
   end
 end
 

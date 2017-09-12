@@ -17,7 +17,7 @@ Some shorthands used throughout
 
 """
 module Arrows
-using ZenUtils
+# using ZenUtils
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
@@ -48,6 +48,8 @@ import Base:  ^,
               in,
               sqrt,
               abs,
+              min,
+              max,
               parent,
               >>,
               <<,

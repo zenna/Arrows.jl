@@ -5,7 +5,10 @@ pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
 ## Unary Combinators ##
 "Wrap an `arr` in a container `CompArrow` `wrap(f) = g`, where `g(x) = f(x)"
 function wrap(arr::Arrow)::CompArrow
-  carr = CompArrow
+  carr = CompArrow(Symbol(:wrap_, name(arr)))
+  sarr = add_sub_arr!(carr, arr)
+  link_to_parent!(sarr, loose)
+  carr
 end
 
 ## ComposeL: Combinators for composition of one or more arrows ##

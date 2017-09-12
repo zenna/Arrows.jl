@@ -76,3 +76,13 @@ port_props(::LogBaseArrow) = unary_arith_port_props()
 struct NegArrow <: PrimArrow end
 name(::NegArrow)::Symbol = :-
 port_props(::NegArrow) = unary_arith_port_props()
+
+"min(x, y)"
+struct MinArrow <: PrimArrow end
+name(::MinArrow)::Symbol = :min
+port_props(::MinArrow) = bin_arith_port_props()
+
+"max(x, y)"
+struct MaxArrow <: PrimArrow end
+name(::MaxArrow)::Symbol = :max
+port_props(::MaxArrow) = bin_arith_port_props()
