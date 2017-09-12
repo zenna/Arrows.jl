@@ -51,3 +51,43 @@ function rev{L, R}(dict::Associative{L, R}, r::R)
   end
   throw(KeyError(r))
 end
+
+"fgh(f, g, q) = h(f(x), g(x))"
+fgh(f, g, h) = x -> h(f(x), g(x))
+
+"""Conjoin predicates
+  p = iseven ∧ (x -> x > 0) ∧ (x -> x < 100)
+  p(50)
+"""
+function conjoin(preds::Vararg{Function})
+  function pred_conjunct(x...)
+    for pred in preds
+      if !pred(x...)
+        return false
+      end
+    end
+    true
+  end
+  pred_conjunct
+end
+
+"`conjoin` \wedge"
+∧ = conjoin
+
+"""Disjoin predicates
+  p = iseven ∨ (x -> x > 0) ∨ (x -> x < 100)
+"""
+function disjoin(preds::Vararg{Function})
+  function pred_disjunct(x...)
+    for pred in preds
+      if pred(x...)
+        return true
+      end
+    end
+    false
+  end
+  pred_disjunct
+end
+
+"`disjoin` \vee"
+∨ = disjoin

@@ -11,6 +11,10 @@
 - `carr`: `CompArrow`
 - `sarr`: `SubArrow`
 
+Some shorthands used throughout
+- `aprx`: Approximate(ly)
+- `inv` : inverse, invert
+
 """
 module Arrows
 using ZenUtils
@@ -50,6 +54,11 @@ import Base:  ^,
               dot,
               identity
 export
+  conjoin,
+  disjoin,
+  ∨,
+  ∧,
+
   compose,
   name,
 
@@ -58,11 +67,14 @@ export
   SubPort,
 
   CompArrow,
+  PrimArrow,
   SubArrow,
   link_ports!,
   ⥅,
   ⥆,
   add_sub_arr!,
+  rem_sub_arr,
+  replace_sub_arr!,
   out_sub_port,
   out_sub_ports,
   sub_arrow,
@@ -86,7 +98,8 @@ export
   interpret,
   invert!,
   invert,
-  approx_invert,
+  aprx_invert,
+  aprx_totalize!,
   duplify!,
   assert!,
   deref,
@@ -163,10 +176,9 @@ include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
-include("compile/simplepolicy.jl")
 
-include("apply/call.jl")
-# include("apply/interpret.jl")
+
+include("apply/interpret.jl")
 
 # Graph Transformations #
 include("transform/walk.jl")
@@ -182,14 +194,22 @@ include("host/overload.jl")
 include("optim/loss.jl")
 
 # Examples, etc #
-include("targets/julia/julia.jl")
+include("targets/targets.jl")
+include("targets/julia/JuliaTarget.jl")
 include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+
+include("apply/call.jl")
 
 include("../test/TestArrows.jl")
 # include("../examples/ExampleArrows.jl")
 
 # Analysis
-include("../analysis/plots.jl")
+include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
+
+const tcarr = TestArrows.xy_plus_x_arr()
+const tsarr = sub_arrows(tcarr)[2]
+export tcarr, tsarr
+
 end

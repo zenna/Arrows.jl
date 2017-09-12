@@ -9,7 +9,6 @@ function binary_inv(arr::Arrow,
                     xconstarr, xconstportmap,
                     yconstarr, yconstportmap)
   xconst, yconst = const_in
-  @show const_in
   if xconst && yconst
     # If both ports constant just return arrow as is
     invarr = deepcopy(arr)

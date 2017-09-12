@@ -17,7 +17,7 @@ end
 
 function test_invert_assert_optim()
   fwdarr = test_assert()
-  invarr = approx_invert(fwdarr)
+  invarr = aprx_invert(fwdarr)
   invloss = iden_loss(fwdarr, invarr)
   invlossjl = julia(invloss)
   invarrjl = julia(invarr)

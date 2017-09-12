@@ -27,13 +27,6 @@ function xy_plus_x_arr()
   c
 end
 
-arr = xy_plus_x_arr()
-invert(arr)
-
-arr(1.0, 2.0)
-
-Arrows.compile(arr)
-
 xy_plus_x_jl(x, y) = x * y + x
 
 function inv_xy_plus_x_arr()
@@ -139,6 +132,16 @@ function triple_add()
   link_ports!((a2, 1), (a3, 2))
   link_ports!((a3, 1), (c, 1))
   c
+end
+
+function test_two_op()
+  carr = CompArrow(:xyab, [:x, :y], [:a, :b])
+  x, y, a, b = sub_ports(carr)
+  z = x + y
+  c = y * z
+  c ⥅ a
+  z ⥅ b
+  carr
 end
 
 "all test arrows"

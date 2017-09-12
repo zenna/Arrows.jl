@@ -41,7 +41,6 @@ function analyze_kinematics(nlinks = 3)
   fwd = fwd_2d_linkage_obs(nlinks)
   # fwd = Arrows.TestArrows.xy_plus_x_arr()
   # fwd = test_two_op()
-  invarr = Arrows.approx_invert(fwd)
   @show invarr = approx_invert(fwd)
   invloss = Arrows.iden_loss(fwd, invarr)
   @show nparams = length(filter(Arrows.is_parameter_port, in_ports(invloss)))
@@ -50,7 +49,8 @@ function analyze_kinematics(nlinks = 3)
 
   inputs = [1.0, 1.0]
   i = 0
-  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3)]
+  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3),
+               ExampleArrows.Circle([0.0, 0.5], 0.3)]
   function invlossf(θs::Vector, grad::Vector)
     loss = invlossjl(inputs..., θs...)[1]
     angles = invarrjl(inputs..., θs...)
@@ -59,25 +59,45 @@ function analyze_kinematics(nlinks = 3)
       ExampleArrows.drawscene(pointmat, obstacles, inputs...)
     end
     i += 1
-    @show θs
-    @show loss
+    loss
+    # @show θs
+    # @show loss
   end
 
-  Arrows.hist_compare(fwd, invlossf, nparams; nsamples=100)
+  Arrows.Analysis.hist_compare(fwd, invlossf, nparams; nsamples=100)
 end
 
-function test_two_op()
-  carr = CompArrow(:xyab, [:x, :y], [:a, :b])
-  x, y, a, b = sub_ports(carr)
-  z = x + y
-  c = y * z
-  c ⥅ a
-  z ⥅ b
-  carr
-end
+Arrows.Analysis.hist_compare
 
 
-analyze_kinematics(2)
+analyze_kinematics(3)|
+nlinks = 3
+fwd = fwd_2d_linkage_obs(nlinks)
 
+pls = plain_arrows()
 
-nlinks = 2
+# function ok(fwd)
+#   invarr = Arrows.approx_invert(fwd)
+#   invloss = Arrows.iden_loss(fwd, invarr)
+#   nparams = length(filter(Arrows.is_parameter_port, in_ports(invloss)))
+#   invlossjl = Arrows.julia(invloss)
+#   invarrjl = Arrows.julia(invarr)
+#   invloss, invlossjl
+# end
+#
+# for (j, fwd) in enumerate(Arrows.TestArrows.plain_arrows())
+#   nin = num_out_ports(fwd)
+#   inputs = rand(nin)
+#   invloss, invlossjl = ok(fwd)
+#   nparams = num_in_ports(invloss) - nin
+#   params = rand(nparams)
+#   for i = 1:10
+#     @show invlossjl(inputs..., params...)
+#     invloss, invlossjl = ok(fwd)
+#     fwd = Arrows.TestArrows.plain_arrows()[j]
+#   end
+# end
+#
+# invloss
+
+θs = [0.962056, 1.73892, -0.172778, 0.36381, 0.505187, 0.308938, 0.242637, 0.00480574, 0.82769, 0.97051, 0.490989, 0.645429, 0.188202, 0.0895715, 0.724754, 3.03171, 0.52669, 0.856996, 0.925592, 1.67078, 1.12515, 0.492938, 0.219698, 0.724886, 0.883057, 0.515478, 0.205461, 0.255325, 0.0596359, 2.45288, 0.602339, 0.473573, 0.522505, 0.430647, 0.878401, -0.196298]

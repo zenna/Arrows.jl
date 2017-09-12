@@ -1,6 +1,6 @@
 function test_xyx()
   fwd = TestArrows.xy_plus_x_arr()
-  invloss = iden_loss(fwd, approx_invert(fwd))
+  invloss = iden_loss(fwd, aprx_invert(fwd))
   z = 10.0
   invlossf(x::Vector, grad::Vector) = invloss(z, x...)[1]
   hist_compare(fwd, invlossf, 10.0)
@@ -25,7 +25,7 @@ end
 
 function analyze_kinematics(nlinks = 3)
   fwd = ExampleArrows.fwd_2d_linkage(nlinks)
-  @show invarr = approx_invert(fwd)
+  @show invarr = aprx_invert(fwd)
   invloss = iden_loss(fwd, invarr)
   nparams = num_in_ports(invloss) - 2
   @show invlossjl = julia(invloss)

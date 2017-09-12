@@ -157,11 +157,11 @@ The following are in the relation +
 
 So if you give me a triple of these values, there is some test, with a unique answer
 which will tell me whether that triple is in the relation.
-The type system represents this set either exactly, or it may over approximate it.
+The type system represents this set either exactly, or it may over aprximate it.
 One way the type system could represent this relation is to list out all the elements.
 This would not be economoical in space, and may be impossible if the space is unbounded.
 We can do much better if instead we use variables to implicitly define a space.
-Constraints on these variables will give us more power to better approximate the space we want.
+Constraints on these variables will give us more power to better aprximate the space we want.
 
 For instance we might have concat as
 concat {A}, {B} >> {C}

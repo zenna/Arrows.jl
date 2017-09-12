@@ -1,118 +1,99 @@
-PortMap = Dict{Port, Any}
+ArrowColors = PriorityQueue{SubArrow, Int}
 
-interpret(::DivArrow, x, y) = (x / y,)
-interpret(::MulArrow, x, y) = (x * y,)
-interpret(::SubtractArrow, x, y) = (x - y,)
-interpret(::AddArrow, x, y) = (x + y,)
-interpret(::EqualArrow, x, y) = (x == y,)
-interpret(::CondArrow, i, t, e) = ((i ? t : e),)
-interpret(arr::SourceArrow) = (arr.value,)
-interpret(::IdentityArrow, x) = (x,)
-
-function interpret(arr::CondArrow, port_map::PortMap)
-  i, t, e = in_ports(arr)
-  port_map[i] ? port_map[t] : port_map[e]
+"Priority queue of each `SubArrow` to number of already evaluated inputs"
+function colors(carr::CompArrow)
+  # priority is the number of inputs each arrrow has which have been 'seen'
+  # seen inputs are inputs to the composition, or outputs of arrows that
+  # have already been sub_interpreterted into
+  ArrowColors(sarr => num_in_ports(sarr) for sarr in sub_arrows(carr))
 end
 
-get_inputs(arr::Arrow, port_map::PortMap) =
-  [port_map[inp] for inp in in_ports(arr)]
+"Decrement priortiy of `sprt`"
+  lower!(pq::ArrowColors, sarr::SubArrow) = if !self_parent(sarr) pq[sarr] -= 1 end
 
-"unpack inputs of `arr` from `port_map` and interpret"
-unpack_interpret(arr::Arrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
-unpack_interpret(arr::CompArrow, port_map::PortMap) = interpret(arr, get_inputs(arr, port_map)...)
-unpack_interpret(arr::CondArrow, port_map::PortMap) = interpret(arr, port_map)
-
-"Can we compute the out_ports of `arr` based on values in `port_map`?"
-can_compute(arr::Arrow, port_map) =
-  all((inp in keys(port_map) for inp in in_ports(arr)))
-
-function can_compute(arr::CondArrow, port_map)
-  i, t, e = in_ports(arr)
-  if i in keys(port_map)
-    (port_map[i] && t in keys(port_map)) || (!port_map[i] && e in keys(port_map))
-  else
-    false
+"Decrement SubArrows "
+function known_colors(carr::CompArrow)::ArrowColors
+  pq = colors(carr)
+  foreach(out_neighbors(in_sub_ports(carr))) do dst_sprt
+    lower!(pq, sub_arrow(dst_sprt))
   end
+  pq
 end
 
-"Update portmap s.t. port_map[out_port[i]] = ys[i]"
-function merge_port_map!(subarr::Arrow, ys, port_map)
-  length(ys) == num_out_ports(subarr) || throw(DomainError())
-  print_port_map(port_map)
-  merge!(port_map, Dict(zip(out_ports(subarr), ys)))
-  print_port_map(port_map)
-end
+"Propagate inputs to `carr` to `sprt::SubPort =>  value` where `is_dst(sprt)`"
+function dst_sub_port_values(carr::CompArrow, inputs::Vector)::Dict{SubPort, Any}
+  length(inputs) == num_in_ports(carr) || throw(DomainError())
+  dst_val = Dict{SubPort, Any}()
 
-"Propagate values in `port_map` from src to dest port"
-function propagate_port_map!(port::Port, arr::CompArrow, port_map)
-  for neigh_port in out_neighbors(port, arr)
-    port_map[neigh_port] = port_map[port]
-  end
-end
-
-"is `port` required to compute the `port.arrow`?"
-in_port_required{A<:Arrow}(port::Port{A}, port_map) = true
-
-function in_port_required(port::Port{CondArrow}, port_map)::Bool
-  arr = port.arrow
-  i, t, e = in_ports(arr)
-
-  if port == i
-    true
-  elseif i in keys(port_map)
-    @assert (port in [t, e])
-    return (port_map[i] && (port == t)) || (!port_map[i] && (port == e))
-  else
-    false
-  end
-end
-
-"Do we need to compute the out_ports of `arr` based on values in `port_map`?"
-function need_compute(subarr::Arrow, arr::CompArrow, port_map)
-  for port in out_neighbors(subarr, arr)
-    if (port.arrow == arr) || (need_compute(port.arrow, arr, port_map) &&
-                               in_port_required(port, port_map))
-      return true
+  for (i, sprt) in enumerate(in_sub_ports(carr))
+    for dst_sprt in out_neighbors(sprt)
+      dst_val[dst_sprt] = inputs[i]
     end
   end
-  false
+  dst_val
 end
 
-function print_port_map(port_map)
-  for (k, v) in port_map
-    println(k, "=>", v)
-  end
-  println("--")
-end
+"""Convert an comp_arrow to a tensorflow graph and add to graph"""
+function inner_interpret(sub_interpret,
+                         carr::CompArrow,
+                         inputs::Vector,
+                         arrcolors::ArrowColors,
+                         dst_val::Dict{SubPort, Any})
+  @assert length(inputs) == num_in_ports(carr) "wrong # inputs"
+  @assert all(sarr ∈ keys(arrcolors) for sarr in sub_arrows(carr))
+  @assert is_wired_ok(carr)
+  seen = Set{SubArrow}()
+  while length(arrcolors) > 0
+    # Highest priority sarr ready to be evaluated
+    @assert peek(arrcolors)[2] == 0 peek(arrcolors)[2]
+    sarr = dequeue!(arrcolors)
+    push!(seen, sarr)
+    inputs = [dst_val[sprt] for sprt in in_sub_ports(sarr)]
+    outputs = sub_interpret(sarr, inputs)
 
-"Evaluate arr(xs...) by interpretation"
-function interpret(arr::CompArrow, xs...)
-  length(xs) == num_in_ports(arr) || throw(DomainError())
-  port_map = Dict{Port, Any}(zip(in_ports(arr), xs))
-  out_ports_done(port_map) = all((op in keys(port_map) for op in out_ports(arr)))
-  for port in in_ports(arr)
-    propagate_port_map!(port, arr, port_map)
-  end
+    # @show arrcolors
+    # @show inputs
+    # @show outputs
+    # @show sarr
 
-  # Naive impl that repeatedly checks for each subarrow can we
-  # (i) compute its output (i.e., are all inputs ready)
-  # (ii) do we need to (maybe unnecessary due to control flow)
-  i = 0
-  while !out_ports_done(port_map)
-    i = i + 1
-    # @assert i < 4
-    println("Length port_map", length(port_map))
-    for sa in sub_arrows(arr)
-      print_port_map(port_map)
-      if can_compute(sa, port_map) && need_compute(sa, arr, port_map)
-        ys = unpack_interpret(sa, port_map)
-        merge_port_map!(sa, ys, port_map)
-        print_port_map(port_map)
-        for port in out_ports(sa)
-          propagate_port_map!(port, arr, port_map)
-        end
+    @assert length(outputs) == length(out_ports(sarr)) "diff num outputs"
+
+    # Decrement the priority of each subarrow connected to this arrow
+    # Unless of course it is connected to the outside word
+    for (i, sprt) in enumerate(out_sub_ports(sarr))
+      for dst_sprt in out_neighbors(sprt)
+        dst_val[dst_sprt] = outputs[i]
+        # @assert sub_arrow(dst_sprt) ∈ keys(arrcolors)
+        lower!(arrcolors, sub_arrow(dst_sprt))
       end
     end
+    # foreach(enumerate(out_neighbors(out_sub_ports(sarr)))) do i_dst_sprt
+    #   i, dst_sprt = i_dst_sprt
+    #   lower!(arrcolors, sub_arrow(dst_sprt))
+    #   dst_val[dst_sprt] = outputs[i]
+    # end
   end
-  [port_map[op] for op in out_ports(arr)]
+
+  [dst_val[sprt] for sprt in out_sub_ports(carr)]
+end
+
+"""
+Interpret a composite arrow on inputs
+Args:
+  sub_interpret:
+  carr: Composite Arrow to execute
+  inputs: list of inputs to composite arrow
+Returns:
+  List of outputs
+"""
+function interpret(sub_interpret,
+                   carr::CompArrow,
+                   inputs::Vector)
+  colors = known_colors(carr)
+  dst_val = dst_sub_port_values(carr, inputs)
+  result = inner_interpret(sub_interpret,
+                           carr,
+                           inputs,
+                           colors,
+                           dst_val)
 end

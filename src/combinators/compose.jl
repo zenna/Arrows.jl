@@ -2,6 +2,12 @@
 pfx(prefix::Symbol, name::Symbol) = Symbol(:prefix_, name)
 pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
 
+## Unary Combinators ##
+"Wrap an `arr` in a container `CompArrow` `wrap(f) = g`, where `g(x) = f(x)"
+function wrap(arr::Arrow)::CompArrow
+  carr = CompArrow
+end
+
 ## ComposeL: Combinators for composition of one or more arrows ##
 "Compose the names of `arr1` and `arr2`"
 compname(arr1::Arrow, arr2::Arrow) = Symbol(name(arr2), :_to_, name(arr1))
@@ -33,10 +39,10 @@ function compose(f::Arrow,
     fsport = sub_port(fsarr, fport)
     link_ports!(gsport, fsport)
   end
-  link_loose_in_ports!(gsarr)
-  link_loose_out_ports!(fsarr)
-  link_loose_in_ports!(fsarr)
-  link_loose_out_ports!(gsarr)
+  link_to_parent!(gsarr, is_in_port ∧ loose)
+  link_to_parent!(fsarr, is_out_port ∧ loose)
+  link_to_parent!(fsarr, is_in_port ∧ loose)
+  link_to_parent!(gsarr, is_out_port ∧ loose)
   carr
 end
 
@@ -54,8 +60,8 @@ function stack(arrs::Vararg{<:Arrow})::CompArrow
   carr = CompArrow(:stack)
   for arr in arrs
     sarr = add_sub_arr!(carr, arr)
-    link_loose_in_ports!(sarr)
-    link_loose_out_ports!(sarr)
+    link_to_parent!(sarr, is_in_port ∧ loose)
+    link_to_parent!(sarr, is_out_port ∧ loose)
   end
   carr
 end
@@ -69,8 +75,8 @@ end
 function dupl_first(arr::Arrow, pass=in_ports(arr), name=pfx(:dupl_first, arr))
   carr = CompArrow(:dupl_first)
   sarr = add_sub_arr!(carr, arr)
-  link_loose_in_ports!(sarr)
-  link_loose_out_ports!(sarr)
+  link_to_parent!(sarr, is_in_port ∧ loose)
+  link_to_parent!(sarr, is_out_port ∧ loose)
   for port in pass
     is_in_port(port) || throw(DomainError())
     lsport = src(sub_port(sarr, port))

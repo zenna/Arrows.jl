@@ -5,7 +5,7 @@ src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
 all_src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, all_sub_ports(arr))
 
 "All destination (receiving) sub_ports"
-dst_sub_ports(arr::CompArrow)::Vector{SubPorts} = filter(is_dst, sub_ports(arr))
+dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, sub_ports(arr))
 
 "All source (projecting) sub_ports"
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
@@ -134,6 +134,9 @@ out_degree(port::SubPort)::Integer = lg_to_p(LG.outdegree, port)
 "Number of `SubPort`s which end at `port`"
 in_degree(port::SubPort)::Integer = lg_to_p(LG.indegree, port)
 
+"Number of `SubPort`s which end at `port`"
+degree(port::SubPort)::Integer = lg_to_p(LG.degree, port)
+
 "Links that end at `sport`"
 in_links(sport::SubPort)::Vector{Link} =
   [Link((neigh, sport)) for neigh in in_neighbors(sport)]
@@ -154,6 +157,17 @@ function out_neighbors(subarr::Arrow)
     end
   end
   ports
+end
+
+"out_neighbors"
+function out_neighbors(sprts::Vector{SubPort})::Vector{SubPort}
+  neighs = SubPort[]
+  for sprt in sprts
+    for dst_sprt in out_neighbors(sprt)
+      push!(neighs, dst_sprt)
+    end
+  end
+  neighs
 end
 
 Component = Vector{SubPort}
@@ -271,63 +285,37 @@ function is_wired_ok(arr::CompArrow)::Bool
 end
 
 
-## Loose Port ##
-"Receiving (dst) port has no incoming edges"
-loose_dst(sport::SubPort)::Bool = should_dst(sport) && !is_dst(sport)
-
-"Receiving (src) port has no outgoing edges"
-loose_src(sport::SubPort)::Bool = should_src(sport) && !is_src(sport)
+## Linking to Parent ##
+"Is `sprt` loose (not connected)?.  Impl assumes `is_wired_ok(parent(sprt))`"
+loose(sprt::SubPort)::Bool = degree(sprt) == 0
 
 "Create a new port in `parent(sport)` and link `sport` to it"
-function link_to_parent!(sport::SubPort)
-  if on_boundary(sport)
+function link_to_parent!(sprt::SubPort)
+  if on_boundary(sprt)
     println("invalid on boundary ports")
     throw(DomainError())
   end
-  arr = parent(sport)
-  newport = add_port_like!(arr, deref(sport))
-  if is_out_port(sport)
-    link_ports!(sport, newport)
+  arr = parent(sprt)
+  newport = add_port_like!(arr, deref(sprt))
+  if is_out_port(sprt)
+    link_ports!(sprt, newport)
   else
-    @assert is_in_port(sport)
-    link_ports!(newport, sport)
+    link_ports!(newport, sprt)
   end
   newport
 end
 
-"Link `n` unlinked ports in arr{I, O} to yield `ret_arr{I, O + n}`"
-function link_loose_ports!(arr::CompArrow)::CompArrow
-  # FIXME: Change name to linnk_loose_ourt_ports
-  for sport in inner_sub_ports(arr)
-    if loose_dst(sport)
-      # @assert is_parameter_port(deref(sport)) sport
-      link_to_parent!(sport)
-    end
-  end
-  arr
-end
+"Link all `sprt::SubPort ∈ sprts` to parent if preds(sprt)"
+link_to_parent!(sprts::Vector{SubPort}, pred) =
+  foreach(link_to_parent!, filter(pred, sprts))
 
-"Link `parent(sarr) -> sport` ∀ `sport` is loose in_port of sarr"
-function link_loose_in_ports!(sarr::SubArrow)
-  for sport in in_sub_ports(sarr)
-    if loose_dst(sport)
-      link_to_parent!(sport)
-    end
-  end
-end
+"Link all `sprt::SubPort ∈ sarr` to parent if preds(sprt)"
+link_to_parent!(sarr::SubArrow, pred) =
+  link_to_parent!(sub_ports(sarr), pred)
 
-"Link `sport -> parent(sarr)` ∀ `sport` is loose in_port of sarr"
-function link_loose_out_ports!(sarr::SubArrow)
-  for sport in out_sub_ports(sarr)
-    if loose_src(sport)
-      link_to_parent!(sport)
-    end
-  end
-end
-
-"Link loose outports for each subarrow"
-link_loose_out_ports!(carr::CompArrow) =
-  foreach(link_loose_out_ports!, sub_arrows(carr))
+"Link all For all `sarrLink all `sprt::SubPort ∈ sarr` to parent if (∧ preds)(sprt)"
+link_to_parent!(carr::CompArrow, pred)::CompArrow =
+  (foreach(sarr -> link_to_parent!(sarr, pred), sub_arrows(carr)); carr)
 
 ## Printing ##
 function mann(carr::CompArrow; kwargs...)

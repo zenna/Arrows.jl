@@ -1,4 +1,5 @@
 using Base.Test
+using Arrows
 import Arrows: compose
 import Arrows: TestArrows
 

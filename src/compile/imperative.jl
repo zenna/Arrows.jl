@@ -128,9 +128,6 @@ function pinterpret(pol::DetPolicy, f, args...)
   [vals[val] for val in outvals]
 end
 
-expr(arr::SourceArrow, args...) = arr.value
-expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
-
 "Convert a policy into a julia program"
 function pol_to_julia(pol::Policy)
   carr = arrow(pol)

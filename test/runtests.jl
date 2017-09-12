@@ -3,7 +3,7 @@ using Base.Test
 include("common.jl")
 
 tests = [
-    "comp_arrow.jl",
+    "comparrow.jl",
     "arrow_tests.jl",
     "policy.jl",
     "compose.jl",
