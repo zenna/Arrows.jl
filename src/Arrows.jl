@@ -104,7 +104,8 @@ export
   num_ports,
   port,
   ports,
-  propagate,
+  propagate!,
+  Shape,
   is_wired_ok,
   is_valid,
   interpret,
@@ -192,8 +193,6 @@ include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
-
-
 include("apply/interpret.jl")
 
 # Graph Transformations #

@@ -31,10 +31,13 @@ function addn(n::Integer)::CompArrow
   addn_accum(n)[1]
 end
 
-"Clips its inpot to interval [A, B]"
-struct ClipArrow{A, B} <: PrimArrow end
-name(::ClipArrow)::Symbol = :clip
-port_props(::ClipArrow) = unary_arith_port_props()
+"Clips its `x` to interval `[a b]"
+clip(x, l, u) = max(l, min(u, x))
 
-"clip(x; a, b) ="
-clip(x, a=-1, b=1) = max(a, min(b, x))
+
+# struct ClipArrow{A, B} <: PrimArrow end
+# name(::ClipArrow)::Symbol = :clip
+# port_props(::ClipArrow) = unary_arith_port_props()
+#
+# "clip(x; a, b) ="
+# clip(x, a=-1, b=1) = max(a, min(b, x))

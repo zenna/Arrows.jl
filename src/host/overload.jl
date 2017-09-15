@@ -25,7 +25,6 @@ end
 # find its soruce
 const ignoretyp = Set([DuplArrow,
                       SourceArrow,
-                      ClipArrow,
                       CondArrow,
                       InvDuplArrow,
                       EqualArrow,
