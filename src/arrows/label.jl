@@ -15,7 +15,6 @@ function label_code_gen(shorthand, super, long)
 
   "Make `prop` parameter"
   function $set_name(pprop::PortProps)
-    is_out_port(pprop) || throw(DomainError())
     add_port_label(pprop, $(QuoteNode(long)))
   end
 

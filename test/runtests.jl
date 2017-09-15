@@ -16,6 +16,7 @@ print_with_color(:blue, "Running tests:\n")
 # Single thread
 srand(345679)
 res = map(tests) do t
+  println("Testing: ", t)
   include(t)
   nothing
 end

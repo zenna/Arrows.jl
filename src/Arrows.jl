@@ -2,6 +2,9 @@
 
 ## Code conventions
 
+- Functions which modify their input are suffixed !, e.g. `link_ports!`
+- Use descriptive function names but appreviate variable names
+
 - Use the following argument names
 
 - `prt`: `Port`
@@ -12,12 +15,13 @@
 - `sarr`: `SubArrow`
 - `parr`: `PrimArrow`
 
--
-
 Some shorthands used throughout
 - `aprx`: Approximate(ly)
 - `inv` : inverse, invert
 
+
+- θ: parameter
+- ϵ: error
 """
 module Arrows
 
@@ -65,6 +69,7 @@ export
   ∧,
 
   compose,
+  wrap,
   name,
 
   Arrow,
@@ -82,6 +87,7 @@ export
   replace_sub_arr!,
   out_sub_port,
   out_sub_ports,
+  inner_sub_ports,
   sub_arrow,
   sub_arrows,
   sub_port,
@@ -106,6 +112,8 @@ export
   invert,
   aprx_invert,
   aprx_totalize!,
+  aprx_totalize!,
+  aprx_errors,
   duplify!,
   assert!,
   deref,
@@ -139,24 +147,25 @@ export
   # Optim
   julia,
   iden_loss
+# Code structures
 
-include("util/misc.jl")
-include("util/lightgraphs.jl")
+include("util/misc.jl")             # miscelleneous utilities
+include("util/lightgraphs.jl")      # methods that should be in LightGraphs
 
 # include("types.jl")
 
 # Core Arrow Data structures #
-include("arrows/arrow.jl")
-include("arrows/port.jl")
-include("arrows/primarrow.jl")
-include("arrows/comparrow.jl")
-include("arrows/comparrowextra.jl")
-include("arrows/value.jl")
-include("arrows/trace.jl")
-include("arrows/label.jl")
+include("arrows/arrow.jl")          # Core Arrow data structures
+include("arrows/port.jl")           # Ports and Port Attirbutes
+include("arrows/primarrow.jl")      # Pimritive Arrows
+include("arrows/comparrow.jl")      # Composite Arrows
+include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
+include("arrows/label.jl")          #
+include("arrows/value.jl")          # Values
+include("arrows/trace.jl")          #
 
 # Library #
-include("library/common.jl")
+include("library/common.jl")        # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
