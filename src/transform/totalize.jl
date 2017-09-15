@@ -51,48 +51,6 @@ function compromise(sprts::Vector{SubPort}, pprops = pprop.(sprts))
   foreach(sprt -> sub_port(add_port!(carr, pprop)), sprts, pprops)
 end
 
-singleton_detuple(x) = length(x) == 1 ? x[1] : x
-s(sprt::SubPort)::Tuple{SubPort}  = (sprt,)
-s(sprts::Tuple{SubPort}) = sprts
-
-"""Convert a function call to a composite arrow
-# Arguments
-f: Vararg::SubPort ->
-
-  `f(x) = sin((x * x + x) / x)
-  carr = CompArrow(:test, [:x], [:y])
-  x = in_sub_port(carr, 1)
-  f(f(f(f(x))))
-  num_sub_arrows(carr)
-    16
-
-  # Try instead with CompCall
-  carr = CompArrow(:test, [:x], [:y])
-  x = in_sub_port(carr, 1)
-  compcall(f, (compcall(f, compcall(f, x))))
-  num_sub_arrows(carr)
-  `
-
-"""
-function compcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
-  # 1. Make new CompArrow whose in_ports are like sprts
-  parent_carr = anyparent(sprts...)
-  # Port Properties like sprts but all in_ports
-  pprops = map(sprt -> PortProps(port_props(sprt); is_in_port=true), sprts)
-  carr = CompArrow(name, [pprops...])
-  # 2. Apply f to these inports to construct internals of `carr`
-  foreach(link_to_parent!, s(f(in_sub_ports(carr)...)))
-  # 3. add carr to the parent, link sprts to in_ports of carr and return outports
-  sarr = add_sub_arr!(parent_carr, carr)
-  foreach(sprts, in_sub_ports(sarr)) do parent_sprt, inner_sprt
-    parent_sprt ⥅ inner_sprt
-  end
-  tuple(out_sub_ports(sarr)...)
-end
-
-compcall(f, sprts::SubPort...) = compcall(f, typeof(f).name.name, (sprts...))
-compcall(f, xs...) = f(xs...)
-
 function siphon!(sarr::SubArrow)
   # Interface be either (1) a function that modifies the arrow or
   # get an arrow that I need to connect inputs to
