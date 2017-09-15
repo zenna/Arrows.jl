@@ -10,6 +10,9 @@
 - `arr`: `Arrow`
 - `carr`: `CompArrow`
 - `sarr`: `SubArrow`
+- `parr`: `PrimArrow`
+
+-
 
 Some shorthands used throughout
 - `aprx`: Approximate(ly)
@@ -17,10 +20,10 @@ Some shorthands used throughout
 
 """
 module Arrows
-# using ZenUtils
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
+using NamedTuples
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘
@@ -81,6 +84,7 @@ export
   out_sub_ports,
   sub_arrow,
   sub_arrows,
+  sub_port,
   sub_ports,
   in_sub_port,
   in_sub_ports,
@@ -149,6 +153,7 @@ include("arrows/comparrow.jl")
 include("arrows/comparrowextra.jl")
 include("arrows/value.jl")
 include("arrows/trace.jl")
+include("arrows/label.jl")
 
 # Library #
 include("library/common.jl")
@@ -188,6 +193,7 @@ include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/invprim.jl")
 include("transform/totalize.jl")
+include("transform/totalizeprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -198,7 +204,7 @@ include("optim/loss.jl")
 # Examples, etc #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
-include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("apply/call.jl")
 

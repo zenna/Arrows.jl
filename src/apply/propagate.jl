@@ -71,13 +71,13 @@ end
 """
 Propagate values around a composite arrow
 Args:
-    arr: Composite Arrow to propagate through
-    props: A mapping from Port to Attribute Name to Attribute Valeu,
-           e.g. Port0 => 'shape' => (1, 2, 3)
-    state: A value of any type that is passed around during propagation
-           and can be updated by sub_propagate
+  arr: Composite Arrow to propagate through
+  props: A mapping from Port to Attribute Name to Attribute Valeu,
+         e.g. Port0 => 'shape' => (1, 2, 3)
+  state: A value of any type that is passed around during propagation
+         and can be updated by sub_propagate
 Returns:
-    port->value map for all ports in composite arrow
+  port->value map for all ports in composite arrow
 """
 function propagate!(arr:: CompArrow, props::Props, state)
   updated = Set{Arrow}(sub_arrows(arr))

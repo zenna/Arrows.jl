@@ -20,6 +20,9 @@ function inner(ArrType, xs::Vararg{SubPort})
   end
 end
 
+# FIXME: functions on subports should only work if
+# The values are src ndoes, if dst throw error or
+# find its soruce
 const ignoretyp = Set([DuplArrow,
                       SourceArrow,
                       ClipArrow,

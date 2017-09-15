@@ -33,22 +33,34 @@ function rewire!(port_map::SubPortMap)
           SubPortIdMap(port_index(l) => port_index(r) for (l, r) in SubPortMap))
 end
 
-"""Traverses `arr`, applies `inner` to each subarrow then `outer` to parent.
+"""Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
 
-Args
-  inner - `orig::SubArrow` -> new::Arrow, portmapize::PortMap` appl t`SubArrow`,
-  outer -
-  arr - `CompArrow` to walk
-Returns
-  res::CompArrow - where `new` in `res` replaces each `orig` in `arr` and
+# Arguments
+  `inner` - `old::SubArrow` -> (new::Arrow, portmap::PortMap)`
+             `new` replaces `old` in `carr`
+  `outer` - `carr::CompArrow` -> `newcarr::CompArrow`
+            `outer` is applied to `carr` after all replacement
+  `carr` - `CompArrow` to walk over
+# Returns
+  `res::CompArrow` - where `new` in `res` replaces each `orig` in `arr` and
     a `PortMap` where PortMap[p1] = p2 means p1 ∈ orig_arr, p2 ∈ new_arr
-  and any edge which connects to p1 in orig will connect to p2 in new.
+    and any edge which connects to p1 in orig will connect to p2 in new.
 """
-function walk!(inner, outer, arr::CompArrow)
-  for sarr in sub_arrows(arr)
+function walk!(inner, outer, carr::CompArrow)::CompArrow
+  for sarr in sub_arrows(carr)
     replarr, port_map = portmapize(inner(sarr)...)
     replace_sub_arr!(sarr, replarr, port_map)
   end
 
-  outer(arr)
+  outer(carr)
+end
+
+"Non mutating `walk!`"
+walk(inner, outer, carr::CompArrow) = walk!(inner, ouer, deepcopy(carr))
+
+"""Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
+"""
+function lightwalk(inner, outer, carr::CompArrow)::CompArrow
+  foreach(inner, sub_arrows(carr))
+  outer(carr)
 end

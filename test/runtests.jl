@@ -8,7 +8,8 @@ tests = [
     "policy.jl",
     "compose.jl",
     "misc.jl",
-    "loss.jl"]
+    "loss.jl",
+    "totalize.jl"]
 
 print_with_color(:blue, "Running tests:\n")
 

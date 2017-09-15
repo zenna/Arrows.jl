@@ -16,6 +16,8 @@ function test_rem_sub_arr()
   @test is_wired_ok(arr)
 end
 
+test_rem_sub_arr()
+
 function test_replace_sub_arr()
   arr = sin_arr()
   sinarr = Arrows.sub_arrows(arr)[1]
@@ -23,5 +25,22 @@ function test_replace_sub_arr()
   @test is_wired_ok(arr)
 end
 
-test_rem_sub_arr()
 test_replace_sub_arr()
+
+function test_compcall()
+  f(x) = sin((x * x + x) / x)
+  carr = CompArrow(:test, [:x], [:y])
+  x, y = sub_ports(carr)
+  g(x) = f(f(f(f(x))))
+  g(x)
+  num_sub_arrows(carr)
+
+  # Try instead with CompCall
+  carr = CompArrow(:test, [:x], [:y])
+  x, y = sub_ports(carr)
+  out, = compcall(f, compcall(f, (compcall(f, compcall(f, x)))))
+  out ⥅ y
+  @test is_wired_ok(carr)
+  @test all(sarr -> isa(deref(sarr), CompArrow), sub_arrows(carr))
+  @test carr(3)[1] == g(3)
+end

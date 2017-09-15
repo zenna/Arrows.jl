@@ -15,7 +15,7 @@ end
 
 function test_invert()
   arr = fwd_2d_linkage_obs(3)
-  invarr = Arrows.approx_invert(arr)
+  invarr = Arrows.aprx_invert(arr)
   num_in_ports(invarr)
   invarr(1.0, 1.0, rand(18)...)
 end
@@ -39,15 +39,15 @@ end
 
 function analyze_kinematics(nlinks = 3)
   fwd = fwd_2d_linkage_obs(nlinks)
+  inputs = ones(num_out_ports(fwd))
   # fwd = Arrows.TestArrows.xy_plus_x_arr()
   # fwd = test_two_op()
-  @show invarr = approx_invert(fwd)
+  @show invarr = aprx_invert(fwd)
   invloss = Arrows.iden_loss(fwd, invarr)
   @show nparams = length(filter(Arrows.is_parameter_port, in_ports(invloss)))
   @show invlossjl = Arrows.julia(invloss)
   @show invarrjl = Arrows.julia(invarr)
 
-  inputs = [1.0, 1.0]
   i = 0
   obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3),
                ExampleArrows.Circle([0.0, 0.5], 0.3)]
@@ -67,17 +67,32 @@ function analyze_kinematics(nlinks = 3)
   Arrows.Analysis.hist_compare(fwd, invlossf, nparams; nsamples=100)
 end
 
-Arrows.Analysis.hist_compare
+function eval_theta(nlinks=2)
+  fwd = fwd_2d_linkage_obs(nlinks)
+  inputs = ones(num_out_ports(fwd))
+  invarr = aprx_invert(fwd)
+  invloss = Arrows.iden_loss(fwd, invarr)
+  nparams = length(filter(Arrows.is_parameter_port, in_ports(invloss)))
+  invlossjl = Arrows.julia(invloss)
+  invarrjl = Arrows.julia(invarr)
+  invloss, invlossjl
+end
 
-
-analyze_kinematics(3)|
-nlinks = 3
-fwd = fwd_2d_linkage_obs(nlinks)
-
-pls = plain_arrows()
-
+# arr, jl = eval_theta(2)  
+# jl
+#
+# arr
+#
+# analyze_kinematics(2)
+#
+# θs = [1.47326, 0.356264, 1.21657, 0.934543, 0.626135, 0.119368, 0.863315, 0.0141938, 0.833309, 0.786484, 0.860195, 0.134759, 0.810281, 0.0467791, 0.483127, 0.68971, 0.285376, 0.399064]
+#
+#
+# jl(1.0, 1.0, θs...)
+# length(θs)
+# num_in_ports(arr)
 # function ok(fwd)
-#   invarr = Arrows.approx_invert(fwd)
+#   invarr = Arrows.aprx_invert(fwd)
 #   invloss = Arrows.iden_loss(fwd, invarr)
 #   nparams = length(filter(Arrows.is_parameter_port, in_ports(invloss)))
 #   invlossjl = Arrows.julia(invloss)
@@ -99,5 +114,3 @@ pls = plain_arrows()
 # end
 #
 # invloss
-
-θs = [0.962056, 1.73892, -0.172778, 0.36381, 0.505187, 0.308938, 0.242637, 0.00480574, 0.82769, 0.97051, 0.490989, 0.645429, 0.188202, 0.0895715, 0.724754, 3.03171, 0.52669, 0.856996, 0.925592, 1.67078, 1.12515, 0.492938, 0.219698, 0.724886, 0.883057, 0.515478, 0.205461, 0.255325, 0.0596359, 2.45288, 0.602339, 0.473573, 0.522505, 0.430647, 0.878401, -0.196298]

@@ -183,6 +183,9 @@ function sub_port(sarr::SubArrow, port::Port)::SubPort
   sub_port(sarr, port.port_id)
 end
 
+"`SubPort` corresponding to `prt` on (self) `SubArrow` of `prt.arrow`"
+sub_port(prt::Port)::SubPort = SubPort(sub_arrow(prt.arrow), prt.port_id)
+
 "All the `SubPort`s of all `SubArrow`s on and within `arr`"
 function all_sub_ports(arr::CompArrow)::Vector{SubPort}
   # TODO: Make subarrow sorting more principled

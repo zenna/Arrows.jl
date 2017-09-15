@@ -25,6 +25,7 @@ strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
 "Is `arr` a sub_arrow of composition `c_arr`"
 in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
 
+# Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 port_props(subport::SubPort) = port_props(deref(subport))
 
@@ -290,7 +291,7 @@ end
 loose(sprt::SubPort)::Bool = degree(sprt) == 0
 
 "Create a new port in `parent(sport)` and link `sport` to it"
-function link_to_parent!(sprt::SubPort)
+function link_to_parent!(sprt::SubPort)::Port
   if on_boundary(sprt)
     println("invalid on boundary ports")
     throw(DomainError())
