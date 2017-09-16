@@ -1,25 +1,29 @@
-singleton_detuple(x) = length(x) == 1 ? x[1] : x
+# FIXME. This is a mess
+
+
+singleton_detuple(x::T) = length(x) == 1 ? x[1] : x
+singleton_detuple(x::T) = length(x) == 1 ? x[1] : x
 s(sprt::SubPort)::Tuple{SubPort}  = (sprt,)
 s(sprts::Tuple{SubPort}) = sprts
+
+"""Stick in `mid` between lefet ports and rigt ports"""
+function stick_in_between!(lefts::Vector{SubArrow},
+                           mids::Vector{SubPort},
+                           rights::Vector{SubArrow})
+  pcarr = anyparent(lefts..., mids..., rights...)
+  foreach(lefts, mids, rights) do lefts, mids, rights
+    unlink_ports!(left, right)
+    left ⥅ mid_in
+    mid_out ⥅ right
+  end
+end
+
+stick_in_between!(left::SubArrow, mid::Arrow, right::SubArrow) =
+  stick_in_between!()
 
 """Convert a function call to a composite arrow
 # Arguments
 f: Vararg::SubPort ->
-
-  `f(x) = sin((x * x + x) / x)
-  carr = CompArrow(:test, [:x], [:y])
-  x = in_sub_port(carr, 1)
-  f(f(f(f(x))))
-  num_sub_arrows(carr)
-    16
-
-  # Try instead with CompCall
-  carr = CompArrow(:test, [:x], [:y])
-  x = in_sub_port(carr, 1)
-  compcall(f, (compcall(f, compcall(f, x))))
-  num_sub_arrows(carr)
-  `
-
 """
 function unlinkcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
   all(is_dst.(sprts)) || throw(DomainError())

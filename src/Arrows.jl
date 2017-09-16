@@ -220,7 +220,7 @@ include("../test/TestArrows.jl")
 # include("../examples/ExampleArrows.jl")
 
 # Analysis
-include("../analysis/analysis.jl")
+# include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 

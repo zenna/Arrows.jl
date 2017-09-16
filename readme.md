@@ -1,5 +1,5 @@
-Smooth Arrows
-=============
+Arrows.jl
+=========
 
 Arrows.jl is a non-deterministic, differentiable programming environment with refinement types.
 
@@ -11,10 +11,7 @@ Arrows leans heavily on the [theano](http://deeplearning.net/software/theano/) (
 
 ## Installation
 
-Arrows requires depends on the following:
-
-- Python
-Arrows is built on top of Julia but not yet in the official Julia Package repository.
+Arrows is a Julia package but not yet in the official Julia Package repository.
 You can still easily install it from a Julia repl with:
 
 ```julia
