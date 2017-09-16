@@ -43,8 +43,6 @@ function unlinkcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
     src(parent_sprt) ⥅ inner_sprt
     fouts ⥅ parent_sprt
   end
-
-  end
   tuple(out_sub_ports(sarr)...)
 end
 

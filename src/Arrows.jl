@@ -200,6 +200,7 @@ include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/invprim.jl")
+include("transform/compcall.jl")
 include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 
