@@ -187,7 +187,8 @@ include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
 include("apply/preddisp.jl")
-include("apply/propagate.jl")
+include("propagate/propagate.jl")
+include("propagate/shape.jl")
 
 include("compile/policy.jl")
 include("compile/depend.jl")
