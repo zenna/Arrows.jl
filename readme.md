@@ -1,5 +1,9 @@
-Smooth Arrows
-=============
+# Arrows.jl
+
+[![Build Status](https://travis-ci.org/zenna/Arrows.jl.svg?branch=master)](https://travis-ci.org/zenna/Arrows.jl)
+
+[![codecov.io](http://codecov.io/github/zenna/Arrows.jl/coverage.svg?branch=master)](http://codecov.io/github/zenna/Arrows.jl?branch=master)
+
 
 Arrows.jl is a non-deterministic, differentiable programming environment with refinement types.
 
@@ -11,10 +15,7 @@ Arrows leans heavily on the [theano](http://deeplearning.net/software/theano/) (
 
 ## Installation
 
-Arrows requires depends on the following:
-
-- Python
-Arrows is built on top of Julia but not yet in the official Julia Package repository.
+Arrows is a Julia package but not yet in the official Julia Package repository.
 You can still easily install it from a Julia repl with:
 
 ```julia
