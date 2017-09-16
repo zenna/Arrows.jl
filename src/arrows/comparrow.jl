@@ -282,7 +282,7 @@ add_port_like!(carr::CompArrow, port::Port) = add_port!(carr, port_props(port))
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}
   es = LG.edges(arr.edges)
-  map(e -> (sub_port_vtx(arr, e.src), sub_port_vtx(arr, e.dst)), LG.edges(arr.edges))
+  map(e -> (sub_port_vtx(arr, e.src), sub_port_vtx(arr, e.dst)), es)
 end
 
 "Add an edge in CompArrow from port `l` to port `r`"
