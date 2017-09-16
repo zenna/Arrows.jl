@@ -58,6 +58,25 @@ function add_value_arrow!{T}(prop::Propagation, port::SubPort, value::T)
     push!(prop.touched_arrows, sub_arrow(port))
 end
 
+"""This function allows the information to jump over the arrows. The idea is that
+ we may provide specialised functions for the different kind of arrows/values.
+ For instance, if we are propagating a shape, the behavior of a
+ `MatrixMultArrow` is very different than `AddArrow` """
+function propagate_through!(prop::Propagation)
+    for touched in prop.touched_arrows
+        selected_port = first(propagated_ports(touched, prop.sprtvals))
+        value = prop.sprtvals[selected_port]
+        unpropagated = unpropagated_ports(touched, prop.sprtvals)
+        for port in unpropagated
+            add_value!(prop, port, value)
+        end
+        for port in sub_ports(touched)
+            check_conflict(prop, port, value)
+        end
+    end
+    prop.touched_arrows = Set()
+end
+
 "helper function that checks conflict during the propagation"
 function check_conflict{T}(prop::Propagation, port::SubPort, value::T)
     if prop.sprtvals[port] != value
@@ -70,7 +89,6 @@ function propagate!{T}(carr:: CompArrow,
   !is_recursive(carr) || throw(DomainError())
   propagation = Propagation{T}(sprtvals)
   while !isempty(propagation.pending)
-    propagation.touched_arrows = Set()
     while !isempty(propagation.pending)
       port = pop!(propagation.pending)
       value = propagation.sprtvals[port]
@@ -82,17 +100,7 @@ function propagate!{T}(carr:: CompArrow,
           end
       end
     end
-    for touched in propagation.touched_arrows
-        selected_port = first(propagated_ports(touched, propagation.sprtvals))
-        value = propagation.sprtvals[selected_port]
-        unpropagated = unpropagated_ports(touched, propagation.sprtvals)
-        for port in unpropagated
-            add_value!(propagation, port, value)
-        end
-        for port in sub_ports(touched)
-            check_conflict(propagation, port, value)
-        end
-    end
+    propagate_through!(propagation)
   end
   propagation.sprtvals
 end
