@@ -1,8 +1,8 @@
 # FIXME. This is a mess
 
 
-singleton_detuple(x::T) = length(x) == 1 ? x[1] : x
-singleton_detuple(x::T) = length(x) == 1 ? x[1] : x
+singleton_detuple(x) = length(x) == 1 ? x[1] : x
+singleton_detuple(x) = length(x) == 1 ? x[1] : x
 s(sprt::SubPort)::Tuple{SubPort}  = (sprt,)
 s(sprts::Tuple{SubPort}) = sprts
 
