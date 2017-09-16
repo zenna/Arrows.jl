@@ -3,7 +3,7 @@ is_src_source(sport::SubPort) = isa(deref(src(sport)).arrow, SourceArrow)
 function inv(arr::CompArrow, const_in)
   @show arr
   @assert !any(const_in)
-  (invert(arr), iden_port_map(arr))
+  (invert(arr), id_portid_map(arr))
 end
 function inv(sarr::SubArrow)
   carr = deref(sarr)

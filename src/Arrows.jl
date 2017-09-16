@@ -225,6 +225,7 @@ include("../test/TestArrows.jl")
 
 # include("smt_solvers/z3interface.jl")
 
+# Just for development for
 const tcarr = TestArrows.xy_plus_x_arr()
 const tsarr = sub_arrows(tcarr)[2]
 export tcarr, tsarr

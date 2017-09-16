@@ -1,14 +1,20 @@
-"Replace an inverse dupl with one that takes the mean"
-identity_portid_map(arr) = PortIdMap(i => i for i = 1:num_ports(arr))
-
 # Approximate Totalization #
 
-## Arrow Types ##
-sub_aprx_totalize(sarr::SubArrow) = sub_aprx_totalize(deref(sarr))
-sub_aprx_totalize(carr::CompArrow) = (aprx_totalize(carr), identity_portid_map(carr))
-sub_aprx_totalize(arr::PrimArrow) = (arr, identity_portid_map(arr))
+# TODO
+# 1. δinterval is wrong
+# 2. dont need walk because not replacing arrow, but maprecur doesnt have outer
+#    - which we need to relink ports, so should change one of them
+# 3. What's the right interface
+# - Perhaps I shouldn't use light walk and should just use foreach
 
-"""Convert `arr` into `Arrow` which is a total function of inputs.
+sub_aprx_totalize(sarr::SubArrow) = sub_aprx_totalize(deref(sarr), sarr)
+sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
+
+"Fallback to do nothing if `parr` is total"
+sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
+
+"""
+Convert `arr` into `Arrow` which is a total function of inputs.
 
 # Arguments:
 - `arr` an `Arrow` that is partial with respect  to its domaina
@@ -16,40 +22,20 @@ sub_aprx_totalize(arr::PrimArrow) = (arr, identity_portid_map(arr))
 - `total_arr`: an apprximate totalization of arr, i.e.
                arr(x) = f(x) = ⊥ ? any y ∈ Y : arr(x)
 """
-aprx_totalize!(arr::CompArrow) = walk!(sub_aprx_totalize, identity, arr)
+aprx_totalize!(carr::CompArrow) = lightwalk(sub_aprx_totalize, identity, carr)
 aprx_totalize(arr::CompArrow)::CompArrow = aprx_totalize!(deepcopy(arr))
 aprx_totalize(parr::PrimArrow) = aprx_totalize!(wrap(parr))
 
 # Errors of Approximate Totalization #
 
-# TODO
-# 1. δinterval is wron
-# 2. dont need walk because not replacing arrow, but maprecur doesnt have outer
-#    - which we need to relink ports, so should change one of them
-# 3. What's the right interface
 
-"Construct an arrow which computes the distance to the interval [a, b]"
-function δinterval(x, a, b)
-  min(abs(x - a), abs(x - b))
-end
+"Construct an arrow which computes the distance to the interval `[a, b]`"
+δinterval(x, a, b) = min(abs(x - a), abs(x - b))
 
 δdomain(arr::SqrtArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::DuplArrow, x) = VarArrow()
-# aprx_error(arr::ASinArrow) = distance to interval
-
-#What I need todo
-# 1. Make a new
-
-
-
-"""Create a `CompArow` wih sprts are inputs"""
-function compromise(sprts::Vector{SubPort}, pprops = pprop.(sprts))
-  all(is_src, sprts) || throw(DomainError())
-  carr = CompArrow(:compromise)
-  foreach(sprt -> sub_port(add_port!(carr, pprop)), sprts, pprops)
-end
 
 function siphon!(sarr::SubArrow)
   # Interface be either (1) a function that modifies the arrow or

@@ -34,6 +34,7 @@ port_props(::LogArrow) = unary_arith_port_props()
 struct ASinArrow <: PrimArrow end
 name(::ASinArrow)::Symbol = :asin
 port_props(::ASinArrow) = unary_arith_port_props()
+domain_bounds(::ASinArrow) = [-1, 1]
 
 "sin(x)"
 struct SinArrow <: PrimArrow end
@@ -49,6 +50,7 @@ port_props(::CosArrow) = unary_arith_port_props()
 struct ACosArrow <: PrimArrow end
 name(::ACosArrow)::Symbol = :acos
 port_props(::ACosArrow) = unary_arith_port_props()
+domain_bounds(::ACosArrow) = [-1, 1]
 
 "sqrt(x)"
 struct SqrtArrow <: PrimArrow end

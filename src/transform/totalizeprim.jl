@@ -1,10 +1,26 @@
 # Primitives for approximate totalization #
-sub_aprx_totalize{I}(arr::InvDuplArrow{I}) = (aprx_inv_dupl(I), identity_portid_map(arr))
-aprx_inv_dupl(n::Integer) = MeanArrow(n)
 
-# sub_aprx_totalize(carr::ASinArrow) =
-#     (ClipArrow{-1.0, 1.0}() >> carr, identity_portid_map(carr))
-# sub_aprx_totalize(carr::ACosArrow) =
-#     (ClipArrow{-1.0, 1.0}() >> carr, identity_portid_map(carr))
-# sub_aprx_totalize(carr::SqrtArrow) =
-#     @show (ClipArrow{0.0, 1e6}() >> carr, identity_portid_map(carr))
+function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
+  meanarr = MeanArrow(I)
+  inner_compose!(sarr, meanarr)
+end
+
+function bounded_totalize!(sarr::SubArrow)
+  # TODO: Generalize this
+  clipcarr = CompArrow(:clip, [:x], [:y])
+  x, y = sub_ports(clipcarr)
+  bounds = domain_bounds(deref(sarr))
+  clip(x, bounds...) ⥅ y
+  inner_compose!(sarr, clipcarr)
+end
+
+function nonneg_totalize!(sarr::SubArrow)
+  clip_zero = CompArrow(:clip_zero, [:x], [:y])
+  x, y = sub_ports(clip_zero)
+  max(x, 0) ⥅ y
+  inner_compose!(sarr, clip_zero)
+end
+
+sub_aprx_totalize(carr::ASinArrow, sarr::SubArrow) = bounded_totalize!(sarr)
+sub_aprx_totalize(carr::ACosArrow, sarr::SubArrow) = bounded_totalize!(sarr)
+sub_aprx_totalize(carr::SqrtArrow, sarr::SubArrow) = nonneg_totalize!(sarr)
