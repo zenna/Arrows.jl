@@ -1,3 +1,16 @@
+"Object to keep the state of the propagation process"
+mutable struct Propagation{T}
+    pending::Vector{SubPort}
+    touched_arrows::Set
+    sprtvals::Dict{SubPort, T}
+    function Propagation{T}(seed::Dict{SubPort, T})
+        p = new{T}()
+        p.sprtvals = seed
+        p.pending = collect(keys(seed))
+        p.touched_arrows = Set()
+        p
+    end
+end
 """
 Propagate values around a composite arrow.
 # Arguments:
@@ -36,42 +49,42 @@ end
 function propagate!{T}(carr:: CompArrow,
                        sprtvals::Dict{SubPort, T})::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())
-  to_propagate = collect(keys(sprtvals))
-  while !isempty(to_propagate)
-    touched_arrows = Set()
-    while !isempty(to_propagate)
-      port = pop!(to_propagate)
-      value = sprtvals[port]
+  propagation = Propagation{T}(sprtvals)
+  while !isempty(propagation.pending)
+    propagation.touched_arrows = Set()
+    while !isempty(propagation.pending)
+      port = pop!(propagation.pending)
+      value = propagation.sprtvals[port]
       for ne in neighbors(port)
-          if haskey(sprtvals, ne)
-              if sprtvals[ne] != value
+          if haskey(propagation.sprtvals, ne)
+              if propagation.sprtvals[ne] != value
                   throw(DomainError())
               end
           else
-              sprtvals[ne] = value
-              push!(to_propagate, ne)
-              push!(touched_arrows, sub_arrow(ne))
+              propagation.sprtvals[ne] = value
+              push!(propagation.pending, ne)
+              push!(propagation.touched_arrows, sub_arrow(ne))
           end
       end
     end
-    for touched in touched_arrows
-        selected_port = propagated_ports(touched, sprtvals)[1]
-        value = sprtvals[selected_port]
-        unpropagated = unpropagated_ports(touched, sprtvals)
+    for touched in propagation.touched_arrows
+        selected_port = propagated_ports(touched, propagation.sprtvals)[1]
+        value = propagation.sprtvals[selected_port]
+        unpropagated = unpropagated_ports(touched, propagation.sprtvals)
         if !isempty(unpropagated)
             for port in unpropagated
-                push!(to_propagate, port)
+                push!(propagation.pending, port)
                 sprtvals[port] = value
             end
         end
         for port in sub_ports(touched)
-            if sprtvals[port] != value
+            if propagation.sprtvals[port] != value
                 throw(DomainError(msg))
             end
         end
     end
   end
-  sprtvals
+  propagation.sprtvals
 end
 
 
