@@ -1,5 +1,9 @@
-Arrows.jl
-=========
+# Arrows.jl
+
+[![Build Status](https://travis-ci.org/zenna/Arrows.jl.svg?branch=master)](https://travis-ci.org/zenna/Arrows.jl)
+
+[![codecov.io](http://codecov.io/github/zenna/Arrows.jl/coverage.svg?branch=master)](http://codecov.io/github/zenna/Arrows.jl?branch=master)
+
 
 Arrows.jl is a non-deterministic, differentiable programming environment with refinement types.
 

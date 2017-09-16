@@ -11,7 +11,6 @@ script:
   - julia -e 'Pkg.clone(pwd())'
   - Pkg.build("Arrows")
   - julia -e 'Pkg.test("Arrows", coverage=true)'
-  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); ; Pkg.test("Arrows"; coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("Arrows")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
   - julia -e 'Pkg.add("Documenter")'
