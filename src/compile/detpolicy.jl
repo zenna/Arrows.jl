@@ -90,9 +90,9 @@ end
 
 "Create `DetPolicy` from `arr` assuming we want all outputs and know all inputs"
 function DetPolicy(arr::CompArrow)
-  known = Set(in_values_vec(arr))
+  known = in_values(arr)
   targets = out_values(arr)
-  DetPolicy(known, targets)
+  DetPolicy(Set(known), Set(targets))
 end
 
 "Recursively get all the policies of `carr`"

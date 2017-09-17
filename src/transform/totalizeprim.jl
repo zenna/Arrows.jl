@@ -1,7 +1,7 @@
 # Primitives for approximate totalization #
 
 function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
-  meanarr = MeanArrow(I)
+  meanarr = MeanArrow(I) >> DuplArrow(I)
   inner_compose!(sarr, meanarr)
 end
 
@@ -24,3 +24,8 @@ end
 sub_aprx_totalize(carr::ASinArrow, sarr::SubArrow) = bounded_totalize!(sarr)
 sub_aprx_totalize(carr::ACosArrow, sarr::SubArrow) = bounded_totalize!(sarr)
 sub_aprx_totalize(carr::SqrtArrow, sarr::SubArrow) = nonneg_totalize!(sarr)
+
+# Aprx Errors #
+δdomain(arr::SqrtArrow, x) = ifelse(x < 0, abs(x), 0)
+δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
+δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)

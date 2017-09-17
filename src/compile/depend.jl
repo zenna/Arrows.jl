@@ -3,7 +3,7 @@ CondMap = Dict{SubPort, Bool}
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
 function needed_values(::Arrow, subarr::SubArrow, cond_map::CondMap)::ValueSet
-  Set(RepValue.(in_sub_ports(subarr)))
+  Set(SrcValue.(in_sub_ports(subarr)))
 end
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
@@ -11,9 +11,9 @@ function needed_values(::CondArrow, subarr::SubArrow, cond_map::CondMap)::ValueS
   i, t, e = in_sub_ports(subarr)
   if i in cond_map
     if cond_map[i]
-      Set(RepValue(t))
+      Set(SrcValue(t))
     else
-      Set(RepValue(e))
+      Set(SrcValue(e))
     end
   else
     Set()
@@ -22,7 +22,7 @@ end
 
 "`Value's do we need to compute `target`"
 function needed_values(target::Value, cond_map::CondMap)::ValueSet
-  subarr = src_sub_arrow(target)
+  subarr = sub_arrow(src(target))
   needed_values(deref(subarr), subarr, cond_map)
 end
 
@@ -30,7 +30,7 @@ end
 function needed_values(targets::ValueSet, cond_map::CondMap = CondMap())::ValueSet
   all_needed = copy(targets)
   to_see = copy(targets)
-  seen = Set{RepValue}()
+  seen = Set{SrcValue}()
   while !isempty(to_see)
     curr = pop!(to_see)
     push!(seen, curr)
@@ -46,7 +46,7 @@ function computable_values(::CondArrow, known::ValueSet, subarr::SubArrow)::Valu
 end
 
 function computable_values(::Arrow, known::ValueSet, subarr::SubArrow)::ValueSet
-  needed_values = Set(in_values_vec(subarr))
+  needed_values = Set(in_values(subarr))
   # println("ARR is", deref(subarr))
   # println("Neede for ARR is ", needed_values)
   # println("but known is ", known)
@@ -64,7 +64,7 @@ function computable_values(::Arrow, known::ValueSet, subarr::SubArrow)::ValueSet
   if all((val ∈ known for val in needed_values))
     out_values(subarr)
   else
-    Set{RepValue}()
+    Set{SrcValue}()
   end
 end
 
@@ -96,5 +96,5 @@ end
 "If we know `know`, what other values must be know"
 function known_values_if_know(know::Value)::ValueSet
   # Assume we know one output value we know them all
-  out_values(src_sub_arrow(know))
+  out_values(sub_arrow(src(know)))
 end

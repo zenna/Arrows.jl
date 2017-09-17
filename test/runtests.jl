@@ -5,11 +5,11 @@ include("common.jl")
 tests = [
     "comparrow.jl",
     "arrow_tests.jl",
-    "policy.jl",
     "compose.jl",
     "misc.jl",
     "loss.jl",
     "totalize.jl",
+    # "policy.jl",
     "value.jl"]
 
 print_with_color(:blue, "Running tests:\n")

@@ -3,7 +3,6 @@ abstract type Value end
 
 ValueSet{T} = Set{T} where T <: Value
 
-## Printing
+# Printing @
 string(v::Value) = string("Value ", sort(port_id.(sub_ports(v))))
-print(io::IO, v::Value) = print(io, string(v))
-show(io::IO, v::Value) = print(io, v)
+show(io::IO, v::Value) = show(io, string(v))

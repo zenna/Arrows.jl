@@ -4,7 +4,7 @@ call_expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
 
 function func_decl_expr(carr::CompArrow)
   funcname = name(carr)
-  argnames = map(name, Arrows.in_values_vec(sub_arrow(carr)))
+  argnames = map(name, Arrows.in_values(sub_arrow(carr)))
   Expr(:call, funcname, argnames...)
 end
 
@@ -40,7 +40,7 @@ function expr(carr::CompArrow)
     outnames
   end
 
-  inputs = map(name, Arrows.in_values_vec(sub_arrow(carr)))
+  inputs = map(name, Arrows.in_values(sub_arrow(carr)))
   interpret(f, carr, inputs)
   function_expr(carr, assigns)
 end

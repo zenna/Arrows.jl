@@ -20,21 +20,6 @@ aprx_totalize(arr::CompArrow)::CompArrow = aprx_totalize!(deepcopy(arr))
 aprx_totalize(parr::PrimArrow) = aprx_totalize!(wrap(parr))
 
 # Errors of Approximate Totalization #
-δdomain(arr::SqrtArrow, x) = δinterval(x, -1, 1)
-δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
-δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)
-δdomain(arr::DuplArrow, x) = VarArrow()
-
-function siphon!(sarr::SubArrow)
-  # Interface be either (1) a function that modifies the arrow or
-  # get an arrow that I need to connect inputs to
-  sprts = src.(in_sub_ports(sarr))
-  f(sprts::SubPort...) = δdomain(deref(sarr), sprts...)
-  res = compcall(f, :node_error, sprts...)
-  foreach(ϵ!, res)
-  # TODO: Replace aboe with:
-  # ϵ!(@▸ δdomain(deref(sarr), src.(in_sub_ports(sarr))))
-end
 
 """
 Capture node_loss from every sub_arrow.
@@ -48,7 +33,16 @@ if sarr is aprximate totalization of sarr_partial
 """
 function aprx_errors!(arr::CompArrow)::CompArrow
   outer = carr -> link_to_parent!(carr, is_error_port ∧ loose)
-  @show lightwalk(siphon!, outer, arr)
+  @show lightwalk(node_error!, outer, arr)
+end
+
+function node_error!(sarr::SubArrow)
+  sprts = src.(in_sub_ports(sarr))
+  f(sprts::SubPort...) = δdomain(deref(sarr), sprts...)
+  res = compcall(f, :node_error, sprts...)
+  foreach(ϵ!, res)
+  # TODO: Replace aboe with:
+  # ϵ!(@▸ δdomain(deref(sarr), src.(in_sub_ports(sarr))))
 end
 
 "Non mutating `aprx_errors`"

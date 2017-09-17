@@ -68,6 +68,7 @@ export
   disjoin,
   ∨,
   ∧,
+  same,
 
   compose,
   wrap,
@@ -112,7 +113,6 @@ export
   interpret,
   invert!,
   invert,
-  in_values_vec,
   out_values,
   aprx_invert,
   aprx_totalize!,
@@ -169,7 +169,6 @@ include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch in
 include("arrows/label.jl")          #
 
 include("value/value.jl")           # ValueSet
-# include("value/rep.jl")             # ValueSet
 include("value/source.jl")          # ValueSet
 
 include("arrows/trace.jl")          #
