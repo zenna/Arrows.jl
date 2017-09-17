@@ -82,7 +82,7 @@ is_branch_node(pol::DetPolicy, node::Vertex)::Bool =
   pol.node_type_labels[node] == Branch
 
 "Compile `arr` into a `Policy`"
-function DetPolicy(known::Values, targets::Values)
+function DetPolicy(known::ValueSet, targets::ValueSet)
   pol = DetPolicy() # new empty policy
   cond_map = CondMap()
   extend_policy!(pol, known, targets, cond_map)
@@ -90,7 +90,7 @@ end
 
 "Create `DetPolicy` from `arr` assuming we want all outputs and know all inputs"
 function DetPolicy(arr::CompArrow)
-  known = in_values(arr)
+  known = Set(in_values_vec(arr))
   targets = out_values(arr)
   DetPolicy(known, targets)
 end
@@ -99,8 +99,8 @@ end
 policies(carr::CompArrow) = maprecur(DetPolicy, carr)
 
 "Extend the policy by adding either `Compute` or `Branch` node"
-function extend_policy!(pol::Policy, known::Values,
-                        targets::Values, cond_map::CondMap)::Policy
+function extend_policy!(pol::Policy, known::ValueSet,
+                        targets::ValueSet, cond_map::CondMap)::Policy
   can_need = can_need_values(known, targets, cond_map)
   all_known = all(value ∈ known for value in targets)
   # conditionals = (value for value in known if uncertain_switch(value, cond_map))

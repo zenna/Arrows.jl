@@ -26,7 +26,7 @@ Semantics of this model
 
 # `Value`
 - All `Port`s that are connected share the same `Value`
-- Often it is useful to talk about these `Values` individually
+- Often it is useful to talk about these `ValueSet` individually
 - a `Value` is a set of `Port`s such that there exists an edge between each
   `port ∈ Value`, i.e. a weakly connected component
 

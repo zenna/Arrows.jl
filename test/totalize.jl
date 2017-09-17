@@ -8,7 +8,7 @@ function test_aprx_totalize()
   @test is_wired_ok(carr)
 end
 
-carr = test_aprx_totalize()
+test_aprx_totalize()
 
 function test_aprx_errors()
   arr = SqrtArrow()

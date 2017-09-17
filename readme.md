@@ -10,6 +10,8 @@ Arrows.jl is a non-deterministic, differentiable programming environment with re
 To do this, we build upon the formalism of [Arrows](https://en.wikibooks.org/wiki/Haskell/Understanding_arrows).
 Arrows leans heavily on the [theano](http://deeplearning.net/software/theano/) (as a compilation target) and the [Z3 interactive theorem prover](https://github.com/Z3Prover/z3) for type-checking.
 
+# Documentation
+
 
 [![Build Status](https://travis-ci.org/zenna/Arrows.jl.svg?branch=master)](https://travis-ci.org/zenna/Arrows.jl)
 

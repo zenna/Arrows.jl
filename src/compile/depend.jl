@@ -2,12 +2,12 @@
 CondMap = Dict{SubPort, Bool}
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
-function needed_values(::Arrow, subarr::SubArrow, cond_map::CondMap)::Values
+function needed_values(::Arrow, subarr::SubArrow, cond_map::CondMap)::ValueSet
   Set(RepValue.(in_sub_ports(subarr)))
 end
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
-function needed_values(::CondArrow, subarr::SubArrow, cond_map::CondMap)::Values
+function needed_values(::CondArrow, subarr::SubArrow, cond_map::CondMap)::ValueSet
   i, t, e = in_sub_ports(subarr)
   if i in cond_map
     if cond_map[i]
@@ -21,13 +21,13 @@ function needed_values(::CondArrow, subarr::SubArrow, cond_map::CondMap)::Values
 end
 
 "`Value's do we need to compute `target`"
-function needed_values(target::Value, cond_map::CondMap)::Values
+function needed_values(target::Value, cond_map::CondMap)::ValueSet
   subarr = src_sub_arrow(target)
   needed_values(deref(subarr), subarr, cond_map)
 end
 
 "`Value`s do we (unambiguously) need in order to determine `targets` inclusive"
-function needed_values(targets::Values, cond_map::CondMap = CondMap())::Values
+function needed_values(targets::ValueSet, cond_map::CondMap = CondMap())::ValueSet
   all_needed = copy(targets)
   to_see = copy(targets)
   seen = Set{RepValue}()
@@ -41,12 +41,12 @@ function needed_values(targets::Values, cond_map::CondMap = CondMap())::Values
   all_needed
 end
 
-function computable_values(::CondArrow, known::Values, subarr::SubArrow)::Values
+function computable_values(::CondArrow, known::ValueSet, subarr::SubArrow)::ValueSet
   @assert false "not implemented"
 end
 
-function computable_values(::Arrow, known::Values, subarr::SubArrow)::Values
-  needed_values = in_values(subarr)
+function computable_values(::Arrow, known::ValueSet, subarr::SubArrow)::ValueSet
+  needed_values = Set(in_values_vec(subarr))
   # println("ARR is", deref(subarr))
   # println("Neede for ARR is ", needed_values)
   # println("but known is ", known)
@@ -68,11 +68,11 @@ function computable_values(::Arrow, known::Values, subarr::SubArrow)::Values
   end
 end
 
-computable_values(known::Values, subarr::SubArrow) =
+computable_values(known::ValueSet, subarr::SubArrow) =
   computable_values(deref(subarr), known, subarr)
 
 "`Value`s we can compute, given we know `known`, may interect with `known`"
-function computable_values(known::Values, cond_map::CondMap = CondMap())::Values
+function computable_values(known::ValueSet, cond_map::CondMap = CondMap())::ValueSet
   if isempty(known)
     Set()
   else
@@ -83,7 +83,7 @@ function computable_values(known::Values, cond_map::CondMap = CondMap())::Values
 end
 
 "`Value`s we both can compute and need to determine `targets`"
-function can_need_values(known::Values, targets::Values, cond_map::CondMap)::Values
+function can_need_values(known::ValueSet, targets::ValueSet, cond_map::CondMap)::ValueSet
   @assert same((parent(value) for value in (known ∪ targets)))
   # println("Target ", targets)
   # println("Needed ", needed_values(targets, cond_map))
@@ -94,7 +94,7 @@ function can_need_values(known::Values, targets::Values, cond_map::CondMap)::Val
 end
 
 "If we know `know`, what other values must be know"
-function known_values_if_know(know::Value)::Values
+function known_values_if_know(know::Value)::ValueSet
   # Assume we know one output value we know them all
   out_values(src_sub_arrow(know))
 end

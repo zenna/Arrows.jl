@@ -20,6 +20,9 @@ function same(xs)::Bool
   return true
 end
 
+"`f: coll -> Bool`, such that ∀ x in xs, x ∈ coll"
+allin_f(xs) = coll -> all((x ∈ coll for x in xs))
+
 "Given a `partition` return a mapping from elements to the cell (integer id)"
 function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
   element_to_class = Dict{T, Int}()
@@ -91,3 +94,8 @@ end
 
 "`disjoin` \vee"
 ∨ = disjoin
+
+product(::Type{Bool}, n::Integer) = product((true, false), n)
+
+"Product of `n` copies of `xs`: `xs₁ × xs₂ × ⋯ × xsₙ`"
+product(xs, n::Integer) = Iterators.product([xs for i = 1:n]...)

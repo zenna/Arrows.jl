@@ -61,7 +61,8 @@ import Base:  ^,
               >>,
               <<,
               dot,
-              identity
+              identity,
+              ifelse
 export
   conjoin,
   disjoin,
@@ -111,6 +112,8 @@ export
   interpret,
   invert!,
   invert,
+  in_values_vec,
+  out_values,
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
@@ -132,6 +135,8 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
+  ASinArrow,
+  ACosArrow,
   SinArrow,
   SqrArrow,
   SqrtArrow,
@@ -162,11 +167,16 @@ include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
 include("arrows/label.jl")          #
-include("arrows/value.jl")          # Values
+
+include("value/value.jl")           # ValueSet
+# include("value/rep.jl")             # ValueSet
+include("value/source.jl")          # ValueSet
+
 include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
+include("library/distances.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")

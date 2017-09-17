@@ -1,7 +1,3 @@
-"A value, corresponds to connected component of `Port`s"
-abstract type Value end
-
-Values{T} = Set{T} where T <: Value
 
 "Represents a `Value` with member `port::Port ∈ Value`"
 struct RepValue <: Value
@@ -29,25 +25,25 @@ function sub_ports(value::RepValue)::Vector{SubPort}
   weakly_connected_component(value.port)
 end
 
-"Get Set of InPort Values"
-function in_values(arr::SubArrow)::Values
+"Get Set of InPort ValueSet"
+function in_values_vec(arr::SubArrow)::ValueSet
   Set(RepValue(port) for port in in_sub_ports(arr))
 end
 
-"Get Vector of InPort Values"
+"Get Vector of InPort ValueSet"
 function in_values_vec(arr::SubArrow)::Vector{Value}
   [RepValue(port) for port in in_sub_ports(arr)]
 end
 
-in_values(arr::CompArrow) = in_values(sub_arrow(arr))
+in_values_vec(arr::CompArrow) = in_values_vec(sub_arrow(arr))
 
-"Get Set of OutPort Values"
-function out_values(arr::SubArrow)::Values
+"Get Set of OutPort ValueSet"
+function out_values(arr::SubArrow)::ValueSet
   Set(RepValue(port) for port in  out_sub_ports(arr))
 end
 
-"Get Set of OutPort Values"
-function out_values_vec(arr::SubArrow)::Vector{Value}
+"Get Set of OutPort ValueSet"
+function out_values(arr::SubArrow)::Vector{Value}
   [RepValue(port) for port in  out_sub_ports(arr)]
 end
 
@@ -58,8 +54,3 @@ src_sub_arrow(value::Value)::SubArrow = src_sub_arrow(value.port)
 
 "Source `SubPort` of `val`, ∀ sport ∈ val, ∃ `Link` source -> sport"
 src_sub_port(val::RepValue)::SubPort = src(val.port)
-
-## Printing
-string(v::Value) = string("Value ", sort(port_id.(sub_ports(v))))
-print(io::IO, v::Value) = print(io, string(v))
-show(io::IO, v::Value) = print(io, v)

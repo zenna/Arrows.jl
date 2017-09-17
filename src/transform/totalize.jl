@@ -1,12 +1,5 @@
 # Approximate Totalization #
 
-# TODO
-# 1. δinterval is wrong
-# 2. dont need walk because not replacing arrow, but maprecur doesnt have outer
-#    - which we need to relink ports, so should change one of them
-# 3. What's the right interface
-# - Perhaps I shouldn't use light walk and should just use foreach
-
 sub_aprx_totalize(sarr::SubArrow) = sub_aprx_totalize(deref(sarr), sarr)
 sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 
@@ -27,11 +20,6 @@ aprx_totalize(arr::CompArrow)::CompArrow = aprx_totalize!(deepcopy(arr))
 aprx_totalize(parr::PrimArrow) = aprx_totalize!(wrap(parr))
 
 # Errors of Approximate Totalization #
-
-
-"Construct an arrow which computes the distance to the interval `[a, b]`"
-δinterval(x, a, b) = min(abs(x - a), abs(x - b))
-
 δdomain(arr::SqrtArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)

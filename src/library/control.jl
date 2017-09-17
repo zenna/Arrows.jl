@@ -23,3 +23,11 @@ port_props(::IdentityArrow) =
   [PortProps(true, :x, Array{Any}), PortProps(false, :y, Array{Any})]
 
 name(::IdentityArrow) = :identity
+
+"ifelse(i, t, e)`"
+struct IfElseArrow <: PrimArrow end
+port_props(::IfElseArrow) =   [PortProps(true, :i, Array{Bool}),
+                               PortProps(true, :t, Array{Real}),
+                               PortProps(true, :e, Array{Real}),
+                               PortProps(false, :y, Array{Real})]
+name(::IfElseArrow) = :ifelse

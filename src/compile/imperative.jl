@@ -61,9 +61,9 @@ function interpret(pol::DetPolicy, args...)
 
     # 2. Find both input and output values for this subarrow
     invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
+    outvals = out_values(sarr)
 
-    # 3. Extract actual values for these `Values` and execute subarrow on this
+    # 3. Extract actual values for these `ValueSet` and execute subarrow on this
     valvals = [vals[val] for val in invals]
     ops = interpret(deref(sarr), valvals...)
 
@@ -80,7 +80,7 @@ function interpret(pol::DetPolicy, args...)
     end
   end
   sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
+  outvals = out_values(sarr)
   [vals[val] for val in outvals]
 end
 
@@ -105,9 +105,9 @@ function pinterpret(pol::DetPolicy, f, args...)
 
     # 2. Find both input and output values for this subarrow
     invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
+    outvals = out_values(sarr)
 
-    # 3. Extract actual values for these `Values` and execute subarrow on this
+    # 3. Extract actual values for these `ValueSet` and execute subarrow on this
     valvals = [vals[val] for val in invals]
     ops = f(sarr, valvals...)
 
@@ -124,7 +124,7 @@ function pinterpret(pol::DetPolicy, f, args...)
     end
   end
   sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
+  outvals = out_values(sarr)
   [vals[val] for val in outvals]
 end
 
@@ -132,12 +132,12 @@ end
 function pol_to_julia(pol::Policy)
   carr = arrow(pol)
   argnames = map(name, in_values_vec(sub_arrow(carr)))
-  coutnames = map(name, out_values_vec(sub_arrow(carr)))
+  coutnames = map(name, out_values(sub_arrow(carr)))
   assigns = Vector{Expr}()
   ouputs = Vector{Expr}()
   function f(sarr::SubArrow, args...)
     arr = deref(sarr)
-    outnames = map(name, tuple(out_values_vec(sarr)...))
+    outnames = map(name, tuple(out_values(sarr)...))
     lhs = Expr(:tuple, outnames...)
     rhs = expr(arr, args...)
     push!(assigns, Expr(:(=), lhs, rhs))
