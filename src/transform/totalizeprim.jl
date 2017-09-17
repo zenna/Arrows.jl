@@ -1,5 +1,7 @@
 # Primitives for approximate totalization #
 
+ParialArrow = Union{SqrtArrow, ASinArrow, ACosArrow}
+
 function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
   meanarr = MeanArrow(I) >> DuplArrow(I)
   inner_compose!(sarr, meanarr)
@@ -26,6 +28,15 @@ sub_aprx_totalize(carr::ACosArrow, sarr::SubArrow) = bounded_totalize!(sarr)
 sub_aprx_totalize(carr::SqrtArrow, sarr::SubArrow) = nonneg_totalize!(sarr)
 
 # Aprx Errors #
+function sub_aprx_error(parr::ParialArrow, sarr::SubArrow)
+  sprts = src.(in_sub_ports(sarr))
+  f(sprts::SubPort...) = δdomain(deref(sarr), sprts...)
+  res = compcall(f, :node_error, sprts...)
+  foreach(ϵ!, res)
+  # TODO: Replace aboe with:
+  # ϵ!(@▸ δdomain(deref(sarr), src.(in_sub_ports(sarr))))
+end
+
 δdomain(arr::SqrtArrow, x) = ifelse(x < 0, abs(x), 0)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)

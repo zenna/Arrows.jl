@@ -64,9 +64,9 @@ Returns:
   will be corresponding ith out_port error_ports and param_ports will follow"""
 function invert!(arr::CompArrow)::CompArrow
   check_reuse(arr)
-  outer = inv_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ is_dst)) ∘ fix_links! ∘ invert_all_ports!
+  outer = inv_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_dst)) ∘ fix_links! ∘ invert_all_ports!
   walk!(inv, outer, arr)
 end
 
 invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))
-aprx_invert(arr::CompArrow) = aprx_totalize!(invert(arr))
+aprx_invert(arr::CompArrow) = aprx_totalize!(aprx_error!(invert(arr)))

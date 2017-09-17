@@ -21,6 +21,10 @@ aprx_totalize(parr::PrimArrow) = aprx_totalize!(wrap(parr))
 
 # Errors of Approximate Totalization #
 
+sub_aprx_error(sarr::SubArrow) = sub_aprx_error(deref(sarr), sarr)
+sub_aprx_error(carr::CompArrow, sarr::SubArrow) = aprx_error!(carr)
+sub_aprx_error(parr::PrimArrow, sarr::SubArrow) = nothing
+
 """
 Capture node_loss from every sub_arrow.
 
@@ -31,20 +35,11 @@ if sarr is aprximate totalization of sarr_partial
   arr = SqrtArrow() # arr(-1) = ⊥
   total_arr = Sqrt
 """
-function aprx_errors!(arr::CompArrow)::CompArrow
+function aprx_error!(arr::CompArrow)::CompArrow
   outer = carr -> link_to_parent!(carr, is_error_port ∧ loose)
-  @show lightwalk(node_error!, outer, arr)
+  @show lightwalk(sub_aprx_error, outer, arr)
 end
 
-function node_error!(sarr::SubArrow)
-  sprts = src.(in_sub_ports(sarr))
-  f(sprts::SubPort...) = δdomain(deref(sarr), sprts...)
-  res = compcall(f, :node_error, sprts...)
-  foreach(ϵ!, res)
-  # TODO: Replace aboe with:
-  # ϵ!(@▸ δdomain(deref(sarr), src.(in_sub_ports(sarr))))
-end
-
-"Non mutating `aprx_errors`"
-aprx_errors(arr::CompArrow)::CompArrow = aprx_errors!(deepcopy(arr))
-aprx_errors(parr::PrimArrow) = aprx_errors!(wrap(parr))
+"Non mutating `aprx_error`"
+aprx_error(carr::CompArrow)::CompArrow = aprx_error!(deepcopy(carr))
+aprx_error(parr::PrimArrow) = aprx_error!(wrap(parr))

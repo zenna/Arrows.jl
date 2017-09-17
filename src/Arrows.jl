@@ -117,7 +117,7 @@ export
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
-  aprx_errors,
+  aprx_error,
   duplify!,
   assert!,
   deref,
@@ -227,7 +227,7 @@ include("targets/julia/JuliaTarget.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../examples/ExampleArrows.jl")
+# include("../examples/BenchmarkArrows.jl")
 
 # Analysis
 # include("../analysis/analysis.jl")
