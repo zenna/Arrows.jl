@@ -1,6 +1,12 @@
-using Documenter, Arrows
+using Documenter
+using Arrows
 
-makedocs()
+makedocs(
+  modules = [Arrows],
+  authors = "Zenna Tavares and contributers",
+  format = :html,
+  sitename = "Arrows.jl",
+)
 
 deploydocs(
     repo = "github.com/zenna/Arrows.jl.git",
