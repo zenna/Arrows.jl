@@ -37,25 +37,25 @@ function propagate!{T}(carr:: CompArrow,
 end
 
 "helper function to filter already processed ports"
-function propagated_ports{T}(sarr::SubArrow, sprtvals::Dict{SubPort, T})
-  filter(port -> haskey(sprtvals, port), sub_ports(sarr))
+function propagated_sports{T}(sarr::SubArrow, sprtvals::Dict{SubPort, T})
+  filter(sport -> haskey(sprtvals, sport), sub_ports(sarr))
 end
 
 "helper function to filter not yet processed ports"
-function unpropagated_ports{T}(sarr::SubArrow, sprtvals::Dict{SubPort, T})
-  filter(port -> !haskey(sprtvals, port), sub_ports(sarr))
+function unpropagated_sports{T}(sarr::SubArrow, sprtvals::Dict{SubPort, T})
+  filter(sport -> !haskey(sprtvals, sport), sub_ports(sarr))
 end
 
 "helper funtion to add values to the propagation"
-function add_value!{T}(prop::Propagation, port::SubPort, value::T)
-  prop.sprtvals[port] = value
-  push!(prop.pending, port)
+function add_value!{T}(prop::Propagation, sport::SubPort, value::T)
+  prop.sprtvals[sport] = value
+  push!(prop.pending, sport)
 end
 
 "helper funtion to add values to the propagation while including `sub_arrow`"
-function add_value_arrow!{T}(prop::Propagation, port::SubPort, value::T)
-  add_value!(prop, port, value)
-  push!(prop.touched_arrows, sub_arrow(port))
+function add_value_arrow!{T}(prop::Propagation, sport::SubPort, value::T)
+  add_value!(prop, sport, value)
+  push!(prop.touched_arrows, sub_arrow(sport))
 end
 
 """This function allows the information to jump over the arrows. The idea is
@@ -64,22 +64,22 @@ end
   `MatrixMultArrow` is very different than `AddArrow` """
 function propagate_through!(prop::Propagation)
   for touched in prop.touched_arrows
-    selected_port = first(propagated_ports(touched, prop.sprtvals))
-    value = prop.sprtvals[selected_port]
-    unpropagated = unpropagated_ports(touched, prop.sprtvals)
-    for port in unpropagated
-      add_value!(prop, port, value)
+    selected_sport = first(propagated_sports(touched, prop.sprtvals))
+    value = prop.sprtvals[selected_sport]
+    unpropagated = unpropagated_sports(touched, prop.sprtvals)
+    for sport in unpropagated
+      add_value!(prop, sport, value)
     end
-    for port in sub_ports(touched)
-      check_conflict(prop, port, value)
+    for sport in sub_ports(touched)
+      check_conflict(prop, sport, value)
     end
   end
   prop.touched_arrows = Set()
 end
 
 "helper function that checks conflict during the propagation"
-function check_conflict{T}(prop::Propagation, port::SubPort, value::T)
-  if prop.sprtvals[port] != value
+function check_conflict{T}(prop::Propagation, sport::SubPort, value::T)
+  if prop.sprtvals[sport] != value
     throw(DomainError(msg))
   end
 end
@@ -90,9 +90,9 @@ function propagate!{T}(carr:: CompArrow,
   propagation = Propagation{T}(sprtvals)
   while !isempty(propagation.pending)
     while !isempty(propagation.pending)
-      port = pop!(propagation.pending)
-      value = propagation.sprtvals[port]
-      for ne in neighbors(port)
+      sport = pop!(propagation.pending)
+      value = propagation.sprtvals[sport]
+      for ne in neighbors(sport)
         if haskey(propagation.sprtvals, ne)
           check_conflict(propagation, ne, value)
         else
