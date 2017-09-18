@@ -4,7 +4,7 @@
 ```
 
 ```@docs
-AbstractArrow
+CompArrow
 ```
 
 ```@index
