@@ -21,14 +21,12 @@ end
 
 foreach(test_aprx_invert ∘ pre_test, plain_arrows())
 foreach(test_invert ∘ pre_test, plain_arrows())
-#
-# xyx = TestArrows.xy_plus_x_arr()
-# invxyx = invert(xyx)
-# @assert is_wired_ok(invxyx)
-#
-# link_to_parent!(invxyx, loose ∧ is_dst)
-#
-# invxyx
-#
-# @which is_dst(sub_port_vtx(invxyx, 6))
-#
+
+function test_ex_invert()
+  arr = TestArrows.xy_plus_x_arr()
+  invarr = invert(arr)
+  aprxarr = aprx_error!(invarr)
+  @test is_wired_ok(aprxarr)
+end
+
+test_ex_invert()

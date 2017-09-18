@@ -9,7 +9,7 @@ tests = [
     "misc.jl",
     "loss.jl",
     "totalize.jl",
-    "invert",
+    "invert.jl",
     # "policy.jl",
     "value.jl"]
 

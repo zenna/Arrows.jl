@@ -118,12 +118,20 @@ export
   aprx_totalize!,
   aprx_totalize!,
   aprx_error,
+  aprx_error!,
+  dupl,
   duplify!,
   assert!,
   deref,
 
+  mean,
+  var,
+
   SourceArrow,
   AssertArrow,
+
+  MeanArrow,
+  VarArrow,
 
   AddArrow,
   MulArrow,
@@ -141,6 +149,7 @@ export
   SqrArrow,
   SqrtArrow,
   CosArrow,
+  DuplArrow,
 
   # Compound
   addn,
@@ -167,6 +176,7 @@ include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
 include("arrows/label.jl")          #
+include("arrows/index.jl")          #
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # ValueSet

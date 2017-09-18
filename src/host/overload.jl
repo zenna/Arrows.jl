@@ -67,7 +67,8 @@ const ignoretyp = Set([DuplArrow,
                        CondArrow,
                        InvDuplArrow,
                        EqualArrow,
-                       MeanArrow])
+                       MeanArrow,
+                       VarArrow])
 for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, subtypes(PrimArrow))
   arr = parrtyp()
   opa = name(arr)
