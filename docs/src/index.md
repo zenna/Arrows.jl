@@ -4,7 +4,7 @@
 ```
 
 ```@docs
-walk!(x)
+AbstractArrow
 ```
 
 ```@index

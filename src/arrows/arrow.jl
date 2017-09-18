@@ -34,7 +34,6 @@ Semantics of this model
 - SubArrows can refer to CompArrow's, even the same CompArrow
 - In execution and other contexts, it is useful be refer to nested
 """
-
 abstract type AbstractArrow end
 
 abstract type Arrow <: AbstractArrow end
