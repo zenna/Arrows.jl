@@ -1,10 +1,17 @@
-using Documenter, Arrows
+using Documenter
+using Arrows
 
-makedocs()
+makedocs(
+  modules = [Arrows],
+  authors = "Zenna Tavares and contributers",
+  format = :html,
+  sitename = "Arrows.jl",
+)
 
 deploydocs(
-    repo = "github.com/zenna/Arrows.jl.git",
-    julia="0.6",
-    deps=nothing,
-    make=nothing,
+  repo = "github.com/zenna/Arrows.jl.git",
+  julia="0.6",
+  deps=nothing,
+  make=nothing,
+  target="build",
 )

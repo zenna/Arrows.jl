@@ -89,3 +89,25 @@ function dupl_first(arr::Arrow, pass=in_ports(arr), name=pfx(:dupl_first, arr))
   end
   carr
 end
+
+"Replace link `src -> dst` with link `src -> a`, `b -> dst`"
+function replace_link!(src::SubPort, dst::SubPort, a::SubPort, b::SubPort)
+  unlink_ports!(src, dst)
+  link_ports!(src, a)
+  link_ports!(b, dst)
+  nothing
+end
+
+"∀ src -> dst ∈ orig"
+function inner_compose!(orig::SubArrow, sarr::SubArrow)
+  dsts = in_sub_ports(orig)
+  srcs = src.(dsts)
+  as = in_sub_ports(sarr)
+  bs = out_sub_ports(sarr)
+  @show same(map(length, [srcs, dsts, as, bs])) || throw(DomainError())
+  foreach(replace_link!, srcs, dsts, as, bs)
+  bs
+end
+
+inner_compose!(orig::SubArrow, arr::Arrow) =
+  inner_compose!(orig, add_sub_arr!(parent(orig), arr))

@@ -49,14 +49,14 @@ function analyze_kinematics(nlinks = 3)
   @show invarrjl = Arrows.julia(invarr)
 
   i = 0
-  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3),
-               ExampleArrows.Circle([0.0, 0.5], 0.3)]
+  obstacles = [BenchmarkArrows.Circle([0.5, 0.5], 0.3),
+               BenchmarkArrows.Circle([0.0, 0.5], 0.3)]
   function invlossf(θs::Vector, grad::Vector)
     loss = invlossjl(inputs..., θs...)[1]
     angles = invarrjl(inputs..., θs...)
-    pointmat = ExampleArrows.vertices([angles...])
+    pointmat = BenchmarkArrows.vertices([angles...])
     if (i % 100 == 0)
-      ExampleArrows.drawscene(pointmat, obstacles, inputs...)
+      BenchmarkArrows.drawscene(pointmat, obstacles, inputs...)
     end
     i += 1
     loss
@@ -78,7 +78,7 @@ function eval_theta(nlinks=2)
   invloss, invlossjl
 end
 
-# arr, jl = eval_theta(2)  
+# arr, jl = eval_theta(2)
 # jl
 #
 # arr

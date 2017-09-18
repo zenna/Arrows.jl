@@ -61,12 +61,14 @@ import Base:  ^,
               >>,
               <<,
               dot,
-              identity
+              identity,
+              ifelse
 export
   conjoin,
   disjoin,
   ∨,
   ∧,
+  same,
 
   compose,
   wrap,
@@ -111,16 +113,25 @@ export
   interpret,
   invert!,
   invert,
+  out_values,
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
-  aprx_errors,
+  aprx_error,
+  aprx_error!,
+  dupl,
   duplify!,
   assert!,
   deref,
 
+  mean,
+  var,
+
   SourceArrow,
   AssertArrow,
+
+  MeanArrow,
+  VarArrow,
 
   AddArrow,
   MulArrow,
@@ -132,10 +143,13 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
+  ASinArrow,
+  ACosArrow,
   SinArrow,
   SqrArrow,
   SqrtArrow,
   CosArrow,
+  DuplArrow,
 
   # Compound
   addn,
@@ -162,11 +176,16 @@ include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
 include("arrows/label.jl")          #
-include("arrows/value.jl")          # Values
+include("arrows/index.jl")          #
+
+include("value/value.jl")           # ValueSet
+include("value/source.jl")          # ValueSet
+
 include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
+include("library/distances.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -219,13 +238,14 @@ include("targets/julia/JuliaTarget.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../examples/ExampleArrows.jl")
+# include("../examples/BenchmarkArrows.jl")
 
 # Analysis
 # include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 
+# Just for development for
 const tcarr = TestArrows.xy_plus_x_arr()
 const tsarr = sub_arrows(tcarr)[2]
 export tcarr, tsarr

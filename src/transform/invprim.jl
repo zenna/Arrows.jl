@@ -12,7 +12,7 @@ function binary_inv(arr::Arrow,
   if xconst && yconst
     # If both ports constant just return arrow as is
     invarr = deepcopy(arr)
-    port_map = iden_port_map(arr)
+    port_map = id_portid_map(arr)
   elseif xconst
     invarr = xconstarr()
     port_map = xconstportmap
@@ -34,7 +34,7 @@ function unary_inv(arr::Arrow,
   xconst, = const_in
   if xconst
     invarr = deepcopy(arr)
-    port_map = iden_port_map(arr)
+    port_map = id_portid_map(arr)
   else
     invarr = inv_arr()
     port_map = inv_port_map

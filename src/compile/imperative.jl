@@ -48,22 +48,22 @@ function interpret(pol::DetPolicy, args...)
     throw(DomainError())
   end
   # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
+  vals = Dict{Value, Any}(zip(in_values(sub_arrow(arr)), args))
   curr_node = start_node(pol)
 
   # Until we reach the end node ...
   while true
     # 1. Find out which subarrow we need to compute to compute curr_node
     val = curr_value(pol, curr_node)
-    sarr = src_sub_arrow(val)
+    sarr = sub_arrow(src(val))
 
     # FIXME: dont repeat execution of sarr if we already have `val`
 
     # 2. Find both input and output values for this subarrow
-    invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
+    invals = in_values(sarr)
+    outvals = out_values(sarr)
 
-    # 3. Extract actual values for these `Values` and execute subarrow on this
+    # 3. Extract actual values for these `ValueSet` and execute subarrow on this
     valvals = [vals[val] for val in invals]
     ops = interpret(deref(sarr), valvals...)
 
@@ -80,7 +80,7 @@ function interpret(pol::DetPolicy, args...)
     end
   end
   sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
+  outvals = out_values(sarr)
   [vals[val] for val in outvals]
 end
 
@@ -92,22 +92,22 @@ function pinterpret(pol::DetPolicy, f, args...)
     throw(DomainError())
   end
   # Map frin `Value` to arguments, init with inputs
-  vals = Dict{Value, Any}(zip(in_values_vec(sub_arrow(arr)), args))
+  vals = Dict{Value, Any}(zip(in_values(sub_arrow(arr)), args))
   curr_node = start_node(pol)
 
   # Until we reach the end node ...
   while true
     # 1. Find out which subarrow we need to compute to compute curr_node
     val = curr_value(pol, curr_node)
-    sarr = src_sub_arrow(val)
+    sarr = sub_arrow(src(val))
 
     # FIXME: dont repeat execution of sarr if we already have `val`
 
     # 2. Find both input and output values for this subarrow
-    invals = in_values_vec(sarr)
-    outvals = out_values_vec(sarr)
+    invals = in_values(sarr)
+    outvals = out_values(sarr)
 
-    # 3. Extract actual values for these `Values` and execute subarrow on this
+    # 3. Extract actual values for these `ValueSet` and execute subarrow on this
     valvals = [vals[val] for val in invals]
     ops = f(sarr, valvals...)
 
@@ -124,20 +124,20 @@ function pinterpret(pol::DetPolicy, f, args...)
     end
   end
   sarr = sub_arrow(arr)
-  outvals = out_values_vec(sarr)
+  outvals = out_values(sarr)
   [vals[val] for val in outvals]
 end
 
 "Convert a policy into a julia program"
 function pol_to_julia(pol::Policy)
   carr = arrow(pol)
-  argnames = map(name, in_values_vec(sub_arrow(carr)))
-  coutnames = map(name, out_values_vec(sub_arrow(carr)))
+  argnames = map(name, in_values(sub_arrow(carr)))
+  coutnames = map(name, out_values(sub_arrow(carr)))
   assigns = Vector{Expr}()
   ouputs = Vector{Expr}()
   function f(sarr::SubArrow, args...)
     arr = deref(sarr)
-    outnames = map(name, tuple(out_values_vec(sarr)...))
+    outnames = map(name, tuple(out_values(sarr)...))
     lhs = Expr(:tuple, outnames...)
     rhs = expr(arr, args...)
     push!(assigns, Expr(:(=), lhs, rhs))
