@@ -227,9 +227,7 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   newname = unique_sub_arrow_name()
   carr.sarr_name_to_arrow[newname] = arr
   for (i, port) in enumerate(ports(arr))
-    LG.add_vertex!(carr.edges)
-    vtx_id = LG.nv(carr.edges)
-    carr.port_to_vtx_id[ProxyPort(newname, i)] = vtx_id
+    add_port_lg!(carr, newname, i)
   end
   SubArrow(carr, newname)
 end
@@ -264,11 +262,18 @@ end
 "Add a port like (i.e. same `PortProps`) to carr"
 function add_port!(carr::CompArrow, pprop::PortProps)::Port
   port_id = num_ports(carr) + 1
-  LG.add_vertex!(carr.edges)
-  vtx_id = LG.nv(carr.edges)
-  carr.port_to_vtx_id[ProxyPort(name(carr), port_id)] = vtx_id
+  add_port_lg!(carr, name(carr), port_id)
   push!(carr.port_props, deepcopy(pprop))
   Port(carr, port_id)
+end
+"""
+Helper function for the addition of ports that
+handle the calls to LightGraph
+"""
+function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
+  LG.add_vertex!(carr.edges)
+  vtx_id = LG.nv(carr.edges)
+  carr.port_to_vtx_id[ProxyPort(arrname, port_id)] = vtx_id
 end
 
 "Add a port like (i.e. same `PortProps`) to carr"
@@ -277,7 +282,7 @@ add_port_like!(carr::CompArrow, port::Port) = add_port!(carr, port_props(port))
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}
   es = LG.edges(arr.edges)
-  map(e -> (sub_port_vtx(arr, e.src), sub_port_vtx(arr, e.dst)), LG.edges(arr.edges))
+  map(e -> (sub_port_vtx(arr, e.src), sub_port_vtx(arr, e.dst)), es)
 end
 
 "Add an edge in CompArrow from port `l` to port `r`"
