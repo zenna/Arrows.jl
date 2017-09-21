@@ -1,6 +1,6 @@
 # Primitives for approximate totalization #
 
-PartialArrow = Union{SqrtArrow, ASinArrow, ACosArrow}
+PartialArrow = Union{SqrtArrow, ASinArrow, ACosArrow, InvDuplArrow}
 
 function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
   meanarr = MeanArrow(I) >> DuplArrow(I)
@@ -40,4 +40,7 @@ end
 δdomain(arr::SqrtArrow, x) = ifelse(x < 0, abs(x), 0)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)
-δdomain{I}(arr::InvDuplArrow{I}, args) = var(x, -1, 1)
+function δdomain{I}(arr::InvDuplArrow{I}, args...)
+  @show args
+  compose!([args...], VarArrow(I))
+end

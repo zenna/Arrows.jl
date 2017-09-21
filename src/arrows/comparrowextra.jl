@@ -318,6 +318,23 @@ link_to_parent!(sarr::SubArrow, pred) =
 link_to_parent!(carr::CompArrow, pred)::CompArrow =
   (foreach(sarr -> link_to_parent!(sarr, pred), sub_arrows(carr)); carr)
 
+## Convenience
+
+▸ = in_port
+◂ = out_port
+▹ = in_sub_port
+◃ = out_sub_port
+▹s = in_sub_ports
+◃s = out_sub_ports
+▸s = in_ports
+◂s = out_ports
+n▸ = num_in_ports
+n◂ = num_out_ports
+▵ = port
+▴ = sub_port
+▵s = ports
+▴s = sub_ports
+
 ## Printing ##
 function mann(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))

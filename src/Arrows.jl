@@ -62,7 +62,10 @@ import Base:  ^,
               <<,
               dot,
               identity,
-              ifelse
+              ifelse,
+              var,
+              zero,
+              one
 export
   conjoin,
   disjoin,
@@ -126,6 +129,17 @@ export
 
   mean,
   var,
+
+  ◂,
+  ◂s,
+  ▸,
+  ▸s,
+  n◂,
+  n▸,
+  ◃,
+  ◃s,
+  ▹,
+  ▹s,
 
   SourceArrow,
   AssertArrow,

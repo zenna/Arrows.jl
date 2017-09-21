@@ -5,6 +5,7 @@ function inv(arr::CompArrow, const_in)
   @assert !any(const_in)
   (invert(arr), id_portid_map(arr))
 end
+
 function inv(sarr::SubArrow)
   carr = deref(sarr)
   const_in = map(is_src_source, in_sub_ports(sarr))

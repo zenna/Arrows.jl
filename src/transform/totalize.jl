@@ -37,7 +37,7 @@ if sarr is aprximate totalization of sarr_partial
 """
 function aprx_error!(arr::CompArrow)::CompArrow
   outer = carr -> link_to_parent!(carr, is_error_port ∧ loose)
-  @show lightwalk(sub_aprx_error, outer, arr)
+  lightwalk(sub_aprx_error, outer, arr)
 end
 
 "Non mutating `aprx_error`"

@@ -111,3 +111,12 @@ end
 
 inner_compose!(orig::SubArrow, arr::Arrow) =
   inner_compose!(orig, add_sub_arr!(parent(orig), arr))
+
+"Add `arr` to parent(sprts) and connect sprts[i] to arr[▹i]"
+function compose!(sprts::Vector{SubPort}, arr::Arrow)::Vector{SubPort}
+  length(sprts) == n▸(arr)
+  carr = anyparent(sprts...)
+  sarr = add_sub_arr!(carr, arr)
+  foreach(link_ports!, sprts, ▹s(sarr))
+  ◃s(sarr)
+end

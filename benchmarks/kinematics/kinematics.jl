@@ -28,6 +28,23 @@ immutable ParametricEdge
   coords::Mat
 end
 
+"Compute vertices from angles"
+function vertices(angles::Vector)
+  xs = [0.0]
+  ys = [0.0]
+  total = 0.0
+  sin_total = 0.0
+  cos_total = 0.0
+  for i = 1:length(angles)
+    total = total + angles[i]
+    sin_total += sin(total)
+    xs = vcat(xs, [sin_total])
+    cos_total += cos(total)
+    ys = vcat(ys, [cos_total])
+  end
+  permutedims(hcat(xs, ys), (2, 1))
+end
+
 function ParametricEdge(e::Edge)
   origin = e.points[:,1]
   dir = e.points[:,2] - e.points[:,1]
