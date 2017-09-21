@@ -39,26 +39,35 @@ function propagate!{T}(carr:: CompArrow,
   #implements a difussion process over the network created by ports.
 end
 
-"helper function to filter already processed sports"
-function propagated_sports{T}(sarr::SubArrow, prop::Propagation{T})
-  filter(sport -> haskey(prop.sprtvals, sport), sub_ports(sarr))
+"private helper function to check a key in sprtvals"
+function haskey_sprvals{T}(prop::Propagation{T})
+  sport -> haskey(prop.sprtvals, sport)
+end
+
+"helper function to filter sports with a boolean function"
+function filter_sports{T}(sarr::SubArrow,
+      prop::Propagation{T},
+      f::Function)
+  filter(f, sub_ports(sarr))
+end
+
+"helper function to filter values according to a boolean function"
+function filter_values{T}(sarr::SubArrow,
+      prop::Propagation{T},
+      f::Function)
+  sports = filter_sports(sarr, prop, f)
+  Set(map(SrcValue, sports))
 end
 
 "helper function to filter already processed values"
 function propagated_values{T}(sarr::SubArrow, prop::Propagation{T})
-  sports = propagated_sports(sarr, prop)
-  Set(map(SrcValue, sports))
+  filter_values(sarr, prop, haskey_sprvals(prop))
 end
 
-"helper function to filter not yet processed sports"
-function unpropagated_sports{T}(sarr::SubArrow, prop::Propagation{T})
-  filter(sport -> !haskey(prop.sprtvals, sport), sub_ports(sarr))
-end
 
 "helper function to filter not yet processed values"
 function unpropagated_values{T}(sarr::SubArrow, prop::Propagation{T})
-  sports = unpropagated_sports(sarr, prop)
-  Set(map(SrcValue, sports))
+  filter_values(sarr, prop, !haskey_sprvals(prop))
 end
 
 "helper funtion to add values to the propagation"
