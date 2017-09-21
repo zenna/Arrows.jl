@@ -91,16 +91,19 @@ function add_content_arrow!{T}(prop::Propagation{T}, sport::SubPort, content::T)
   push!(prop.touched_arrows, sub_arrow(sport))
 end
 
+"helper function to mention that a value needs to propagate some content"
+function add_pending!{T}(prop::Propagation{T}, value::SrcValue, content::T)
+  prop.value_content[value] = content
+  push!(prop.pending, value)
+end
+
 """This function is the basic way in which content is propagated thrhough an
   arrow: all Values connected to the arrow will have the same content"""
 function same_content_propagator(sarrow::SubArrow, prop::Propagation)
   selected_value = first(propagated_values(sarrow, prop))
   content = prop.value_content[selected_value]
   unpropagated = unpropagated_values(sarrow, prop)
-  for value in unpropagated
-    prop.value_content[value] = content
-    push!(prop.pending, value)
-  end
+  foreach(value-> add_pending!(prop, value, content), unpropagated)
 end
 
 """This function allows the information to jump over the arrows. The idea is
