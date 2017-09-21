@@ -21,15 +21,6 @@ end
 make_error_accum(Ts::Vector{DataType}) =
   stack(map(δ, Ts)...) >> MeanArrow(length(Ts))
 
-# "δ(fwd(inv(y)), y)"
-# function iden_loss(fwd::Arrow, inv::Arrow)::Arrow
-#   inv_fwd = inv >> fwd
-#   diffs = make_error_accum(map(typ, out_ports(inv_fwd)))
-#   plain = plain_in_ports(inv_fwd)
-#   dupl_inv_fwd = dupl_first(inv_fwd, plain)
-#   dupl_inv_fwd >> diffs
-# end
-
 "δ(fwd(inv(y)), y)"
 function iden_loss!(fwd::Arrow, inv::Arrow)::Arrow
   carr = CompArrow(:iden_loss)

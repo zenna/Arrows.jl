@@ -14,8 +14,10 @@ function test_policy()
     @test is_valid(pol)
   end
 end
+test_policy()
 
 test_pol_to_julia(arr) = pol_to_julia(Arrows.DetPolicy(arr))
+foreach(test_pol_to_julia ∘ pre_test, plain_arrows())
 
 function test_interpret()
   for arr in Arrows.TestArrows.plain_arrows()
@@ -25,6 +27,4 @@ function test_interpret()
   end
 end
 
-foreach(test_pol_to_julia ∘ pre_test, plain_arrows())
-test_policy()
 test_interpret()

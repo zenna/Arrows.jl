@@ -1,125 +1,31 @@
-# TODO:
-# 1. Decide when precisely we should repropagate an arrow
-# 2. For composites decide whether we can just use a special dispatch or
-  # we need to call propagate explicitly
-# Determine how to stop refiring
-# Determine how to do caching
-# Determine how to do types
-
-
-function any_shape(arr::AddArrow, props::Props)
-  return true
-end
-
-function same_shape(arr::AddArrow, props::Props)
-  Props(port=>Dict("shape"=>(1, 2, 3)) for port in ports(arr))
-end
-
-
-function predicate_dispatches(::AddArrow)
-  [(any_shape, same_shape)]
-end
-
-
-"Propagate with port partitions already defined"
-function propagate(arr::CompArrow,
-                   props::Props,
-                   state,
-                   class_to_ports::Vector{Vector{Port}},
-                   port_to_class::Dict{Port, Int},
-                   class_props::Vector{PropDict})
-  # TODO: Think about adding optimization to do all primitives before
-  arrows_to_see = Set{Arrow}(sub_arrows(arr))
-
-  "Get the property dictionary of a port, from its class"
-  sub_prop_dict(port) = class_props[port_to_class[port]]
-
-  # Main propagation loop
-  while length(arrows_to_see) > 0
-    println("Propagating: ", length(arrows_to_see), " arrows to see")
-    sub_arrow = pop!(arrows_to_see)
-
-    # Find attributes restricted to sub_arrow
-    sub_props = Props(port=>sub_prop_dict(port) for port in ports(sub_arrow))
-
-    # For each pred_dispatch of sub_arrow
-    # TODO pred dispatch
-    for (pred, dispatch) in predicate_dispatches(sub_arrow)
-      if pred(sub_arrow, sub_props)
-        new_sub_props = dispatch(sub_arrow, sub_props)
-
-        # Update the associated equivalence class
-        for (port, prop_dict) in  new_sub_props
-          class = port_to_class[port]
-          update_prop_dict!(class_props[class], prop_dict)
-
-          # Must (re)see every sub_arrow of any port in a cell which has changed
-          for port in class_to_ports[class]
-            # FIXME: Just because a port has a value doesnt mean its unchanged
-            if port.arrow != arr
-              push!(arrows_to_see, port.arrow)
-            end
-          end
-        end
-      end
-    end
-  end
-  unravel_equiv_class
-end
-
-
 """
-Propagate values around a composite arrow
-Args:
-    arr: Composite Arrow to propagate through
-    props: A mapping from Port to Attribute Name to Attribute Valeu,
-           e.g. Port0 => 'shape' => (1, 2, 3)
-    state: A value of any type that is passed around during propagation
-           and can be updated by sub_propagate
-Returns:
-    port->value map for all ports in composite arrow
+Propagate values around a composite arrow.
+# Arguments:
+  `carr`: Composite Arrow to propagate through
+          assumes `!(is_recursive(carr))`
+  `sprtvals`: Mapping from `SubPort` to some value of type `T`
+  `propagators`: functions
+# Returns:
+  port->value map for all ports in composite arrow
+- Principles
+-- Every arrow can propage one or more than one value of differnet types
+-- It can propagate that information to any one of its ports
+-- If there is already values at those ports then some kind of conflict resolution
+   is necessary
+-- The propagation data can depend on different types of values at differnet
+   ports
 """
-function propagate!(arr:: CompArrow, props::Props, state)
-  updated = Set{Arrow}(sub_arrows(arr))
-
-  # 1. Partition every edge into connected components
-  class_to_ports = weakly_connected_components(arr)
-
-  # Set up a mapping from a port to its class
-  port_to_class = elem_to_cell(class_to_ports)
-
-  # aggregate class attributes
-  function aggregate(ports::Vector{Port})
-    prop_dict = PropDict()
-    for port in ports
-      if port in keys(props)
-        update_prop_dict!(prop_dict, props[port])
-      end
-    end
-    prop_dict
-  end
-
-  # Propagating values of each class
-  class_props = aggregate.(class_to_ports)
-  propagate(arr, props, state, class_to_ports, port_to_class, class_props)
+function propagate!{T}(carr:: CompArrow,
+                        sprtvals::Dict{SubPort, T},
+                        propagators...)
+  !is_recursive(carr) || throw(DomainError())
 end
 
-function copy(props::Props)::Props
-  _props = Props()
-  for (port, attr) in props
-    _props[port] = PropDict()
-    for (attr_key, attr_value) in attr
-      _props[port][attr_key] = attr_value
-    end
-  end
-  _props
+function propagate!{T}(carr:: CompArrow,
+                       sprtvals::Dict{SubPort, T})
+  !is_recursive(carr) || throw(DomainError())
 end
 
-function propagate(arr::CompArrow, props::Props)
-  _props = copy(props)
-  propagate!(arr, _props, Dict())
-end
-
-function propagate(arr::CompArrow)
-  propagate!(arr, Props(), Dict())
+"is `carr` recursive."
+function is_recursive(carr::CompArrow)::Bool
 end

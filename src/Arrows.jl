@@ -2,6 +2,9 @@
 
 ## Code conventions
 
+- Functions which modify their input are suffixed !, e.g. `link_ports!`
+- Use descriptive function names but appreviate variable names
+
 - Use the following argument names
 
 - `prt`: `Port`
@@ -10,17 +13,21 @@
 - `arr`: `Arrow`
 - `carr`: `CompArrow`
 - `sarr`: `SubArrow`
+- `parr`: `PrimArrow`
 
 Some shorthands used throughout
 - `aprx`: Approximate(ly)
 - `inv` : inverse, invert
 
+
+- θ: parameter
+- ϵ: error
 """
 module Arrows
-# using ZenUtils
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
+using NamedTuples
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘
@@ -54,14 +61,17 @@ import Base:  ^,
               >>,
               <<,
               dot,
-              identity
+              identity,
+              ifelse
 export
   conjoin,
   disjoin,
   ∨,
   ∧,
+  same,
 
   compose,
+  wrap,
   name,
 
   Arrow,
@@ -79,8 +89,10 @@ export
   replace_sub_arr!,
   out_sub_port,
   out_sub_ports,
+  inner_sub_ports,
   sub_arrow,
   sub_arrows,
+  sub_port,
   sub_ports,
   in_sub_port,
   in_sub_ports,
@@ -94,20 +106,32 @@ export
   num_ports,
   port,
   ports,
-  propagate,
+  propagate!,
+  Shape,
   is_wired_ok,
   is_valid,
   interpret,
   invert!,
   invert,
+  out_values,
   aprx_invert,
   aprx_totalize!,
+  aprx_totalize!,
+  aprx_error,
+  aprx_error!,
+  dupl,
   duplify!,
   assert!,
   deref,
 
+  mean,
+  var,
+
   SourceArrow,
   AssertArrow,
+
+  MeanArrow,
+  VarArrow,
 
   AddArrow,
   MulArrow,
@@ -119,10 +143,13 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
+  ASinArrow,
+  ACosArrow,
   SinArrow,
   SqrArrow,
   SqrtArrow,
   CosArrow,
+  DuplArrow,
 
   # Compound
   addn,
@@ -135,23 +162,30 @@ export
   # Optim
   julia,
   iden_loss
+# Code structures
 
-include("util/misc.jl")
-include("util/lightgraphs.jl")
+include("util/misc.jl")             # miscelleneous utilities
+include("util/lightgraphs.jl")      # methods that should be in LightGraphs
 
 # include("types.jl")
 
 # Core Arrow Data structures #
-include("arrows/arrow.jl")
-include("arrows/port.jl")
-include("arrows/primarrow.jl")
-include("arrows/comparrow.jl")
-include("arrows/comparrowextra.jl")
-include("arrows/value.jl")
-include("arrows/trace.jl")
+include("arrows/arrow.jl")          # Core Arrow data structures
+include("arrows/port.jl")           # Ports and Port Attirbutes
+include("arrows/primarrow.jl")      # Pimritive Arrows
+include("arrows/comparrow.jl")      # Composite Arrows
+include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
+include("arrows/label.jl")          #
+include("arrows/index.jl")          #
+
+include("value/value.jl")           # ValueSet
+include("value/source.jl")          # ValueSet
+
+include("arrows/trace.jl")          #
 
 # Library #
-include("library/common.jl")
+include("library/common.jl")        # Methods common to library functions
+include("library/distances.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -172,14 +206,13 @@ include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
 include("apply/preddisp.jl")
-include("apply/propagate.jl")
+include("propagate/propagate.jl")
+include("propagate/shape.jl")
 
 include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
-
-
 include("apply/interpret.jl")
 
 # Graph Transformations #
@@ -187,7 +220,9 @@ include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/invprim.jl")
+include("transform/compcall.jl")
 include("transform/totalize.jl")
+include("transform/totalizeprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -198,18 +233,19 @@ include("optim/loss.jl")
 # Examples, etc #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
-include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../examples/ExampleArrows.jl")
+# include("../examples/BenchmarkArrows.jl")
 
 # Analysis
 # include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 
+# Just for development for
 const tcarr = TestArrows.xy_plus_x_arr()
 const tsarr = sub_arrows(tcarr)[2]
 export tcarr, tsarr

@@ -25,6 +25,7 @@ strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
 "Is `arr` a sub_arrow of composition `c_arr`"
 in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
 
+# Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 port_props(subport::SubPort) = port_props(deref(subport))
 
@@ -120,7 +121,7 @@ is_dst(port::SubPort) = lg_to_p(is_dst, port)
 is_src(port::SubPort) = lg_to_p(is_src, port)
 
 "All neighbors of `port`"
-neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.neighbors, port)
+neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.all_neighbors, port)
 
 "`Subport`s of ports which `port` receives from"
 in_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.in_neighbors, port)
@@ -290,7 +291,7 @@ end
 loose(sprt::SubPort)::Bool = degree(sprt) == 0
 
 "Create a new port in `parent(sport)` and link `sport` to it"
-function link_to_parent!(sprt::SubPort)
+function link_to_parent!(sprt::SubPort)::Port
   if on_boundary(sprt)
     println("invalid on boundary ports")
     throw(DomainError())

@@ -2,6 +2,7 @@
 A port is uniquely determined by the arrow it belongs to and an index"""
 abstract type AbstractPort end
 
+"An interface to an `Arrow`"
 struct Port{A <: Arrow, T <: Integer} <: AbstractPort
   arrow::A
   port_id::T
@@ -43,8 +44,8 @@ function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
   ni == I && no == O
 end
 
-"Get the port properties of `port` in arrow `arr`"
-port_props(port::Port) = port_props(port.arrow)[port.port_id]
+"Port properties of `port`"
+port_props(prt::Port) = port_props(prt.arrow)[prt.port_id]
 
 "Is `port` an `out_port`"
 is_out_port(port_props::PortProps)::Bool = !port_props.is_in_port
@@ -116,28 +117,6 @@ port_names(arr::Arrow) = name.(ports(arr))
 function ports(aarr::AbstractArrow, lb::Label)::Vector{Port}
   collect(filter(p -> has_port_label(p, lb), ports(aarr)))AbstractArrow
 end
-
-"Does `port` have `label` `lb`?"
-has_port_label(port::Port, lb::Label) = lb ∈ port_props(port).labels
-
-"Make `prop` parameter"
-function set_error_port!(pprop::PortProps)
-  is_out_port(pprop) || throw(DomainError())
-  push!(pprop.labels, :error)
-end
-is_error_port(pprop::PortProps) = :error ∈ pprop.labels
-is_error_port(port::Port) = is_error_port(port_props(port))
-set_error_port!(port::Port) = set_error_port!(port_props(port))
-
-"Make `prop` parameter"
-function set_parameter_port!(pprop::PortProps)
-  is_in_port(pprop) || throw(DomainError())
-  push!(pprop.labels, :parameter)
-end
-
-is_parameter_port(pprop::PortProps) = :parameter ∈ pprop.labels
-is_parameter_port(port::Port) = is_parameter_port(port_props(port))
-set_parameter_port!(port::Port) = set_parameter_port!(port_props(port))
 
 mann(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 

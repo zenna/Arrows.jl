@@ -3,7 +3,7 @@ is_src_source(sport::SubPort) = isa(deref(src(sport)).arrow, SourceArrow)
 function inv(arr::CompArrow, const_in)
   @show arr
   @assert !any(const_in)
-  (invert(arr), iden_port_map(arr))
+  (invert(arr), id_portid_map(arr))
 end
 function inv(sarr::SubArrow)
   carr = deref(sarr)
@@ -64,9 +64,9 @@ Returns:
   will be corresponding ith out_port error_ports and param_ports will follow"""
 function invert!(arr::CompArrow)::CompArrow
   check_reuse(arr)
-  outer = inv_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ is_dst)) ∘ fix_links! ∘ invert_all_ports!
+  outer = inv_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_dst)) ∘ fix_links! ∘ invert_all_ports!
   walk!(inv, outer, arr)
 end
 
 invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))
-aprx_invert(arr::CompArrow) = aprx_totalize!(invert(arr))
+aprx_invert(arr::CompArrow) = aprx_totalize!(aprx_error!(invert(arr)))

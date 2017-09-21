@@ -24,7 +24,7 @@ function vertices(angles::Vector)
 end
 
 function analyze_kinematics(nlinks = 3)
-  fwd = ExampleArrows.fwd_2d_linkage(nlinks)
+  fwd = BenchmarkArrows.fwd_2d_linkage(nlinks)
   @show invarr = aprx_invert(fwd)
   invloss = iden_loss(fwd, invarr)
   nparams = num_in_ports(invloss) - 2
@@ -33,13 +33,13 @@ function analyze_kinematics(nlinks = 3)
 
   x, y = 1.0, 1.0
   i = 0
-  obstacles = [ExampleArrows.Circle([0.5, 0.5], 0.3)]
+  obstacles = [BenchmarkArrows.Circle([0.5, 0.5], 0.3)]
   function invlossf(θs::Vector, grad::Vector)
     loss = invlossjl(x, y, θs...)[1]
     angles = invarrjl(x, y, θs...)
     pointmat = vertices([angles...])
     if i % 100 == 0
-      ExampleArrows.drawscene(pointmat, obstacles, x, y)
+      BenchmarkArrows.drawscene(pointmat, obstacles, x, y)
     end
     i += 1
     loss
