@@ -2,5 +2,5 @@
 abstract type Const end
 struct IsConst <: Const end
 struct NotConst <: Const end
-const isconst = IsConst()
-const notconst = NotConst()
+const known_const = IsConst()
+const known_not_const = NotConst()

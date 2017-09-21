@@ -108,6 +108,12 @@ export
   ports,
   propagate!,
   Shape,
+  #const
+  Const,
+  known_const,
+  known_not_const,
+  const_content_propagator,
+
   is_wired_ok,
   is_valid,
   interpret,
