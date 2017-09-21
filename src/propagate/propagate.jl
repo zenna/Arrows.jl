@@ -4,13 +4,15 @@ mutable struct Propagation{T}
   value_content::Dict{SrcValue, T}
   touched_arrows::Set
   sprtvals::Dict{SubPort, T}
-  function Propagation{T}(seed::Dict{SubPort, T})
+  propagator::Function
+  function Propagation{T}(seed::Dict{SubPort, T}, propagator::Function)
     p = new{T}()
     p.sprtvals = seed
     p.pending = Set(SrcValue(sport) for sport in keys(seed))
     p.touched_arrows = Set()
     p.value_content = Dict(SrcValue(sport) => content
                           for (sport, content) in seed)
+    p.propagator = propagator
     p
   end
 end
@@ -34,9 +36,17 @@ Propagate values around a composite arrow.
 """
 function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T},
-       propagators...)::Dict{SubPort, T}
+       propagator::Function)::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())
-  #implements a difussion process over the network created by ports.
+  propagation = Propagation{T}(sprtvals, propagator)
+  while !isempty(propagation.pending)
+    while !isempty(propagation.pending)
+      value = pop!(propagation.pending)
+      propagate!(value, propagation)
+    end
+    propagate_through!(propagation)
+  end
+  propagation.sprtvals
 end
 
 "private helper function to check a key in sprtvals"
@@ -81,20 +91,25 @@ function add_content_arrow!{T}(prop::Propagation{T}, sport::SubPort, content::T)
   push!(prop.touched_arrows, sub_arrow(sport))
 end
 
+"""This function is the basic way in which content is propagated thrhough an
+  arrow: all Values connected to the arrow will have the same content"""
+function same_content_propagator(sarrow::SubArrow, prop::Propagation)
+  selected_value = first(propagated_values(sarrow, prop))
+  content = prop.value_content[selected_value]
+  unpropagated = unpropagated_values(sarrow, prop)
+  for value in unpropagated
+    prop.value_content[value] = content
+    push!(prop.pending, value)
+  end
+end
+
 """This function allows the information to jump over the arrows. The idea is
   that we may provide specialised functions for the different kind of
   arrows/values. For instance, if we are propagating a shape, the behavior of a
   `MatrixMultArrow` is very different than `AddArrow` """
 function propagate_through!(prop::Propagation)
-  for sarrow in prop.touched_arrows
-    selected_value = first(propagated_values(sarrow, prop))
-    content = prop.value_content[selected_value]
-    unpropagated = unpropagated_values(sarrow, prop)
-    for value in unpropagated
-      prop.value_content[value] = content
-      push!(prop.pending, value)
-    end
-  end
+  f = sarrow->prop.propagator(sarrow, prop)
+  foreach(f, prop.touched_arrows)
   prop.touched_arrows = Set()
 end
 
@@ -120,15 +135,7 @@ end
 function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T})::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())
-  propagation = Propagation{T}(sprtvals)
-  while !isempty(propagation.pending)
-    while !isempty(propagation.pending)
-      value = pop!(propagation.pending)
-      propagate!(value, propagation)
-    end
-    propagate_through!(propagation)
-  end
-  propagation.sprtvals
+  propagate!(carr, sprtvals, same_content_propagator)
 end
 
 
