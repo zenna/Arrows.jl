@@ -123,6 +123,7 @@ export
   aprx_error,
   aprx_error!,
   dupl,
+  inv_dupl,
   duplify!,
   assert!,
   deref,

@@ -66,10 +66,19 @@ function eval_theta(nlinks=2)
   invloss, invlossjl
 end
 
-eval_theta()
+test_arr()
+Arrows.maprecur(test_arr, apr)
 
+eval_theta()
+import Arrows: is_error_port, loose, link_to_parent!
+
+InvDuplArrow
 Arrows.mean_errors!
 nlinks = 2
 fwd = fwd_2d_linkage_obs(nlinks)
-inputs = ones(num_out_ports(fwd))
-invarr = aprx_invert(fwd)
+invarr = invert(fwd)
+apr = aprx_error(invarr)
+bah = Arrows.aprx_totalize(apr)
+ok = rand(n▸(bah))
+bah(ok...)
+Arrows.compile(bah)

@@ -4,8 +4,8 @@ pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
 
 ## Unary Combinators ##
 "Wrap an `arr` in a container `CompArrow` `wrap(f) = g`, where `g(x) = f(x)"
-function wrap(arr::Arrow)::CompArrow
-  carr = CompArrow(Symbol(:wrap_, name(arr)))
+function wrap(arr::Arrow, name=Symbol(:wrap_, name(arr)))::CompArrow
+  carr = CompArrow(name)
   sarr = add_sub_arr!(carr, arr)
   link_to_parent!(sarr, loose)
   carr

@@ -20,24 +20,21 @@ aprx_totalize(arr::CompArrow)::CompArrow = aprx_totalize!(deepcopy(arr))
 aprx_totalize(parr::PrimArrow) = aprx_totalize!(wrap(parr))
 
 # Errors of Approximate Totalization #
-
 sub_aprx_error(sarr::SubArrow) = sub_aprx_error(deref(sarr), sarr)
-sub_aprx_error(carr::CompArrow, sarr::SubArrow) = aprx_error!(carr)
-sub_aprx_error(parr::PrimArrow, sarr::SubArrow) = nothing
+sub_aprx_error(carr::CompArrow, sarr::SubArrow) =
+  (aprx_error(carr), id_portid_map(carr))
+sub_aprx_error(parr::PrimArrow, sarr::SubArrow) = (parr, id_portid_map(parr))
 
 """
-Capture node_loss from every sub_arrow.
+Quantitative measure of domain Error.
+Distance from input to subset of domain that is well defined.
 
-∀ sarr::SubArrow ∈ `arr`
-if sarr is aprximate totalization of sarr_partial
-  replace sarr with sarr
-
-  arr = SqrtArrow() # arr(-1) = ⊥
-  total_arr = Sqrt
+From `f:X -> Y`, derive `f:X -> Y × Ε`, where e ∈ E = δ(x, {x | f(x) != ⊥}`
 """
-function aprx_error!(arr::CompArrow)::CompArrow
-  outer = carr -> link_to_parent!(carr, is_error_port ∧ loose)
-  lightwalk(sub_aprx_error, outer, arr)
+function aprx_error!(carr::CompArrow)::CompArrow
+  link_loose_srcs(carr) = link_to_parent!(carr, loose ∧ should_src)
+  outer = inv_rename! ∘ link_loose_srcs
+  walk!(sub_aprx_error, outer, carr)
 end
 
 "Non mutating `aprx_error`"

@@ -266,10 +266,8 @@ function add_port!(carr::CompArrow, pprop::PortProps)::Port
   push!(carr.port_props, deepcopy(pprop))
   Port(carr, port_id)
 end
-"""
-Helper function for the addition of ports that
-handle the calls to LightGraph
-"""
+
+"Helper function for the addition of ports that handle the calls to LightGraph"
 function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
   LG.add_vertex!(carr.edges)
   vtx_id = LG.nv(carr.edges)
