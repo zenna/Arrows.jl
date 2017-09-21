@@ -179,7 +179,8 @@ include("arrows/label.jl")          #
 include("arrows/index.jl")          #
 
 include("value/value.jl")           # ValueSet
-include("value/source.jl")          # ValueSet
+include("value/source.jl")          # SrcValue
+include("value/const.jl")           # Const type
 
 include("arrows/trace.jl")          #
 
