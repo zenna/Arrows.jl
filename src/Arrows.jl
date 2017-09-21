@@ -112,7 +112,7 @@ export
   Const,
   known_const,
   known_not_const,
-  const_content_propagator,
+  const_propagator!,
 
   is_wired_ok,
   is_valid,
