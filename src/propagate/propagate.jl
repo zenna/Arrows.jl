@@ -42,7 +42,7 @@ function propagate!{T}(carr:: CompArrow,
        propagator::Function)::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())
   propagation = Propagation{T}(carr, sprtvals, propagator)
-  while !isempty(propagation.pending)
+  while !(isempty(propagation.pending) && isempty(propagation.touched_arrows))
     while !isempty(propagation.pending)
       value = pop!(propagation.pending)
       propagate!(value, propagation)

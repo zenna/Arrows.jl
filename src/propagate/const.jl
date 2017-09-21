@@ -69,7 +69,7 @@ function const_propagator!(_::SourceArrow,
                                 sarrow::SubArrow,
                                 prop::Propagation)
   seen = Set(keys(prop.value_content))
-  to_propagate = Set(out_values(sarrow))
+  values = Set(out_values(sarrow))
   propagate_known_const!(prop, seen, values)
 end
 
