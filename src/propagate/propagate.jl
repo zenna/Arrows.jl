@@ -4,15 +4,18 @@ mutable struct Propagation{T}
   value_content::Dict{SrcValue, T}
   touched_arrows::Set
   sprtvals::Dict{SubPort, T}
+  carr::CompArrow
   propagator::Function
-  function Propagation{T}(seed::Dict{SubPort, T}, propagator::Function)
+  function Propagation{T}(carr::CompArrow, seed::Dict{SubPort, T}, propagator::Function)
     p = new{T}()
+    p.carr = carr
     p.sprtvals = seed
     p.pending = Set(SrcValue(sport) for sport in keys(seed))
     p.touched_arrows = Set()
     p.value_content = Dict(SrcValue(sport) => content
                           for (sport, content) in seed)
-    p.propagator = propagator
+    prologue, p.propagator = propagator()
+    prologue(p)
     p
   end
 end
@@ -38,7 +41,7 @@ function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T},
        propagator::Function)::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())
-  propagation = Propagation{T}(sprtvals, propagator)
+  propagation = Propagation{T}(carr, sprtvals, propagator)
   while !isempty(propagation.pending)
     while !isempty(propagation.pending)
       value = pop!(propagation.pending)
@@ -99,11 +102,14 @@ end
 
 """This function is the basic way in which content is propagated thrhough an
   arrow: all Values connected to the arrow will have the same content"""
-function same_content_propagator(sarrow::SubArrow, prop::Propagation)
-  selected_value = first(propagated_values(sarrow, prop))
-  content = prop.value_content[selected_value]
-  unpropagated = unpropagated_values(sarrow, prop)
-  foreach(value-> add_pending!(prop, value, content), unpropagated)
+function same_content_propagator()
+  function f(sarrow::SubArrow, prop::Propagation)
+    selected_value = first(propagated_values(sarrow, prop))
+    content = prop.value_content[selected_value]
+    unpropagated = unpropagated_values(sarrow, prop)
+    foreach(value-> add_pending!(prop, value, content), unpropagated)
+  end
+  x->nothing, f
 end
 
 """This function allows the information to jump over the arrows. The idea is

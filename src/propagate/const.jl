@@ -8,9 +8,36 @@
 
 """Function that selects the propagator according to the subtype
     of `deref(sarrow)`"""
-function const_propagator!(sarrow::SubArrow, prop::Propagation)
-  const_propagator!(deref(sarrow), sarrow, prop)
+function const_propagator!()
+  function f(sarrow::SubArrow, prop::Propagation)
+    const_propagator!(deref(sarrow), sarrow, prop)
+  end
+  prologue_const, f
 end
+
+"""Prologue for propagation of `const` property. When a `CompArrow` contains
+  a `SourceArrow`, this `sarrow` must be added to the `touched_arrows` set
+  for further examination."""
+function prologue_const(prop::Propagation)
+  prologue_const(prop, prop.carr)
+end
+
+function prologue_const(prop::Propagation, carr::CompArrow)
+  f = sarrow -> prologue_const(prop, deref(sarrow), sarrow)
+  foreach(f, sub_arrows(carr))
+end
+
+function prologue_const(prop::Propagation, carr::CompArrow, _::SubArrow)
+  prologue_const(prop, carr)
+end
+
+function prologue_const(prop::Propagation, arrow::Arrow, _::SubArrow)
+end
+
+function prologue_const(prop::Propagation, _::SourceArrow, sarrow::SubArrow)
+  push!(prop.touched_arrows, sarrow)
+end
+
 
 "Default `const_propagator`: do nothing"
 function const_propagator!(_::Arrow,
