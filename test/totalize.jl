@@ -23,7 +23,7 @@ test_aprx_error()
 function test_has_error_ports()
   arr = TestArrows.xy_plus_x_arr()
   invarr = aprx_error(invert(arr))
-  @test !isempty(invarr[Arrows.isϵ])
+  @test !isempty(⬧(invarr, isϵ))
 end
 
 test_has_error_ports()
