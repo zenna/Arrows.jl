@@ -21,5 +21,8 @@ sub_ports(val::SrcValue)::Vector{SubPort} = [src(val), out_neighbors(src(val))..
 "Get Vector of InPort ValueSet"
 in_values(aarr::AbstractArrow)::Vector{SrcValue} = SrcValue.(in_sub_ports(aarr))
 
-"Get Vector of InPort ValueSet"
+"Get Vector of OutPort ValueSet"
 out_values(aarr::AbstractArrow)::Vector{SrcValue} = SrcValue.(out_sub_ports(aarr))
+
+"Get Vector of ValueSet"
+all_values(sarr::SubArrow)::Vector{SrcValue} = SrcValue.(sub_ports(sarr))

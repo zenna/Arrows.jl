@@ -52,35 +52,18 @@ function propagate!{T}(carr:: CompArrow,
   propagation.sprtvals
 end
 
-"check if a key is in sprtvals"
-function haskey_sprvals{T}(prop::Propagation{T})
-  sport -> haskey(prop.sprtvals, sport)
-end
-
-"filter sports with a boolean function"
-function filter_sports{T}(sarr::SubArrow,
-      prop::Propagation{T},
-      f::Function)
-  filter(f, sub_ports(sarr))
-end
-
-"filter values according to a boolean function"
-function filter_values{T}(sarr::SubArrow,
-      prop::Propagation{T},
-      f::Function)
-  sports = filter_sports(sarr, prop, f)
-  Set(map(SrcValue, sports))
-end
 
 "filter already processed values"
 function propagated_values{T}(sarr::SubArrow, prop::Propagation{T})
-  filter_values(sarr, prop, haskey_sprvals(prop))
+  values = Set(all_values(sarr))
+  values ∩ keys(prop.value_content)
 end
 
 
 "filter not yet processed values"
 function unpropagated_values{T}(sarr::SubArrow, prop::Propagation{T})
-  filter_values(sarr, prop, !haskey_sprvals(prop))
+  values = Set(all_values(sarr))
+  setdiff(values, keys(prop.value_content))
 end
 
 "add values to the propagation"
