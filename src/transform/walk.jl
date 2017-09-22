@@ -56,7 +56,7 @@ function walk!(inner, outer, carr::CompArrow)::CompArrow
 end
 
 "Non mutating `walk!`"
-walk(inner, outer, carr::CompArrow) = walk!(inner, ouer, deepcopy(carr))
+walk(inner, outer, carr::CompArrow) = walk!(inner, outer, deepcopy(carr))
 
 """Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
 """
