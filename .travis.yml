@@ -1,17 +1,19 @@
 language: julia
 os:
   - linux
-  # - osx
+  - osx
 julia:
   - 0.6
   - nightly
 notifications:
   email: false
 env:
-  - DOCUMENTER_DEBUG="true"  
+  - DOCUMENTER_DEBUG="true"
 script:
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
+  - julia -e 'Pkg.build("Plots")'
+  - julia -e 'Pkg.build("Luxor")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'
 after_success:
   # - julia -e 'cd(Pkg.dir("Arrows")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'

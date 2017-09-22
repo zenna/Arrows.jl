@@ -66,3 +66,26 @@ function hist_compare(fwd, invloss, nparams; nsamples=100)
   end
   losses
 end
+
+function optim_arrow(invloss, nparams; nsamples=100)
+  minlosses = Float64[]
+
+  losses = Float64[]
+  @showprogress 1 "Optimizing..." for i = 1:nsamples
+    θs = rand(nparams) # FIXME: Not general How to generate random parameter init
+    # FIXME: (1) Derive number of parametric inputs
+    # FIXME 2. Get gradients=
+    opt = Opt(:LN_COBYLA, nparams)
+
+    # FIXME: Do we have any bounds on parameters?
+    # lower_bounds!(opt, [-Inf, 0.])
+    xtol_rel!(opt, 1e-4)
+
+    min_objective!(opt, invloss)
+
+    # FIXME, save parameter values
+    (minf, minx, ret) = optimize(opt, θs)
+    println("got $minf at $minx after $count iterations (returned $ret)")
+  end
+  losses
+end

@@ -15,9 +15,5 @@ Pkg.clone("https://github.com/zenna/Arrows.jl.git")
 ```@contents
 ```
 
-```@docs
-CompArrow
-```
-
 ```@index
 ```

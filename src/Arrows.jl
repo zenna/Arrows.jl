@@ -62,7 +62,10 @@ import Base:  ^,
               <<,
               dot,
               identity,
-              ifelse
+              ifelse,
+              var,
+              zero,
+              one
 export
   conjoin,
   disjoin,
@@ -120,12 +123,24 @@ export
   aprx_error,
   aprx_error!,
   dupl,
+  inv_dupl,
   duplify!,
   assert!,
   deref,
 
   mean,
   var,
+
+  ◂,
+  ◂s,
+  ▸,
+  ▸s,
+  n◂,
+  n▸,
+  ◃,
+  ◃s,
+  ▹,
+  ▹s,
 
   SourceArrow,
   AssertArrow,
@@ -176,7 +191,6 @@ include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
 include("arrows/label.jl")          #
-include("arrows/index.jl")          #
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # ValueSet
@@ -226,6 +240,8 @@ include("transform/totalizeprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
+include("host/filter.jl")
+
 
 # Optimziation and Learning #
 include("optim/loss.jl")
@@ -238,10 +254,10 @@ include("targets/julia/JuliaTarget.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../examples/BenchmarkArrows.jl")
+include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis
-# include("../analysis/analysis.jl")
+include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 

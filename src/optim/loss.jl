@@ -1,9 +1,3 @@
-"A Plain port is neither a parameter port nor an error port"
-is_plain_port(port::Port) = !(is_parameter_port(port) || is_error_port(port))
-
-"In ports that are plain"
-plain_in_ports(arr) = filter(is_plain_port, in_ports(arr))
-
 "f(x, y) = (x - y)^2 sqrt"
 function diff_arrow()
   carr = SubtractArrow() >> SqrArrow() >> SqrtArrow()
@@ -12,17 +6,17 @@ function diff_arrow()
   carr
 end
 
-"Arrow `arr: x_1::T, x_2::T -> Real` which compares two inputs of type `T`"
+"Arrow which computes distance a distance between two elements of type `T`"
 δ(T::DataType) = diff_arrow()
-
 δ!(a::SubPort, b::SubPort) = sqrt(sqr(a - b))
 
-"mean()"
-make_error_accum(Ts::Vector{DataType}) =
-  stack(map(δ, Ts)...) >> MeanArrow(length(Ts))
+mean_errors!(ϵsprts::Vector{SubPort}) = mean(ϵsprts)
+mean_errors!(arr::CompArrow) = mean_errors!(arr[isϵ])
 
 "δ(fwd(inv(y)), y)"
 function iden_loss!(fwd::Arrow, inv::Arrow)::Arrow
+  #FIXME iden_loss is a bad name
+  #FIXME why is this so complicated? 
   carr = CompArrow(:iden_loss)
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)

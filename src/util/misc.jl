@@ -20,6 +20,14 @@ function same(xs)::Bool
   return true
 end
 
+"Split a collection `xs` by a predicate"
+function split{T}(pred, xs::Vector{T})
+  in = T[]
+  out = T[]
+  foreach(x -> pred(x) ? push!(in, x) : push!(out, x), xs)
+  (in, out)
+end
+
 "`f: coll -> Bool`, such that ∀ x in xs, x ∈ coll"
 allin_f(xs) = coll -> all((x ∈ coll for x in xs))
 
