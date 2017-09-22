@@ -1,4 +1,5 @@
 using NamedTuples
+import Arrows: is_error_port, loose, link_to_parent!
 
 "Example scene"
 function example_scene(path_length::Integer)
@@ -66,19 +67,63 @@ function eval_theta(nlinks=2)
   invloss, invlossjl
 end
 
-test_arr()
-Arrows.maprecur(test_arr, apr)
+function meanerror(invarr::CompArrow)
+  thebest = CompArrow(:thebest)
+  sarr = add_sub_arr!(thebest, invarr)
+  ϵprts = filter(is_error_port, ◂s(invarr))
+  meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
+  i = 1
+  foreach(Arrows.link_to_parent!, ▹s(sarr))
+  for sprt in ◃s(sarr)
+    if is_error_port(sprt)
+      sprt ⥅ ▹(meanarr, i)
+      i += 1
+    else
+      Arrows.link_to_parent!(sprt)
+    end
+  end
+  Arrows.link_to_parent!(◃(meanarr, 1))
+  ϵ!(Arrows.dst(◃(meanarr, 1)))
+  @assert is_wired_ok(thebest)
+  thebest
+end
 
-eval_theta()
-import Arrows: is_error_port, loose, link_to_parent!
+"Generate the inverse arrow with loss"
+function invlossarr(nlinks)
+  fwd = fwd_2d_linkage_obs(nlinks)
+  invarr = invert(fwd)
+  invarrwerros = aprx_error(invarr)
+  totalinvarr = Arrows.aprx_totalize(invarrwerros)
+  meanerror(totalinvarr)
+end
 
-InvDuplArrow
-Arrows.mean_errors!
-nlinks = 2
-fwd = fwd_2d_linkage_obs(nlinks)
-invarr = invert(fwd)
-apr = aprx_error(invarr)
-bah = Arrows.aprx_totalize(apr)
-ok = rand(n▸(bah))
-bah(ok...)
-Arrows.compile(bah)
+function train(invarr)
+  nparams = length(filter(Arrows.is_parameter_port, in_ports(invarr)))
+  invlossjl = Arrows.julia(invarr)
+  i = 1
+  inputs = [1.0, 1.0]
+  obstacles = [BenchmarkArrows.Circle([0.5, 0.5], 0.3),
+               BenchmarkArrows.Circle([0.0, 0.5], 0.3)]
+  function invlossf(θs::Vector, grad::Vector)
+    output = invlossjl(inputs..., θs...)
+    loss = output[end]
+    angles = output[1:end-1]
+    pointmat = BenchmarkArrows.vertices([angles...])
+    if (i % 100 == 0)
+      BenchmarkArrows.drawscene(pointmat, obstacles, inputs...)
+    end
+    i += 1
+    loss
+  end
+  Arrows.Analysis.optim_arrow(invlossf, nparams; nsamples=100)
+end
+
+function test(nlinks=2)
+  invarr = invlossarr(nlinks)
+  train(invarr)
+end
+
+test()
+
+# include("../analysis/analysis.jl")
+# include("../analysis/analysis.jl")
