@@ -24,8 +24,7 @@ end
 """
 Propagate values around a composite arrow.
 # Arguments:
-  `carr`: Composite Arrow to propagate through
-      assumes `!(is_recursive(carr))`
+  `carr`: Composite Arrow to propagate through`
   `sprtvals`: Mapping from `SubPort` to some value of type `T`
   `propagators`: functions
 
@@ -42,7 +41,6 @@ Propagate values around a composite arrow.
 function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T},
        propagator::Function)::Dict{SubPort, T}
-  !is_recursive(carr) || throw(DomainError())
   propagation = Propagation{T}(carr, sprtvals, propagator)
   while !(isempty(propagation.pending) && isempty(propagation.touched_arrows))
     while !isempty(propagation.pending)
@@ -131,12 +129,5 @@ end
   each of its values"""
 function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T})::Dict{SubPort, T}
-  !is_recursive(carr) || throw(DomainError())
   propagate!(carr, sprtvals, same_content_propagator)
-end
-
-
-"is `carr` recursive."
-function is_recursive(carr::CompArrow)::Bool
-  false
 end

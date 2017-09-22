@@ -19,22 +19,37 @@ end
   a `SourceArrow`, this `sarrow` must be added to the `touched_arrows` set
   for further examination."""
 function prologue_const(prop::Propagation)
-  prologue_const(prop, prop.carr)
+  seen = Set{CompArrow}()
+  push!(seen, prop.carr)
+  prologue_const(prop, prop.carr, seen)
 end
 
-function prologue_const(prop::Propagation, carr::CompArrow)
-  f = sarrow -> prologue_const(prop, deref(sarrow), sarrow)
+function prologue_const(prop::Propagation,
+                        carr::CompArrow,
+                        seen::Set{CompArrow})
+  f = sarrow -> prologue_const(prop, deref(sarrow), sarrow, seen)
   foreach(f, sub_arrows(carr))
 end
 
-function prologue_const(prop::Propagation, carr::CompArrow, _::SubArrow)
-  prologue_const(prop, carr)
+function prologue_const(prop::Propagation,
+                        carr::CompArrow,
+                        _::SubArrow,
+                        seen::Set{CompArrow})
+  if carr ∉ seen
+    prologue_const(prop, carr, seen)
+  end
 end
 
-function prologue_const(prop::Propagation, arrow::Arrow, _::SubArrow)
+function prologue_const(prop::Propagation,
+                        arrow::Arrow,
+                        _::SubArrow,
+                        seen::Set{CompArrow})
 end
 
-function prologue_const(prop::Propagation, _::SourceArrow, sarrow::SubArrow)
+function prologue_const(prop::Propagation,
+                        _::SourceArrow,
+                        sarrow::SubArrow,
+                        seen::Set{CompArrow})
   push!(prop.touched_arrows, sarrow)
 end
 
