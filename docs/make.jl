@@ -10,6 +10,7 @@ makedocs(
   sitename = "Arrows.jl",
   pages = [
     "Home"=>"index.md",
+    "Selection"=>"select.md",
     "Internals"=>
       ["Types"=>"types.md",
        "CompArrow API"=>"comparrow.md",

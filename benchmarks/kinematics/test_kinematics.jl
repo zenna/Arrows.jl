@@ -90,7 +90,7 @@ end
 
 "Generate the inverse arrow with loss"
 function invlossarr(nlinks)
-  fwd = fwd_2d_linkage_obs(nlinks)
+  fwd = fwd_2d_linkage(nlinks)
   invarr = invert(fwd)
   invarrwerros = aprx_error(invarr)
   totalinvarr = Arrows.aprx_totalize(invarrwerros)
@@ -118,12 +118,7 @@ function train(invarr)
   Arrows.Analysis.optim_arrow(invlossf, nparams; nsamples=100)
 end
 
-function test(nlinks=2)
+function test(nlinks=4)
   invarr = invlossarr(nlinks)
   train(invarr)
 end
-
-test()
-
-# include("../analysis/analysis.jl")
-# include("../analysis/analysis.jl")

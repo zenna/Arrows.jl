@@ -257,7 +257,7 @@ include("../test/TestArrows.jl")
 # include("../examples/BenchmarkArrows.jl")
 
 # Analysis
-# include("../analysis/analysis.jl")
+include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 

@@ -7,6 +7,12 @@ function expander(short_symb, f_symb)
   $fname(carr::CompArrow, pred, xs...) = filter(pred, $plural(carr))[xs...]
   $fname(carr::CompArrow, pred) = filter(pred, $plural(carr))
   $fname(carr::CompArrow) = $plural(carr)
+
+  $fname(sarr::SubArrow, i::Int) = $f_symb(sarr, i)
+  $fname(sarr::SubArrow, pred, xs...) = filter(pred, $plural(sarr))[xs...]
+  $fname(sarr::SubArrow, pred) = filter(pred, $plural(sarr))
+  $fname(sarr::SubArrow) = $plural(sarr)
+
   $short_symb = $fname
   export $fname
   export $short_symb
