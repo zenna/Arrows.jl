@@ -1,5 +1,7 @@
 using NamedTuples
 import Arrows: is_error_port, loose, link_to_parent!
+using Arrows
+using Arrows.BenchmarkArrows
 
 "Example scene"
 function example_scene(path_length::Integer)
@@ -122,3 +124,5 @@ function test(nlinks=4)
   invarr = invlossarr(nlinks)
   train(invarr)
 end
+
+test()

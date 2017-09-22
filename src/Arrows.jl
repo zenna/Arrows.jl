@@ -254,7 +254,7 @@ include("targets/julia/JuliaTarget.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../examples/BenchmarkArrows.jl")
+include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis
 include("../analysis/analysis.jl")
