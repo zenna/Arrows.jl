@@ -30,15 +30,15 @@ function pgflala!(carr::CompArrow)
 end
 pgf(carr::CompArrow) = pgflala!(deepcopy(carr))
 
-carr = CompArrow(:test, [:x, :y], [:z])
-x, y, z = sub_ports(carr)
-(x * y + x) ⥅ z
-carr
-
-inv_carr = invert(carr)
-carr(1, 2)
-
-pgf_carr = pgf(carr)
-pgf_carr(1, 2)
-
-inv_carr(3, 2, 1)
+# carr = CompArrow(:test, [:x, :y], [:z])
+# x, y, z = sub_ports(carr)
+# (x * y + x) ⥅ z
+# carr
+#
+# inv_carr = invert(carr)
+# carr(1, 2)
+#
+# pgf_carr = pgf(carr)
+# pgf_carr(1, 2)
+#
+# inv_carr(3, 2, 1)
