@@ -52,19 +52,19 @@ function propagate!{T}(carr:: CompArrow,
   propagation.sprtvals
 end
 
-"private helper function to check a key in sprtvals"
+"check if a key is in sprtvals"
 function haskey_sprvals{T}(prop::Propagation{T})
   sport -> haskey(prop.sprtvals, sport)
 end
 
-"helper function to filter sports with a boolean function"
+"filter sports with a boolean function"
 function filter_sports{T}(sarr::SubArrow,
       prop::Propagation{T},
       f::Function)
   filter(f, sub_ports(sarr))
 end
 
-"helper function to filter values according to a boolean function"
+"filter values according to a boolean function"
 function filter_values{T}(sarr::SubArrow,
       prop::Propagation{T},
       f::Function)
@@ -72,29 +72,29 @@ function filter_values{T}(sarr::SubArrow,
   Set(map(SrcValue, sports))
 end
 
-"helper function to filter already processed values"
+"filter already processed values"
 function propagated_values{T}(sarr::SubArrow, prop::Propagation{T})
   filter_values(sarr, prop, haskey_sprvals(prop))
 end
 
 
-"helper function to filter not yet processed values"
+"filter not yet processed values"
 function unpropagated_values{T}(sarr::SubArrow, prop::Propagation{T})
   filter_values(sarr, prop, !haskey_sprvals(prop))
 end
 
-"helper funtion to add values to the propagation"
+"add values to the propagation"
 function add_content!{T}(prop::Propagation{T}, sport::SubPort, content::T)
   prop.sprtvals[sport] = content
 end
 
-"helper funtion to add values to the propagation while including `sub_arrow`"
+"add values to the propagation while including `sub_arrow`"
 function add_content_arrow!{T}(prop::Propagation{T}, sport::SubPort, content::T)
   add_content!(prop, sport, content)
   push!(prop.touched_arrows, sub_arrow(sport))
 end
 
-"helper function to mention that a value needs to propagate some content"
+"state that a value needs to propagate some content"
 function add_pending!{T}(prop::Propagation{T}, value::SrcValue, content::T)
   prop.value_content[value] = content
   push!(prop.pending, value)
@@ -122,14 +122,14 @@ function propagate_through!(prop::Propagation)
   prop.touched_arrows = Set()
 end
 
-"helper function that checks conflict during the propagation"
+"check conflict during the propagation"
 function check_conflict{T}(prop::Propagation{T}, sport::SubPort, content::T)
   if prop.sprtvals[sport] != content
     throw(DomainError(msg))
   end
 end
 
-"helper function to propagate the content of a value to all its subports"
+"propagate the content of a value to all its subports"
 function propagate!{T}(value::SrcValue, prop::Propagation{T})
   content = prop.value_content[value]
   for sport in sub_ports(value)
@@ -141,6 +141,9 @@ function propagate!{T}(value::SrcValue, prop::Propagation{T})
   end
 end
 
+"""propagate the content of a value to all its subports,
+  using the default policy: every sarrow propagate the same content to
+  each of its values"""
 function propagate!{T}(carr:: CompArrow,
        sprtvals::Dict{SubPort, T})::Dict{SubPort, T}
   !is_recursive(carr) || throw(DomainError())

@@ -6,7 +6,7 @@
 #   - The output of any `SourceArrow` is a constant.
 
 
-"""Function that selects the propagator according to the subtype
+"""Select a propagator according to the subtype
     of `deref(sarrow)`"""
 function const_propagator!()
   function f(sarrow::SubArrow, prop::Propagation)
@@ -74,7 +74,7 @@ function const_propagator!(_::SourceArrow,
 end
 
 
-"helper function to propagate `known_const` in a given set"
+"propagate `known_const` in a given set"
 function propagate_known_const!(prop::Propagation,
                                 seen,
                                 values::Set{SrcValue})
