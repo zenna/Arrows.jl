@@ -6,7 +6,9 @@ mutable struct Propagation{T}
   sprtvals::Dict{SubPort, T}
   carr::CompArrow
   propagator::Function
-  function Propagation{T}(carr::CompArrow, seed::Dict{SubPort, T}, propagator::Function)
+  function Propagation{T}(carr::CompArrow,
+                          seed::Dict{SubPort, T},
+                          propagator::Function) where T
     p = new{T}()
     p.carr = carr
     p.sprtvals = seed
