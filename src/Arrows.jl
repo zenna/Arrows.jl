@@ -237,6 +237,7 @@ include("transform/walk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/invprim.jl")
+include("transform/pgf.jl")
 include("transform/compcall.jl")
 include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
@@ -261,7 +262,7 @@ include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis
-include("../analysis/analysis.jl")
+#include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 
