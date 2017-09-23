@@ -48,18 +48,31 @@ function parent_value{T}(::Arrows.Port{Arrows.Arrow, T},
   default
 end
 
-function ordered_values(carr::CompArrow)
+function order_values(carr::CompArrow)
   assigments = order_of_assigment(carr)
-  answer = Dict{Arrows.SrcValue, Int}()
-
-  for (idx, value) in enumerate(assigments)
+  order = Dict{Arrows.SrcValue, Int}()
+  idx = 1
+  for value in assigments
     sport = Arrows.src(value)
     p_value = parent_value(deref(sport), value)
-    if p_value ∈ keys(answer)
-      answer[value] = answer[p_value]
+    if p_value ∈ keys(order)
+      order[value] = order[p_value]
     else
-      answer[value] = idx
+      order[value] = idx
+      idx += 1
     end
   end
-  sort(collect(answer), by=x->x[2])
+  order
+end
+
+function order_sub_ports(carr::CompArrow, sports::Vector{SubPort})
+  ordered_values = order_values(carr)
+  pairs = Vector{Pair{Int, Int}}()
+  for (idx, sport) in enumerate(sports)
+    value = Arrows.SrcValue(sport)
+    position = ordered_values[value]
+    push!(pairs, idx=>position)
+  end
+  sorted_pairs = sort(pairs, by=x->x[2])
+  map(first, pairs)
 end
