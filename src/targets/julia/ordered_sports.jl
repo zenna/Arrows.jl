@@ -1,19 +1,21 @@
 import Base: Iterators
 
-#TODO: remove the Arrows.
 
-order_of_assigment(carr::Arrow, ::Set{Arrows.CompArrow}) = []
+"Return the order in which the values of `carr` are assigned"
+order_of_assigment(carr::Arrow, ::Set{CompArrow}) = []
 
+"Return the order in which the values of `carr` are assigned"
 function order_of_assigment(carr::CompArrow)
-  order_of_assigment(carr, Set{Arrows.CompArrow}())
+  order_of_assigment(carr, Set{CompArrow}())
 end
 
-function order_of_assigment(carr::CompArrow, seen::Set{Arrows.CompArrow})
+"Return the order in which the values of `carr` are assigned"
+function order_of_assigment(carr::CompArrow, seen::Set{CompArrow})
   push!(seen, carr)
-  assigns = Vector{Arrows.SrcValue}()
+  assigns = Vector{SrcValue}()
   function f(sarr::SubArrow, args)
-    outnames = map(name, Arrows.out_values(sarr))
-    for value in Arrows.out_values(sarr)
+    outnames = map(name, out_values(sarr))
+    for value in out_values(sarr)
       if value ∉ assigns
         push!(assigns, value)
       end
@@ -21,10 +23,10 @@ function order_of_assigment(carr::CompArrow, seen::Set{Arrows.CompArrow})
     outnames
   end
 
-  inputs = map(name, Arrows.in_values(sub_arrow(carr)))
+  inputs = map(name, in_values(sub_arrow(carr)))
   interpret(f, carr, inputs)
-  answer = Vector{Vector{Arrows.SrcValue}}()
-  to_arrow = Arrows.deref ∘ Arrows.sub_arrow ∘ Arrows.src
+  answer = Vector{Vector{SrcValue}}()
+  to_arrow = deref ∘ sub_arrow ∘ src
   for value in assigns
     prev = to_arrow(value)
     if prev ∉ seen
@@ -38,22 +40,23 @@ function order_of_assigment(carr::CompArrow, seen::Set{Arrows.CompArrow})
   collect(Iterators.flatten(answer))
 end
 
-function parent_value{T}(port::Arrows.Port{Arrows.CompArrow, T},
-                        ::Arrows.SrcValue)
-  (Arrows.SrcValue ∘ sub_port)(port)
+function parent_value{T}(port::Port{CompArrow, T},
+                        ::SrcValue)
+  (SrcValue ∘ sub_port)(port)
 end
 
-function parent_value{T}(::Arrows.Port{Arrows.Arrow, T},
-                        default::Arrows.SrcValue)
+function parent_value{T}(::Port{Arrow, T},
+                        default::SrcValue)
   default
 end
 
+"""Return the order in which the values of `carr` are computed"""
 function order_values(carr::CompArrow)
   assigments = order_of_assigment(carr)
-  order = Dict{Arrows.SrcValue, Int}()
+  order = Dict{SrcValue, Int}()
   idx = 1
   for value in assigments
-    sport = Arrows.src(value)
+    sport = src(value)
     p_value = parent_value(deref(sport), value)
     if p_value ∈ keys(order)
       order[value] = order[p_value]
@@ -65,11 +68,13 @@ function order_values(carr::CompArrow)
   order
 end
 
+"""Given a `CompArrow` and a `Vecotr{SubPort}`, return the order in which the
+  elements of the vector are computed"""
 function order_sub_ports(carr::CompArrow, sports::Vector{SubPort})
   ordered_values = order_values(carr)
   pairs = Vector{Pair{Int, Int}}()
   for (idx, sport) in enumerate(sports)
-    value = Arrows.SrcValue(sport)
+    value = SrcValue(sport)
     position = ordered_values[value]
     push!(pairs, idx=>position)
   end
