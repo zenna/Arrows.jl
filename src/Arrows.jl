@@ -169,6 +169,9 @@ export
   # Compound
   addn,
 
+  # Optimization
+  optimize,
+
   # Inverse Arrows
   InvDuplArrow,
   inv_add,
@@ -176,7 +179,7 @@ export
 
   # Optim
   julia,
-  iden_loss
+  id_loss
 # Code structures
 
 include("util/misc.jl")             # miscelleneous utilities
@@ -245,6 +248,7 @@ include("host/filter.jl")
 
 # Optimziation and Learning #
 include("optim/loss.jl")
+include("optim/optimize.jl")
 
 # Examples, etc #
 include("targets/targets.jl")

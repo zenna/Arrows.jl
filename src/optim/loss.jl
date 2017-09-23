@@ -10,14 +10,33 @@ end
 δ(T::DataType) = diff_arrow()
 δ!(a::SubPort, b::SubPort) = sqrt(sqr(a - b))
 
-mean_errors!(ϵsprts::Vector{SubPort}) = mean(ϵsprts)
-mean_errors!(arr::CompArrow) = mean_errors!(arr[isϵ])
+"accumulate errors"
+function meanerror(invarr::CompArrow)
+  thebest = CompArrow(:thebest)
+  sarr = add_sub_arr!(thebest, invarr)
+  ϵprts = filter(is_error_port, ◂s(invarr))
+  meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
+  i = 1
+  foreach(Arrows.link_to_parent!, ▹s(sarr))
+  for sprt in ◃s(sarr)
+    if is_error_port(sprt)
+      sprt ⥅ ▹(meanarr, i)
+      i += 1
+    else
+      Arrows.link_to_parent!(sprt)
+    end
+  end
+  Arrows.link_to_parent!(◃(meanarr, 1))
+  ϵ!(Arrows.dst(◃(meanarr, 1)))
+  @assert is_wired_ok(thebest)
+  thebest
+end
 
-"δ(fwd(inv(y)), y)"
-function iden_loss!(fwd::Arrow, inv::Arrow)::Arrow
-  #FIXME iden_loss is a bad name
-  #FIXME why is this so complicated? 
-  carr = CompArrow(:iden_loss)
+"Identity Loss : δ(f(f⁻¹(y)), y)"
+function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
+  #FIXME id_loss is a bad name
+  #FIXME why is this so complicated?
+  carr = CompArrow(:id_loss)
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
   for (i, sprt) in enumerate(out_sub_ports(invsarr))
@@ -44,4 +63,4 @@ function iden_loss!(fwd::Arrow, inv::Arrow)::Arrow
   carr
 end
 
-iden_loss(fwd::Arrow, inv::Arrow) = iden_loss!(deepcopy(fwd), deepcopy(inv))
+id_loss(fwd::Arrow, inv::Arrow) = id_loss!(deepcopy(fwd), deepcopy(inv))
