@@ -70,7 +70,7 @@ end
 
 """Given a `CompArrow` and a `Vecotr{SubPort}`, return the order in which the
   elements of the vector are computed"""
-function order_sub_ports(carr::CompArrow, sports::Vector{SubPort})
+function order_sports(carr::CompArrow, sports::Vector{SubPort})
   ordered_values = order_values(carr)
   pairs = Vector{Pair{Int, Int}}()
   for (idx, sport) in enumerate(sports)
@@ -79,5 +79,5 @@ function order_sub_ports(carr::CompArrow, sports::Vector{SubPort})
     push!(pairs, idx=>position)
   end
   sorted_pairs = sort(pairs, by=x->x[2])
-  map(first, pairs)
+  map(first, sorted_pairs)
 end
