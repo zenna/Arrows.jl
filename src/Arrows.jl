@@ -179,7 +179,10 @@ export
 
   # Optim
   julia,
-  id_loss
+  id_loss,
+
+  # compiler
+  order_sports
 # Code structures
 
 include("util/misc.jl")             # miscelleneous utilities

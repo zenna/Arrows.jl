@@ -45,7 +45,7 @@ function parent_value{T}(port::Port{CompArrow, T},
   (SrcValue ∘ sub_port)(port)
 end
 
-function parent_value{T}(::Port{Arrow, T},
+function parent_value{T1, T2}(::Port{T1, T2},
                         default::SrcValue)
   default
 end
