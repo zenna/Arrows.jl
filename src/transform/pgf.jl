@@ -18,6 +18,65 @@ function pgf(arr::AddArrow)
   carr
 end
 
+function pgf(arr::SubArrow)
+  # TODO: make it general
+  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :th])
+  x, y, z, th = sub_ports(carr)
+  x - y ⥅ z
+  y ⥅ th
+  carr
+end
+
+function pgf(arr::SinArrow)
+  # TODO: make it general
+  carr = CompArrow(Symbol(:pgf_, :sin), [:x], [:y, :th])
+  x, y, th = sub_ports(carr)
+  sinarr = add_sub_arr!(carr, SinArrow())
+  link_ports!(x, (sinarr, 1))
+  link_ports!((sinarr, 1), y)
+  zero = add_sub_arr!(carr, SourceArrow(0))
+  link_ports!((zero, 1), th)
+  carr
+end
+
+function pgf(arr::CosArrow)
+  # TODO: make it general
+  carr = CompArrow(Symbol(:pgf_, :cos), [:x], [:y, :th])
+  x, y, th = sub_ports(carr)
+  cosarr = add_sub_arr!(carr, CosArrow())
+  link_ports!(x, (cosarr, 1))
+  link_ports!((cosarr, 1), y)
+  zero = add_sub_arr!(carr, SourceArrow(0))
+  link_ports!((zero, 1), th)
+  carr
+end
+
+function pgf(arr::SourceArrow)
+  # TODO: make it general
+  newarr = deepcopy(arr)
+  rename!(newarr, Symbol(:pgf_, :source))
+  newarr
+end
+
+function pgf(arr::IdentityArrow)
+  # TODO: make it general
+  newarr = deepcopy(arr)
+  rename!(newarr, Symbol(:pgf_, :identity))
+  newarr
+end
+
+function pgf(arr::LessThanArrow)
+  # TODO: make it general
+  carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :th1, :th2])
+  x, y, z, th1, th2 = sub_ports(carr)
+  abs = add_sub_arr!(carr, AbsArrow())
+  x < y ⥅ z
+  x ⥅ th1
+  x - y ⥅ (abs, 1)
+  link_ports!((abs, 2), th2)
+  carr
+end
+
 pgf_rename!(carr::CompArrow) = (rename!(carr, Symbol(:pgf_, carr.name)); carr)
 
 pgf_in(sarr::SubArrow) = pgf(deref(sarr))
@@ -32,16 +91,3 @@ function pgf_change!(carr::CompArrow)
 end
 
 pgf(carr::CompArrow) = pgf_change!(deepcopy(carr))
-
-carr = CompArrow(:test, [:x, :y], [:z])
-x, y, z = sub_ports(carr)
-(x * y + x) ⥅ z
-carr
-
-inv_carr = invert(carr)
-carr(1, 2)
-
-pgf_carr = pgf(carr)
-pgf_carr(1, 2)
-
-inv_carr(3, 2, 1)
