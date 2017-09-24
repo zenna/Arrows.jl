@@ -111,6 +111,12 @@ export
   ports,
   propagate!,
   Shape,
+  #const
+  Const,
+  known_const,
+  known_not_const,
+  const_propagator!,
+
   is_wired_ok,
   is_valid,
   interpret,
@@ -196,7 +202,8 @@ include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch in
 include("arrows/label.jl")          #
 
 include("value/value.jl")           # ValueSet
-include("value/source.jl")          # ValueSet
+include("value/source.jl")          # SrcValue
+include("value/const.jl")           # Const type
 
 include("arrows/trace.jl")          #
 
@@ -225,6 +232,7 @@ include("combinators/compose.jl")
 include("apply/preddisp.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
+include("propagate/const.jl")
 
 include("compile/policy.jl")
 include("compile/depend.jl")
