@@ -9,11 +9,14 @@ notifications:
   email: false
 env:
   - DOCUMENTER_DEBUG="true"
+dist: trusty
+sudo: true
 script:
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
   - julia -e 'Pkg.add("Plots")'
   - julia -e 'Pkg.add("Luxor")'
+  - julia -e 'Pkg.add("NLopt")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'
 after_success:
   # - julia -e 'cd(Pkg.dir("Arrows")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
