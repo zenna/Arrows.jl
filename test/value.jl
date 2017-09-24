@@ -42,7 +42,20 @@ function test_const_srcarrow()
   @test haskey(is_const, x) == false
 end
 
+function test_const_recursive()
+  arr = fibonnaci_arr()
+  is_const = Dict{SubPort, Const}()
+  propagate!(arr, is_const, const_propagator!)
+  wrap, one, min, ite, eq, add = sub_arrows(arr)
+  @test length(is_const) == 4
+  @test haskey(is_const, in_sub_port(eq, 2))
+  @test haskey(is_const, out_sub_port(one, 1))
+  @test haskey(is_const, in_sub_port(ite, 2))
+  @test haskey(is_const, in_sub_port(min, 2))
+end
+
 test_src_value()
 test_const_1()
 test_const_2()
 test_const_srcarrow()
+test_const_recursive()
