@@ -261,6 +261,8 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
+include("gradient/gradient.jl")
+
 
 # Examples, etc #
 include("targets/targets.jl")

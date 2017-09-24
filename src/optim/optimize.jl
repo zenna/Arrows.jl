@@ -1,8 +1,10 @@
 import NLopt
+import ReverseDiff
 
 "Construct loss julia function"
 function lossjl(▸idx, init, ϵprt::Port, callbacks)
   carrjl = julia(ϵprt.arrow)
+  @show ∇carrjl = gradient(ϵprt)
   input = copy(init)
   ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
   @assert ϵid != 0
@@ -12,8 +14,12 @@ function lossjl(▸idx, init, ϵprt::Port, callbacks)
       input[id] = θs[i]
     end
     output = carrjl(input...)
+    grads = ∇carrjl(input...)
+    for (i, id) in enumerate(▸idx) # Update gradients
+      grad[i] = grads[id]
+    end
     loss = output[ϵid]
-    for cb in callbacks
+    for cb in callbacks # Call all callbacks
       cb(@NT(input = input,
              output = output,
              loss = loss))
@@ -40,18 +46,20 @@ argmin_θ(ϵprt): find θ which minimizes ϵprt
 - `init`: initial input values
 # Result
 - `θ_optim`: values for
+- `min_f`:
 """
 function optimize(carr::CompArrow,
                   over::Vector{Port},
                   ϵprt::Port,
                   init::Vector;
                   callbacks=[],
-                  optim_args = @NT(tol=1e-4, alg=:LN_COBYLA))
+                  optim_args = @NT(tol=1e-4, alg=:LD_MMA))
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
   ▸idx = indexin(over, ▸(carr))
   @assert !(any(iszero.(▸idx)))
   loss = lossjl(▸idx, init, ϵprt::Port, callbacks)
   opt = gen_opt(loss, length(over), optim_args)
   init_over = [init[i] for i in ▸idx]
-  (minf, minx, ret) = NLopt.optimize(opt, init_over)
+  (minf, argmin, ret) = NLopt.optimize(opt, init_over)
+  @NT(minf = minf, argmin = argmin, ret = ret)
 end
