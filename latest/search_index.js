@@ -25,6 +25,30 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "select.html#",
+    "page": "Selection",
+    "title": "Selection",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "select.html#Selection-1",
+    "page": "Selection",
+    "title": "Selection",
+    "category": "section",
+    "text": "Arrows has a few mechanisms to select Ports, SubPorts and various Arrow types. Arrows.jl embraces unicode! The following symbols are used throughout:▸ = in_port\n◂ = out_port\n▹ = in_sub_port\n◃ = out_sub_port\n⬧ = port\n⬨ = sub_port"
+},
+
+{
+    "location": "select.html#Filtering-Examples-1",
+    "page": "Selection",
+    "title": "Filtering Examples",
+    "category": "section",
+    "text": "These can be used to select filtering by boolean combinations of predicates◂(arr, 1): The first out Port\n▹(sarr, isθ): all parametric in SubPorts\n◂(carr, isϵ ∨ isθ, 1:3): first 3 Ports which are error or parametric"
+},
+
+{
     "location": "types.html#",
     "page": "Types",
     "title": "Types",
