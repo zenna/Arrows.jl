@@ -9,6 +9,8 @@ notifications:
   email: false
 env:
   - DOCUMENTER_DEBUG="true"
+dist: trusty
+sudo: true
 script:
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
