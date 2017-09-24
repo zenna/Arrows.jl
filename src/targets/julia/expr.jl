@@ -1,5 +1,6 @@
 ## Expr ##
 call_expr{N}(arr::DuplArrow{N}, arg) = Expr(:call, dupl, arg, N)
+call_expr{N}(arr::InvDuplArrow{N}, args...) = Expr(:call, inv_dupl, args...)
 call_expr(arr::SourceArrow, args...) = arr.value
 call_expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
 

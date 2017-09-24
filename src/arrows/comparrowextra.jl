@@ -17,10 +17,10 @@ in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
 
 "Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
-is_boundary(sport::SubPort) = sport ∈ sub_ports(sub_arrow(sport))
+is_boundary(sprt::SubPort) = sprt ∈ sub_ports(sub_arrow(sprt))
 
 "Is `port` within `arr` but not on boundary"
-strictly_in(sport::SubPort, arr::CompArrow) = sport ∈ inner_sub_ports(arr)
+strictly_in(sprt::SubPort, arr::CompArrow) = sprt ∈ inner_sub_ports(arr)
 
 "Is `arr` a sub_arrow of composition `c_arr`"
 in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
@@ -203,6 +203,17 @@ function src(sport::SubPort)::SubPort
   end
 end
 
+"`dst_sprt` such that `sprt -> dst_psrt` and `dst_sprt` is unique"
+function dst(sprt::SubPort)::SubPort
+  if is_dst(sprt)
+    sprt
+  else
+    out_neighs = out_neighbors(sprt)
+    length(out_neighs) == 1 || throw(DomainError())
+    first(out_neighs)
+  end
+end
+
 maprecur!(f, parr::PrimArrow, outputs::Vector, seen::Set{ArrowName}) = nothing
 
 function maprecur!(f, carr::CompArrow, outputs::Vector, seen::Set{ArrowName})
@@ -314,9 +325,27 @@ link_to_parent!(sprts::Vector{SubPort}, pred) =
 link_to_parent!(sarr::SubArrow, pred) =
   link_to_parent!(sub_ports(sarr), pred)
 
-"Link all For all `sarrLink all `sprt::SubPort ∈ sarr` to parent if (∧ preds)(sprt)"
+# FIXME: Deprecate this in favour of convenient syntax for filter vector ports
+"Link `sprt::SubPort ∈ sarr` to parent if `pred(sprt)``"
 link_to_parent!(carr::CompArrow, pred)::CompArrow =
   (foreach(sarr -> link_to_parent!(sarr, pred), sub_arrows(carr)); carr)
+
+## Convenience
+
+▸ = in_port
+◂ = out_port
+▹ = in_sub_port
+◃ = out_sub_port
+▹s = in_sub_ports
+◃s = out_sub_ports
+▸s = in_ports
+◂s = out_ports
+n▸ = num_in_ports
+n◂ = num_out_ports
+▵ = port
+▴ = sub_port
+▵s = ports
+▴s = sub_ports
 
 ## Printing ##
 function mann(carr::CompArrow; kwargs...)
