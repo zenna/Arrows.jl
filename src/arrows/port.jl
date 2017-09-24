@@ -118,7 +118,7 @@ function ports(aarr::AbstractArrow, lb::Label)::Vector{Port}
   collect(filter(p -> has_port_label(p, lb), ports(aarr)))AbstractArrow
 end
 
-mann(is_in_port::Bool) = is_in_port ? "▹" : "◃"
+mann(is_in_port::Bool) = is_in_port ? "▸" : "◂"
 
 ## Printing ##
 const label_to_superscript = Dict{Symbol, Symbol}(

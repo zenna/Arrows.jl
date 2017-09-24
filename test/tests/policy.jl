@@ -2,7 +2,7 @@ import Arrows: name, is_valid, interpret, pol_to_julia
 using Arrows.TestArrows
 using Base.Test
 
-include("common.jl")
+include("../common.jl")
 
 
 rand_input(arr) = rand(Arrows.num_in_ports(arr))
