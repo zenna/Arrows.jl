@@ -4,7 +4,7 @@ import ReverseDiff
 "Construct loss julia function"
 function lossjl(▸idx, init, ϵprt::Port, callbacks)
   carrjl = julia(ϵprt.arrow)
-  @show ∇carrjl = gradient(ϵprt)
+  ∇carrjl = gradient(ϵprt)
   input = copy(init)
   ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
   @assert ϵid != 0
@@ -45,8 +45,9 @@ argmin_θ(ϵprt): find θ which minimizes ϵprt
 - `ϵprt`: out port to minimize
 - `init`: initial input values
 # Result
-- `θ_optim`: values for
-- `min_f`:
+- `θ_optim`: minimal value of ϵprt found
+- `argmin`: argmin of `over` found
+
 """
 function optimize(carr::CompArrow,
                   over::Vector{Port},
@@ -60,6 +61,6 @@ function optimize(carr::CompArrow,
   loss = lossjl(▸idx, init, ϵprt::Port, callbacks)
   opt = gen_opt(loss, length(over), optim_args)
   init_over = [init[i] for i in ▸idx]
-  (minf, argmin, ret) = NLopt.optimize(opt, init_over)
-  @NT(minf = minf, argmin = argmin, ret = ret)
+  (min, argmin, ret) = NLopt.optimize(opt, init_over)
+  @NT(min = min, argmin = argmin, ret = ret)
 end
