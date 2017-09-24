@@ -185,7 +185,10 @@ export
 
   # Optim
   julia,
-  id_loss
+  id_loss,
+
+  # compiler
+  order_sports
 # Code structures
 
 include("util/misc.jl")             # miscelleneous utilities
@@ -258,10 +261,13 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
+include("gradient/gradient.jl")
+
 
 # Examples, etc #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
+include("targets/julia/ordered_sports.jl")
 # include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("apply/call.jl")
