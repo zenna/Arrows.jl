@@ -32,11 +32,14 @@ function meanerror(invarr::CompArrow)
   thebest
 end
 
-"Identity Loss : δ(f(f⁻¹(y)), y)"
+"""
+Appends Identity loss : δ(f(f⁻¹(y)), y)
+
+#Arguments
+"""
 function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
-  #FIXME id_loss is a bad name
   #FIXME why is this so complicated?
-  carr = CompArrow(:id_loss)
+  carr = CompArrow(:id_loss) #FIXME, loses name of fwd/inv
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
   for (i, sprt) in enumerate(out_sub_ports(invsarr))
