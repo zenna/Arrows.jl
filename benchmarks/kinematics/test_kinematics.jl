@@ -43,17 +43,33 @@ end
 function invlossarr(nlinks)
   fwd = fwd_2d_linkage(nlinks)
   invarr = invert(fwd)
-  invarrwerros = aprx_error(invarr)
+  invarrwerros = domain_error(invarr)
   totalinvarr = Arrows.aprx_totalize(invarrwerros)
   meanerror(totalinvarr)
 end
 
-function test(nlinks=4)
-  invarr = invlossarr(nlinks)
+function test(nlinks=3)
+  fwd = fwd_2d_linkage(nlinks)
+  allϵinvarr = aprx_invert(fwd)
+  invarr = meanerror(allϵinvarr)
   invθ▸ = ▸(invarr, isθ)
   nparams = length(▸(invarr, isθ))
   init = [1.0, 1.0, rand(nparams)...]
   @assert length(init) == length(▸(invarr))
+
+  # Plotting
+  ◂ϵids = findn(isϵ.(◂(allϵinvarr)))
+  @show ◂ϵids
+  allϵinvarrjl = julia(allϵinvarr)
+  domain_losses = Matrix{Float64}(length(◂ϵids), 0)
+  j = 0
+  function analysis(data)
+    output = allϵinvarrjl(data.input...)
+    domain_losses = [domain_losses [output...]]
+    Arrows.Analysis.plot_domain_loss(domain_losses)
+    Plots.savefig("plot$(j).png")
+    j += 1
+  end
 
   i = 0
   function drawarm(data)
@@ -62,13 +78,16 @@ function test(nlinks=4)
     obstacles = [BenchmarkArrows.Circle([0.5, 0.5], 0.3),
                  BenchmarkArrows.Circle([0.0, 0.5], 0.3)]
     pointmat = BenchmarkArrows.vertices([angles...])
-    if (i % 100 == 0)
+    if (i % 2 == 0)
       BenchmarkArrows.drawscene(pointmat, obstacles, inputs...)
     end
-    i += 1
+    @show i += 1
   end
 
-  optimize(invarr, invθ▸, ◂(invarr, isϵ, 1), init; callbacks = [drawarm])
+  optimize(invarr, invθ▸, ◂(invarr, isϵ, 1), init;
+           callbacks = [analysis, drawarm])
 end
 
 test()
+using Plots
+Arrows.Analysis.plot_domain_loss(rand(10,10))

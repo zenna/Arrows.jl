@@ -36,7 +36,7 @@ struct SubArrow <: ArrowRef
   function SubArrow(parent::CompArrow, name::ArrowName)
     sarr = new(parent, name)
     if !is_valid(sarr)
-      throw(DomainError())
+      throw(ArgumentError("Invalid SubArrow: name not in parent"))
     end
     sarr
   end
@@ -179,7 +179,7 @@ sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
 
 "`SubPort` of `sarr` which is `port`"
 function sub_port(sarr::SubArrow, port::Port)::SubPort
-  port.arrow == deref(sarr) || throw(DomainError())
+  port.arrow == deref(sarr) || throw(ArgumentError("Port not on SubArrow"))
   sub_port(sarr, port.port_id)
 end
 
@@ -235,8 +235,7 @@ end
 "Remove `sarr` from `parent(sarr)`, return updated Arrow"
 function rem_sub_arr!(sarr::SubArrow)::Arrow
   if self_parent(sarr)
-    println("Cannot replace parent subarrow")
-    throw(DomainError())
+    throw(ArgumentError("Cannot replace parent subarrow"))
   end
   arr = parent(sarr)
 

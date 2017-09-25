@@ -73,7 +73,7 @@ function port(arr::Arrow, i::Integer)::Port
   if 1 <= i <= num_ports(arr)
     Port(arr, i)
   else
-    throw(DomainError())
+    throw(ArgumentError("Invalid port id"))
   end
 end
 

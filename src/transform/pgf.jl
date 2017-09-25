@@ -1,53 +1,58 @@
-# TODO: move the primitive pgfs into a separate file
+# TODO: move θe primitive pgfs into a separate file
 
 function pgf(arr::MulArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :th])
-  x, y, z, th = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θ])
+  x, y, z, θ = sub_ports(carr)
+  set_parameter_port!(θ)
   x * y ⥅ z
-  y ⥅ th
+  y ⥅ θ
   carr
 end
 
 function pgf(arr::AddArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :th])
-  x, y, z, th = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θ])
+  x, y, z, θ = sub_ports(carr)
+  set_parameter_port!(θ)
   x + y ⥅ z
-  y ⥅ th
+  y ⥅ θ
   carr
 end
 
-function pgf(arr::SubArrow)
+function pgf(arr::SubtractArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :th])
-  x, y, z, th = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θ])
+  x, y, z, θ = sub_ports(carr)
+  set_parameter_port!(θ)
   x - y ⥅ z
-  y ⥅ th
+  y ⥅ θ
   carr
 end
 
 function pgf(arr::SinArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :sin), [:x], [:y, :th])
-  x, y, th = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :sin), [:x], [:y, :θ])
+  x, y, θ = sub_ports(carr)
+  set_parameter_port!(θ)
   sinarr = add_sub_arr!(carr, SinArrow())
   link_ports!(x, (sinarr, 1))
   link_ports!((sinarr, 1), y)
   zero = add_sub_arr!(carr, SourceArrow(0))
-  link_ports!((zero, 1), th)
+  link_ports!((zero, 1), θ)
   carr
 end
 
 function pgf(arr::CosArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :cos), [:x], [:y, :th])
-  x, y, th = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :cos), [:x], [:y, :θ])
+  x, y, θ = sub_ports(carr)
+  set_parameter_port!(θ)
   cosarr = add_sub_arr!(carr, CosArrow())
   link_ports!(x, (cosarr, 1))
   link_ports!((cosarr, 1), y)
   zero = add_sub_arr!(carr, SourceArrow(0))
-  link_ports!((zero, 1), th)
+  link_ports!((zero, 1), θ)
   carr
 end
 
@@ -67,13 +72,14 @@ end
 
 function pgf(arr::LessThanArrow)
   # TODO: make it general
-  carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :th1, :th2])
-  x, y, z, th1, th2 = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
+  x, y, z, θ1, θ2 = sub_ports(carr)
+  set_parameter_port!(θ1, θ2)
   abs = add_sub_arr!(carr, AbsArrow())
   x < y ⥅ z
-  x ⥅ th1
+  x ⥅ θ1
   x - y ⥅ (abs, 1)
-  link_ports!((abs, 2), th2)
+  link_ports!((abs, 2), θ2)
   carr
 end
 

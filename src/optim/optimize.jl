@@ -14,9 +14,11 @@ function lossjl(▸idx, init, ϵprt::Port, callbacks)
       input[id] = θs[i]
     end
     output = carrjl(input...)
-    grads = ∇carrjl(input...)
-    for (i, id) in enumerate(▸idx) # Update gradients
-      grad[i] = grads[id]
+    if length(grad) > 0
+      grads = ∇carrjl(input...)
+      for (i, id) in enumerate(▸idx) # Update gradients
+        grad[i] = grads[id]
+      end
     end
     loss = output[ϵid]
     for cb in callbacks # Call all callbacks
@@ -54,7 +56,7 @@ function optimize(carr::CompArrow,
                   ϵprt::Port,
                   init::Vector;
                   callbacks=[],
-                  optim_args = @NT(tol=1e-4, alg=:LD_MMA))
+                  optim_args = @NT(tol=1e-5, alg=:LD_MMA))
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
   ▸idx = indexin(over, ▸(carr))
   @assert !(any(iszero.(▸idx)))

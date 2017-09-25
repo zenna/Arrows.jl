@@ -122,12 +122,13 @@ export
   interpret,
   invert!,
   invert,
+  pgf,
   out_values,
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
-  aprx_error,
-  aprx_error!,
+  domain_error,
+  domain_error!,
   dupl,
   inv_dupl,
   duplify!,
@@ -252,6 +253,8 @@ include("transform/invprim.jl")
 include("transform/compcall.jl")
 include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
+include("transform/domainerror.jl")
+include("transform/domainerrorprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -276,7 +279,7 @@ include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis
-#include("../analysis/analysis.jl")
+include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 
