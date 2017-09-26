@@ -33,15 +33,40 @@ function meanerror(invarr::CompArrow)
 end
 
 """
-Appends Identity loss : δ(f(f⁻¹(y)), y)
+Appends Identity loss
 
-#Arguments
+δ(f(f⁻¹(y)), y)
+
+# Arguments
+
+
+Algorithm
+For each outport of inv find *corresponding* inport to fwd
+Do that composition
+foreach  inport to inv find corresponding outport of fwd
+foreach of those pairs compute diff
+
+TODO
+How to do corresponding?
+
+How to modify graph
+
+how to distinguish id loss from id whatever
+- I need more fine grained labels
+- labels should be over laping
+-
 """
 function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   #FIXME why is this so complicated?
   carr = CompArrow(:id_loss) #FIXME, loses name of fwd/inv
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
+
+  # TODO: Make ports correspond
+  # How to do correspondance? We dont want to match error outports
+  # Can we assume number is the same
+  # Can't we do it more semantically
+  # We need a richer notion of an error port
   for (i, sprt) in enumerate(out_sub_ports(invsarr))
     sprt ⥅ (fwdsarr, i)
   end

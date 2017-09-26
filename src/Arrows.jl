@@ -214,6 +214,7 @@ include("arrows/trace.jl")          #
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
+include("library/sigmoid.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
