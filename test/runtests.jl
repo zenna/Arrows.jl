@@ -11,6 +11,7 @@ tests = [
     "totalize.jl",
     "propagate.jl",
     "invert.jl",
+    "pgf.jl",
     # "policy.jl",
     "value.jl"]
 

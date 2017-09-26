@@ -196,6 +196,8 @@ include("library/control.jl")
 include("library/array.jl")
 include("library/compound.jl")
 
+include("library/pgfprim.jl")
+
 include("library/inv_control.jl")
 include("library/inv_arith.jl")
 include("library/statistics.jl")
