@@ -1,7 +1,7 @@
 using Documenter
 using Arrows
 
-import Arrows: PortProps, AbstractArrow
+import Arrows: Props, AbstractArrow
 
 makedocs(
   modules = [Arrows],

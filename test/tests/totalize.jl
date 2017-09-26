@@ -23,7 +23,7 @@ test_domain_error()
 function test_has_error_ports()
   arr = TestArrows.xy_plus_x_arr()
   invarr = domain_error(invert(arr))
-  @test !isempty(⬧(invarr, isϵ))
+  @test !isempty(⬧(invarr, is(ϵ)))
 end
 
 test_has_error_ports()

@@ -27,7 +27,7 @@ in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
 
 # Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
-port_props(subport::SubPort) = port_props(deref(subport))
+props(subport::SubPort) = props(deref(subport))
 
 "Ensore we find the port"
 must_find(i) = i == 0 ? throw(DomainError()) : i

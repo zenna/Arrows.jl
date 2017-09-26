@@ -32,7 +32,7 @@ xy_plus_x_jl(x, y) = x * y + x
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
   z, θ, x, y = sub_ports(carr)
-  set_parameter_port!(Arrows.deref(θ))
+  addprop!(θp, deref(θ))
   invadd = add_sub_arr!(carr, inv_add())
   invmul = add_sub_arr!(carr, inv_mul())
   invdupl = add_sub_arr!(carr, InvDuplArrow(2))

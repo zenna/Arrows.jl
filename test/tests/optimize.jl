@@ -5,8 +5,8 @@ function test_optimize(fwd)
   invarr = aprx_invert(fwd)
   invarr = Arrows.meanerror(invarr)
   init = [rand() for p in ▸(invarr)]
-  over = ▸(invarr, isθ)
-  ϵprt = ◂(invarr, isϵ, 1)
+  over = ▸(invarr, is(θp))
+  ϵprt = ◂(invarr, is(ϵ), 1)
 
   function dataget(data)
     data.loss

@@ -12,19 +12,19 @@ mutable struct CompArrow <: Arrow
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
-  port_props::Vector{PortProps}
+  props::Vector{Props}
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
 
   function CompArrow(name::Symbol,
-                     port_props::Vector{PortProps})
+                     props::Vector{Props})
     c = new()
-    nports = length(port_props)
+    nports = length(props)
     g = LG.DiGraph(nports)
     c.name = name
     c.edges = g
     c.port_to_vtx_id = Dict(ProxyPort(name, i) => i for i = 1:nports)
     c.sarr_name_to_arrow = Dict(name => c)
-    c.port_props = port_props
+    c.props = props
     c
   end
 end
@@ -71,42 +71,44 @@ SubPortMap = Dict{SubPort, SubPort}
 
 ## CompArrow constructors ##
 "Empty `CompArrow`"
-CompArrow(name::ArrowName) = CompArrow(name, PortProps[])
+CompArrow(name::ArrowName) = CompArrow(name, Props[])
 
 "Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow(name::ArrowName, I::Integer, O::Integer)
   # Default is for first I ports to be in_ports then next O oout_ports
   inp_names = [Symbol(:inp_, i) for i=1:I]
   out_names = [Symbol(:out_, i) for i=1:O]
-  in_port_props = [PortProps(true, inp_names[i], Any) for i = 1:I]
-  out_port_props = [PortProps(false, out_names[i], Any) for i = 1:O]
-  port_props = vcat(in_port_props, out_port_props)
-  CompArrow(name, port_props)
+  in_props = [Props(true, inp_names[i], Any) for i = 1:I]
+  out_props = [Props(false, out_names[i], Any) for i = 1:O]
+  props = vcat(in_props, out_props)
+  CompArrow(name, props)
 end
 
 "Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow(name::Symbol, inames::Vector{Symbol}, onames::Vector{Symbol})
   # Default is for first I ports to be in_ports then next O oout_ports
-  in_port_props = [PortProps(true, iname, Any) for iname in inames]
-  out_port_props = [PortProps(false, onames, Any) for onames in onames]
-  port_props = vcat(in_port_props, out_port_props)
-  CompArrow(name, port_props)
+  in_props = [Props(true, iname, Any) for iname in inames]
+  out_props = [Props(false, onames, Any) for onames in onames]
+  props = vcat(in_props, out_props)
+  CompArrow(name, props)
 end
 
 "Port Properties of all ports of `arr`"
-port_props(arr::CompArrow) = arr.port_props
+props(arr::CompArrow) = arr.props
 
 "Port Properties of all ports of `sarr`"
-port_props(sarr::SubArrow) = port_props(deref(sarr))
+props(sarr::SubArrow) = props(deref(sarr))
 
+# DEPRECATE
 "Make `port` an in_port"
 function set_in_port!(port::Port{<:CompArrow})
-  port.arrow.port_props[port.port_id].is_in_port = true
+  setprop!(In(), props(prt))
 end
 
+# DEPRECATE
 "Make `port` an in_port"
-function make_out_port!(port::Port{<:CompArrow})
-  port.arrow.port_props[port.port_id].is_in_port = false
+function make_out_port!(prt::Port{<:CompArrow})
+  setprop!(Out(), props(prt))
 end
 
 ## Dereference ##
@@ -258,11 +260,11 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   arr
 end
 
-"Add a port like (i.e. same `PortProps`) to carr"
-function add_port!(carr::CompArrow, pprop::PortProps)::Port
+"Add a port like (i.e. same `Props`) to carr"
+function add_port!(carr::CompArrow, pprop::Props)::Port
   port_id = num_ports(carr) + 1
   add_port_lg!(carr, name(carr), port_id)
-  push!(carr.port_props, deepcopy(pprop))
+  push!(carr.props, deepcopy(pprop))
   Port(carr, port_id)
 end
 
@@ -273,8 +275,8 @@ function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
   carr.port_to_vtx_id[ProxyPort(arrname, port_id)] = vtx_id
 end
 
-"Add a port like (i.e. same `PortProps`) to carr"
-add_port_like!(carr::CompArrow, port::Port) = add_port!(carr, port_props(port))
+"Add a port like (i.e. same `Props`) to carr"
+add_port_like!(carr::CompArrow, port::Port) = add_port!(carr, props(port))
 
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}
