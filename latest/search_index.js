@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Selection",
     "title": "Filtering Examples",
     "category": "section",
-    "text": "These can be used to select filtering by boolean combinations of predicates◂(arr, 1): The first out Port\n▹(sarr, isθ): all parametric in SubPorts\n◂(carr, isϵ ∨ isθ, 1:3): first 3 Ports which are error or parametric"
+    "text": "These can be used to select filtering by boolean combinations of predicates◂(arr, 1): The first out Port\n▹(sarr, is(θp)): all parametric in SubPorts\n◂(carr, is(ϵ) ∨ is(θp), 1:3): first 3 Ports which are error or parametric"
 },
 
 {
@@ -97,11 +97,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "types.html#Arrows.PortProps",
+    "location": "types.html#Arrows.Props",
     "page": "Types",
-    "title": "Arrows.PortProps",
+    "title": "Arrows.Props",
     "category": "Type",
-    "text": "Port Properties: properties instrinsic to a port.\n\n\n\n"
+    "text": "Set of Properties\n\n\n\n"
 },
 
 {
@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types",
     "title": "Ports",
     "category": "section",
-    "text": "PortPortProps"
+    "text": "PortProps"
 },
 
 {
