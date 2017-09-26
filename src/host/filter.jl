@@ -28,11 +28,8 @@ fs = [(:⬧, :port)
 codes = map(f -> expander(f...), fs)
 foreach(eval, codes)
 
+# Deprecate is(▸)
 is▸ = is_in_port
 is◂ = is_out_port
-isϵ = is_error_port
-isθ = is_parameter_port
-is▹ = is_in_port
-is◃ = is_out_port
 
-export isθ, is◂, is▸, isϵ, is▹, is◃
+export is◂, is▸

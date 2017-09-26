@@ -11,7 +11,7 @@ function unlinkcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
   src_sprts = src.(sprts...)
   # 1. Make new CompArrow whose in_ports are like sprts
   # Port Properties like sprts but all in_ports
-  pprops = map(sprt -> PortProps(port_props(sprt); is_in_port=true), src_sprts)
+  pprops = map(sprt -> Props(props(sprt); is_in_port=true), src_sprts)
   carr = CompArrow(name, [pprops...])
   # 2. Break all the kinks
   f_outs = s(f(in_sub_ports(carr)...))
@@ -63,7 +63,7 @@ num_sub_arrows(carr)
 """
 function compcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
   # Port Properties like sprts but all in_ports
-  pprops = map(sprt -> PortProps(port_props(sprt); is_in_port=true), sprts)
+  pprops = map(sprt -> Props(props(sprt); is_in_port=true), sprts)
   carr = CompArrow(name, [pprops...]) # 2. Apply f to these inports to construct internals of `carr`
   foreach(link_to_parent!, applycarr(f, carr))
   sarr = add_sub_arr!(anyparent(sprts...), carr)  # 3. add carr to the parent, link sprts to in_ports of carr and return outports

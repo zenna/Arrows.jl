@@ -122,12 +122,13 @@ export
   interpret,
   invert!,
   invert,
+  pgf,
   out_values,
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
-  aprx_error,
-  aprx_error!,
+  domain_error,
+  domain_error!,
   dupl,
   inv_dupl,
   duplify!,
@@ -147,6 +148,9 @@ export
   ◃s,
   ▹,
   ▹s,
+  θp,
+  ϵ,
+  addprop!,
 
   SourceArrow,
   AssertArrow,
@@ -198,11 +202,11 @@ include("util/lightgraphs.jl")      # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
+include("arrows/property.jl")           # Ports and Port Attirbutes
 include("arrows/port.jl")           # Ports and Port Attirbutes
 include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
-include("arrows/label.jl")          #
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
@@ -213,6 +217,7 @@ include("arrows/trace.jl")          #
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
+include("library/sigmoid.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -232,7 +237,6 @@ include("library/boolean.jl")
 include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
-include("apply/preddisp.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
@@ -252,6 +256,8 @@ include("transform/invprim.jl")
 include("transform/compcall.jl")
 include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
+include("transform/domainerror.jl")
+include("transform/domainerrorprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -273,10 +279,10 @@ include("targets/julia/ordered_sports.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
-
-# Analysis
-#include("../analysis/analysis.jl")
+# include("../benchmarks/BenchmarkArrows.jl")
+#
+# # Analysis
+# include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 

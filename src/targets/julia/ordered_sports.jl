@@ -42,17 +42,15 @@ function order_of_assigment(carr::CompArrow, seen::Set{CompArrow})
   collect(Iterators.flatten(answer))
 end
 
-function parent_value{T}(port::Port{CompArrow, T},
-                        ::SrcValue)
+function parent_value{T}(port::Port{CompArrow, T}, ::SrcValue)
   (SrcValue ∘ sub_port)(port)
 end
 
-function parent_value{T1, T2}(::Port{T1, T2},
-                        default::SrcValue)
+function parent_value{T1, T2}(::Port{T1, T2}, default::SrcValue)
   default
 end
 
-"""Return the order in which the values of `carr` are computed"""
+"Return the order in which the values of `carr` are computed"
 function order_values(carr::CompArrow)
   assigments = order_of_assigment(carr)
   order = Dict{SrcValue, Int}()

@@ -1,5 +1,7 @@
-"""An entry or exit to an Arrow, analogous to argument of multivariate function.
-A port is uniquely determined by the arrow it belongs to and an index"""
+"""
+An entry or exit to an Arrow, analogous to argument of multivariate function.
+A port is uniquely determined by the arrow it belongs to and an index
+"""
 abstract type AbstractPort end
 
 "An interface to an `Arrow`"
@@ -11,62 +13,35 @@ end
 "Barebone mechanism to add attributes to a `Port`: it either has label or not"
 Label = Symbol
 
-"""Port Properties: properties instrinsic to a port."""
-mutable struct PortProps
-  is_in_port::Bool
-  name::Symbol
-  typ::Type
-  labels::Set{Label}
+# "Make a copy of `Props`, assign partial fields"
+# function Props(pprops;
+#                    is_in_port::Bool = pprops.is_in_port,
+#                    name::Symbol = pprops.name,
+#                    typ::Type = pprops.typ,
+#                    labels::Set{Label} = pprops.labels)
+#   deepcopy(Props(is_in_port, name, typ, labels))
+# end
+
+function Props(is_in_port::Bool, name::Symbol, typ::Type)
+  dir = is_in_port ? In() : Out()
+  Props(@NT(direction = dir,
+            name = Name(name),
+            typ = Typ(typ)))
 end
-
-"Make a copy of `PortProps`, assign partial fields"
-function PortProps(pprops;
-                   is_in_port::Bool = pprops.is_in_port,
-                   name::Symbol = pprops.name,
-                   typ::Type = pprops.typ,
-                   labels::Set{Label} = pprops.labels)
-  deepcopy(PortProps(is_in_port, name, typ, labels))
-end
-
-PortProps(is_in_port, name, typ) = PortProps(is_in_port, name, typ, Set())
-
-"Does a vector of port properties have I inports and O outports?"
-function is_valid(port_props::Vector{PortProps}, I::Integer, O::Integer)::Bool
-  ni = 0
-  no = 0
-  for port_prop in port_props
-    if is_in_port(port_prop)
-      ni += 1
-    elseif is_out_port(port_prop)
-      no += 1
-    end
-  end
-  ni == I && no == O
-end
-
 "Port properties of `port`"
-port_props(prt::Port) = port_props(prt.arrow)[prt.port_id]
+props(prt::Port) = props(prt.arrow)[prt.port_id]
+labels(prt::Port) = labels(props(prt))
+addprop!(T::Type{<:Prop}, prt::Port) = addprop!(T, props(prt))
+in(P::Type{<:Prop}, prt::Port) = in(P, props(prt))
 
 "Is `port` an `out_port`"
-is_out_port(port_props::PortProps)::Bool = !port_props.is_in_port
+is_out_port(prt::AbstractPort)::Bool = isout(props(prt))
 
 "Is `port` an `out_port`"
-is_out_port(port::AbstractPort)::Bool = is_out_port(port_props(port))
+is_in_port(prt::AbstractPort)::Bool = isin(props(prt))
 
-"Is `port` an `in_port`"
-is_in_port(port_props::PortProps)::Bool = port_props.is_in_port
-
-"Type of port"
-typ(pprops::PortProps) = pprops.typ
-
-"Is `port` an `in_port`"
-is_in_port(port::AbstractPort)::Bool = is_in_port(port_props(port))
-
-"labels of `aport`, e.g. `:parametric, :error`"
-labels(aport::AbstractPort) = labels(port_props(aport))
-
-"Type of a `aport`"
-typ(aport::AbstractPort) = typ(port_props(aport))
+"Type of `aport`"
+typ(aprt::AbstractPort) = typ(props(aprt))
 
 "`i`th port of arrow"
 function port(arr::Arrow, i::Integer)::Port
@@ -80,51 +55,46 @@ end
 "all ports of arrow"
 ports(arr::Arrow)::Vector{Port} = [Port(arr, i) for i = 1:num_ports(arr)]
 
+# FIXME: Deprecate
 "out_ports of `aarr`"
 out_ports(aarr::AbstractArrow)::Vector{Port} = filter(is_out_port, ports(aarr))
 
+# FIXME: Deprecate
 "`i`th out_port of `arr`"
 out_port(aarr::AbstractArrow, i::Integer)::Port = out_ports(aarr)[i]
 
+# FIXME: Deprecate
 "in_ports of arr"
 in_ports(aarr::AbstractArrow)::Vector{Port} = filter(is_in_port, ports(aarr))
 
+# FIXME: Deprecate
 "`i`th in_port of `arr`"
 in_port(aarr::AbstractArrow, i::Integer)::Port = in_ports(aarr)[i]
 
 ## Num_ports ##
 
+# FIXME: Deprecate
 "How manny ports does `aarr` have"
-num_ports(aarr::AbstractArrow) = length(port_props(aarr))
+num_ports(aarr::AbstractArrow) = length(props(aarr))
 
+# FIXME: Deprecate
 "How many out ports does `aarr` have"
 num_out_ports(aarr::AbstractArrow)::Integer = length(out_ports(aarr))
 
+# FIXME: Deprecate
 "How many in ports does `aarr` have"
 num_in_ports(aarr::AbstractArrow)::Integer = length(in_ports(aarr))
 
-"Name of `port` where `pa == port_props(port)`"
-name(pa::PortProps) = pa.name
-
 "Name of `port`"
-name(port::Port) = name(port_props(port))
+name(port::Port) = name(props(port))
 
 "Ordered Names of each port of `arr`"
 port_names(arr::Arrow) = name.(ports(arr))
 
 ## Label ##
-"ports in `arr` with label"
-function ports(aarr::AbstractArrow, lb::Label)::Vector{Port}
-  collect(filter(p -> has_port_label(p, lb), ports(aarr)))AbstractArrow
-end
-
-mann(is_in_port::Bool) = is_in_port ? "▸" : "◂"
+mann(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 
 ## Printing ##
-const label_to_superscript = Dict{Symbol, Symbol}(
-  :parameter => :ᶿ,
-  :error => :ᵋ)
-
 function mann(prt::Port; show_name=true,
                          show_port_id=true,
                          show_is_in_port=true,
@@ -137,8 +107,8 @@ function mann(prt::Port; show_name=true,
   if show_name
     res *= string(name(prt))
     if show_labels
-      for label in port_props(prt).labels
-        res *= string(label_to_superscript[label])
+      for label in map(superscript, labels(prt))
+        res *= string(label)
       end
     end
   end
@@ -149,5 +119,4 @@ function mann(prt::Port; show_name=true,
 end
 
 string(prt::Port) = mann(prt)
-print(io::IO, prt::Port) = print(io, string(prt))
-show(io::IO, prt::Port) = print(io, prt)
+show(io::IO, prt::Port) = print(io, string(prt))
