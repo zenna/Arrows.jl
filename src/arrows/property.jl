@@ -31,6 +31,7 @@ struct Name <: Prop
   name::Symbol
 end
 name(prps::Props) = prps.namedprops.name
+string(name::Name) = string(name.name)
 
 "In or Out?"
 type Direction <: Prop
@@ -49,6 +50,7 @@ isout(prps::Props) = isout(prps.namedprops.direction)
 
 "Error"
 abstract type Err <: Prop end
+superscript(::Type{Err}) = :ᵋ
 iserror(::Type{<:Prop}) = false
 iserror(::Type{<:Err}) = true
 in(::Type{Err}, prps::Props) = any(iserror, prps.labels)
@@ -74,3 +76,4 @@ type Typ <: Prop
   typ::Type
 end
 typ(prps::Props) = prps.namedprops.typ
+string(typ::Typ) = string(typ.typ)
