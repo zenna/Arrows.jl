@@ -113,7 +113,7 @@ function mann(prt::Port; show_name=true,
     end
   end
   if show_port_id res *= "[$(prt.port_id)]" end
-  if show_typ res *= string("::", typ(prt); kwargs...) end
+  if show_typ res *= string("::", string(typ(prt)); kwargs...) end
   if show_arrow res *= " on $(name(prt.arrow))" end
   res
 end

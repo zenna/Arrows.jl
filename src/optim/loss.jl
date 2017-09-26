@@ -27,7 +27,9 @@ function meanerror(invarr::CompArrow)
     end
   end
   Arrows.link_to_parent!(◃(meanarr, 1))
-  addprop!(ϵ, deref((Arrows.dst(◃(meanarr, 1)))))
+  # FIXME This sint idϵ its the mean of potentially different errors
+  # I would want the most specific type
+  addprop!(idϵ, deref((Arrows.dst(◃(meanarr, 1)))))
   @assert is_wired_ok(thebest)
   thebest
 end
