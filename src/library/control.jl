@@ -13,7 +13,7 @@ port_props{O}(::DuplArrow{O}) =
   [PortProps(true, :x, Any),
    [PortProps(false, Symbol(:y, i), Any) for i=1:O]...]
 
-name(::DuplArrow) = :dupl
+name{O}(::DuplArrow{O}) = Symbol(:dupl_, O)
 DuplArrow(n::Integer) = DuplArrow{n}()
 
 "`(x, x, ..., x)` `n` times"

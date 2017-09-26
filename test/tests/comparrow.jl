@@ -44,3 +44,16 @@ function test_compcall()
   @test all(sarr -> isa(deref(sarr), CompArrow), sub_arrows(carr))
   @test carr(3)[1] == g(3)
 end
+
+function test_inner_sub_ports(carr::CompArrow)
+  sprts = inner_sub_ports(carr)
+  for sarr in sub_arrows(carr)
+    for sprt in sub_ports(sarr)
+      if sprt ∉ sprts
+        @show deref(sprt)
+        false
+      end
+    end
+  end
+  true
+end

@@ -1,10 +1,13 @@
-"Is `sport` (function of) output of `SourceArrow`, i.e. constant"
-is_src_source(sport::SubPort) = isa(deref(src(sport)).arrow, SourceArrow)
+"Is `sprt` (function of) output of `SourceArrow`, i.e. constant"
+is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
+
+"Inversion of "
 function inv(arr::CompArrow, const_in)
-  @show arr
   @assert !any(const_in)
   (invert(arr), id_portid_map(arr))
 end
+
+# Hack until constant propagation is done
 function inv(sarr::SubArrow)
   carr = deref(sarr)
   const_in = map(is_src_source, in_sub_ports(sarr))
@@ -55,16 +58,18 @@ end
 "Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
-"""Construct a parametric inverse of `arr`
-Args:
-  `arr`: Arrow to invert
-  `dispatch`: Dict mapping arrow class to invert function
-Returns:
-  A (aprximate) parametric inverse of `arrow`. The ith in_port of arr
-  will be corresponding ith out_port error_ports and param_ports will follow"""
+"""
+Construct a parametric inverse of `arr`
+# Arguments:
+- `arr`: Arrow to invert
+- `dispatch`: Dict mapping arrow class to invert function
+# Returns:
+- A parametric inverse of `arr`
+"""
 function invert!(arr::CompArrow)::CompArrow
   check_reuse(arr)
-  outer = inv_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_dst)) ∘ fix_links! ∘ invert_all_ports!
+  link_loose_dsts(carr) = link_to_parent!(carr, loose ∧ should_dst)
+  outer = inv_rename! ∘ link_loose_dsts ∘ fix_links! ∘ invert_all_ports!
   walk!(inv, outer, arr)
 end
 

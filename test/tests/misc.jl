@@ -15,8 +15,7 @@ test_inv_xy_plus_x()
 function test_aprx_inverse()
   fwdarr = TestArrows.xy_plus_x_arr()
   invarr = Arrows.aprx_invert(fwdarr)
-  lossarr = Arrows.iden_loss(fwdarr, invarr)
-  @test is_wired_ok(lossarr)
+  @test is_wired_ok(fwdarr)
 end
 
 test_aprx_inverse()

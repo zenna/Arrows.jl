@@ -5,11 +5,10 @@ port_props{I}(::InvDuplArrow{I}) =
   [[PortProps(true, Symbol(:x, i), Array{Any}) for i=1:I]...,
    PortProps(false, :y, Array{Any})]
 
-name(::InvDuplArrow) = :inv_dupl
+name{I}(::InvDuplArrow{I}) = Symbol(:inv_dupl_, I)
 InvDuplArrow(n::Integer) = InvDuplArrow{n}()
 
 "f(x, x) = (x,)"
-function inv_dupl(x, y)
-  @assert x == y
-  x
+function inv_dupl(xs...)
+  first(xs)
 end

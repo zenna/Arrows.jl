@@ -4,8 +4,8 @@ pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
 
 ## Unary Combinators ##
 "Wrap an `arr` in a container `CompArrow` `wrap(f) = g`, where `g(x) = f(x)"
-function wrap(arr::Arrow)::CompArrow
-  carr = CompArrow(Symbol(:wrap_, name(arr)))
+function wrap(arr::Arrow, name=Symbol(:wrap_, name(arr)))::CompArrow
+  carr = CompArrow(name)
   sarr = add_sub_arr!(carr, arr)
   link_to_parent!(sarr, loose)
   carr
@@ -13,17 +13,18 @@ end
 
 ## ComposeL: Combinators for composition of one or more arrows ##
 "Compose the names of `arr1` and `arr2`"
-compname(arr1::Arrow, arr2::Arrow) = Symbol(name(arr2), :_to_, name(arr1))
+composename(arr1::Arrow, arr2::Arrow) = Symbol(name(arr2), :_to_, name(arr1))
 
 "PortMap which aligns out_ports of `g` to in_ports of `f`"
 composeall(f::Arrow, g::Arrow)::PortMap = PortMap(zip(out_ports(g), in_ports(f)))
 
-"""Compose `g` with `f` `to the right` (f ∘ g)
+"""
+Compose `g` with `f` `to the right` (f ∘ g)
 # Arguments:
 - `f`:
 - `g`:
-- `name`: Name of result, defaults to name(g)_to_name(f)
-- `portmap`:
+- `name`: Name of result, defaults to `name(g)_to_name(f)`
+- `portmap`: d
 # Returns:
 - (f ∘ g):
   Any  loose `in_ports(f)` will become in_ports of res, after `in_ports(g)`
@@ -32,8 +33,7 @@ composeall(f::Arrow, g::Arrow)::PortMap = PortMap(zip(out_ports(g), in_ports(f))
 function compose(f::Arrow,
                  g::Arrow,
                  portmap::PortMap=composeall(f, g),
-                 name=compname(f, g))
-  # Make empty comparrow th
+                 name=composename(f, g))
   carr = CompArrow(name)
   fsarr = add_sub_arr!(carr, f)
   gsarr = add_sub_arr!(carr, g)
@@ -104,10 +104,19 @@ function inner_compose!(orig::SubArrow, sarr::SubArrow)
   srcs = src.(dsts)
   as = in_sub_ports(sarr)
   bs = out_sub_ports(sarr)
-  @show same(map(length, [srcs, dsts, as, bs])) || throw(DomainError())
+  same(map(length, [srcs, dsts, as, bs])) || throw(DomainError())
   foreach(replace_link!, srcs, dsts, as, bs)
   bs
 end
 
 inner_compose!(orig::SubArrow, arr::Arrow) =
   inner_compose!(orig, add_sub_arr!(parent(orig), arr))
+
+"Add `arr` to `parent(sprts)` and link sprts[i] to arr[▹i]"
+function compose!(sprts::Vector{SubPort}, arr::Arrow)::Vector{SubPort}
+  length(sprts) == n▸(arr)
+  carr = anyparent(sprts...)
+  sarr = add_sub_arr!(carr, arr)
+  foreach(link_ports!, sprts, ▹s(sarr))
+  ◃s(sarr)
+end

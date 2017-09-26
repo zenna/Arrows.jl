@@ -2,18 +2,10 @@ using Arrows
 using Base.Test
 include("common.jl")
 
-tests = [
-    "comparrow.jl",
-    "arrow_tests.jl",
-    "compose.jl",
-    "misc.jl",
-    "loss.jl",
-    "totalize.jl",
-    "propagate.jl",
-    "invert.jl",
-    "pgf.jl",
-    # "policy.jl",
-    "value.jl"]
+exclude = ["policy.jl",
+           "tensorflow.jl"]
+test_dir = joinpath(Pkg.dir("Arrows"), "test", "tests")
+tests = setdiff(readdir(test_dir), exclude)
 
 print_with_color(:blue, "Running tests:\n")
 
@@ -21,7 +13,7 @@ print_with_color(:blue, "Running tests:\n")
 srand(345679)
 res = map(tests) do t
   println("Testing: ", t)
-  include(t)
+  include(joinpath(test_dir, t))
   nothing
 end
 
