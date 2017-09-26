@@ -14,5 +14,5 @@ Arrows.jl embraces unicode! The following symbols are used throughout:
 These can be used to select filtering by boolean combinations of predicates
 
 - `◂(arr, 1)`: The first out `Port`
-- `▹(sarr, isθ)`: all parametric in `SubPort`s
-- `◂(carr, isϵ ∨ isθ, 1:3)`: first 3 `Port`s which are error or parametric
+- `▹(sarr, is(θp))`: all parametric in `SubPort`s
+- `◂(carr, is(ϵ) ∨ is(θp), 1:3)`: first 3 `Port`s which are error or parametric

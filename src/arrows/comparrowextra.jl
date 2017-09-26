@@ -27,7 +27,7 @@ in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
 
 # Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
-port_props(subport::SubPort) = port_props(deref(subport))
+props(subport::SubPort) = props(deref(subport))
 
 "Ensore we find the port"
 must_find(i) = i == 0 ? throw(DomainError()) : i
@@ -38,8 +38,7 @@ port_id(port::Arrow, name::Symbol) = must_find(findfirst(port_names(arr), name))
 "Get parent of any `x ∈ xs` and check they all have the same parent"
 function anyparent(xs::Vararg{<:Union{SubArrow, SubPort}})::CompArrow
   if !same(parent.(xs))
-    println("Different parents!")
-    throw(DomainError())
+    throw(ArgumentError("Different parents!"))
   end
   parent(first(xs))
 end
@@ -89,8 +88,7 @@ end
 """
 function replace_sub_arr!(sarr::SubArrow, arr::Arrow, portidmap::PortIdMap)::SubArrow
   if self_parent(sarr)
-    println("Cannot replace parent subarrow")
-    throw(DomainError())
+    throw(ArgumentError("Cannot replace parent subarrow"))
   end
   parr = parent(sarr)
   replarr = add_sub_arr!(parr, arr)
@@ -209,7 +207,7 @@ function dst(sprt::SubPort)::SubPort
     sprt
   else
     out_neighs = out_neighbors(sprt)
-    length(out_neighs) == 1 || throw(DomainError())
+    length(out_neighs) == 1 || throw(ArgumentError("dst not unique"))
     first(out_neighs)
   end
 end
@@ -240,9 +238,7 @@ end
 function should_src(port::SubPort)::Bool
   arr = parent(port)
   if !(port in all_sub_ports(arr))
-    errmsg = "Port $port not in ports of $(name(arr))"
-    println(errmsg)
-    throw(DomainError())
+    throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
   if strictly_in(port, parent(port))
     is_out_port(port)
@@ -255,9 +251,7 @@ end
 function should_dst(port::SubPort)::Bool
   arr = parent(port)
   if !(port in all_sub_ports(arr))
-    errmsg = "Port $port not in ports of $(name(arr))"
-    println(errmsg)
-    throw(DomainError())
+    throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
   if strictly_in(port, parent(port))
     is_in_port(port)
@@ -304,8 +298,7 @@ loose(sprt::SubPort)::Bool = degree(sprt) == 0
 "Create a new port in `parent(sport)` and link `sport` to it"
 function link_to_parent!(sprt::SubPort)::Port
   if on_boundary(sprt)
-    println("invalid on boundary ports")
-    throw(DomainError())
+    throw(ArgumentError("invalid on boundary ports"))
   end
   arr = parent(sprt)
   newport = add_port_like!(arr, deref(sprt))

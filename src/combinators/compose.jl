@@ -83,7 +83,7 @@ function dupl_first(arr::Arrow, pass=in_ports(arr), name=pfx(:dupl_first, arr))
   for port in pass
     is_in_port(port) || throw(DomainError())
     lsport = src(sub_port(sarr, port))
-    pprops = PortProps(port_props(lsport); is_in_port = false)
+    pprops = Props(props(lsport); is_in_port = false)
     rsport = add_port!(carr, pprops)
     link_ports!(lsport, rsport)
   end

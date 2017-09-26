@@ -1,7 +1,7 @@
 "Does `port` have `label` `lb`?"
-has_port_label(pprops::PortProps, lb::Label) = lb ∈ pprops.labels
-has_port_label(prt::Port, lb::Label) = has_port_label(port_props(prt), lb)
-add_port_label(pprops::PortProps, lb::Label) = push!(pprops.labels, lb)
+has_port_label(pprops::Props, lb::Label) = lb ∈ pprops.labels
+has_port_label(prt::Port, lb::Label) = has_port_label(props(prt), lb)
+add_port_label(pprops::Props, lb::Label) = push!(pprops.labels, lb)
 
 """Code generation for labels
 For a particular `label`, e.g., `error` or `parameter` generates
@@ -14,17 +14,17 @@ function label_code_gen(shorthand, super, long)
   quote
 
   "Make `prop` parameter"
-  function $set_name(pprop::PortProps)
+  function $set_name(pprop::Props)
     add_port_label(pprop, $(QuoteNode(long)))
   end
 
-  $is_name(pprop::PortProps) = has_port_label(pprop, $(QuoteNode(long)))
-  $is_name(port::Port) = $is_name(port_props(port))
+  $is_name(pprop::Props) = has_port_label(pprop, $(QuoteNode(long)))
+  $is_name(port::Port) = $is_name(props(port))
 
   $short_set = $set_name
 
   $is_name(sprt::SubPort) = $is_name(deref(sprt))
-  $set_name(port::Port{CompArrow}) = $set_name(port_props(port))
+  $set_name(port::Port{CompArrow}) = $set_name(props(port))
   $set_name(sprt::SubPort) = $set_name(deref(sprt))
 
   export $set_name, $is_name, $short_set

@@ -21,7 +21,7 @@ Port
 ```
 
 ```@docs
-PortProps
+Props
 ```
 
 # SubTypes

@@ -111,17 +111,24 @@ export
   ports,
   propagate!,
   Shape,
+  #const
+  Const,
+  known_const,
+  known_not_const,
+  const_propagator!,
+
   is_wired_ok,
   is_valid,
   interpret,
   invert!,
   invert,
+  pgf,
   out_values,
   aprx_invert,
   aprx_totalize!,
   aprx_totalize!,
-  aprx_error,
-  aprx_error!,
+  domain_error,
+  domain_error!,
   dupl,
   inv_dupl,
   duplify!,
@@ -141,6 +148,9 @@ export
   ◃s,
   ▹,
   ▹s,
+  θp,
+  ϵ,
+  addprop!,
 
   SourceArrow,
   AssertArrow,
@@ -179,7 +189,10 @@ export
 
   # Optim
   julia,
-  id_loss
+  id_loss,
+
+  # compiler
+  order_sports
 # Code structures
 
 include("util/misc.jl")             # miscelleneous utilities
@@ -189,20 +202,22 @@ include("util/lightgraphs.jl")      # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
+include("arrows/property.jl")           # Ports and Port Attirbutes
 include("arrows/port.jl")           # Ports and Port Attirbutes
 include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
-include("arrows/label.jl")          #
 
 include("value/value.jl")           # ValueSet
-include("value/source.jl")          # ValueSet
+include("value/source.jl")          # SrcValue
+include("value/const.jl")           # Const type
 
 include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
+include("library/sigmoid.jl")     # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -224,9 +239,9 @@ include("library/boolean.jl")
 include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
-include("apply/preddisp.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
+include("propagate/const.jl")
 
 include("compile/policy.jl")
 include("compile/depend.jl")
@@ -240,10 +255,11 @@ include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/pgf.jl")
 include("transform/invprim.jl")
-include("transform/pgf.jl")
 include("transform/compcall.jl")
 include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
+include("transform/domainerror.jl")
+include("transform/domainerrorprim.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -253,19 +269,22 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
+include("gradient/gradient.jl")
+
 
 # Examples, etc #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
+include("targets/julia/ordered_sports.jl")
 # include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
-
-# Analysis
-#include("../analysis/analysis.jl")
+# include("../benchmarks/BenchmarkArrows.jl")
+#
+# # Analysis
+# include("../analysis/analysis.jl")
 
 # include("smt_solvers/z3interface.jl")
 

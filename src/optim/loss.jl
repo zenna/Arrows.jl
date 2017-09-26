@@ -14,12 +14,12 @@ end
 function meanerror(invarr::CompArrow)
   thebest = CompArrow(:thebest)
   sarr = add_sub_arr!(thebest, invarr)
-  ϵprts = filter(is_error_port, ◂s(invarr))
+  ϵprts = filter(is(ϵ), ◂s(invarr))
   meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
   i = 1
   foreach(Arrows.link_to_parent!, ▹s(sarr))
   for sprt in ◃s(sarr)
-    if is_error_port(sprt)
+    if is(ϵ)(deref(sprt))
       sprt ⥅ ▹(meanarr, i)
       i += 1
     else
@@ -27,21 +27,46 @@ function meanerror(invarr::CompArrow)
     end
   end
   Arrows.link_to_parent!(◃(meanarr, 1))
-  ϵ!(Arrows.dst(◃(meanarr, 1)))
+  addprop!(ϵ, deref((Arrows.dst(◃(meanarr, 1)))))
   @assert is_wired_ok(thebest)
   thebest
 end
 
 """
-Appends Identity loss : δ(f(f⁻¹(y)), y)
+Appends Identity loss
 
-#Arguments
+δ(f(f⁻¹(y)), y)
+
+# Arguments
+
+
+Algorithm
+For each outport of inv find *corresponding* inport to fwd
+Do that composition
+foreach  inport to inv find corresponding outport of fwd
+foreach of those pairs compute diff
+
+TODO
+How to do corresponding?
+
+How to modify graph
+
+how to distinguish id loss from id whatever
+- I need more fine grained labels
+- labels should be over laping
+-
 """
 function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   #FIXME why is this so complicated?
   carr = CompArrow(:id_loss) #FIXME, loses name of fwd/inv
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
+
+  # TODO: Make ports correspond
+  # How to do correspondance? We dont want to match error outports
+  # Can we assume number is the same
+  # Can't we do it more semantically
+  # We need a richer notion of an error port
   for (i, sprt) in enumerate(out_sub_ports(invsarr))
     sprt ⥅ (fwdsarr, i)
   end
@@ -50,7 +75,7 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   for (i, sprt) in enumerate(in_sub_ports(invsarr))
     prt = add_port_like!(carr, deref(sprt))
     prt ⥅ sprt
-    if !is_parameter_port(prt)
+    if !(is(θp)(prt))
       diff = δ!(sub_port(carr, prt.port_id), out_sub_port(fwdsarr, i))
       push!(diffs, diff)
     end

@@ -24,8 +24,7 @@ end
 "Check that no subports with more than out outgoing edge"
 function check_reuse(arr)
   if !no_reuse(arr)
-    print("Must eliminate reuse of values before `invert`, use `duplify`")
-    throw(DomainError())
+    throw(ArgumentError("Eliminate reuse before `invert`, use `duplify"))
   end
 end
 
@@ -74,4 +73,4 @@ function invert!(arr::CompArrow)::CompArrow
 end
 
 invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))
-aprx_invert(arr::CompArrow) = aprx_totalize!(aprx_error!(invert(arr)))
+aprx_invert(arr::CompArrow) = aprx_totalize!(domain_error!(invert(arr)))
