@@ -51,11 +51,6 @@ function inner_interpret(sub_interpret,
     inputs = [dst_val[sprt] for sprt in in_sub_ports(sarr)]
     outputs = sub_interpret(sarr, inputs)
 
-    # @show arrcolors
-    # @show inputs
-    # @show outputs
-    # @show sarr
-
     @assert length(outputs) == length(out_ports(sarr)) "diff num outputs"
 
     # Decrement the priority of each subarrow connected to this arrow
@@ -67,11 +62,6 @@ function inner_interpret(sub_interpret,
         lower!(arrcolors, sub_arrow(dst_sprt))
       end
     end
-    # foreach(enumerate(out_neighbors(out_sub_ports(sarr)))) do i_dst_sprt
-    #   i, dst_sprt = i_dst_sprt
-    #   lower!(arrcolors, sub_arrow(dst_sprt))
-    #   dst_val[dst_sprt] = outputs[i]
-    # end
   end
 
   [dst_val[sprt] for sprt in out_sub_ports(carr)]
