@@ -58,14 +58,14 @@ end
 function pgf(arr::SourceArrow)
   "The parametric inverse of SourceArrow has no parameters, so return the same arrow renamed."
   newarr = deepcopy(arr)
-  rename!(newarr, Symbol(:pgf_, :source))
+  #rename!(newarr, Symbol(:pgf_, :source))
   newarr
 end
 
 function pgf(arr::IdentityArrow)
   "The parametric inverse of IdentityArrow has no parameters, so return the same arrow renamed."
   newarr = deepcopy(arr)
-  rename!(newarr, Symbol(:pgf_, :identity))
+  #rename!(newarr, Symbol(:pgf_, :identity))
   newarr
 end
 
