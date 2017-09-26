@@ -101,7 +101,7 @@ props(sarr::SubArrow) = props(deref(sarr))
 
 # DEPRECATE
 "Make `port` an in_port"
-function set_in_port!(port::Port{<:CompArrow})
+function set_in_port!(prt::Port{<:CompArrow})
   setprop!(In(), props(prt))
 end
 

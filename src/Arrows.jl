@@ -149,6 +149,8 @@ export
   ▹,
   ▹s,
   θp,
+  ϵ,
+  addprop!,
 
   SourceArrow,
   AssertArrow,

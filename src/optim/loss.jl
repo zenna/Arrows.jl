@@ -14,12 +14,12 @@ end
 function meanerror(invarr::CompArrow)
   thebest = CompArrow(:thebest)
   sarr = add_sub_arr!(thebest, invarr)
-  ϵprts = filter(is_error_port, ◂s(invarr))
+  ϵprts = filter(is(ϵ), ◂s(invarr))
   meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
   i = 1
   foreach(Arrows.link_to_parent!, ▹s(sarr))
   for sprt in ◃s(sarr)
-    if is_error_port(sprt)
+    if is(ϵ)(deref(sprt))
       sprt ⥅ ▹(meanarr, i)
       i += 1
     else
@@ -27,7 +27,7 @@ function meanerror(invarr::CompArrow)
     end
   end
   Arrows.link_to_parent!(◃(meanarr, 1))
-  ϵ!(Arrows.dst(◃(meanarr, 1)))
+  addprop!(ϵ, deref((Arrows.dst(◃(meanarr, 1)))))
   @assert is_wired_ok(thebest)
   thebest
 end
@@ -75,7 +75,7 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   for (i, sprt) in enumerate(in_sub_ports(invsarr))
     prt = add_port_like!(carr, deref(sprt))
     prt ⥅ sprt
-    if !is_parameter_port(prt)
+    if !(is(θp)(prt))
       diff = δ!(sub_port(carr, prt.port_id), out_sub_port(fwdsarr, i))
       push!(diffs, diff)
     end

@@ -1,7 +1,7 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, set_parameter_port!
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
 
 "f(x) = sin(x)"
 function sin_arr()
