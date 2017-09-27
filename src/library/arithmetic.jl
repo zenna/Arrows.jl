@@ -88,3 +88,8 @@ props(::MinArrow) = bin_arith_props()
 struct MaxArrow <: PrimArrow end
 name(::MaxArrow)::Symbol = :max
 props(::MaxArrow) = bin_arith_props()
+
+"x % y"
+struct ModArrow <: PrimArrow end
+name(::ModArrow)::Symbol = :%
+props(::ModArrow) = bin_arith_props()

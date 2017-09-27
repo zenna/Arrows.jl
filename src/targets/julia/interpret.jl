@@ -17,6 +17,7 @@ interpret(::IdentityArrow, x) = (x,)
 interpret(::ExpArrow, x) = (exp(x),)
 interpret(::SinArrow, x) = (sin(x),)
 interpret(::CosArrow, x) = (cos(x),)
+interpret(::ModArrow, x, y) = (x .% y,)
 interpret(::Arrows.MeanArrow, args...) = mean(args...)
 
 

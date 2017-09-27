@@ -72,8 +72,47 @@ inv(arr::MulArrow, const_in) =
              DivArrow,
              Dict(0 => 2, 1 => 1, 2 => 0))
 
-inv(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
-inv(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
+#inv(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
+#inv(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
+"The parametric inverse of cos, cos^(-1)(y; θ) = 2πθ+(-1)^θ * acos(z)."
+# (-1)^θ is implemented as θ % 2 == 0 ? 1 : -1
+function inv(arr::CosArrow, const_in)
+  inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
+  y, θ, x = sub_ports(inv_cos)
+  twoπ = add_sub_arr!(inv_cos, SourceArrow(2 * π))
+  mul1 = add_sub_arr!(inv_cos, MulArrow())
+  link_ports!(θ, (mul1, 1))
+  link_ports!((twoπ, 1), (mul1, 2))
+  # output of mul1 represents 2πθ.
+
+  negativeone = add_sub_arr!(inv_cos, SourceArrow(-1.0))
+  one = add_sub_arr!(inv_cos, SourceArrow(1.0))
+  two = add_sub_arr!(inv_cos, SourceArrow(2.0))
+  zero = add_sub_arr!(inv_cos, SourceArrow(0.0))
+  mod = add_sub_arr!(inv_cos, ModArrow())
+  equals = add_sub_arr!(inv_cos, EqualArrow())
+  ifelse = add_sub_arr!(inv_cos, IfElseArrow())
+  link_ports!(θ, (mod, 1))
+  link_ports!((two, 1), (mod, 2))
+  link_ports!((mod, 1), (equals, 1))
+  link_ports!((zero, 1), (equals, 2))
+  link_ports!((equals, 1), (ifelse, 1))
+  link_ports!((one, 1), (ifelse, 2))
+  link_ports!((negativeone, 1), (ifelse, 3))
+  # the output of conditional represents (-1)^θ = θ % 2 == 0? 1 : -1.
+
+  mul2 = add_sub_arr!(inv_cos, MulArrow())
+  acos = add_sub_arr!(inv_cos, ACosArrow())
+  link_ports!(y, (acos, 1))
+  link_ports!((acos, 1), (mul2, 1))
+  link_ports!((ifelse, 1), (mul2, 2))
+  add = add_sub_arr!(inv_cos, AddArrow())
+  link_ports!((mul1, 1), (add, 1))
+  link_ports!((mul2, 1), (add, 2))
+  link_ports!((add, 1), x)
+  inv_cos
+end
+
 inv(arr::ExpArrow, const_in) = unary_inv(arr, const_in, LogArrow)
 
 inv(arr::SourceArrow, const_in::Vector{Bool}) = (SourceArrow(arr.value), Dict(1 => 1))

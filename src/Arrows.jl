@@ -46,6 +46,7 @@ import Base:  ^,
               |,
               &,
               !,
+              %,
               cos,
               acos,
               sin,
@@ -175,6 +176,7 @@ export
   SqrtArrow,
   CosArrow,
   DuplArrow,
+  ModArrow,
 
   # Compound
   addn,

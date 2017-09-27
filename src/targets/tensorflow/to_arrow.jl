@@ -28,6 +28,8 @@ conv_Identity(id_op::AbstractOperation) = IdentityArrow()
 
 conv_Abs(id_op::AbstractOperation) = AbsArrow()
 
+conv_Mod(mod_op::AbstractOperation) = ModArrow()
+
 # Mapping between op types and arrows
 # Cannot use multimethods because different ops not distinguished by type
 Op_Type_To_Arrow = Dict{String, Function}(
@@ -46,7 +48,8 @@ Op_Type_To_Arrow = Dict{String, Function}(
   "Const" => conv_Const,
   "Greater" => conv_Greater,
   "Identity" => conv_Identity,
-  "VariableV2" => conv_Const)
+  "VariableV2" => conv_Const,
+  "Mod" => conv_Mod)
 
 """Return an arrow from a list or create one if haven't done already"""
 function arrow_from_op(c::CompArrow,
