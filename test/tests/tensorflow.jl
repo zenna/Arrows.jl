@@ -40,7 +40,7 @@ function test_decode()
   output_tensors = PyTensor[y]
   graph::PyGraph = pytf.get_default_graph()
   arr = graph_to_arrow(:test, input_tensors, output_tensors, graph)
-  @test is_wired_ok(arr)
+  @test is_valid(arr)
 end
 
 function test_convert()

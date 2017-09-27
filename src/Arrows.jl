@@ -117,7 +117,7 @@ export
   known_not_const,
   const_propagator!,
 
-  is_wired_ok,
+  is_valid,
   is_valid,
   interpret,
   invert!,

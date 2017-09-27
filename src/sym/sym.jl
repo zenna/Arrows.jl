@@ -54,7 +54,6 @@ function Sym(prps::Props)
   symbols(string(name(prps)))
 end
 
-Sym(prt::Port) = Sym(props(prt))
 Sym(prt::Port) = symbols("x$(prt.port_id)")
 RefnSym(prt::Port) = RefnSym(Sym(prt))
 

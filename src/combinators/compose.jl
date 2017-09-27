@@ -117,6 +117,6 @@ function compose!(sprts::Vector{SubPort}, arr::Arrow)::Vector{SubPort}
   length(sprts) == n▸(arr)
   carr = anyparent(sprts...)
   sarr = add_sub_arr!(carr, arr)
-  foreach(link_ports!, sprts, ▹s(sarr))
-  ◃s(sarr)
+  foreach(link_ports!, sprts, ▹(sarr))
+  ◃(sarr)
 end

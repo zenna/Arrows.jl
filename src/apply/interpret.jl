@@ -41,7 +41,7 @@ function inner_interpret(sub_interpret,
                          dst_val::Dict{SubPort, Any})
   @assert length(inputs) == num_in_ports(carr) "wrong # inputs"
   @assert all(sarr ∈ keys(arrcolors) for sarr in sub_arrows(carr))
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   seen = Set{SubArrow}()
   while length(arrcolors) > 0
     # Highest priority sarr ready to be evaluated

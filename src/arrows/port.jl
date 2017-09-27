@@ -88,9 +88,6 @@ num_in_ports(aarr::AbstractArrow)::Integer = length(in_ports(aarr))
 "Name of `port`"
 name(port::Port) = name(props(port))
 
-"Ordered Names of each port of `arr`"
-port_names(arr::Arrow) = name.(ports(arr))
-
 ## Label ##
 mann(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 

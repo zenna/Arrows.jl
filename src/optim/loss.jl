@@ -14,11 +14,11 @@ end
 function meanerror(invarr::CompArrow)
   thebest = CompArrow(:thebest)
   sarr = add_sub_arr!(thebest, invarr)
-  ϵprts = filter(is(ϵ), ◂s(invarr))
+  ϵprts = filter(is(ϵ), ◂(invarr))
   meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
   i = 1
-  foreach(Arrows.link_to_parent!, ▹s(sarr))
-  for sprt in ◃s(sarr)
+  foreach(Arrows.link_to_parent!, ▹(sarr))
+  for sprt in ◃(sarr)
     if is(ϵ)(deref(sprt))
       sprt ⥅ ▹(meanarr, i)
       i += 1
@@ -30,7 +30,7 @@ function meanerror(invarr::CompArrow)
   # FIXME This sint idϵ its the mean of potentially different errors
   # I would want the most specific type
   addprop!(idϵ, deref((Arrows.dst(◃(meanarr, 1)))))
-  @assert is_wired_ok(thebest)
+  @assert is_valid(thebest)
   thebest
 end
 

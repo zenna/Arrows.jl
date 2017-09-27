@@ -153,7 +153,7 @@ function weird_arr()
   h = f * g
   h ⥅ a
   g ⥅ b
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
