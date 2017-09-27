@@ -13,14 +13,16 @@ end
 function order_of_assigment(carr::CompArrow, seen::Set{CompArrow})
   push!(seen, carr)
   assigns = Vector{SrcValue}()
-  function f(sarr::SubArrow, args)
-    outnames = map(name, out_values(sarr))
-    for value in out_values(sarr)
-      if value ∉ assigns
-        push!(assigns, value)
-      end
+  function add_to_assigns(value)
+    if value ∉ assigns
+      push!(assigns, value)
     end
-    outnames
+  end
+  function f(sarr::SubArrow, args)
+    out = out_values(sarr)
+    foreach(add_to_assigns, in_values(sarr))
+    foreach(add_to_assigns, out)
+    map(name, out)
   end
 
   inputs = map(name, in_values(sub_arrow(carr)))
