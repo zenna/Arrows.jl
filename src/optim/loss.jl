@@ -27,7 +27,9 @@ function meanerror(invarr::CompArrow)
     end
   end
   Arrows.link_to_parent!(◃(meanarr, 1))
-  addprop!(ϵ, deref((Arrows.dst(◃(meanarr, 1)))))
+  # FIXME This sint idϵ its the mean of potentially different errors
+  # I would want the most specific type
+  addprop!(idϵ, deref((Arrows.dst(◃(meanarr, 1)))))
   @assert is_wired_ok(thebest)
   thebest
 end
@@ -67,8 +69,15 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   # Can we assume number is the same
   # Can't we do it more semantically
   # We need a richer notion of an error port
-  for (i, sprt) in enumerate(out_sub_ports(invsarr))
+  osports = out_sub_ports(invsarr)
+  error_port = is(ϵ) ∘ deref
+  for (i, sprt) in enumerate(filter(!error_port, osports))
     sprt ⥅ (fwdsarr, i)
+  end
+
+  for sprt in filter(error_port, osports)
+    prt = add_port_like!(carr, deref(sprt))
+    sprt ⥅ prt
   end
 
   diffs = []
