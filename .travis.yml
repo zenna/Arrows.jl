@@ -17,6 +17,7 @@ script:
   - julia -e 'Pkg.add("ReverseDiff")'
   - julia -e 'Pkg.add("Plots")'
   - julia -e 'Pkg.add("Luxor")'
+  - julia -e 'Pkg.add("SymPy")'
   - julia -e 'Pkg.clone("NLopt")'
   - julia -e 'Pkg.build("NLopt")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'
