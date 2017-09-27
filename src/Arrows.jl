@@ -259,6 +259,9 @@ include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
 
+# Solving constraints
+include("sym/sym.jl")
+
 # Integration of arrow with julia #
 include("host/overload.jl")
 include("host/filter.jl")
