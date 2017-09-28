@@ -93,3 +93,13 @@ props(::MaxArrow) = bin_arith_props()
 struct ModArrow <: PrimArrow end
 name(::ModArrow)::Symbol = :%
 props(::ModArrow) = bin_arith_props()
+
+"ceil(x)"
+struct CeilArrow <: PrimArrow end
+name(::CeilArrow)::Symbol = :ceil
+props(::CeilArrow) = unary_arith_props()
+
+"floor(x)"
+struct FloorArrow <: PrimArrow end
+name(::FloorArrow)::Symbol = :floor
+props(::FloorArrow) = unary_arith_props()

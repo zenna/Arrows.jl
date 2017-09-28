@@ -18,6 +18,8 @@ interpret(::ExpArrow, x) = (exp(x),)
 interpret(::SinArrow, x) = (sin(x),)
 interpret(::CosArrow, x) = (cos(x),)
 interpret(::ModArrow, x, y) = (x .% y,)
+interpret(::FloorArrow, x) = (floor(x),)
+interpret(::CeilArrow, x) = (ceil(x),)
 interpret(::Arrows.MeanArrow, args...) = mean(args...)
 
 

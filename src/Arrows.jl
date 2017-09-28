@@ -66,7 +66,9 @@ import Base:  ^,
               ifelse,
               var,
               zero,
-              one
+              one,
+              floor,
+              ceil
 export
   conjoin,
   disjoin,
@@ -177,6 +179,8 @@ export
   CosArrow,
   DuplArrow,
   ModArrow,
+  FloorArrow,
+  CeilArrow,
 
   # Compound
   addn,
