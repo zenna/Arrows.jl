@@ -235,6 +235,22 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   SubArrow(carr, newname)
 end
 
+"Remove `prt` from a `CompArrow`"
+function rem_port!(prt::Port{<:CompArrow})
+  carr = prt.arrow
+  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
+  vtx_id = carr.port_to_vtx_id[pxport]
+  last_id = LG.nv(carr.edges)
+  LG.rem_vertex!(carr.edges, vtx_id) || throw("Could not remove node")
+  delete!(carr.port_to_vtx_id, pxport)
+  if last_id != vtx_id
+    to_update = rev(carr.port_to_vtx_id, last_id)
+    carr.port_to_vtx_id[to_update] = vtx_id
+  end
+  deleteat!(carr.props, prt.port_id)
+  carr
+end
+
 "Remove `sarr` from `parent(sarr)`, return updated Arrow"
 function rem_sub_arr!(sarr::SubArrow)::Arrow
   if self_parent(sarr)

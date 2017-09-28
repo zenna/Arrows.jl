@@ -54,7 +54,8 @@ function Sym(prps::Props)
   symbols(string(name(prps)))
 end
 
-Sym(prt::Port) = symbols("x$(prt.port_id)")
+Sym(prt::Port) = Sym(props(prt))
+# Sym(prt::Port) = symbols("x$(prt.port_id)")
 RefnSym(prt::Port) = RefnSym(Sym(prt))
 
 # Recurse
@@ -68,4 +69,39 @@ function constraints(carr::CompArrow, remove=[SympyTRUE])
   allpreds = Set{Sym}()
   foreach(out -> union!(allpreds, out.preds), outs)
   filter(pred -> pred ∉ remove, allpreds)
+end
+
+# TODO. Solve with respect to only the parameters
+# #
+
+t = CompArrow(:test, [:a], [:b])
+a, b = ⬨(t)
+aa, bb = ⬧(t)
+a ⥅ b
+t
+rem_port!(aa)
+collect(keys(t.port_to_vtx_id))
+
+t.port_to_vtx_id
+t.props
+is_wired_ok(t)
+
+LG.nv(t.edges)
+sarr = sub_port_vtx(t, 1)
+t.port_to_vtx_id
+
+function solve!(class::Vector{Port})
+  carr = CompArrow(:test)
+
+  # If only one in class do nothing
+  if length(class) > 1
+    sprts = sub_port.(class)
+  end
+
+end
+
+function solve!(carr::CompArrow)
+  preds = constraints(invarr)
+  # solve equality constraints
+  θnms = Sym.(▸(invarr, is(θp)))
 end
