@@ -238,16 +238,28 @@ end
 drawobstacles(obstacles) = foreach(draw, obstacles)
 
 "Draw the path, target and obstacles"
-function drawscene(points, obstacles, x, y)
-  Drawing(1000, 1000, "scenes.png")
-  origin()
-  scale(50.0, 50.0)
+function drawscene(points, obstacles, x, y; target=true)
+  Drawing(200, 200, "scenes.png")
+  # origin()
+  scale(100.0, 100.0)
   background("white")
 
   drawpath(points)
   drawobstacles(obstacles)
-  drawtarget(x, y)
+  if target
+    drawtarget(x, y)
+  end
 
   finish()
   preview()
+end
+
+function drawscene(angles, x, y)
+  points = vertices(angles)
+  drawscene(points, [], x, y)
+end
+
+function drawscene(angles)
+  points = vertices(angles)
+  drawscene(points, [], 0, 0; target=false)
 end

@@ -137,6 +137,7 @@ export
 
   mean,
   var,
+  randinverse,
 
   ◂,
   ◂s,
@@ -269,6 +270,7 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
+include("optim/randinv.jl")
 include("gradient/gradient.jl")
 
 
@@ -281,7 +283,7 @@ include("targets/julia/ordered_sports.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../benchmarks/BenchmarkArrows.jl")
+include("../benchmarks/BenchmarkArrows.jl")
 #
 # # Analysis
 # include("../analysis/analysis.jl")

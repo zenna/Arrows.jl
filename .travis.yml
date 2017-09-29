@@ -14,7 +14,6 @@ sudo: true
 script:
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
-  - julia -e 'Pkg.add("ReverseDiff")'
   - julia -e 'Pkg.add("Plots")'
   - julia -e 'Pkg.add("Luxor")'
   - julia -e 'Pkg.clone("NLopt")'

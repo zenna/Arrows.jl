@@ -80,14 +80,15 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
     sprt ⥅ prt
   end
 
+  # Diffs between inputs to inv and outputs of fwd
   diffs = []
-  for (i, sprt) in enumerate(in_sub_ports(invsarr))
-    prt = add_port_like!(carr, deref(sprt))
-    prt ⥅ sprt
-    if !(is(θp)(prt))
-      diff = δ!(sub_port(carr, prt.port_id), out_sub_port(fwdsarr, i))
-      push!(diffs, diff)
-    end
+  foreach(link_to_parent!, ▹(invsarr))
+  invinsprts = src.(▹(invsarr, !is(θp)))
+  fwdoutsprts = ◃(fwdsarr, !is(ϵ))
+  length(invinsprts) == length(fwdoutsprts) || throw(DomainError())
+  foreach(invinsprts, fwdoutsprts) do sprt1, sprt2
+    diff = δ!(sprt1, sprt2)
+    push!(diffs, diff)
   end
 
   total = first(diffs)
@@ -97,6 +98,7 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
 
   loss = add_port_like!(carr, deref(total))
   total ⥅ loss
+  addprop!(idϵ, loss)
   carr
 end
 
