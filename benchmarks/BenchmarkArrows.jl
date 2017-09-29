@@ -13,5 +13,6 @@ all_example_arrows() = [fwd_2d_linkage(),
                         render_arrow()]
 
 export fwd_2d_linkage,
-       all_example_arrows
+       all_example_arrows,
+       drawscene
 end
