@@ -3,7 +3,20 @@ function fwd_kinematics(θ1, θ2, θ3)
     y = cos(θ1) + cos(θ1 + θ2) + cos(θ1 + θ2 + θ3)
     x, y
 end
-#
+
+function arr(f)
+    nms = code_lowered(f)[1].slotnames[2:end]
+    nms = Symbol[nms...]
+    c = CompArrow
+    inames = nms[1:3]
+    onames = nms[4:5]
+    carr = CompArrow(:fwd_kinematics, inames, onames)
+    insprts = ▹(carr)
+    outs = f(insprts...)
+    foreach(⥅, outs, ◃(carr))
+    carr
+end
+
 # BenchmarkArrows.drawscene([1.0, 1.0, 1.0], 1.0, 1.0)
 
 # function fwd_kinematics_arr()

@@ -188,6 +188,8 @@ export
   inv_add,
   inv_mul,
 
+  arr,
+
   # Optim
   julia,
   id_loss,
