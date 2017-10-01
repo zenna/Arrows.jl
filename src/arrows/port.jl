@@ -29,10 +29,10 @@ function Props(is_in_port::Bool, name::Symbol, typ::Type)
             typ = Typ(typ)))
 end
 "Port properties of `port`"
-props(prt::Port) = props(prt.arrow)[prt.port_id]
-labels(prt::Port) = labels(props(prt))
-addprop!(T::Type{<:Prop}, prt::Port) = addprop!(T, props(prt))
-in(P::Type{<:Prop}, prt::Port) = in(P, props(prt))
+props(prt::AbstractPort) = props(prt.arrow)[prt.port_id]
+labels(prt::AbstractPort) = labels(props(prt))
+addprop!(T::Type{<:Prop}, prt::AbstractPort) = addprop!(T, props(prt))
+in(P::Type{<:Prop}, prt::AbstractPort) = in(P, props(prt))
 
 "Is `port` an `out_port`"
 is_out_port(prt::AbstractPort)::Bool = isout(props(prt))

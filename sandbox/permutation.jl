@@ -1,4 +1,30 @@
-using ForwardDiff
+The problem as I see it I need to replace outer and make all the inner connections.
+
+Modifying Graph
+
+With the solver we get solutions.  These may say that one variable is a function of another.
+We therefore want to eliminite, either explicitly or implicitly the redundant port.
+We may also need to add this functional relationship to the arrow
+
+- There are changes you might want to to make to every copy of a CompArrow
+- And there are changes you might want to make to just one instance
+
+A couple things aren't clear to me
+- If I have an arrow it is multiple nested sub arrows which reference the same
+cokmp.
+Are they really the same as in will mutating one change another
+
+The problem with removing a port by mutation is that
+- All the parent arrows are now broken
+- So then maybe I should walk the thing
+
+Bbut there's a question of what am I fixing.
+Currently: I am deriving all the constraints for all the parameters
+
+
+
+is▹
+using ForwardDiff-
 using ReverseDiff
 using MNIST
 using TestImages

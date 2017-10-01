@@ -187,6 +187,8 @@ export
   inv_add,
   inv_mul,
 
+  arr,
+
   # Optim
   julia,
   id_loss,
@@ -284,7 +286,7 @@ include("targets/julia/ordered_sports.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../benchmarks/BenchmarkArrows.jl")
+include("../benchmarks/BenchmarkArrows.jl")
 #
 # # Analysis
 # include("../analysis/analysis.jl")
