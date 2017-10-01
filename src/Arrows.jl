@@ -137,7 +137,6 @@ export
 
   mean,
   var,
-  randinverse,
 
   ◂,
   ◂s,
@@ -272,7 +271,6 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
-include("optim/randinv.jl")
 include("gradient/gradient.jl")
 
 
