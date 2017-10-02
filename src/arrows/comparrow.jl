@@ -277,6 +277,13 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   arr
 end
 
+"Helper function for the addition of ports that handle the calls to LightGraph"
+function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
+  LG.add_vertex!(carr.edges)
+  vtx_id = LG.nv(carr.edges)
+  carr.port_to_vtx_id[ProxyPort(arrname, port_id)] = vtx_id
+end
+
 "Add a port like (i.e. same `Props`) to carr"
 function add_port!(carr::CompArrow, prps::Props)::Port
   name(prps) ∉ name.(⬧(carr)) || throw(ArgumentError("$(name(prps)) ∈ carr"))
@@ -284,13 +291,6 @@ function add_port!(carr::CompArrow, prps::Props)::Port
   add_port_lg!(carr, name(carr), port_id)
   push!(carr.props, deepcopy(prps))
   Port(carr, port_id)
-end
-
-"Helper function for the addition of ports that handle the calls to LightGraph"
-function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
-  LG.add_vertex!(carr.edges)
-  vtx_id = LG.nv(carr.edges)
-  carr.port_to_vtx_id[ProxyPort(arrname, port_id)] = vtx_id
 end
 
 "Add a port like (i.e. same `Props`) to carr"

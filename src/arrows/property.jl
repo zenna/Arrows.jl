@@ -21,6 +21,18 @@ Props(namedprops::NamedTuple) = Props(namedprops, Set())
 "Add property `P` to `prps`"
 addprop!(P::Type{<:Prop}, prps::Props) = push!(prps.labels, P)
 
+function addprop(P::Type{<:Prop}, prps::Props)
+  prps = deepcopy(prps)
+  push!(prps.labels, P)
+  prps
+end
+
+function setprop(prp, prps::Props)
+  prps = deepcopy(prps)
+  setprop!(prp, prps)
+  prps
+end
+
 "Is `prp` a property in `prps`"
 in(P::Type{<:Prop}, prps::Props) = P ∈ prps.labels
 is(P::Type{<:Prop}) = prps -> in(P, prps)

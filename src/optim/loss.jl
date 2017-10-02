@@ -34,29 +34,23 @@ function meanerror(invarr::CompArrow)
   thebest
 end
 
+"∑δ(a,b)"
+function sumδ(as::Vector{SubPort}, bs::Vector{SubPort})
+  diffs = []
+  foreach(as, bs) do sprt1, sprt2
+    diff = δ!(sprt1, sprt2)
+    push!(diffs, diff)
+  end
+
+  total = first(diffs)
+  for i = 2:length(diffs)
+    total += diffs[i]
+  end
+  total
+end
+
 """
-Appends Identity loss
-
 δ(f(f⁻¹(y)), y)
-
-# Arguments
-
-
-Algorithm
-For each outport of inv find *corresponding* inport to fwd
-Do that composition
-foreach  inport to inv find corresponding outport of fwd
-foreach of those pairs compute diff
-
-TODO
-How to do corresponding?
-
-How to modify graph
-
-how to distinguish id loss from id whatever
-- I need more fine grained labels
-- labels should be over laping
--
 """
 function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   #FIXME why is this so complicated?
@@ -64,11 +58,6 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
 
-  # TODO: Make ports correspond
-  # How to do correspondance? We dont want to match error outports
-  # Can we assume number is the same
-  # Can't we do it more semantically
-  # We need a richer notion of an error port
   osports = out_sub_ports(invsarr)
   error_port = is(ϵ) ∘ deref
   for (i, sprt) in enumerate(filter(!error_port, osports))
@@ -81,25 +70,31 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   end
 
   # Diffs between inputs to inv and outputs of fwd
-  diffs = []
   foreach(link_to_parent!, ▹(invsarr))
   invinsprts = src.(▹(invsarr, !is(θp)))
   fwdoutsprts = ◃(fwdsarr, !is(ϵ))
   length(invinsprts) == length(fwdoutsprts) || throw(DomainError())
-  foreach(invinsprts, fwdoutsprts) do sprt1, sprt2
-    diff = δ!(sprt1, sprt2)
-    push!(diffs, diff)
-  end
+  total = sumδ(invinsprts, fwdoutsprts)
+  loss = add_port_like!(carr, deref(total))
+  total ⥅ loss
+  addprop!(idϵ, loss)
+  carr
 
-  total = first(diffs)
-  for i = 2:length(diffs)
-    total += diffs[i]
-  end
+end
 
+id_loss(fwd::Arrow, inv::Arrow) = id_loss!(deepcopy(fwd), deepcopy(inv))
+
+"x -> y => x × y -> real"
+function fwd_loss(arr::Arrow)
+  carr = CompArrow(:fwd_loss)
+  sarr = add_sub_arr!(carr, arr)
+  foreach(link_to_parent!, ▹(sarr))
+  y▸ = [add_port!(carr, setprop(In(), props(sprt))) for sprt in ◃(sarr)]
+  y▹ = sub_port.(y▸)
+  y◃ = ◃(sarr)
+  total = sumδ(y◃, y▹)
   loss = add_port_like!(carr, deref(total))
   total ⥅ loss
   addprop!(idϵ, loss)
   carr
 end
-
-id_loss(fwd::Arrow, inv::Arrow) = id_loss!(deepcopy(fwd), deepcopy(inv))
