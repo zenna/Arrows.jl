@@ -18,4 +18,4 @@ end
 
 test_pgf(Arrows.TestArrows.xy_plus_x_arr())
 
-foreach(test_pgf ∘ pre_test, plain_arrows())
+# foreach(test_pgf ∘ pre_test, plain_arrows())

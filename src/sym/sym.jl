@@ -40,7 +40,6 @@ domainpreds(::Arrow, args...) = Set{Sym}()
 function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector{RefnSym}
   vars = Sym[arg.var for arg in args]
   preds = Set{Sym}[arg.preds for arg in args]
-  @show preds
   outputs = prim_sym_interpret(parr, vars...)
   dompreds = domainpreds(parr, vars...)
   allpreds = union(dompreds, preds...)
@@ -55,7 +54,6 @@ function Sym(prps::Props)
 end
 
 Sym(prt::Port) = Sym(props(prt))
-Sym(prt::Port) = symbols("x$(prt.port_id)")
 RefnSym(prt::Port) = RefnSym(Sym(prt))
 
 # Recurse
