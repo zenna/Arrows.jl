@@ -145,7 +145,7 @@ function test_two_op()
 end
 
 function weird_arr()
-  carr = CompArrow(:test, [:x, :y, :z], [:a, :b])
+  carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
   x, y, z, a, b = ⬨(carr)
   e = z * x + y * (2 * z + y)
   f = e * x + y
