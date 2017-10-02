@@ -68,3 +68,19 @@ function constraints(carr::CompArrow, remove=[SympyTRUE])
   foreach(out -> union!(allpreds, out.preds), outs)
   filter(pred -> pred ∉ remove, allpreds)
 end
+
+function solve!(class::Vector{Port})
+  carr = CompArrow(:test)
+
+  # If only one in class do nothing
+  if length(class) > 1
+    sprts = sub_port.(class)
+  end
+
+end
+
+function solve!(carr::CompArrow)
+  preds = constraints(invarr)
+  # solve equality constraints
+  θnms = Sym.(▸(invarr, is(θp)))
+end

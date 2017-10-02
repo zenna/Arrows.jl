@@ -146,6 +146,6 @@ function graph_to_arrow(name::Symbol,
     end
   end
 
-  # @assert is_wired_ok(c)
+  # @assert is_valid(c)
   return c
 end
