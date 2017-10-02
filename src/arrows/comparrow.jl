@@ -15,15 +15,16 @@ mutable struct CompArrow <: Arrow
   props::Vector{Props}
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
 
-  function CompArrow(name::Symbol,
+  function CompArrow(nm::Symbol,
                      props::Vector{Props})
+    !hasduplicates(name.(props)) || throw(ArgumentError("name duplicates: $(name.(props))"))
     c = new()
     nports = length(props)
     g = LG.DiGraph(nports)
-    c.name = name
+    c.name = nm
     c.edges = g
-    c.port_to_vtx_id = Dict(ProxyPort(name, i) => i for i = 1:nports)
-    c.sarr_name_to_arrow = Dict(name => c)
+    c.port_to_vtx_id = Dict(ProxyPort(nm, i) => i for i = 1:nports)
+    c.sarr_name_to_arrow = Dict(nm => c)
     c.props = props
     c
   end
@@ -76,10 +77,10 @@ CompArrow(name::ArrowName) = CompArrow(name, Props[])
 "Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow(name::ArrowName, I::Integer, O::Integer)
   # Default is for first I ports to be in_ports then next O oout_ports
-  inp_names = [Symbol(:inp_, i) for i=1:I]
-  out_names = [Symbol(:out_, i) for i=1:O]
-  in_props = [Props(true, inp_names[i], Any) for i = 1:I]
-  out_props = [Props(false, out_names[i], Any) for i = 1:O]
+  inames = [Symbol(:inp_, i) for i=1:I]
+  onames = [Symbol(:out_, i) for i=1:O]
+  in_props = [Props(true, inames[i], Any) for i = 1:I]
+  out_props = [Props(false, onames[i], Any) for i = 1:O]
   props = vcat(in_props, out_props)
   CompArrow(name, props)
 end
@@ -234,6 +235,22 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   SubArrow(carr, newname)
 end
 
+"Remove `prt` from a `CompArrow`"
+function rem_port!(prt::Port{<:CompArrow})
+  carr = prt.arrow
+  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
+  vtx_id = carr.port_to_vtx_id[pxport]
+  last_id = LG.nv(carr.edges)
+  LG.rem_vertex!(carr.edges, vtx_id) || throw("Could not remove node")
+  delete!(carr.port_to_vtx_id, pxport)
+  if last_id != vtx_id
+    to_update = rev(carr.port_to_vtx_id, last_id)
+    carr.port_to_vtx_id[to_update] = vtx_id
+  end
+  deleteat!(carr.props, prt.port_id)
+  carr
+end
+
 "Remove `sarr` from `parent(sarr)`, return updated Arrow"
 function rem_sub_arr!(sarr::SubArrow)::Arrow
   if self_parent(sarr)
@@ -260,14 +277,6 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   arr
 end
 
-"Add a port like (i.e. same `Props`) to carr"
-function add_port!(carr::CompArrow, pprop::Props)::Port
-  port_id = num_ports(carr) + 1
-  add_port_lg!(carr, name(carr), port_id)
-  push!(carr.props, deepcopy(pprop))
-  Port(carr, port_id)
-end
-
 "Helper function for the addition of ports that handle the calls to LightGraph"
 function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
   LG.add_vertex!(carr.edges)
@@ -276,7 +285,24 @@ function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
 end
 
 "Add a port like (i.e. same `Props`) to carr"
-add_port_like!(carr::CompArrow, port::Port) = add_port!(carr, props(port))
+function add_port!(carr::CompArrow, prps::Props)::Port
+  name(prps) ∉ name.(⬧(carr)) || throw(ArgumentError("$(name(prps)) ∈ carr"))
+  port_id = num_ports(carr) + 1
+  add_port_lg!(carr, name(carr), port_id)
+  push!(carr.props, deepcopy(prps))
+  Port(carr, port_id)
+end
+
+"Add a port like (i.e. same `Props`) to carr"
+function add_port_like!(carr::CompArrow, prt::Port, genname=true)
+  prps = deepcopy(props(prt)) # FIXME: Copying prps twice, here and add_port!
+  if genname && name(prt) ∈ name.(⬧(carr))
+    typeof(name(prt))
+    nm = uniquename(name(prt), name.(⬧(carr)))
+    setprop!(nm, prps)
+  end
+  add_port!(carr, prps)
+end
 
 "All directed `Link`s (src_port, dst_port)"
 function links(arr::CompArrow)::Vector{Link}

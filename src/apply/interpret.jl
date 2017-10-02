@@ -41,7 +41,7 @@ function inner_interpret(sub_interpret,
                          dst_val::Dict{SubPort, Any})
   @assert length(inputs) == num_in_ports(carr) "wrong # inputs"
   @assert all(sarr ∈ keys(arrcolors) for sarr in sub_arrows(carr))
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   seen = Set{SubArrow}()
   while length(arrcolors) > 0
     # Highest priority sarr ready to be evaluated
@@ -50,11 +50,6 @@ function inner_interpret(sub_interpret,
     push!(seen, sarr)
     inputs = [dst_val[sprt] for sprt in in_sub_ports(sarr)]
     outputs = sub_interpret(sarr, inputs)
-
-    # @show arrcolors
-    # @show inputs
-    # @show outputs
-    # @show sarr
 
     @assert length(outputs) == length(out_ports(sarr)) "diff num outputs"
 
@@ -67,11 +62,6 @@ function inner_interpret(sub_interpret,
         lower!(arrcolors, sub_arrow(dst_sprt))
       end
     end
-    # foreach(enumerate(out_neighbors(out_sub_ports(sarr)))) do i_dst_sprt
-    #   i, dst_sprt = i_dst_sprt
-    #   lower!(arrcolors, sub_arrow(dst_sprt))
-    #   dst_val[dst_sprt] = outputs[i]
-    # end
   end
 
   [dst_val[sprt] for sprt in out_sub_ports(carr)]

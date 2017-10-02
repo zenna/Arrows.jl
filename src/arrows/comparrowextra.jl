@@ -32,9 +32,6 @@ props(subport::SubPort) = props(deref(subport))
 "Ensore we find the port"
 must_find(i) = i == 0 ? throw(DomainError()) : i
 
-"Get the id of a port from its name"
-port_id(port::Arrow, name::Symbol) = must_find(findfirst(port_names(arr), name))
-
 "Get parent of any `x ∈ xs` and check they all have the same parent"
 function anyparent(xs::Vararg{<:Union{SubArrow, SubPort}})::CompArrow
   if !same(parent.(xs))
@@ -234,7 +231,7 @@ end
 
 ## Validation ##
 
-"Should `port` be a src in context `arr`. Possibly false iff is_wired_ok = false"
+"Should `port` be a src in context `arr`. Possibly false iff is_valid = false"
 function should_src(port::SubPort)::Bool
   arr = parent(port)
   if !(port in all_sub_ports(arr))
@@ -247,7 +244,7 @@ function should_src(port::SubPort)::Bool
   end
 end
 
-"Should `port` be a dst in context `arr`? Maybe false iff is_wired_ok=false"
+"Should `port` be a dst in context `arr`? Maybe false iff is_valid=false"
 function should_dst(port::SubPort)::Bool
   arr = parent(port)
   if !(port in all_sub_ports(arr))
@@ -290,12 +287,16 @@ function is_wired_ok(arr::CompArrow)::Bool
   true
 end
 
+"Is `carr` well formed"
+function is_valid(carr::CompArrow)
+  is_wired_ok(carr) && !hasduplicates(name.(ports(carr)))
+end
 
 ## Linking to Parent ##
-"Is `sprt` loose (not connected)?.  Impl assumes `is_wired_ok(parent(sprt))`"
+"Is `sprt` loose (not connected)?"
 loose(sprt::SubPort)::Bool = degree(sprt) == 0
 
-"Create a new port in `parent(sport)` and link `sport` to it"
+"Create a new port in `parent(sprt)` like `sprt` and link `sprt` to it"
 function link_to_parent!(sprt::SubPort)::Port
   if on_boundary(sprt)
     throw(ArgumentError("invalid on boundary ports"))
@@ -310,10 +311,12 @@ function link_to_parent!(sprt::SubPort)::Port
   newport
 end
 
+# FIXME: Deprecate in favour of sub_arrow filter
 "Link all `sprt::SubPort ∈ sprts` to parent if preds(sprt)"
 link_to_parent!(sprts::Vector{SubPort}, pred) =
   foreach(link_to_parent!, filter(pred, sprts))
 
+# FIXME: Deprecate in favour of sub_arrow filter
 "Link all `sprt::SubPort ∈ sarr` to parent if preds(sprt)"
 link_to_parent!(sarr::SubArrow, pred) =
   link_to_parent!(sub_ports(sarr), pred)
@@ -325,26 +328,16 @@ link_to_parent!(carr::CompArrow, pred)::CompArrow =
 
 ## Convenience
 
-▸ = in_port
-◂ = out_port
-▹ = in_sub_port
-◃ = out_sub_port
-▹s = in_sub_ports
-◃s = out_sub_ports
-▸s = in_ports
-◂s = out_ports
+# FIXME: Deprecate
 n▸ = num_in_ports
 n◂ = num_out_ports
-▵ = port
-▴ = sub_port
-▵s = ports
-▴s = sub_ports
 
 ## Printing ##
+# FIXME: rename mann to something meaningful 
 function mann(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows
-  wired_ok? $(is_wired_ok(carr))"""
+  wired_ok? $(is_valid(carr))"""
 end
 
 string(carr::CompArrow) = mann(carr)

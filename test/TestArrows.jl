@@ -144,13 +144,27 @@ function test_two_op()
   carr
 end
 
+function weird_arr()
+  carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
+  x, y, z, a, b = ⬨(carr)
+  e = z * x + y * (2 * z + y)
+  f = e * x + y
+  g = 6*x+x
+  h = f * g
+  h ⥅ a
+  g ⥅ b
+  @assert is_valid(carr)
+  carr
+end
+
 "all test arrows"
 function all_test_arrows()
   [xy_plus_x_arr(),
    fibonnaci_arr(),
    dupl_id_arr(),
    det_policy_inner_arr(),
-   triple_add()]
+   triple_add(),
+   weird_arr()]
 end
 
 function is_plain(arr::CompArrow)
