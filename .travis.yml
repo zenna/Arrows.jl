@@ -8,8 +8,7 @@ julia:
 notifications:
   email: false
 env:
-  - DOCUMENTER_DEBUG="true"
-  - PYTHON=conda
+  - DOCUMENTER_DEBUG="true" PYTHON=conda
 dist: trusty
 sudo: true
 script:
