@@ -114,7 +114,7 @@ function inv(arr::CosArrow, const_in)
   link_ports!((mul1, 1), (add, 1))
   link_ports!((mul2, 1), (add, 2))
   link_ports!((add, 1), x)
-  inv_cos
+  inv_cos, Dict(1 => 3, 2 => 1)
 end
 
 "The parametric inverse of sin, sin^(-1)(y; θ) = πθ + (-1)^θ * asin(y)."
@@ -153,7 +153,7 @@ function inv(arr::SinArrow, const_in)
   link_ports!((mul1, 1), (add, 1))
   link_ports!((mul2, 1), (add, 2))
   link_ports!((add, 1), x)
-  inv_sin
+  inv_sin, Dict(1 => 3, 2 => 1)
 end
 
 inv(arr::ExpArrow, const_in) = unary_inv(arr, const_in, LogArrow)
