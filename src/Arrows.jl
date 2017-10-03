@@ -142,15 +142,13 @@ export
   var,
 
   ◂,
-  ◂s,
+  ◂,
   ▸,
-  ▸s,
+  ▸,
   n◂,
   n▸,
   ◃,
-  ◃s,
   ▹,
-  ▹s,
   θp,
   ϵ,
   addprop!,
@@ -192,6 +190,8 @@ export
   InvDuplArrow,
   inv_add,
   inv_mul,
+
+  arr,
 
   # Optim
   julia,
@@ -267,6 +267,9 @@ include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
 
+# Solving constraints
+include("sym/sym.jl")
+
 # Integration of arrow with julia #
 include("host/overload.jl")
 include("host/filter.jl")
@@ -287,7 +290,7 @@ include("targets/julia/ordered_sports.jl")
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
-# include("../benchmarks/BenchmarkArrows.jl")
+include("../benchmarks/BenchmarkArrows.jl")
 #
 # # Analysis
 # include("../analysis/analysis.jl")

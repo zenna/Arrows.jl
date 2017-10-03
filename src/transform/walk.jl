@@ -1,4 +1,4 @@
-symb_id_portid_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(port_names(arr)))
+symb_id_portid_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(names.(ports(arr))))
 id_portid_map(arr::Arrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
 portmapize(arr::Arrow, portmap::PortIdMap) = (arr, portmap)
 portmapize(arr::Arrow) = (arr, id_portid_map(arr))
@@ -33,18 +33,19 @@ function rewire!(port_map::SubPortMap)
           SubPortIdMap(port_index(l) => port_index(r) for (l, r) in SubPortMap))
 end
 
-"""Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
+"""
+Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
 
 # Arguments
-  `inner` - `old::SubArrow` -> (new::Arrow, portmap::PortMap)`
-             `new` replaces `old` in `carr`
-  `outer` - `carr::CompArrow` -> `newcarr::CompArrow`
-            `outer` is applied to `carr` after all replacement
-  `carr` - `CompArrow` to walk over
+- `inner`: `old::SubArrow` -> (new::Arrow, portmap::PortMap)`
+           `new` replaces `old` in `carr`
+- `outer`: `carr::CompArrow` -> `newcarr::CompArrow`
+           `outer` is applied to `carr` after all replacement
+- `carr`:  `CompArrow` to walk over
 # Returns
-  `res::CompArrow` - where `new` in `res` replaces each `orig` in `arr` and
-    a `PortMap` where PortMap[p1] = p2 means p1 ∈ orig_arr, p2 ∈ new_arr
-    and any edge which connects to p1 in orig will connect to p2 in new.
+- `res::CompArrow` - where `new` in `res` replaces each `orig` in `arr` and
+   a `PortMap` where PortMap[p1] = p2 means p1 ∈ orig_arr, p2 ∈ new_arr
+   and any edge which connects to p1 in orig will connect to p2 in new.
 """
 function walk!(inner, outer, carr::CompArrow)::CompArrow
   for sarr in sub_arrows(carr)

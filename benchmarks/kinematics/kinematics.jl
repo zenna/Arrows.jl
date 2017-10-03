@@ -217,37 +217,55 @@ end
 function drawtarget(x, y)
   p1 = Luxor.Point(x, y)
   sethue("red")
-  circle(p1, 0.1, :fill)
+  star(x, y, 0.1, 5)
+  star(p1, 0.1, 4, 0.2, 0, :fill)
+  # circle(p1, 0.1, :fill)
 end
 
 "Draw the path"
 function drawpath(points)
   setline(3)
   curr = O
+  color = randomhue()
   for i = 1:size(points, 2)
-    color = randomhue()
     sethue(color)
     x, y = points[1, i], points[2, i]
     point = Luxor.Point(x, y)
     line(curr, point, :stroke)
     curr = point
+    if i == size(points, 2)
+      circle(point, 0.05, :fill)
+    end
   end
+  # sethue("blue")
 end
 
 "Draw all the obstacles"
 drawobstacles(obstacles) = foreach(draw, obstacles)
 
 "Draw the path, target and obstacles"
-function drawscene(points, obstacles, x, y)
-  Drawing(1000, 1000, "scenes.png")
-  origin()
-  scale(50.0, 50.0)
+function drawscene(points, obstacles, x, y; target=true)
+  Drawing(200, 200, "scenes.png")
+  origin(Luxor.Point(70, 0))
+  scale(100.0, 100.0)
   background("white")
 
   drawpath(points)
   drawobstacles(obstacles)
-  drawtarget(x, y)
+  if target
+    drawtarget(x, y)
+  end
 
   finish()
   preview()
+end
+
+function drawscene(angles, x, y)
+  points = vertices(angles)
+  drawscene(points, [], x, y)
+end
+
+function drawscene(angles)
+  points = vertices(angles)
+  drawscene(points, [], 0, 0; target=false)
 end

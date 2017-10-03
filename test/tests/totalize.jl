@@ -5,7 +5,7 @@ import Arrows: aprx_totalize
 function test_aprx_totalize()
   carr = SqrArrow() >> ASinArrow()
   total_arr = aprx_totalize(carr)
-  @test is_wired_ok(carr)
+  @test is_valid(carr)
 end
 
 test_aprx_totalize()
