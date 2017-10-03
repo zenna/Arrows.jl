@@ -23,7 +23,7 @@ function addn_accum_linke(n::Integer)::CompArrow
     prt = add_port!(carr, pprop)
     link_ports!(asum, prt)
   end
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 

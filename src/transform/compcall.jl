@@ -34,8 +34,8 @@ tuple_untupled(x) = (x,)
 tuple_untupled(xs::Vector) = tuple(xs...)
 tuple_untupled(xs::Tuple) = xs
 
-"Apply `f` to ▹s of carr"
-applycarr(f, carr::CompArrow) = tuple_untupled(f(▹s(carr)...))
+"Apply `f` to ▹ of carr"
+applycarr(f, carr::CompArrow) = tuple_untupled(f(▹(carr)...))
 
 """
 Convert a function call to a composite arrow
@@ -67,8 +67,8 @@ function compcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
   carr = CompArrow(name, [pprops...]) # 2. Apply f to these inports to construct internals of `carr`
   foreach(link_to_parent!, applycarr(f, carr))
   sarr = add_sub_arr!(anyparent(sprts...), carr)  # 3. add carr to the parent, link sprts to in_ports of carr and return outports
-  foreach(⥅, sprts, ▹s(sarr))
-  tuple(◃s(sarr)...)
+  foreach(⥅, sprts, ▹(sarr))
+  tuple(◃(sarr)...)
 end
 
 compcall(f, sprts::SubPort...) = compcall(f, typeof(f).name.name, (sprts...))

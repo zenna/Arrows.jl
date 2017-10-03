@@ -8,17 +8,16 @@ julia:
 notifications:
   email: false
 env:
-  - DOCUMENTER_DEBUG="true"
+  - DOCUMENTER_DEBUG="true" PYTHON=conda
 dist: trusty
 sudo: true
 script:
-  - julia -e 'Pkg.clone(pwd())'
-  - julia -e 'Pkg.build("Arrows")'
-  - julia -e 'Pkg.add("ReverseDiff")'
-  - julia -e 'Pkg.add("Plots")'
-  - julia -e 'Pkg.add("Luxor")'
   - julia -e 'Pkg.clone("NLopt")'
   - julia -e 'Pkg.build("NLopt")'
+  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.build("Arrows")'
+  - julia -e 'Pkg.add("Plots")'
+  - julia -e 'Pkg.add("Luxor")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'
 after_success:
   # - julia -e 'cd(Pkg.dir("Arrows")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
