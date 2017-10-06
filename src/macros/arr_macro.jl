@@ -49,7 +49,7 @@ end
 
 "Transform `if` and the operator `:?`"
 function transform_if!(expr, context, carr)
-   if_arr = Arrows.CondArrow()
+   if_arr = Arrows.IfElseArrow()
    sarr = add_sub_arr!(carr, if_arr)
    cond = transform_expr_prim!(expr.args[1], context, carr)
    true_clause = transform_expr_prim!(expr.args[2], context, carr)
