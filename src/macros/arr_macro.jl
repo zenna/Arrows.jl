@@ -11,8 +11,15 @@ of the evaluation. If the evaluation return a `sub_port` or a
 function transform_call!(expr, context, carr)
    args = map(expr->transform_expr!(expr, context, carr), expr.args[2:end])
    name = expr.args[1]
-   new_expr = Expr(:call, name, args...)
-   eval(new_expr)
+   if name == :(==)
+      eq = add_sub_arr!(carr, EqualArrow())
+      args[1] ⥅ (eq, 1)
+      args[2] ⥅ (eq, 2)
+      ◃(eq, 1)
+   else
+      new_expr = Expr(:call, name, args...)
+      eval(new_expr)
+   end
 end
 
 "Evaluate each element of the block and return the result of the last one"
@@ -43,6 +50,14 @@ end
 "Transform `if` and the operator `:?`"
 function transform_if!(expr, context, carr)
    if_arr = Arrows.CondArrow()
+   sarr = add_sub_arr!(carr, if_arr)
+   cond = transform_expr_prim!(expr.args[1], context, carr)
+   true_clause = transform_expr_prim!(expr.args[2], context, carr)
+   false_clause = transform_expr_prim!(expr.args[3], context, carr)
+   cond ⥅ (sarr, 1)
+   true_clause ⥅ (sarr, 2)
+   false_clause ⥅ (sarr, 3)
+   ◃(sarr, 1)
 end
 
 "Recursive function to transform expressions into `SubPort` operations"
