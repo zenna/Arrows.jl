@@ -22,7 +22,7 @@ function transform_block!(block, context, carr)
 end
 
 "Assigns to variable `dst` the result of evaluating `src`"
-function transform_assigment!(expr, context, carr)
+function transform_assignment!(expr, context, carr)
    dst = expr.args[1]
    @assert isexpr(dst, Symbol)
    src = transform_expr!(expr.args[2], context, carr)
@@ -40,16 +40,23 @@ function transform_expr!(expr, context, carr)
    transform_expr_prim!(MacroTools.unblock(expr), context, carr)
 end
 
+"Transform `if` and the operator `:?`"
+function transform_if!(expr, context, carr)
+   if_arr = Arrows.CondArrow()
+end
+
 "Recursive function to transform expressions into `SubPort` operations"
 function transform_expr_prim!(expr, context, carr)
    if isexpr(expr, :call)
       transform_call!(expr, context, carr)
    elseif isexpr(expr, :(=))
-      transform_assigment!(expr, context, carr)
+      transform_assignment!(expr, context, carr)
    elseif isexpr(expr, :->)
       transform_lambda!(epxr, context, carr)
    elseif isexpr(expr, :block)
       transform_block!(MacroTools.rmlines(expr), context, carr)
+   elseif isexpr(expr, :if)
+      transform_if!(expr, context, carr)
    elseif isexpr(expr, Number)
       transform_number!(expr, context, carr)
    elseif isexpr(expr, Symbol)
