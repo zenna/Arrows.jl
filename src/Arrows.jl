@@ -185,7 +185,9 @@ export
   inv_add,
   inv_mul,
 
+  # Macros
   arr,
+  transform_function,
 
   # Optim
   julia,
@@ -194,6 +196,7 @@ export
   # compiler
   order_sports
 # Code structures
+
 
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
@@ -260,6 +263,9 @@ include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
+
+# Macros
+include("macros/arr_macro.jl")
 
 # Solving constraints
 include("sym/sym.jl")

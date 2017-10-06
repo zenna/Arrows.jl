@@ -2,6 +2,8 @@
 # @arr function f(x::Int, y::Int)
 #   2x + y
 # end
+using MacroTools
+
 
 """ Evaluate the arguments of the call and then apply the function to the result
 of the evaluation. If the evaluation return a `sub_port` or a
@@ -79,5 +81,7 @@ end
 
 
 macro arr(expr)
-   transform_function(expr), expr
+   let carr = transform_function(expr)
+      :($(carr), eval($(expr)))
+   end
 end
