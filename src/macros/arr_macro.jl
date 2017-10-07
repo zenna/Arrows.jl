@@ -35,7 +35,7 @@ end
 
 """ Evaluate the arguments of the call and then apply the function to the result
 of the evaluation. If the evaluation return a `sub_port` or a
-`Vector{SubPort}`, the called function should support the overloading"""
+`Vector{SubPort}`, the called function should support the overloading."""
 function transform_call!(expr, context, carr, in_block::Bool = false)
   args = map(expr->transform_expr!(expr, context, carr), expr.args[2:end])
   name = expr.args[1]
@@ -104,7 +104,9 @@ function transform_if!(expr, context, carr, in_block::Bool = false)
   end
 end
 
-"Recursive function to transform expressions into `SubPort` operations"
+"""Recursive function to transform expressions into `SubPort` operations.
+`in_block` variable are used to notify that the statement's return value
+may not be used."""
 function transform_expr_prim!(expr, context, carr, in_block::Bool = false)
   if isexpr(expr, :call)
     transform_call!(expr, context, carr, in_block)
