@@ -106,9 +106,27 @@ function test_undefined()
   @test carr(4, 3) == (f(4, 3),)
 end
 
+function test_w_types()
+  carr, f = Arrows.@arr function f(x::Int, y::Float64)
+    if x > y
+      y = y*3
+      w = 4
+    else
+      w = x*y
+      x = 2
+    end
+    y * w * x
+  end
+  @test carr(4, 4.0) == (128.0,)
+  @test carr(4, 4.0) == (f(4, 4.0),)
+  @test carr(4, 3.0) == (144.0,)
+  @test carr(4, 3.0) == (f(4, 3.0),)
+end
+
 test_operations()
 test_assignment()
 test_conditional1()
 test_conditional_eq()
 test_conditional_complex()
 test_conditional_complex_wo_assignment()
+test_w_types()

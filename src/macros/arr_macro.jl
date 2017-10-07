@@ -128,6 +128,14 @@ function transform_expr_prim!(expr, context, carr, in_block::Bool = false)
   end
 end
 
+"helper from `MacroTools::master`"
+splitvar(arg) =
+      @match arg begin
+          ::T_ => (nothing, T)
+          name_::T_ => (name::Symbol, T)
+          x_ => (x::Symbol, :Any)
+      end
+
 
 """Extract information about the function, creates a `CompArrow` and transform
    the `Expr` recursively"""
@@ -137,6 +145,7 @@ function transform_function(expr)
                                     (func_(args__; kwargs__)::rtype_) |
                                     (func_(args__)) |
                                     (func_(args__)::rtype_)))
+  args = [splitvar(var)[1] for var in args]                                  
   args = [Symbol(s) for s in args]
   name = Symbol(args...)
   carr = CompArrow(name, args, [:z])
