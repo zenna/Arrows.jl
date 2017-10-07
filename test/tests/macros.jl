@@ -49,7 +49,26 @@ function test_conditional_eq()
   @test carr(4, 3) == (f(4, 3),)
 end
 
+
+function test_conditional_complex()
+  carr, f = Arrows.@arr function f(x, y)
+    d = if x > y
+      y = y*3
+      w = 4
+    else
+      w = x*y
+      x = 2
+    end
+    y * w * x * d
+  end
+  @test carr(4, 4) == (256,)
+  @test carr(4, 4) == (f(4, 4),)
+  @test carr(4, 3) == (576,)
+  @test carr(4, 3) == (f(4, 3),)
+end
+
 test_operations()
 test_assignment()
 test_conditional1()
 test_conditional_eq()
+test_conditional_complex()
