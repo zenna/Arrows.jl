@@ -93,8 +93,9 @@ function transform_if!(expr, context, carr)
   true_clause = transform_expr_prim!(expr.args[2], true_context, carr)
   false_clause = transform_expr_prim!(expr.args[3], false_context, carr)
   for dst in (true_context.modified ∪ false_context.modified)
-    context[dst] = add_if_else(carr, cond,
-      true_context[dst], false_context[dst])
+    true_value = true_context[dst]
+    false_value = false_context[dst]
+    context[dst] = add_if_else(carr, cond, true_value, false_value)
   end
   add_if_else(carr, cond, true_clause, false_clause)
 end
