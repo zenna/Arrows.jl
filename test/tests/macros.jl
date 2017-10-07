@@ -78,9 +78,9 @@ function test_conditional_complex_wo_assignment()
     end
     y * w * x
   end
-  @test carr(4, 4) == (256,)
+  @test carr(4, 4) == (128,)
   @test carr(4, 4) == (f(4, 4),)
-  @test carr(4, 3) == (576,)
+  @test carr(4, 3) == (144,)
   @test carr(4, 3) == (f(4, 3),)
 end
 

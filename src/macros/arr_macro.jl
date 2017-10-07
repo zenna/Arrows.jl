@@ -36,7 +36,7 @@ end
 """ Evaluate the arguments of the call and then apply the function to the result
 of the evaluation. If the evaluation return a `sub_port` or a
 `Vector{SubPort}`, the called function should support the overloading"""
-function transform_call!(expr, context, carr)
+function transform_call!(expr, context, carr, in_block::Bool = false)
   args = map(expr->transform_expr!(expr, context, carr), expr.args[2:end])
   name = expr.args[1]
   if name == :(==)
@@ -51,13 +51,15 @@ function transform_call!(expr, context, carr)
 end
 
 "Evaluate each element of the block and return the result of the last one"
-function transform_block!(block, context, carr)
-  f = expr -> transform_expr!(expr, context, carr)
-  map(f, block.args)[end]
+function transform_block!(block, context, carr, in_block::Bool = false)
+  f = expr -> transform_expr!(expr, context, carr, true)
+
+  map(f, block.args[1:end-1])
+  transform_expr!(block.args[end], context, carr, in_block)
 end
 
 "Assigns to variable `dst` the result of evaluating `src`"
-function transform_assignment!(expr, context, carr)
+function transform_assignment!(expr, context, carr, in_block::Bool = false)
   dst = expr.args[1]
   @assert isexpr(dst, Symbol)
   src = transform_expr!(expr.args[2], context, carr)
@@ -65,14 +67,14 @@ function transform_assignment!(expr, context, carr)
 end
 
 "Transform a `Literal` of type `Number` in a `SourceArrow`"
-function transform_number!(number, context, carr)
+function transform_number!(number, context, carr, in_block::Bool = false)
   parr = SourceArrow(number)
   sarr = add_sub_arr!(carr, parr)
   ◃(sarr, 1)
 end
 
-function transform_expr!(expr, context, carr)
-  transform_expr_prim!(MacroTools.unblock(expr), context, carr)
+function transform_expr!(expr, context, carr, in_block::Bool = false)
+  transform_expr_prim!(MacroTools.unblock(expr), context, carr, in_block)
 end
 
 "helper to add an `IfElseArrow`"
@@ -86,7 +88,7 @@ function add_if_else(carr, cond, true_clause, false_clause)
 end
 
 "Transform `if` and the operator `:?`"
-function transform_if!(expr, context, carr)
+function transform_if!(expr, context, carr, in_block::Bool = false)
   true_context = DictProxy(context)
   false_context = DictProxy(context)
   cond = transform_expr_prim!(expr.args[1], context, carr)
@@ -97,26 +99,29 @@ function transform_if!(expr, context, carr)
     false_value = false_context[dst]
     context[dst] = add_if_else(carr, cond, true_value, false_value)
   end
-  add_if_else(carr, cond, true_clause, false_clause)
+  if !in_block
+    add_if_else(carr, cond, true_clause, false_clause)
+  end
 end
 
 "Recursive function to transform expressions into `SubPort` operations"
-function transform_expr_prim!(expr, context, carr)
+function transform_expr_prim!(expr, context, carr, in_block::Bool = false)
   if isexpr(expr, :call)
-    transform_call!(expr, context, carr)
+    transform_call!(expr, context, carr, in_block)
   elseif isexpr(expr, :(=))
-    transform_assignment!(expr, context, carr)
+    transform_assignment!(expr, context, carr, in_block)
   elseif isexpr(expr, :->)
-    transform_lambda!(epxr, context, carr)
+    transform_lambda!(epxr, context, carr, in_block)
   elseif isexpr(expr, :block)
-    transform_block!(MacroTools.rmlines(expr), context, carr)
+    transform_block!(MacroTools.rmlines(expr), context, carr, in_block)
   elseif isexpr(expr, :if)
-    transform_if!(expr, context, carr)
+    transform_if!(expr, context, carr, in_block)
   elseif isexpr(expr, Number)
-    transform_number!(expr, context, carr)
+    transform_number!(expr, context, carr, in_block)
   elseif isexpr(expr, Symbol)
     context[expr]
   else
+    dump(expr)
     throw(DomainError())
   end
 end
