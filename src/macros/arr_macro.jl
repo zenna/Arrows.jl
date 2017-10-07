@@ -112,8 +112,8 @@ function transform_expr_prim!(expr, context, carr, in_block::Bool = false)
     transform_call!(expr, context, carr, in_block)
   elseif isexpr(expr, :(=))
     transform_assignment!(expr, context, carr, in_block)
-  elseif isexpr(expr, :->)
-    transform_lambda!(epxr, context, carr, in_block)
+  # elseif isexpr(expr, :->)
+  #   transform_lambda!(epxr, context, carr, in_block)
   elseif isexpr(expr, :block)
     transform_block!(MacroTools.rmlines(expr), context, carr, in_block)
   elseif isexpr(expr, :if)
@@ -150,7 +150,7 @@ end
 
 
 macro arr(expr)
-  let carr = transform_function(expr)
-    :($(carr), eval($(expr)))
+  let quoted_expr = Expr(:quote, expr)
+    :(Arrows.transform_function($(quoted_expr)), eval($(expr)))
   end
 end

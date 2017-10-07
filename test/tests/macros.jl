@@ -67,8 +67,30 @@ function test_conditional_complex()
   @test carr(4, 3) == (f(4, 3),)
 end
 
+"""This function, unlike `test_conditional_complex`, do not assign the result
+of `if` to a variable"""
 function test_conditional_complex_wo_assignment()
   carr, f = Arrows.@arr function f(x, y)
+    if x > y
+      y = y*3
+      w = 4
+    else
+      w = x*y
+      x = 2
+    end
+    y * w * x
+  end
+  @test carr(4, 4) == (128,)
+  @test carr(4, 4) == (f(4, 4),)
+  @test carr(4, 3) == (144,)
+  @test carr(4, 3) == (f(4, 3),)
+end
+
+"""This test shall be not called. It's testing wether `transform_function` is
+called when the macro is evaluated or when the code is executed"""
+function test_undefined()
+  carr, f = Arrows.@arr function f(x, y)
+    z = x -> 2
     if x > y
       y = y*3
       w = 4
