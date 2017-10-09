@@ -285,7 +285,7 @@ include("gradient/gradient.jl")
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
-# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+include("targets/tensorflow/tensorflow.jl") # TODO Make optional
 
 include("apply/call.jl")
 

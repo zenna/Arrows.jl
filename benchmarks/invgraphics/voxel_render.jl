@@ -19,8 +19,8 @@ function render_arrow()
 end
 
 "Render voxels to an image"
-function render_images(pol::Arrows.Policy, slice)
-  flat_images = Arrows.interpret(vpol, slice)[1]
+function render_images(arr, slice)
+  flat_images = arr_interpret(arr, slice)[1]
   images = reshape(flat_images, batch_size, 128, 128)
 end
 
@@ -41,8 +41,11 @@ end
 function render()
   batch_size = 128
   arr = render_arrow()
-  @assert Arrows.is_valid(vpol)
   slice = random_slice(batch_size)
-  img_batch = render_images(vpol, slice)
+  img_batch = render_images(arr, slice)
   colorview(Gray, img_batch[rand(1:128),:,:])
+end
+
+function arr_interpret(arr, input)
+  Arrows.interpret(Arrows.JuliaTarget.sub_interpret, arr, [input])
 end

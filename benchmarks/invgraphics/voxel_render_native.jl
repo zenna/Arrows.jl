@@ -1,0 +1,181 @@
+# For repeatability
+# STD_ROTATION_MATRIX = rand_rotation_matrices(nviews)
+const STD_ROTATION_MATRIX = [[[0.94071758, -0.33430171, -0.05738258],
+                              [-0.33835238, -0.91297877, -0.2280076],
+                              [0.02383425, 0.2339063, -0.97196698]]]
+
+"""(width * height * 2) matrix, where element i,j is [i,j]
+This is used to generate ray directions based on an increment"""
+function gen_fragcoords(width::Integer, height::Integer)
+  raster_space = zeros(width, height, 2)
+  for i = 1:width
+    for j = 1:height
+      raster_space[i, j] = [i, j] + 0.5
+    end
+  end
+  return raster_space
+end
+
+gen_fragcoords(1,2)
+
+"Append an image filled with scalars to the back of an image."
+function stack(intensor, width::Integer, height::Integer, scalar::Real)
+  scalars = ones(width, height, 1) * scalar
+  return concatenate([intensor, scalars], axis=2)
+end
+
+function anorm(x)
+  return norm(x, 2, axis=3)
+end
+
+"""Render rays starting with raster_space according to geometry"""
+function make_ro(r, raster_space, width, height)
+  nmatrices = r.shape[0]
+  resolution = np.array([width, height], dtype=floatX())
+  # Normalise it to be bound between 0 1
+  norm_raster_space = raster_space / resolution
+  # Put it in NDC space, -1, 1
+  screen_space = -1.0 + 2.0 * norm_raster_space
+  # Make pixels square by mul by aspect ratio
+  aspect_ratio = resolution[0] / resolution[1]
+  ndc_space = screen_space * np.array([aspect_ratio, 1.0], dtype=floatX())
+  # Ray Direction
+
+  # Position on z-plane
+  ndc_xyz = stack(ndc_space, width, height, 1.0)*0.5  # Change focal length
+
+  # Put the origin farther along z-axis
+  ro = np.array([0, 0, 1.5], dtype=floatX())
+
+  # Rotate both by same rotation matrix
+  ro_t = np.dot(np.reshape(ro, (1, 3)), r)
+  ndc_t = np.dot(np.reshape(ndc_xyz, (1, width, height, 3)), r)
+  print(ndc_t.shape, width, height, nmatrices)
+  ndc_t = np.reshape(ndc_t, (width, height, nmatrices, 3))
+  ndc_t = np.transpose(ndc_t, (2, 0, 1, 3))
+
+  # Increment by 0.5 since voxels are in [0, 1]
+  ro_t = ro_t + 0.5
+  ndc_t = ndc_t + 0.5
+  # Find normalise ray dirs from origin to image plane
+  unnorm_rd = ndc_t - np.reshape(ro_t, (nmatrices, 1, 1, 3))
+  rd = unnorm_rd / np.reshape(anorm(unnorm_rd), (nmatrices, width, height, 1))
+  return rd, ro_t
+end
+
+function innerloop()
+  # Find the position (x,y,z) of ith step
+  pos = orig + rd * step_sz * i
+
+  # convert to indices for voxel cube
+  voxel_indices = np.floor(pos * res)
+  pruned = np.clip(voxel_indices, 0, res - 1)
+  p_int = Int(pruned)
+  indices = np.reshape(p_int, (nmatrices * width * height, 3))
+
+  # convert to indices in flat list of voxels
+  flat_indices = indices[:, 0] + res * (indices[:, 1] + res * indices[:, 2])
+
+  # tile the indices to repeat for all elements of batch
+  # import pdb; pdb.set_trace()
+  tiled_indices = np.tile(flat_indices, opt.batch_size)
+  batched_indices = np.transpose([x_tiled, tiled_indices])
+  batched_indices = batched_indices.reshape(opt.batch_size, len(flat_indices), 2)
+  attenuation = tf.gather_nd(voxels, batched_indices)
+  if opt.phong
+    grad_samples = tf.gather_nd(gdotl_cube, batched_indices)
+    attenuation = attenuation * grad_samples
+  end
+  # left_over = left_over * -attenuation * opt.density * step_sz_flat
+  left_over = left_over * tf.exp(-attenuation * opt.density * step_sz_flat)
+  # left_over = left_over * attenuation
+end
+
+"""
+Renders `batch_size` voxel grids
+# Arguments
+- voxels : (batch_size, res, res, res)
+- rotation_matrix : (m, 4)
+- width: width in pixels of rendered image
+- height: height in pixels of rendered image
+- nsteps: number of points along each ray to sample voxel grid
+- res: voxel resolution 'voxels' should be res * res * res
+- batch_size: number of voxels to render in batch
+- gdot_cube: dot product of gradient and light, can be computed offline
+- used only in phond shading
+- phong: do phong shading
+
+# Returns
+- (n, m, width, height) - from voxel data from functions in voxel_helpers
+"""
+function gen_img(voxels, gdotl_cube, rotation_matrix, opt)
+  width, height, res = opt.width, opt.height, opt.res
+  raster_space = gen_fragcoords(width, height)
+  rd, ro = make_ro(rotation_matrix, raster_space, width, height)
+  a = 0 - ro  # c = 0
+  b = 1 - ro  # c = 1
+  nmatrices = rotation_matrix.shape[0]
+  tn = np.reshape(a, (nmatrices, 1, 1, 3)) / rd
+  tff = np.reshape(b, (nmatrices, 1, 1, 3)) / rd
+  tn_true = np.minimum(tn, tff)
+  tff_true = np.maximum(tn, tff)
+  # do X
+  tn_x = tn_true[:, :, :, 0]
+  tff_x = tff_true[:, :, :, 0]
+  tmin = 0.0
+  tmax = 10.0
+  t0 = tmin
+  t1 = tmax
+  t02 = np.where(tn_x > t0, tn_x, t0)
+  t12 = np.where(tff_x < t1, tff_x, t1)
+  # y
+  tn_x = tn_true[:, :, :, 1]
+  tff_x = tff_true[:, :, :, 1]
+  t03 = np.where(tn_x > t02, tn_x, t02)
+  t13 = np.where(tff_x < t12, tff_x, t12)
+  # z
+  tn_x = tn_true[:, :, :, 2]
+  tff_x = tff_true[:, :, :, 2]
+  t04 = np.where(tn_x > t03, tn_x, t03)
+  t14 = np.where(tff_x < t13, tff_x, t13)
+
+  # Shift a little bit to avoid numerial inaccuracies
+  t04 = t04 * 1.001
+  t14 = t14 * 0.999
+
+  left_over = np.ones((opt.batch_size, nmatrices * width * height,))
+  step_size = (t14 - t04) / opt.nsteps
+  orig = np.reshape(ro, (nmatrices, 1, 1, 3)) + rd * np.reshape(t04,(nmatrices, width, height, 1))
+  xres = yres = res
+
+  # import pdb; pdb.set_trace()
+
+  orig = np.reshape(orig, (nmatrices * width * height, 3))
+  rd = np.reshape(rd, (nmatrices * width * height, 3))
+  step_sz = np.reshape(step_size, (nmatrices * width * height, 1))
+  # step_sz = np.exp(-step_sz)
+  step_sz_flat = step_sz.reshape(1, nmatrices * width * height)
+
+  # For batch rendering, we treat each voxel in each voxel independently,
+  nrays = width * height
+  x = np.arange(opt.batch_size)
+  x_tiled = np.repeat(x, nrays)
+  # voxels = tf.exp(-voxels)
+  # voxels = tf.Print(voxels, [tf.reduce_sum(voxels)], message="VOXEL SUM TF")
+  # 998627.56
+  for i = 1:opt.nsteps
+    innerloop()
+  end
+
+  img = left_over
+  return img
+end
+
+function test_render()
+  voxels = load("/home/zenna/repos/Arrows.jl/data/voxels.jld")["voxels"]
+  opt = @NT(width = 64, height = 64, nsteps = 10, res = 32, batch_size = 4,
+            phong = false, density = 1.0)
+  gen_img(voxels, gdotl_cube, rotation_matrix, opt)
+end
+
+img = test_render()
