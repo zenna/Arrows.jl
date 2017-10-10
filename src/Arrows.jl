@@ -291,11 +291,9 @@ include("apply/call.jl")
 
 include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
-#
-# # Analysis
-# include("../analysis/analysis.jl")
 
-# include("smt_solvers/z3interface.jl")
+# Analysis
+# include("../analysis/analysis.jl")
 
 # Just for development for
 const tcarr = TestArrows.xy_plus_x_arr()
