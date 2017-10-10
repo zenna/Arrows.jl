@@ -46,7 +46,7 @@ end
 ## Validation ##
 
 "`sarr` valid if it exists in its parent"
-is_valid(sarr::SubArrow) = name(sarr) ∈ all_names(parent(sarr))
+is_valid(sarr::SubArrow) = contains(parent(sarr), name(sarr))
 
 "A `Port` on a `SubArrow`"
 struct SubPort <: AbstractPort
@@ -137,6 +137,10 @@ all_names(arr::CompArrow)::Vector{ArrowName} =
 
 "Names of all `SubArrows` in `arr`, exclusive of `arr`"
 names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
+
+"Contains a name?"
+contains(arr::CompArrow, name::ArrowName)::Bool =
+  haskey(arr.sarr_name_to_arrow, name)
 
 "Rename `arr` to `n`"
 function rename!(carr::CompArrow, n::ArrowName)::CompArrow
