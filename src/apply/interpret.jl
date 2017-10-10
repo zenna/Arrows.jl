@@ -14,7 +14,7 @@ end
 "Decrement SubArrows "
 function known_colors(carr::CompArrow)::ArrowColors
   pq = colors(carr)
-  foreach(out_neighbors(in_sub_ports(carr))) do dst_sprt
+  foreach(out_neighbors(▹(carr))) do dst_sprt
     lower!(pq, sub_arrow(dst_sprt))
   end
   pq
@@ -25,7 +25,7 @@ function dst_sub_port_values(carr::CompArrow, inputs::Vector)::Dict{SubPort, Any
   length(inputs) == num_in_ports(carr) || throw(DomainError())
   dst_val = Dict{SubPort, Any}()
 
-  for (i, sprt) in enumerate(in_sub_ports(carr))
+  for (i, sprt) in enumerate(▹(carr))
     for dst_sprt in out_neighbors(sprt)
       dst_val[dst_sprt] = inputs[i]
     end
@@ -48,14 +48,14 @@ function inner_interpret(sub_interpret,
     @assert peek(arrcolors)[2] == 0 peek(arrcolors)[2]
     sarr = dequeue!(arrcolors)
     push!(seen, sarr)
-    inputs = [dst_val[sprt] for sprt in in_sub_ports(sarr)]
+    inputs = [dst_val[sprt] for sprt in ▹(sarr)]
     outputs = sub_interpret(sarr, inputs)
 
-    @assert length(outputs) == length(out_ports(sarr)) "diff num outputs"
+    @assert length(outputs) == length(◂(sarr)) "diff num outputs"
 
     # Decrement the priority of each subarrow connected to this arrow
     # Unless of course it is connected to the outside word
-    for (i, sprt) in enumerate(out_sub_ports(sarr))
+    for (i, sprt) in enumerate(◃(sarr))
       for dst_sprt in out_neighbors(sprt)
         dst_val[dst_sprt] = outputs[i]
         # @assert sub_arrow(dst_sprt) ∈ keys(arrcolors)
@@ -64,7 +64,7 @@ function inner_interpret(sub_interpret,
     end
   end
 
-  [dst_val[sprt] for sprt in out_sub_ports(carr)]
+  [dst_val[sprt] for sprt in ◃(carr)]
 end
 
 """
