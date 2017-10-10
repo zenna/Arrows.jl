@@ -95,31 +95,10 @@ function gather_nd(params, indices)
   [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
 end
 
-function origin()
-
-
-"""
-Renders `batch_size` `voxels` grids
-# Arguments
-- `voxels` : (batch_size, res, res, res)
-- `rotation_matrix` : (m, 4)
-- `opt`: Options named tuple
-  - width: width in pixels of rendered image
-  - height: height in pixels of rendered image
-  - nsteps: number of points along each ray to sample voxel grid
-  - res: voxel resolution 'voxels' should be res * res * res
-  - batch_size: number of voxels to render in batch
-
-# Returns
-- (n, m, width, height) - from voxel data from functions in voxel_helpers
-"""
-function render(voxels, rotation_matrix, opt)
+function origin(rotation_matrix, opt, rd, ro, nmatrices)
   width, height, res = opt.width, opt.height, opt.res
-  raster_space = gen_fragcoords(width, height)
-  rd, ro = make_ro(rotation_matrix, raster_space, width, height)
   a = 0 - ro  # c = 0
   b = 1 - ro  # c = 1
-  nmatrices = 1
   tn = reshape(a, (nmatrices, 1, 1, 3)) ./ rd
   tff = reshape(b, (nmatrices, 1, 1, 3)) ./ rd
   tn_true = min.(tn, tff)
@@ -151,13 +130,38 @@ function render(voxels, rotation_matrix, opt)
   t04 = t04 * 1.001
   t14 = t14 * 0.999
 
-  left_over = ones((opt.batch_size, nmatrices * width * height,))
   step_size = (t14 - t04) / opt.nsteps
 
   orig = reshape(ro, (nmatrices, 1, 1, 3)) .+ rd .* reshape(t04, (nmatrices, width, height, 1))
   xres = yres = res
 
   orig = reshape(orig, (nmatrices * width * height, 3))
+  orig, step_size
+end
+
+
+"""
+Renders `batch_size` `voxels` grids
+# Arguments
+- `voxels` : (batch_size, res, res, res)
+- `rotation_matrix` : (m, 4)
+- `opt`: Options named tuple
+  - width: width in pixels of rendered image
+  - height: height in pixels of rendered image
+  - nsteps: number of points along each ray to sample voxel grid
+  - res: voxel resolution 'voxels' should be res * res * res
+  - batch_size: number of voxels to render in batch
+
+# Returns
+- (n, m, width, height) - from voxel data from functions in voxel_helpers
+"""
+function render(voxels, rotation_matrix, opt)
+  width, height, res = opt.width, opt.height, opt.res
+  nmatrices = 1
+  raster_space = gen_fragcoords(width, height)
+  rd, ro = make_ro(rotation_matrix, raster_space, width, height)
+  orig, step_size = origin(rotation_matrix, opt, rd, ro, nmatrices)
+
   rd = reshape(rd, (nmatrices * width * height, 3))
   step_sz = reshape(step_size, (nmatrices * width * height, 1))
   step_sz_flat = reshape(step_sz, (1, nmatrices * width * height))
@@ -168,6 +172,7 @@ function render(voxels, rotation_matrix, opt)
   x_tiled = repeat(x, outer=nrays)
   voxels = reshape(voxels, (opt.batch_size, res * res * res))
 
+  left_over = ones((opt.batch_size, nmatrices * width * height,))
   for i = 0:opt.nsteps - 1
     left_over = left_over .* innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
   end
@@ -178,7 +183,7 @@ function test_render()
   path = joinpath(ENV["DATADIR"], "alio", "voxels", "voxels.jld")
   voxels = load(path)["voxels"]
   opt = @NT(width = 256, height = 256, nsteps = 15, res = 32, batch_size = 8,
-            phong = false, density = 10)
+            phong = false, density = 2)
   x = rand(1:size(voxels, 1) - opt.batch_size)
   voxels = voxels[x:x+opt.batch_size-1, :, :, :]
   imgs = render(voxels, STD_ROTATION_MATRIX, opt)
