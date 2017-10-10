@@ -84,7 +84,7 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tile
   # println(i, "batched_indices", maximum(batched_indices), " ", minimum(batched_indices))
   attenuation = gather_nd(voxels, batched_indices)
   # println(i, "voxels", mean(indices))
-  exp(-attenuation * opt.density .* step_sz_flat)
+  exp.(-attenuation * opt.density .* step_sz_flat)
 
   # left_over
 end
