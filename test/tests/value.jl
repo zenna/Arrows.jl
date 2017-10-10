@@ -49,7 +49,7 @@ function test_const_recursive()
   wrap, one, min, ite, eq, add = sub_arrows(arr)
   @test length(is_const) == 4
   @test haskey(is_const, ▹(eq, 2))
-  @test haskey(is_const, ◂(one, 1))
+  @test haskey(is_const, ◃(one, 1))
   @test haskey(is_const, ▹(ite, 2))
   @test haskey(is_const, ▹(min, 2))
 end
