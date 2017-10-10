@@ -1,27 +1,28 @@
+using NamedTuples
+using JLD
+
 # For repeatability
 # STD_ROTATION_MATRIX = rand_rotation_matrices(nviews)
-const STD_ROTATION_MATRIX = [[[0.94071758, -0.33430171, -0.05738258],
-                              [-0.33835238, -0.91297877, -0.2280076],
-                              [0.02383425, 0.2339063, -0.97196698]]]
+const STD_ROTATION_MATRIX = [0.94071758  -0.33430171 -0.05738258
+                             -0.33835238 -0.91297877 -0.2280076
+                             0.02383425  0.2339063 -0.97196698]
 
-"""(width * height * 2) matrix, where element i,j is [i,j]
-This is used to generate ray directions based on an increment"""
+
+"(width, height, 2) array, res[i,j] = [i,j] - generate ray directions based on an increment"
 function gen_fragcoords(width::Integer, height::Integer)
   raster_space = zeros(width, height, 2)
   for i = 1:width
     for j = 1:height
-      raster_space[i, j] = [i, j] + 0.5
+      raster_space[i, j, :] = [i, j] - 0.5
     end
   end
   return raster_space
 end
 
-gen_fragcoords(1,2)
-
 "Append an image filled with scalars to the back of an image."
 function stack(intensor, width::Integer, height::Integer, scalar::Real)
   scalars = ones(width, height, 1) * scalar
-  return concatenate([intensor, scalars], axis=2)
+  concatenate([intensor, scalars], axis=2)
 end
 
 function anorm(x)
@@ -30,36 +31,44 @@ end
 
 """Render rays starting with raster_space according to geometry"""
 function make_ro(r, raster_space, width, height)
-  nmatrices = r.shape[0]
-  resolution = np.array([width, height], dtype=floatX())
+  nmatrices = 1
+  resolution = [width, height]
   # Normalise it to be bound between 0 1
-  norm_raster_space = raster_space / resolution
+  norm_raster_space = raster_space ./ reshape(resolution, 1, 1, 2)
   # Put it in NDC space, -1, 1
   screen_space = -1.0 + 2.0 * norm_raster_space
+  screen_space[51,1,1]
   # Make pixels square by mul by aspect ratio
-  aspect_ratio = resolution[0] / resolution[1]
-  ndc_space = screen_space * np.array([aspect_ratio, 1.0], dtype=floatX())
+  aspect_ratio = resolution[1] / resolution[2]
+  ndc_space = screen_space .* reshape([aspect_ratio, 1.0], (1, 1, 2))
   # Ray Direction
 
   # Position on z-plane
-  ndc_xyz = stack(ndc_space, width, height, 1.0)*0.5  # Change focal length
+  scalars = ones(width, height, 1) * 1.0
+  ndc_xyz = cat(3, ndc_space, scalars) * 0.5  # Change focal length
 
   # Put the origin farther along z-axis
-  ro = np.array([0, 0, 1.5], dtype=floatX())
+  ro = [0, 0, 1.5]
 
   # Rotate both by same rotation matrix
-  ro_t = np.dot(np.reshape(ro, (1, 3)), r)
-  ndc_t = np.dot(np.reshape(ndc_xyz, (1, width, height, 3)), r)
-  print(ndc_t.shape, width, height, nmatrices)
-  ndc_t = np.reshape(ndc_t, (width, height, nmatrices, 3))
-  ndc_t = np.transpose(ndc_t, (2, 0, 1, 3))
+  ro_t = reshape(ro, (1, 3)) * r
+  mean(ro_t)
+  ndc_t = reshape(ndc_xyz, (1, width, height, 3)) * r
+  ndc_t = Array{Float64}(width, height, nmatrices, 3)
+  for w = 1:width, h = 1:height
+    ndc_t[w, h, :] = ndc_xyz[w, h, :]' * r
+  end
+  ndc_t = reshape(ndc_t, (width, height, nmatrices, 3))
+  ndc_t = permutedims(ndc_t, (3, 1, 2, 4))
 
   # Increment by 0.5 since voxels are in [0, 1]
   ro_t = ro_t + 0.5
   ndc_t = ndc_t + 0.5
   # Find normalise ray dirs from origin to image plane
-  unnorm_rd = ndc_t - np.reshape(ro_t, (nmatrices, 1, 1, 3))
-  rd = unnorm_rd / np.reshape(anorm(unnorm_rd), (nmatrices, width, height, 1))
+  unnorm_rd = ndc_t .- reshape(ro_t, (nmatrices, 1, 1, 3))
+  norms = [norm(unnorm_rd[:,w,h,:]) for w = 1:size(unnorm_rd, 2), h = 1:size(unnorm_rd, 3)]
+
+  rd = unnorm_rd ./ reshape(norms, (nmatrices, width, height, 1))
   return rd, ro_t
 end
 
@@ -82,10 +91,6 @@ function innerloop()
   batched_indices = np.transpose([x_tiled, tiled_indices])
   batched_indices = batched_indices.reshape(opt.batch_size, len(flat_indices), 2)
   attenuation = tf.gather_nd(voxels, batched_indices)
-  if opt.phong
-    grad_samples = tf.gather_nd(gdotl_cube, batched_indices)
-    attenuation = attenuation * grad_samples
-  end
   # left_over = left_over * -attenuation * opt.density * step_sz_flat
   left_over = left_over * tf.exp(-attenuation * opt.density * step_sz_flat)
   # left_over = left_over * attenuation
@@ -108,7 +113,7 @@ Renders `batch_size` voxel grids
 # Returns
 - (n, m, width, height) - from voxel data from functions in voxel_helpers
 """
-function gen_img(voxels, gdotl_cube, rotation_matrix, opt)
+function gen_img(voxels, rotation_matrix, opt)
   width, height, res = opt.width, opt.height, opt.res
   raster_space = gen_fragcoords(width, height)
   rd, ro = make_ro(rotation_matrix, raster_space, width, height)
@@ -173,9 +178,34 @@ end
 
 function test_render()
   voxels = load("/home/zenna/repos/Arrows.jl/data/voxels.jld")["voxels"]
-  opt = @NT(width = 64, height = 64, nsteps = 10, res = 32, batch_size = 4,
+  opt = @NT(width = 128, height = 128, nsteps = 6, res = 32, batch_size = 4,
             phong = false, density = 1.0)
-  gen_img(voxels, gdotl_cube, rotation_matrix, opt)
+  gen_img(voxels, STD_ROTATION_MATRIX, opt)
 end
 
+raster_space = gen_fragcoords(128, 128)
+raster_space ./ reshape([1.0, 2.0], (1, 1, 2))
 img = test_render()
+
+
+# Find the position (x,y,z) of ith step
+pos = orig + rd * step_sz * i
+
+# convert to indices for voxel cube
+voxel_indices = np.floor(pos * res)
+pruned = np.clip(voxel_indices, 0, res - 1)
+p_int = Int(pruned)
+indices = np.reshape(p_int, (nmatrices * width * height, 3))
+
+# convert to indices in flat list of voxels
+flat_indices = indices[:, 0] + res * (indices[:, 1] + res * indices[:, 2])
+
+# tile the indices to repeat for all elements of batch
+# import pdb; pdb.set_trace()
+tiled_indices = np.tile(flat_indices, opt.batch_size)
+batched_indices = np.transpose([x_tiled, tiled_indices])
+batched_indices = batched_indices.reshape(opt.batch_size, len(flat_indices), 2)
+attenuation = tf.gather_nd(voxels, batched_indices)
+# left_over = left_over * -attenuation * opt.density * step_sz_flat
+left_over = left_over * tf.exp(-attenuation * opt.density * step_sz_flat)
+# left_over = left_over * attenuation
