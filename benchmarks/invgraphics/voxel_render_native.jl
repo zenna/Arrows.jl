@@ -21,7 +21,6 @@ function gen_fragcoords(width::Integer, height::Integer)
   return raster_space
 end
 
-
 """Render rays starting with raster_space according to geometry"""
 function make_ro(r, raster_space, width, height)
   nmatrices = 1
@@ -51,7 +50,6 @@ function make_ro(r, raster_space, width, height)
   end
   ndc_t = reshape(ndc_t, (width, height, nmatrices, 3))
   ndc_t = permutedims(ndc_t, (3, 1, 2, 4))
-  println("Done")
 
   # Increment by 0.5 since voxels are in [0, 1]
   ro_t = ro_t + 0.5
@@ -68,8 +66,10 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tile
   # Find the position (x,y,z) of ith step
   pos = orig .+ rd .* (step_sz * i)
 
+
   # convert to indices for voxel cube
   voxel_indices = floor.(Int, pos * opt.res)
+
   p_int = clamp.(voxel_indices, 0, opt.res - 1)
   nmatrices = 1
   indices = reshape(p_int, (nmatrices * opt.width * opt.height, 3))
@@ -78,23 +78,25 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tile
   flat_indices = indices[:, 1] + opt.res * (indices[:, 2] + opt.res * indices[:, 3])
 
   # tile the indices to repeat for all elements of batch
-  tiled_indices = repeat(flat_indices, outer=opt.batch_size)
-  @show size(x_tiled)
-  @show size(tiled_indices)
+  tiled_indices = repeat(flat_indices, inner=opt.batch_size)
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
+  # println(i, "batched_indices", maximum(batched_indices), " ", minimum(batched_indices))
   attenuation = gather_nd(voxels, batched_indices)
-  @show size(left_over)
-  @show size(attenuation)
-  @show size(step_sz_flat)
-  left_over .* exp(-attenuation * opt.density .* step_sz_flat)
+  # println(i, "voxels", mean(indices))
+  exp(-attenuation * opt.density .* step_sz_flat)
+
+  # left_over
 end
 
-"Gather ND, from TensorFlow"
+"GatherND, from TensorFlow"
 function gather_nd(params, indices)
   indices = indices + 1
   [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
 end
+
+function origin()
+
 
 """
 Renders `batch_size` `voxels` grids
@@ -131,19 +133,19 @@ function render(voxels, rotation_matrix, opt)
   t0 = fill(tmin, size(tn_x))
   t1 = fill(tmax, size(tn_x))
 
-  t02 = ifelse(tn_x .> t0, tn_x, t0)
-  t12 = ifelse(tff_x .< t1, tff_x, t1)
+  t02 = ifelse.(tn_x .> t0, tn_x, t0)
+  t12 = ifelse.(tff_x .< t1, tff_x, t1)
 
   # y
   tn_x = tn_true[:, :, :, 2]
   tff_x = tff_true[:, :, :, 2]
-  t03 = ifelse(tn_x .> t02, tn_x, t02)
-  t13 = ifelse(tff_x .< t12, tff_x, t12)
+  t03 = ifelse.(tn_x .> t02, tn_x, t02)
+  t13 = ifelse.(tff_x .< t12, tff_x, t12)
   # z
   tn_x = tn_true[:, :, :, 3]
   tff_x = tff_true[:, :, :, 3]
-  t04 = ifelse(tn_x .> t03, tn_x, t03)
-  t14 = ifelse(tff_x .< t13, tff_x, t13)
+  t04 = ifelse.(tn_x .> t03, tn_x, t03)
+  t14 = ifelse.(tff_x .< t13, tff_x, t13)
 
   # Shift a little bit to avoid numerial inaccuracies
   t04 = t04 * 1.001
@@ -163,13 +165,11 @@ function render(voxels, rotation_matrix, opt)
   # For batch rendering, we treat each voxel in each voxel independently,
   nrays = width * height
   x = 0:opt.batch_size - 1
-  x_tiled = repeat(x, inner=nrays)
-  @show size(x_tiled)
+  x_tiled = repeat(x, outer=nrays)
   voxels = reshape(voxels, (opt.batch_size, res * res * res))
 
-  for i = 1:opt.nsteps
-    println(i)
-    left_over = innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
+  for i = 0:opt.nsteps - 1
+    left_over = left_over .* innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
   end
   left_over
 end
@@ -177,10 +177,13 @@ end
 function test_render()
   path = joinpath(ENV["DATADIR"], "alio", "voxels", "voxels.jld")
   voxels = load(path)["voxels"]
-  opt = @NT(width = 120, height = 120, nsteps = 6, res = 32, batch_size = 128,
-            phong = false, density = 1.0)
-  voxels = voxels[1:opt.batch_size, :, :, :]
-  img = render(voxels, STD_ROTATION_MATRIX, opt)
-  imga = reshape(img[rand(1:opt.batch_size),:,:], (opt.width, opt.height))
-  colorview(Gray, imga)
+  opt = @NT(width = 256, height = 256, nsteps = 15, res = 32, batch_size = 8,
+            phong = false, density = 10)
+  x = rand(1:size(voxels, 1) - opt.batch_size)
+  voxels = voxels[x:x+opt.batch_size-1, :, :, :]
+  imgs = render(voxels, STD_ROTATION_MATRIX, opt)
+  img = reshape(imgs[1,:,:], (256, 256))
+  colorview(Gray, img)
 end
+
+test_render()
