@@ -1,5 +1,7 @@
 using NamedTuples
 using JLD
+using Images
+
 
 # For repeatability
 # STD_ROTATION_MATRIX = rand_rotation_matrices(nviews)
@@ -62,20 +64,23 @@ function make_ro(r, raster_space, width, height)
   return rd, ro_t
 end
 
-function innerloop(left_over, orig, rd, step_sz, i)
+function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
   # Find the position (x,y,z) of ith step
   pos = orig .+ rd .* (step_sz * i)
 
   # convert to indices for voxel cube
-  voxel_indices = floor(Int, pos * res)
-  p_int = clamp(voxel_indices, 0, res - 1)
-  indices = reshape(p_int, (nmatrices * width * height, 3))
+  voxel_indices = floor.(Int, pos * opt.res)
+  p_int = clamp.(voxel_indices, 0, opt.res - 1)
+  nmatrices = 1
+  indices = reshape(p_int, (nmatrices * opt.width * opt.height, 3))
 
   # convert to indices in flat list of voxels
-  flat_indices = indices[:, 1] + res * (indices[:, 2] + res * indices[:, 3])
+  flat_indices = indices[:, 1] + opt.res * (indices[:, 2] + opt.res * indices[:, 3])
 
   # tile the indices to repeat for all elements of batch
   tiled_indices = repeat(flat_indices, outer=opt.batch_size)
+  @show size(x_tiled)
+  @show size(tiled_indices)
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
   attenuation = gather_nd(voxels, batched_indices)
@@ -92,23 +97,21 @@ function gather_nd(params, indices)
 end
 
 """
-Renders `batch_size` voxel grids
+Renders `batch_size` `voxels` grids
 # Arguments
-- voxels : (batch_size, res, res, res)
-- rotation_matrix : (m, 4)
-- width: width in pixels of rendered image
-- height: height in pixels of rendered image
-- nsteps: number of points along each ray to sample voxel grid
-- res: voxel resolution 'voxels' should be res * res * res
-- batch_size: number of voxels to render in batch
-- gdot_cube: dot product of gradient and light, can be computed offline
-- used only in phond shading
-- phong: do phong shading
+- `voxels` : (batch_size, res, res, res)
+- `rotation_matrix` : (m, 4)
+- `opt`: Options named tuple
+  - width: width in pixels of rendered image
+  - height: height in pixels of rendered image
+  - nsteps: number of points along each ray to sample voxel grid
+  - res: voxel resolution 'voxels' should be res * res * res
+  - batch_size: number of voxels to render in batch
 
 # Returns
 - (n, m, width, height) - from voxel data from functions in voxel_helpers
 """
-function gen_img(voxels, rotation_matrix, opt)
+function render(voxels, rotation_matrix, opt)
   width, height, res = opt.width, opt.height, opt.res
   raster_space = gen_fragcoords(width, height)
   rd, ro = make_ro(rotation_matrix, raster_space, width, height)
@@ -117,8 +120,8 @@ function gen_img(voxels, rotation_matrix, opt)
   nmatrices = 1
   tn = reshape(a, (nmatrices, 1, 1, 3)) ./ rd
   tff = reshape(b, (nmatrices, 1, 1, 3)) ./ rd
-  tn_true = min(tn, tff)
-  tff_true = max(tn, tff)
+  tn_true = min.(tn, tff)
+  tff_true = max.(tn, tff)
 
   # do X
   tn_x = tn_true[:, :, :, 1]
@@ -159,23 +162,25 @@ function gen_img(voxels, rotation_matrix, opt)
 
   # For batch rendering, we treat each voxel in each voxel independently,
   nrays = width * height
-  x = 0:opt.batch_size
+  x = 0:opt.batch_size - 1
   x_tiled = repeat(x, inner=nrays)
+  @show size(x_tiled)
   voxels = reshape(voxels, (opt.batch_size, res * res * res))
 
   for i = 1:opt.nsteps
     println(i)
-    left_over = innerloop(left_over, orig, rd, step_sz, i)
+    left_over = innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
   end
   left_over
 end
 
 function test_render()
-  voxels = load("/home/zenna/repos/Arrows.jl/data/voxels.jld")["voxels"]
-  opt = @NT(width = 120, height = 120, nsteps = 6, res = 32, batch_size = 4,
+  path = joinpath(ENV["DATADIR"], "alio", "voxels", "voxels.jld")
+  voxels = load(path)["voxels"]
+  opt = @NT(width = 120, height = 120, nsteps = 6, res = 32, batch_size = 128,
             phong = false, density = 1.0)
   voxels = voxels[1:opt.batch_size, :, :, :]
-  gen_img(voxels, STD_ROTATION_MATRIX, opt)
+  img = render(voxels, STD_ROTATION_MATRIX, opt)
+  imga = reshape(img[rand(1:opt.batch_size),:,:], (opt.width, opt.height))
+  colorview(Gray, imga)
 end
-
-img = test_render()
