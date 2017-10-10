@@ -64,24 +64,31 @@ end
 
 function innerloop(left_over, orig, rd, step_sz, i)
   # Find the position (x,y,z) of ith step
-  pos = orig + rd * step_sz * i
+  pos = orig .+ rd .* (step_sz * i)
 
   # convert to indices for voxel cube
-  voxel_indices = floor(pos * res)
-  pruned = clip(voxel_indices, 0, res - 1)
-  p_int = Int(pruned)
+  voxel_indices = floor(Int, pos * res)
+  p_int = clamp(voxel_indices, 0, res - 1)
   indices = reshape(p_int, (nmatrices * width * height, 3))
 
   # convert to indices in flat list of voxels
-  flat_indices = indices[:, 0] + res * (indices[:, 1] + res * indices[:, 2])
+  flat_indices = indices[:, 1] + res * (indices[:, 2] + res * indices[:, 3])
 
   # tile the indices to repeat for all elements of batch
-  # import pdb; pdb.set_trace()
-  tiled_indices = np.tile(flat_indices, opt.batch_size)
-  batched_indices = np.transpose([x_tiled, tiled_indices])
-  batched_indices = batched_indices.reshape(opt.batch_size, len(flat_indices), 2)
-  attenuation = tf.gather_nd(voxels, batched_indices)
-  left_over * tf.exp(-attenuation * opt.density * step_sz_flat)
+  tiled_indices = repeat(flat_indices, outer=opt.batch_size)
+  batched_indices = [x_tiled tiled_indices]
+  batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
+  attenuation = gather_nd(voxels, batched_indices)
+  @show size(left_over)
+  @show size(attenuation)
+  @show size(step_sz_flat)
+  left_over .* exp(-attenuation * opt.density .* step_sz_flat)
+end
+
+"Gather ND, from TensorFlow"
+function gather_nd(params, indices)
+  indices = indices + 1
+  [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
 end
 
 """
@@ -153,8 +160,11 @@ function gen_img(voxels, rotation_matrix, opt)
   # For batch rendering, we treat each voxel in each voxel independently,
   nrays = width * height
   x = 0:opt.batch_size
-  x_tiled = repeat(x, nrays)
+  x_tiled = repeat(x, inner=nrays)
+  voxels = reshape(voxels, (opt.batch_size, res * res * res))
+
   for i = 1:opt.nsteps
+    println(i)
     left_over = innerloop(left_over, orig, rd, step_sz, i)
   end
   left_over
@@ -162,76 +172,10 @@ end
 
 function test_render()
   voxels = load("/home/zenna/repos/Arrows.jl/data/voxels.jld")["voxels"]
-  opt = @NT(width = 128, height = 128, nsteps = 6, res = 32, batch_size = 4,
+  opt = @NT(width = 120, height = 120, nsteps = 6, res = 32, batch_size = 4,
             phong = false, density = 1.0)
+  voxels = voxels[1:opt.batch_size, :, :, :]
   gen_img(voxels, STD_ROTATION_MATRIX, opt)
 end
 
 img = test_render()
-#
-# width = 128
-# height = 128
-# nsteps = 6
-# res = 32
-#
-# opt = @NT(width = 128, height = 128, nsteps = 6, res = 32, batch_size = 4,
-#           phong = false, density = 1.0)
-#
-# width, height, res = opt.width, opt.height, opt.res
-# raster_space = gen_fragcoords(width, height)
-# rd, ro = make_ro(STD_ROTATION_MATRIX, raster_space, width, height)
-# a = 0 - ro  # c = 0
-# b = 1 - ro  # c = 1
-# nmatrices = 1
-# tn = reshape(a, (nmatrices, 1, 1, 3)) ./ rd
-# tff = reshape(b, (nmatrices, 1, 1, 3)) ./ rd
-# tn_true = min(tn, tff)
-# tff_true = max(tn, tff)
-#
-# # do X
-# tn_x = tn_true[:, :, :, 1]
-# tff_x = tff_true[:, :, :, 1]
-# tmin = 0.0
-# tmax = 10.0
-# t0 = fill(tmin, size(tn_x))
-# t1 = fill(tmax, size(tn_x))
-#
-# t02 = ifelse(tn_x .> t0, tn_x, t0)
-# t12 = ifelse(tff_x .< t1, tff_x, t1)
-#
-# # y
-# tn_x = tn_true[:, :, :, 2]
-# tff_x = tff_true[:, :, :, 2]
-# t03 = ifelse(tn_x .> t02, tn_x, t02)
-# t13 = ifelse(tff_x .< t12, tff_x, t12)
-# # z
-# tn_x = tn_true[:, :, :, 3]
-# tff_x = tff_true[:, :, :, 3]
-# t04 = ifelse(tn_x .> t03, tn_x, t03)
-# t14 = ifelse(tff_x .< t13, tff_x, t13)
-#
-# # Shift a little bit to avoid numerial inaccuracies
-# t04 = t04 * 1.001
-# t14 = t14 * 0.999
-#
-# left_over = ones((opt.batch_size, nmatrices * width * height,))
-# step_size = (t14 - t04) / opt.nsteps
-#
-# orig = reshape(ro, (nmatrices, 1, 1, 3)) .+ rd .* reshape(t04, (nmatrices, width, height, 1))
-# xres = yres = res
-#
-# orig = reshape(orig, (nmatrices * width * height, 3))
-# rd = reshape(rd, (nmatrices * width * height, 3))
-# step_sz = reshape(step_size, (nmatrices * width * height, 1))
-# step_sz_flat = reshape(step_sz, (1, nmatrices * width * height))
-#
-# # For batch rendering, we treat each voxel in each voxel independently,
-# nrays = width * height
-# x = 0:opt.batch_size
-# x_tiled = repeat(x, nrays)
-# for i = 1:opt.nsteps
-#   innerloop(left_over)
-# end
-#
-# img = left_over
-# return img
