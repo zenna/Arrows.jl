@@ -1,8 +1,8 @@
 "Inverse Addition"
 function inv_add()
   c = CompArrow(:inv_add, [:z, :θadd], [:x, :y])
-  z, θ = in_ports(c)
-  x, y = out_ports(c)
+  z, θ = ▸(c)
+  x, y = ◂(c)
   addprop!(θp, θ)
   subtract = add_sub_arr!(c, SubtractArrow())
   link_ports!(z, (subtract, 1))
@@ -15,7 +15,7 @@ end
 "Inverse Subtraction"
 function inv_sub()
   carr = CompArrow(:inv_sub, [:z, :θsub], [:x, :y])
-  z, θ, x, y = sub_ports(carr)
+  z, θ, x, y = ⬨(carr)
   addprop!(θp, deref(θ))
   (z + θ) ⥅ x
   θ ⥅ y
@@ -25,8 +25,8 @@ end
 "Inverse multiplication"
 function inv_mul()
   c = CompArrow(:inv_mul, [:z, :θmul], [:x, :y])
-  z, θ = in_ports(c)
-  x, y = out_ports(c)
+  z, θ = ▸(c)
+  x, y = ◂(c)
   div = add_sub_arr!(c, DivArrow())
   addprop!(θp, θ)
   link_ports!(z, (div, 1))
