@@ -157,6 +157,21 @@ function weird_arr()
   carr
 end
 
+function cond_arr_eq()
+  c = CompArrow(:xyx, [:x, :y], [:z])
+  x, y, z = ports(c)
+  eq = add_sub_arr!(c, EqualArrow())
+  ite = add_sub_arr!(c, CondArrow())
+  x ⥅ (eq, 1)
+  y ⥅ (eq, 2)
+  (eq, 1) ⥅ (ite, 1)
+  x ⥅ (ite, 2)
+  y ⥅ (ite, 3)
+  (ite, 1)  ⥅ z
+  @assert is_valid(c)
+  c
+end
+
 "all test arrows"
 function all_test_arrows()
   [xy_plus_x_arr(),
@@ -183,5 +198,6 @@ export xy_plus_x_arr,
        det_policy_inner_arr,
        sin_arr,
        all_test_arrows,
-       plain_arrows
+       plain_arrows,
+       cond_arr_eq
 end
