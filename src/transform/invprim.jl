@@ -74,10 +74,11 @@ inv(arr::MulArrow, const_in) =
 
 #inv(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
 #inv(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
-"The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(z)."
+"The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
 function inv(arr::CosArrow, const_in)
   inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_cos)
+  #add_prop!(θp, θ)
   twoπ = add_sub_arr!(inv_cos, SourceArrow(2 * π))
   two = add_sub_arr!(inv_cos, SourceArrow(2.0))
   mul1 = add_sub_arr!(inv_cos, MulArrow())
@@ -122,6 +123,7 @@ end
 function inv(arr::SinArrow, const_in)
   inv_sin = CompArrow(:inv_sin, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_sin)
+  #add_prop!(θp, θ)
   pi = add_sub_arr!(inv_sin, SourceArrow(π))
   mul1 = add_sub_arr!(inv_sin, MulArrow())
   link_ports!(θ, (mul1, 1))
