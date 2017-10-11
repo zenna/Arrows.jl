@@ -26,7 +26,6 @@ function make_ro(r, raster_space, width, height)
   norm_raster_space = raster_space ./ reshape(resolution, 1, 1, 2)
   # Put it in NDC space, -1, 1
   screen_space = -1.0 + 2.0 * norm_raster_space
-  screen_space[51,1,1]
   # Make pixels square by mul by aspect ratio
   aspect_ratio = resolution[1] / resolution[2]
   ndc_space = screen_space .* reshape([aspect_ratio, 1.0], (1, 1, 2))
