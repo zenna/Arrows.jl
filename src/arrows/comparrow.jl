@@ -165,7 +165,7 @@ end
 
 "Construct a `SubPort` from a `ProxyPort`"
 SubPort(arr::CompArrow, pxport::ProxyPort)::SubPort =
-  SubPort(SubArrow(arr, pxport.arrname), pxport.port_id)
+  SubPort(sub_arrow(arr, pxport.arrname), pxport.port_id)
 
 "`SubPort` of `arr` with vertex id `vtx_id`"
 sub_port_vtx(arr::CompArrow, vtx_id::VertexId)::SubPort =
@@ -198,7 +198,7 @@ function all_sub_ports(arr::CompArrow)::Vector{SubPort}
   # TODO: Make subarrow sorting more principled
   sorted_keys = sort(collect(keys(arr.port_to_vtx_id)),
                      lt=(p1, p2) -> p1.arrname < p2.arrname)
-  [SubPort(SubArrow(arr, pxp.arrname), pxp.port_id) for pxp in sorted_keys]
+  [SubPort(sub_arrow(arr, pxp.arrname), pxp.port_id) for pxp in sorted_keys]
 end
 
 "`SubPort`s from `SubArrow`s within `arr` but not boundary"
@@ -361,11 +361,11 @@ sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)
 
 "All `SubArrows` within `arr`, inclusive"
 all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [SubArrow(arr, n) for n in all_names(arr)]
+  [sub_arrow(arr, n) for n in all_names(arr)]
 
 "All `SubArrow`s within `arr` exlusive of `arr`"
 sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [SubArrow(arr, n) for n in names(arr)]
+  [sub_arrow(arr, n) for n in names(arr)]
 
 "`SubArrow` which `sport` is 'attached' to"
 sub_arrow(sport::SubPort)::SubArrow = sport.sub_arrow
