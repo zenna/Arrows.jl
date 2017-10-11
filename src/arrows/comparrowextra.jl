@@ -278,7 +278,7 @@ function is_wired_ok(arr::CompArrow)::Bool
       if !(LG.indegree(arr.edges, vtxid) == 1 &&
            LG.outdegree(arr.edges, vtxid) == 0)
       # TODO: replace error with lens
-        errmsg = """vertex $i Port $(sarr) should be a dst but
+        errmsg = """vertex $vtxid Port $(sarr) should be a dst but
                     indeg is $(LG.indegree(arr.edges, vtxid)) (should be 1)
                     outdeg is $(LG.outdegree(arr.edges, vtxid)) (should be 0)
                   """
