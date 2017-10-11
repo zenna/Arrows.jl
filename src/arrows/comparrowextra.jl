@@ -11,10 +11,17 @@ dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, sub_ports(arr))
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
 
 "Is `sport` a port on one of the `SubArrow`s within `arr`"
-in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
+function in(sport::SubPort, carr::CompArrow)::Bool
+  sarr = sub_arrow(sport)
+  (sarr ∈ carr) &&  (0 < sport.port_id <= num_ports(sarr))
+end
 
 "Is `link` one of the links in `arr`?"
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
+
+"Is a name of a `SubArrow`"
+in(name::ArrowName, arr::CompArrow)::Bool =
+  haskey(arr.sarr_name_to_arrow, name)
 
 "Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
 is_boundary(sprt::SubPort) = sprt ∈ sub_ports(sub_arrow(sprt))
@@ -23,8 +30,9 @@ is_boundary(sprt::SubPort) = sprt ∈ sub_ports(sub_arrow(sprt))
 strictly_in(sprt::SubPort, arr::CompArrow) = sprt ∈ inner_sub_ports(arr)
 
 "Is `arr` a sub_arrow of composition `c_arr`"
-in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
-
+function in(sarr::SubArrow, carr::CompArrow)::Bool
+  (parent(sarr) == carr) && (name(sarr) ∈ carr)
+end
 # Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 props(subport::SubPort) = props(deref(subport))
@@ -232,15 +240,15 @@ end
 ## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_valid = false"
-function should_src(port::SubPort)::Bool
-  arr = parent(port)
-  if !(port in all_sub_ports(arr))
+function should_src(sport::SubPort)::Bool
+  arr = parent(sport)
+  if sport ∉ arr
     throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
-  if strictly_in(port, parent(port))
-    is_out_port(port)
+  if strictly_in(sport, parent(sport))
+    is_out_port(sport)
   else
-    is_in_port(port)
+    is_in_port(sport)
   end
 end
 
@@ -333,7 +341,7 @@ n▸ = num_in_ports
 n◂ = num_out_ports
 
 ## Printing ##
-# FIXME: rename mann to something meaningful 
+# FIXME: rename mann to something meaningful
 function mann(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows

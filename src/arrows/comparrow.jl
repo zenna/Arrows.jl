@@ -56,7 +56,7 @@ end
 ## Validation ##
 
 "`sarr` valid if it exists in its parent"
-is_valid(sarr::SubArrow) = contains(parent(sarr), name(sarr))
+is_valid(sarr::SubArrow) = name(sarr) ∈ parent(sarr)
 
 "A `Port` on a `SubArrow`"
 struct SubPort <: AbstractPort
@@ -148,9 +148,6 @@ all_names(arr::CompArrow)::Vector{ArrowName} =
 "Names of all `SubArrows` in `arr`, exclusive of `arr`"
 names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
 
-"Contains a name?"
-contains(arr::CompArrow, name::ArrowName)::Bool =
-  haskey(arr.sarr_name_to_arrow, name)
 
 "Rename `arr` to `n`"
 function rename!(carr::CompArrow, n::ArrowName)::CompArrow
@@ -210,7 +207,7 @@ function all_sub_ports(arr::CompArrow)::Vector{SubPort}
   # TODO: Make subarrow sorting more principled
   sorted_keys = sort(collect(keys(arr.port_to_vtx_id)),
                      lt=(p1, p2) -> p1.arrname < p2.arrname)
-  [SubPort(sub_arrow(arr, pxp.arrname), pxp.port_id) for pxp in sorted_keys]
+  [SubPort(arr, pxp) for pxp in sorted_keys]
 end
 
 "`SubPort`s from `SubArrow`s within `arr` but not boundary"
@@ -393,6 +390,8 @@ sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
 
 parent(sarr::SubArrow)::CompArrow = sarr.parent
 parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
+
+
 
 """
 Helper function to translate LightGraph functions to Port functions
