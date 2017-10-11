@@ -269,16 +269,18 @@ end
 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
-  for i = 1:LG.nv(arr.edges)
-    sarr = sub_port_vtx(arr, i)
+  seen = Set{Int}()
+  for (pxport, vtxid) in arr.port_to_vtx_id
+    sarr = SubPort(arr, pxport)
+    push!(seen, vtxid)
     if should_dst(sarr)
       # If it should be a desination
-      if !(LG.indegree(arr.edges, i) == 1 &&
-           LG.outdegree(arr.edges, i) == 0)
+      if !(LG.indegree(arr.edges, vtxid) == 1 &&
+           LG.outdegree(arr.edges, vtxid) == 0)
       # TODO: replace error with lens
         errmsg = """vertex $i Port $(sarr) should be a dst but
-                    indeg is $(LG.indegree(arr.edges, i)) (should be 1)
-                    outdeg is $(LG.outdegree(arr.edges, i)) (should be 0)
+                    indeg is $(LG.indegree(arr.edges, vtxid)) (should be 1)
+                    outdeg is $(LG.outdegree(arr.edges, vtxid)) (should be 0)
                   """
         warn(errmsg)
         return false
@@ -286,13 +288,20 @@ function is_wired_ok(arr::CompArrow)::Bool
     end
     if should_src(sarr)
       # if it should be a source
-      if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
-        errmsg = """vertex $i Port $(sarr) is source but out degree is
-        $(LG.outdegree(arr.edges, i)) (should be >= 1)"""
+      if !(LG.outdegree(arr.edges, vtxid) > 0 || LG.indegree(arr.edges) == 1)
+        errmsg = """vertex $vtxid Port $(sarr) is source but out degree is
+        $(LG.outdegree(arr.edges, vtxid)) (should be >= 1)"""
         warn(errmsg)
         return false
       end
     end
+  end
+  n = LG.nv(arr.edges)
+  if !((length(seen) == n) && (max(seen...) == n))
+    errmsg = """The number of subports is $(length(seen)) but should
+    be $(n) or some port has a bigger vertex id $(max(seen...))"""
+    warn(errmsg)
+    return false
   end
   true
 end
