@@ -14,17 +14,18 @@ mutable struct CompArrow <: Arrow
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
   props::Vector{Props}
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
+  sarr_name_to_sarrow::Dict{ArrowName, ArrowRef}
 
   function CompArrow(nm::Symbol,
-                     props::Vector{Props})
+                     props::Vector{Props}, nports::Number)
     !hasduplicates(name.(props)) || throw(ArgumentError("name duplicates: $(name.(props))"))
     c = new()
-    nports = length(props)
     g = LG.DiGraph(nports)
     c.name = nm
     c.edges = g
     c.port_to_vtx_id = Dict(ProxyPort(nm, i) => i for i = 1:nports)
     c.sarr_name_to_arrow = Dict(nm => c)
+    c.sarr_name_to_sarrow = Dict()
     c.props = props
     c
   end
@@ -41,6 +42,15 @@ struct SubArrow <: ArrowRef
     end
     sarr
   end
+end
+
+"Constructor to avoid circularity between `Arrow` and `SubArrow`"
+function CompArrow(nm::Symbol, props::Vector{Props})::CompArrow
+  nports = length(props)
+  carr = CompArrow(nm, props, nports)
+  sarr = SubArrow(carr, nm)
+  carr.sarr_name_to_sarrow[nm] = sarr
+  carr
 end
 
 ## Validation ##
@@ -156,7 +166,9 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
     end
   end
   delete!(arr.sarr_name_to_arrow, carr.name)
+  delete!(arr.sarr_name_to_sarrow, carr.name)
   carr.sarr_name_to_arrow[n] = arr
+  carr.sarr_name_to_sarrow[n] = SubArrow(arr, n)
   carr.name = n
   carr
 end
@@ -233,10 +245,12 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   # TODO: FINISH!
   newname = unique_sub_arrow_name()
   carr.sarr_name_to_arrow[newname] = arr
+  sarr = SubArrow(carr, newname)
+  carr.sarr_name_to_sarrow[newname] = sarr
   for (i, port) in enumerate(ports(arr))
     add_port_lg!(carr, newname, i)
   end
-  SubArrow(carr, newname)
+  sarr
 end
 
 "Remove `prt` from a `CompArrow`"
@@ -278,6 +292,7 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   end
 
   delete!(arr.sarr_name_to_arrow, name(sarr))
+  delete!(arr.sarr_name_to_sarrow, name(sarr))
   arr
 end
 
@@ -357,7 +372,9 @@ num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
 num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
 
 "`SubArrow` of `arr` with name `n`"
-sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)
+function sub_arrow(arr::CompArrow, name::ArrowName)::SubArrow
+  arr.sarr_name_to_sarrow[name]
+end
 
 "All `SubArrows` within `arr`, inclusive"
 all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
