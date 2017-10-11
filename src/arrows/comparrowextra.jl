@@ -27,7 +27,9 @@ in(name::ArrowName, arr::CompArrow)::Bool =
 is_boundary(sprt::SubPort) = sprt ∈ sub_ports(sub_arrow(sprt))
 
 "Is `port` within `arr` but not on boundary"
-strictly_in(sprt::SubPort, arr::CompArrow) = sprt ∈ inner_sub_ports(arr)
+function strictly_in(sprt::SubPort, arr::CompArrow)
+  (sprt ∈ arr) && !on_boundary(sprt)
+end
 
 "Is `arr` a sub_arrow of composition `c_arr`"
 function in(sarr::SubArrow, carr::CompArrow)::Bool
@@ -253,15 +255,15 @@ function should_src(sport::SubPort)::Bool
 end
 
 "Should `port` be a dst in context `arr`? Maybe false iff is_valid=false"
-function should_dst(port::SubPort)::Bool
-  arr = parent(port)
-  if !(port in all_sub_ports(arr))
+function should_dst(sport::SubPort)::Bool
+  arr = parent(sport)
+  if sport ∉ arr
     throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
-  if strictly_in(port, parent(port))
-    is_in_port(port)
+  if strictly_in(sport, parent(sport))
+    is_in_port(sport)
   else
-    is_out_port(port)
+    is_out_port(sport)
   end
 end
 
