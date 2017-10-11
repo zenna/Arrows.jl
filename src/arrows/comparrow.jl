@@ -377,8 +377,9 @@ function sub_arrow(arr::CompArrow, name::ArrowName)::SubArrow
 end
 
 "All `SubArrows` within `arr`, inclusive"
-all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [sub_arrow(arr, n) for n in all_names(arr)]
+function all_sub_arrows(arr::CompArrow)::Vector{SubArrow}
+  (collect ∘ values)(arr.sarr_name_to_sarrow)
+end
 
 "All `SubArrow`s within `arr` exlusive of `arr`"
 sub_arrows(arr::CompArrow)::Vector{SubArrow} =
