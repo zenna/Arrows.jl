@@ -48,7 +48,7 @@ Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
    and any edge which connects to p1 in orig will connect to p2 in new.
 """
 function walk!(inner, outer, carr::CompArrow)::CompArrow
-  for sarr in sub_arrows(carr)
+  for sarr in copy(sub_arrows(carr))
     replarr, port_map = portmapize(inner(sarr)...)
     replace_sub_arr!(sarr, replarr, port_map)
   end
