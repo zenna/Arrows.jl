@@ -49,16 +49,16 @@ inv(arr::AddArrow, const_in) =
   binary_inv(arr,
               const_in,
               inv_add,
-              SubArrow,
+              SubtractArrow,
               Dict(1 => 2, 2 => 3, 3 => 1),
-              SubArrow,
+              SubtractArrow,
               Dict(0 => 2, 1 => 1, 2 => 0))
 
 inv(arr::SubtractArrow, const_in) =
   binary_inv(arr,
              const_in,
              inv_sub,
-             SubArrow,
+             AddArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              AddArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
