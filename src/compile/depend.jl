@@ -3,12 +3,12 @@ CondMap = Dict{SubPort, Bool}
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
 function needed_values(::Arrow, subarr::SubArrow, cond_map::CondMap)::ValueSet
-  Set(SrcValue.(in_sub_ports(subarr)))
+  Set(SrcValue.(▹(subarr)))
 end
 
 "`Value`s in `arr` needed to compute outputs of `subarr`"
 function needed_values(::CondArrow, subarr::SubArrow, cond_map::CondMap)::ValueSet
-  i, t, e = in_sub_ports(subarr)
+  i, t, e = ▹(subarr)
   if i in cond_map
     if cond_map[i]
       Set(SrcValue(t))

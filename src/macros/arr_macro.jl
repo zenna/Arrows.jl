@@ -145,11 +145,11 @@ function transform_function(expr)
                                     (func_(args__; kwargs__)::rtype_) |
                                     (func_(args__)) |
                                     (func_(args__)::rtype_)))
-  args = [splitvar(var)[1] for var in args]                                  
+  args = [splitvar(var)[1] for var in args]
   args = [Symbol(s) for s in args]
   name = Symbol(args...)
   carr = CompArrow(name, args, [:z])
-  sports = sub_ports(carr)
+  sports = ⬨(carr)
   z = sports[end]
   context = Dict([k=> v for (k,v) in zip(args, sports[1:end-1])])
   osprt = transform_expr!(body, context, carr)
