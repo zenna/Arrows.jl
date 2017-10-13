@@ -17,7 +17,7 @@ function test_render()
 end
 
 function test_arrow_render()
-  # The render only uses a small subset of the input.
+  # Render only uses a small subset of the input.
   # Therefore, we need to execute it twice: once to know which are the
   # relevant inputs, and the second time to actually compute the arrows
   opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
