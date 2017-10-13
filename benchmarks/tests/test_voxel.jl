@@ -45,11 +45,11 @@ function test_arrow_render()
   varr
 end
 
-varr = test_arrow_render();
+@time varr = test_arrow_render();
 println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
 println("testing if it's wired ok")
-is_wired_ok(varr)
+@time is_wired_ok(varr)
 println("computing inverse")
-invvarr = invert(varr);
+@time invvarr = invert(varr);
 println("inverse computed")
 # end
