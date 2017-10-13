@@ -1,7 +1,7 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, set_parameter_port!
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
 
 "f(x) = sin(x)"
 function sin_arr()
@@ -32,7 +32,7 @@ xy_plus_x_jl(x, y) = x * y + x
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
   z, θ, x, y = sub_ports(carr)
-  set_parameter_port!(Arrows.deref(θ))
+  addprop!(θp, deref(θ))
   invadd = add_sub_arr!(carr, inv_add())
   invmul = add_sub_arr!(carr, inv_mul())
   invdupl = add_sub_arr!(carr, InvDuplArrow(2))
@@ -144,13 +144,42 @@ function test_two_op()
   carr
 end
 
+function weird_arr()
+  carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
+  x, y, z, a, b = ⬨(carr)
+  e = z * x + y * (2 * z + y)
+  f = e * x + y
+  g = 6*x+x
+  h = f * g
+  h ⥅ a
+  g ⥅ b
+  @assert is_valid(carr)
+  carr
+end
+
+function cond_arr_eq()
+  c = CompArrow(:xyx, [:x, :y], [:z])
+  x, y, z = ports(c)
+  eq = add_sub_arr!(c, EqualArrow())
+  ite = add_sub_arr!(c, CondArrow())
+  x ⥅ (eq, 1)
+  y ⥅ (eq, 2)
+  (eq, 1) ⥅ (ite, 1)
+  x ⥅ (ite, 2)
+  y ⥅ (ite, 3)
+  (ite, 1)  ⥅ z
+  @assert is_valid(c)
+  c
+end
+
 "all test arrows"
 function all_test_arrows()
   [xy_plus_x_arr(),
    fibonnaci_arr(),
    dupl_id_arr(),
    det_policy_inner_arr(),
-   triple_add()]
+   triple_add(),
+   weird_arr()]
 end
 
 function is_plain(arr::CompArrow)
@@ -169,5 +198,6 @@ export xy_plus_x_arr,
        det_policy_inner_arr,
        sin_arr,
        all_test_arrows,
-       plain_arrows
+       plain_arrows,
+       cond_arr_eq
 end

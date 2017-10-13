@@ -4,7 +4,7 @@ struct SourceArrow{T} <: PrimArrow
 end
 
 name(::SourceArrow) = :source
-port_props(::SourceArrow) =  [PortProps(false, :x, Array)]
+props{T}(::SourceArrow{T}) =  [Props(false, :x, T)]
 
 # FIXME, Specialize this for different types
 zero(::Type{SubPort}) = SourceArrow(0)

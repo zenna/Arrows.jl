@@ -1,4 +1,4 @@
-"Distance to the interval `[a, b]`"
+"Distance from `x` to the interval `[a, b]`"
 function δinterval(x, a, b)
   ifelse(x > b,
          x - b,

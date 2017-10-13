@@ -20,6 +20,20 @@ function same(xs)::Bool
   return true
 end
 
+"Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
+function uniquename(x, nms)
+  nm = x
+  i = 1
+  while nm ∈ nms
+    nm = namei(x, i)
+    i += 1
+  end
+  nm
+end
+
+"Does `xs` contain any element more than once"
+hasduplicates(xs) = length(unique(xs)) != length(xs)
+
 "Split a collection `xs` by a predicate"
 function split{T}(pred, xs::Vector{T})
   in = T[]

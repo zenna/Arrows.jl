@@ -24,7 +24,6 @@ end
 function test_invert()
   arr = fwd_2d_linkage_obs(3)
   invarr = Arrows.aprx_invert(arr)
-  num_in_ports(invarr)
   invarr(1.0, 1.0, rand(18)...)
 end
 
@@ -43,17 +42,34 @@ end
 function invlossarr(nlinks)
   fwd = fwd_2d_linkage(nlinks)
   invarr = invert(fwd)
-  invarrwerros = aprx_error(invarr)
+  invarrwerros = domain_error(invarr)
   totalinvarr = Arrows.aprx_totalize(invarrwerros)
   meanerror(totalinvarr)
 end
 
-function test(nlinks=4)
-  invarr = invlossarr(nlinks)
-  invθ▸ = ▸(invarr, isθ)
-  nparams = length(▸(invarr, isθ))
+function test(nlinks=3)
+  fwd = fwd_2d_linkage(nlinks)
+  allϵinvarr = aprx_invert(fwd)
+  invarr = meanerror(allϵinvarr)
+  invθ▸ = ▸(invarr, is(θp))
+  nparams = length(▸(invarr, is(θp)))
   init = [1.0, 1.0, rand(nparams)...]
   @assert length(init) == length(▸(invarr))
+
+  # Plotting
+  ◂ϵids = findn(is(ϵ).(◂(allϵinvarr)))
+  @show ◂ϵids
+  allϵinvarrjl = julia(allϵinvarr)
+  domain_losses = Matrix{Float64}(length(◂ϵids), 0)
+  j = 0
+  function analysis(data)
+    output = allϵinvarrjl(data.input...)
+    ◂ϵ = [output...][◂ϵids]
+    domain_losses = [domain_losses ◂ϵ]
+    Arrows.Analysis.plot_domain_loss(domain_losses)
+    Plots.savefig("plot$(j).png")
+    j += 1
+  end
 
   i = 0
   function drawarm(data)
@@ -62,13 +78,28 @@ function test(nlinks=4)
     obstacles = [BenchmarkArrows.Circle([0.5, 0.5], 0.3),
                  BenchmarkArrows.Circle([0.0, 0.5], 0.3)]
     pointmat = BenchmarkArrows.vertices([angles...])
-    if (i % 100 == 0)
+    if (i % 2 == 0)
       BenchmarkArrows.drawscene(pointmat, obstacles, inputs...)
     end
-    i += 1
+    @show i += 1
   end
 
-  optimize(invarr, invθ▸, ◂(invarr, isϵ, 1), init; callbacks = [drawarm])
+  optimize(invarr, invθ▸, ◂(invarr, is(ϵ), 1), init;
+           callbacks = [analysis, drawarm])
 end
 
 test()
+using Plots
+Arrows.Analysis.plot_domain_loss(rand(10,10))
+
+function test_pgf(arr)
+  randin = rand(length(▸(arr)))
+  pgfarr = Arrows.pgf(arr)
+  pgfout = pgfarr(randin...)
+  invarr = invert(arr)
+  out = invarr(pgfout...)
+  all(map(≈, randin, out))
+end
+
+arr = fwd_2d_linkage(3)
+test_pgf(arr)

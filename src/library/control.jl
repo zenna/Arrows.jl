@@ -1,17 +1,17 @@
 "Takes no input simple emits a `value::T`"
 struct CondArrow <: PrimArrow end
-port_props(::CondArrow) =   [PortProps(true, :i, Bool),
-                             PortProps(true, :t, Real),
-                             PortProps(true, :e, Real),
-                             PortProps(false, :e, Real)]
+props(::CondArrow) =   [Props(true, :i, Bool),
+                             Props(true, :t, Real),
+                             Props(true, :e, Real),
+                             Props(false, :e, Real)]
 name(::CondArrow) = :cond
 
 "Duplicates input `O` times dupl_n_(x) = (x,...x)"
 struct DuplArrow{O} <: PrimArrow end
 
-port_props{O}(::DuplArrow{O}) =
-  [PortProps(true, :x, Any),
-   [PortProps(false, Symbol(:y, i), Any) for i=1:O]...]
+props{O}(::DuplArrow{O}) =
+  [Props(true, :x, Any),
+   [Props(false, Symbol(:y, i), Any) for i=1:O]...]
 
 name{O}(::DuplArrow{O}) = Symbol(:dupl_, O)
 DuplArrow(n::Integer) = DuplArrow{n}()
@@ -22,15 +22,15 @@ dupl(x, n)::Tuple = tuple((x for i = 1:n)...)
 "f(x) = (x,)"
 struct IdentityArrow <: PrimArrow end
 
-port_props(::IdentityArrow) =
-  [PortProps(true, :x, Any), PortProps(false, :y, Any)]
+props(::IdentityArrow) =
+  [Props(true, :x, Any), Props(false, :y, Any)]
 
 name(::IdentityArrow) = :identity
 
 "ifelse(i, t, e)`"
 struct IfElseArrow <: PrimArrow end
-port_props(::IfElseArrow) =   [PortProps(true, :i, Bool),
-                               PortProps(true, :t, Real),
-                               PortProps(true, :e, Real),
-                               PortProps(false, :y, Real)]
+props(::IfElseArrow) =   [Props(true, :i, Bool),
+                               Props(true, :t, Real),
+                               Props(true, :e, Real),
+                               Props(false, :y, Real)]
 name(::IfElseArrow) = :ifelse

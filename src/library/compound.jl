@@ -19,11 +19,11 @@ end
 function addn_accum_linke(n::Integer)::CompArrow
   carr, sum_vals = addn_accum(n)
   for (i, asum) in enumerate(sum_vals)
-    pprop = PortProps(false, Symbol(:midsum, i), Real, Set())
+    pprop = Props(false, Symbol(:midsum, i), Real, Set())
     prt = add_port!(carr, pprop)
     link_ports!(asum, prt)
   end
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -37,7 +37,7 @@ clip(x, l, u) = max(l, min(u, x))
 
 # struct ClipArrow{A, B} <: PrimArrow end
 # name(::ClipArrow)::Symbol = :clip
-# port_props(::ClipArrow) = unary_arith_port_props()
+# props(::ClipArrow) = unary_arith_props()
 #
 # "clip(x; a, b) ="
 # clip(x, a=-1, b=1) = max(a, min(b, x))

@@ -1,33 +1,33 @@
 # Order alphabetically
-const ineq_port_props = [PortProps(true, :x, Real),
-                         PortProps(true, :y, Real),
-                         PortProps(false, :z, Bool)]
+const ineq_props = [Props(true, :x, Real),
+                         Props(true, :y, Real),
+                         Props(false, :z, Bool)]
 
 # Inequalities #
 
 "x > y"
 struct GreaterThanArrow <: PrimArrow end
 name(::GreaterThanArrow)::Symbol = :>
-port_props(::GreaterThanArrow) = ineq_port_props
+props(::GreaterThanArrow) = ineq_props
 
 "x >= y"
 struct GreaterThanEqualArrow <: PrimArrow end
 name(::GreaterThanEqualArrow)::Symbol = :(>=)
-port_props(::GreaterThanEqualArrow) = ineq_port_props
+props(::GreaterThanEqualArrow) = ineq_props
 
 "x <= y"
 struct LessThanEqualArrow <: PrimArrow end
 name(::LessThanEqualArrow)::Symbol = :(<=)
-port_props(::LessThanEqualArrow) = ineq_port_props
+props(::LessThanEqualArrow) = ineq_props
 
 "x < y"
 struct LessThanArrow <: PrimArrow end
 name(::LessThanArrow)::Symbol = :(<)
-port_props(::LessThanArrow) = ineq_port_props
+props(::LessThanArrow) = ineq_props
 
 # Equality #
 
 "Takes no input simple emits a `value::T`"
 struct EqualArrow <: PrimArrow end
 name(::EqualArrow) = :(==)
-port_props(::EqualArrow) = ineq_port_props
+props(::EqualArrow) = ineq_props
