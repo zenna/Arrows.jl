@@ -10,5 +10,6 @@ InvDuplArrow(n::Integer) = InvDuplArrow{n}()
 
 "f(x, x) = (x,)"
 function inv_dupl(xs...)
+  !same(xs) || throw(ArgumentError("All inputs to invdupl should be same"))
   first(xs)
 end
