@@ -274,6 +274,13 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   arr = parent(sarr)
 
   # Remove every
+
+  # This section replicates the logic of LG.rem_vertex!(arr.edges, vtx_id)
+  # <quote>This operation has to be performed carefully if one keeps external
+  # data structures indexed by edges or vertices in the graph, since
+  # internally the removal is performed swapping the vertices v and |V|,
+  # and removing the last vertex |V| from the graph. After removal the
+  # vertices in g will be indexed by 1:|V|-1.</quote>
   last_id = LG.nv(arr.edges)
   for pxport in proxy_ports(sarr)
     vtx_id = arr.port_to_vtx_id[pxport]
