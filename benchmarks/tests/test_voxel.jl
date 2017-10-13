@@ -17,7 +17,7 @@ function test_render()
 end
 
 function test_arrow_render()
-  # The render only uses a small subset of the input.
+  # Render only uses a small subset of the input.
   # Therefore, we need to execute it twice: once to know which are the
   # relevant inputs, and the second time to actually compute the arrows
   opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
@@ -45,11 +45,11 @@ function test_arrow_render()
   varr
 end
 
-varr = test_arrow_render();
+@time varr = test_arrow_render();
 println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
 println("testing if it's wired ok")
-is_wired_ok(varr)
+@time is_wired_ok(varr)
 println("computing inverse")
-invvarr = invert(varr);
+@time invvarr = invert(varr);
 println("inverse computed")
 # end

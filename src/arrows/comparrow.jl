@@ -12,19 +12,23 @@ mutable struct CompArrow <: Arrow
   name::ArrowName
   edges::LG.DiGraph
   port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
+  vtx_id_to_port::Vector{ProxyPort}         # ProxyPort at vtx_id
   props::Vector{Props}
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
+  sarr_name_to_sarrow::Dict{ArrowName, ArrowRef}
 
   function CompArrow(nm::Symbol,
-                     props::Vector{Props})
+                     props::Vector{Props}, nports::Number)
     !hasduplicates(name.(props)) || throw(ArgumentError("name duplicates: $(name.(props))"))
     c = new()
-    nports = length(props)
     g = LG.DiGraph(nports)
     c.name = nm
     c.edges = g
-    c.port_to_vtx_id = Dict(ProxyPort(nm, i) => i for i = 1:nports)
+    c.vtx_id_to_port = [ProxyPort(nm, i) for i = 1:nports]
+    c.port_to_vtx_id = Dict(c.vtx_id_to_port[i] => i
+                              for i = 1:nports)
     c.sarr_name_to_arrow = Dict(nm => c)
+    c.sarr_name_to_sarrow = Dict()
     c.props = props
     c
   end
@@ -43,10 +47,19 @@ struct SubArrow <: ArrowRef
   end
 end
 
+"Constructor to avoid circularity between `Arrow` and `SubArrow`"
+function CompArrow(nm::Symbol, props::Vector{Props})::CompArrow
+  nports = length(props)
+  carr = CompArrow(nm, props, nports)
+  sarr = SubArrow(carr, nm)
+  carr.sarr_name_to_sarrow[nm] = sarr
+  carr
+end
+
 ## Validation ##
 
 "`sarr` valid if it exists in its parent"
-is_valid(sarr::SubArrow) = contains(parent(sarr), name(sarr))
+is_valid(sarr::SubArrow) = name(sarr) ∈ parent(sarr)
 
 "A `Port` on a `SubArrow`"
 struct SubPort <: AbstractPort
@@ -138,9 +151,6 @@ all_names(arr::CompArrow)::Vector{ArrowName} =
 "Names of all `SubArrows` in `arr`, exclusive of `arr`"
 names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
 
-"Contains a name?"
-contains(arr::CompArrow, name::ArrowName)::Bool =
-  haskey(arr.sarr_name_to_arrow, name)
 
 "Rename `arr` to `n`"
 function rename!(carr::CompArrow, n::ArrowName)::CompArrow
@@ -152,11 +162,15 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   for (pxport, vtxid) in arr.port_to_vtx_id
     if pxport.arrname == carr.name
       delete!(arr.port_to_vtx_id, pxport)
-      carr.port_to_vtx_id[ProxyPort(n, pxport.port_id)] = vtxid
+      new_pport = ProxyPort(n, pxport.port_id)
+      carr.vtx_id_to_port[vtxid] = new_pport
+      carr.port_to_vtx_id[new_pport] = vtxid
     end
   end
   delete!(arr.sarr_name_to_arrow, carr.name)
+  delete!(arr.sarr_name_to_sarrow, carr.name)
   carr.sarr_name_to_arrow[n] = arr
+  carr.sarr_name_to_sarrow[n] = SubArrow(arr, n)
   carr.name = n
   carr
 end
@@ -165,11 +179,11 @@ end
 
 "Construct a `SubPort` from a `ProxyPort`"
 SubPort(arr::CompArrow, pxport::ProxyPort)::SubPort =
-  SubPort(SubArrow(arr, pxport.arrname), pxport.port_id)
+  SubPort(sub_arrow(arr, pxport.arrname), pxport.port_id)
 
 "`SubPort` of `arr` with vertex id `vtx_id`"
 sub_port_vtx(arr::CompArrow, vtx_id::VertexId)::SubPort =
-  SubPort(arr, rev(arr.port_to_vtx_id, vtx_id))
+  SubPort(arr, arr.vtx_id_to_port[vtx_id])
 
 "`SubPort`s on boundary of `arr`"
 sub_ports(arr::CompArrow) = sub_ports(sub_arrow(arr))
@@ -196,9 +210,9 @@ sub_port(prt::Port)::SubPort = SubPort(sub_arrow(prt.arrow), prt.port_id)
 "All the `SubPort`s of all `SubArrow`s on and within `arr`"
 function all_sub_ports(arr::CompArrow)::Vector{SubPort}
   # TODO: Make subarrow sorting more principled
-  sorted_keys = sort(collect(keys(arr.port_to_vtx_id)),
+  sorted_keys = sort(arr.vtx_id_to_port,
                      lt=(p1, p2) -> p1.arrname < p2.arrname)
-  [SubPort(SubArrow(arr, pxp.arrname), pxp.port_id) for pxp in sorted_keys]
+  [SubPort(arr, pxp) for pxp in sorted_keys]
 end
 
 "`SubPort`s from `SubArrow`s within `arr` but not boundary"
@@ -206,7 +220,7 @@ inner_sub_ports(arr::CompArrow)::Vector{SubPort} =
   filter(sport -> !on_boundary(sport), all_sub_ports(arr))
 
 "Number `SubPort`s within on on `arr`"
-num_all_sub_ports(arr::CompArrow) = length(arr.port_to_vtx_id)
+num_all_sub_ports(arr::CompArrow) = length(arr.vtx_id_to_port)
 
 "Number `SubPort`s within on on `arr`"
 num_sub_ports(arr::CompArrow) = num_all_sub_ports(arr) - num_ports(arr)
@@ -221,7 +235,7 @@ on_boundary(sport::SubPort)::Bool = name(parent(sport)) == name(sub_arrow(sport)
 
 ## Proxy Ports ##
 
-all_proxy_ports(arr::CompArrow)::Vector{ProxyPort} = keys(arr.port_to_vtx_id)
+all_proxy_ports(arr::CompArrow)::Vector{ProxyPort} = arr.vtx_id_to_port
 proxy_ports(sarr::SubArrow) = [ProxyPort(name(sarr), i) for i=1:num_ports(sarr)]
 
 ## Ports of SubArrows ##
@@ -233,25 +247,39 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   # TODO: FINISH!
   newname = unique_sub_arrow_name()
   carr.sarr_name_to_arrow[newname] = arr
+  sarr = SubArrow(carr, newname)
+  carr.sarr_name_to_sarrow[newname] = sarr
   for (i, port) in enumerate(ports(arr))
     add_port_lg!(carr, newname, i)
   end
-  SubArrow(carr, newname)
+  sarr
 end
 
 "Remove `prt` from a `CompArrow`"
 function rem_port!(prt::Port{<:CompArrow})
   carr = prt.arrow
   pxport = ProxyPort(name(carr), prt.port_id) # FIXME
+  rem_pxport(pxport, carr)
+  deleteat!(carr.props, prt.port_id)
+  carr
+end
+
+"Remove `pxport` from a `CompArrow`"
+function rem_pxport!(pxport::ProxyPort, carr::CompArrow)
+  # This section replicates the logic of LG.rem_vertex!(arr.edges, vtx_id)
+  # <quote>This operation has to be performed carefully if one keeps external
+  # data structures indexed by edges or vertices in the graph, since
+  # internally the removal is performed swapping the vertices v and |V|,
+  # and removing the last vertex |V| from the graph. After removal the
+  # vertices in g will be indexed by 1:|V|-1.</quote>
   vtx_id = carr.port_to_vtx_id[pxport]
   last_id = LG.nv(carr.edges)
+  to_update = carr.vtx_id_to_port[last_id]
+  carr.vtx_id_to_port[vtx_id] = to_update
+  carr.port_to_vtx_id[to_update] = vtx_id
   LG.rem_vertex!(carr.edges, vtx_id) || throw("Could not remove node")
+  deleteat!(carr.vtx_id_to_port, last_id)
   delete!(carr.port_to_vtx_id, pxport)
-  if last_id != vtx_id
-    to_update = rev(carr.port_to_vtx_id, last_id)
-    carr.port_to_vtx_id[to_update] = vtx_id
-  end
-  deleteat!(carr.props, prt.port_id)
   carr
 end
 
@@ -263,21 +291,13 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   arr = parent(sarr)
 
   # Remove every
-  last_id = LG.nv(arr.edges)
-  for pxport in proxy_ports(sarr)
-    vtx_id = arr.port_to_vtx_id[pxport]
-    # Remove the node and fix mess from node reordering
-    LG.rem_vertex!(arr.edges, vtx_id) || throw("Could not remove node")
-    # Whatever points to hte last node
-    delete!(arr.port_to_vtx_id, pxport)
-    if last_id != vtx_id
-      to_update = rev(arr.port_to_vtx_id, last_id)
-      arr.port_to_vtx_id[to_update] = vtx_id
-    end
-    last_id -= 1
+
+  for pxport in copy(proxy_ports(sarr))
+    rem_pxport!(pxport, arr)
   end
 
   delete!(arr.sarr_name_to_arrow, name(sarr))
+  delete!(arr.sarr_name_to_sarrow, name(sarr))
   arr
 end
 
@@ -285,7 +305,10 @@ end
 function add_port_lg!(carr::CompArrow, arrname::ArrowName, port_id::Int)
   LG.add_vertex!(carr.edges)
   vtx_id = LG.nv(carr.edges)
-  carr.port_to_vtx_id[ProxyPort(arrname, port_id)] = vtx_id
+  pxport = ProxyPort(arrname, port_id)
+  push!(carr.vtx_id_to_port, pxport)
+  @assert length(carr.vtx_id_to_port) == vtx_id
+  carr.port_to_vtx_id[pxport] = vtx_id
 end
 
 "Add a port like (i.e. same `Props`) to carr"
@@ -357,15 +380,18 @@ num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))
 num_sub_arrows(arr::CompArrow) = length(sub_arrows(arr))
 
 "`SubArrow` of `arr` with name `n`"
-sub_arrow(arr::CompArrow, n::ArrowName)::SubArrow = SubArrow(arr, n)
+function sub_arrow(arr::CompArrow, name::ArrowName)::SubArrow
+  arr.sarr_name_to_sarrow[name]
+end
 
 "All `SubArrows` within `arr`, inclusive"
-all_sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [SubArrow(arr, n) for n in all_names(arr)]
+function all_sub_arrows(arr::CompArrow)::Vector{SubArrow}
+  (collect ∘ values)(arr.sarr_name_to_sarrow)
+end
 
 "All `SubArrow`s within `arr` exlusive of `arr`"
 sub_arrows(arr::CompArrow)::Vector{SubArrow} =
-  [SubArrow(arr, n) for n in names(arr)]
+  [sub_arrow(arr, n) for n in names(arr)]
 
 "`SubArrow` which `sport` is 'attached' to"
 sub_arrow(sport::SubPort)::SubArrow = sport.sub_arrow
@@ -375,6 +401,8 @@ sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
 
 parent(sarr::SubArrow)::CompArrow = sarr.parent
 parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
+
+
 
 """
 Helper function to translate LightGraph functions to Port functions

@@ -49,16 +49,16 @@ inv(arr::AddArrow, const_in) =
   binary_inv(arr,
               const_in,
               inv_add,
-              SubArrow,
+              SubtractArrow,
               Dict(1 => 2, 2 => 3, 3 => 1),
-              SubArrow,
-              Dict(0 => 2, 1 => 1, 2 => 0))
+              SubtractArrow,
+              Dict(3 => 1, 2 => 2, 1 => 3))
 
 inv(arr::SubtractArrow, const_in) =
   binary_inv(arr,
              const_in,
              inv_sub,
-             SubArrow,
+             AddArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              AddArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
@@ -70,7 +70,7 @@ inv(arr::MulArrow, const_in) =
              DivArrow,
              Dict(1 => 2, 2 => 3, 3 => 1),
              DivArrow,
-             Dict(0 => 2, 1 => 1, 2 => 0))
+             Dict(1 => 3, 2 => 2, 3 => 1))
 
 inv(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
 inv(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)

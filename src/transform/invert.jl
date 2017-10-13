@@ -11,12 +11,12 @@ end
 function inv(sarr::SubArrow)
   carr = deref(sarr)
   const_in = map(is_src_source, in_sub_ports(sarr))
-  for sprt in in_sub_ports(sarr)
-    arr = deref(src(sprt)).arrow
-    if isa(arr, SourceArrow)
-      @show arr.value
-    end
-  end
+  # for sprt in in_sub_ports(sarr)
+  #   arr = deref(src(sprt)).arrow
+  #   if isa(arr, SourceArrow)
+  #     @show arr.value
+  #   end
+  # end
   inv(deref(sarr), const_in)
 end
 # FIXME? is it ok to use invert!, what about source

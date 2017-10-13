@@ -22,9 +22,10 @@ end
 
 "Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
 function uniquename(x, nms)
+  names = Set(nms)
   nm = x
   i = 1
-  while nm ∈ nms
+  while nm ∈ names
     nm = namei(x, i)
     i += 1
   end
