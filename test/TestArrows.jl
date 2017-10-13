@@ -6,7 +6,7 @@ import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
 "f(x) = sin(x)"
 function sin_arr()
   c = CompArrow(:x2, 1, 1)
-  x, y = ports(c)
+  x, y = ⬧(c)
   sinarr = add_sub_arr!(c, Arrows.SinArrow())
   x ⥅ (sinarr, 1)
   (sinarr, 1) ⥅ y
@@ -16,14 +16,14 @@ end
 "x * y + x"
 function xy_plus_x_arr()
   c = CompArrow(:xyx, [:x, :y], [:z])
-  x, y, z = ports(c)
+  x, y, z = ⬧(c)
   m2 = add_sub_arr!(c, MulArrow())
   add_arr = add_sub_arr!(c, AddArrow())
-  link_ports!(x, in_sub_port(m2, 1))
-  link_ports!(y, in_sub_port(m2, 2))
-  link_ports!(out_sub_port(m2, 1), in_sub_port(add_arr, 1))
-  link_ports!(x, in_sub_port(add_arr, 2))
-  link_ports!(out_sub_port(add_arr, 1), z)
+  x ⥅ (m2, 1)
+  y ⥅ (m2, 2)
+  (m2, 1) ⥅ (add_arr, 1)
+  x ⥅ (add_arr, 2)
+  (add_arr, 1) ⥅ z
   c
 end
 
@@ -31,23 +31,22 @@ xy_plus_x_jl(x, y) = x * y + x
 
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
-  z, θ, x, y = sub_ports(carr)
+  z, θ, x, y = ⬨(carr)
   addprop!(θp, deref(θ))
   invadd = add_sub_arr!(carr, inv_add())
   invmul = add_sub_arr!(carr, inv_mul())
   invdupl = add_sub_arr!(carr, InvDuplArrow(2))
 
-  addz, addθ, addx, addy = sub_ports(invadd)
-  mulz, mulθ, mulx, muly = sub_ports(invmul)
-  sub_ports(invdupl)
-  link_ports!(z, addz)
-  link_ports!(addx, mulz)
-  link_ports!(θ, addθ)
-  link_ports!(addy, (invdupl, 1))
-  link_ports!(mulx, y)
-  link_ports!((invdupl, 1), x)
-  link_ports!(muly, (invdupl, 2))
-  link_ports!(θ, mulθ)
+  addz, addθ, addx, addy = ⬨(invadd)
+  mulz, mulθ, mulx, muly = ⬨(invmul)
+  z ⥅ addz
+  addx ⥅ mulz
+  θ ⥅ addθ
+  addy ⥅ (invdupl, 1)
+  mulx ⥅ y
+  (invdupl, 1) ⥅ x
+  muly ⥅ (invdupl, 2)
+  θ ⥅ mulθ
   carr
 end
 
@@ -55,7 +54,7 @@ end
 function fibonnaci_arr()
   c = CompArrow(:fib, 1, 1)
   c_wrap = add_sub_arr!(c, c)
-  x, y = ports(c)
+  x, y = ⬧(c)
   one = add_sub_arr!(c, SourceArrow(1))
   min = add_sub_arr!(c, SubtractArrow())
   ite = add_sub_arr!(c, CondArrow())
@@ -63,23 +62,23 @@ function fibonnaci_arr()
   add = add_sub_arr!(c, AddArrow())
 
   # if x == 1
-  link_ports!(x, in_sub_port(eq, 1))
-  link_ports!(out_sub_port(one, 1), in_sub_port(eq, 2))
-  link_ports!(out_sub_port(eq, 1), in_sub_port(ite, 1))
+  x ⥅ (eq, 1)
+  (one, 1) ⥅ (eq, 2)
+  (eq, 1) ⥅ (ite, 1)
 
   # return x
-  link_ports!(out_sub_port(one, 1), in_sub_port(ite, 2))
+  (one, 1) ⥅ (ite, 2)
 
   # f(x - 1)
-  link_ports!(x, in_sub_port(min, 1))
-  link_ports!(out_sub_port(one, 1), in_sub_port(min, 2))
-  link_ports!(out_sub_port(min, 1), in_sub_port(c_wrap, 1))
+  x ⥅ (min, 1)
+  (one, 1) ⥅ (min, 2)
+  (min, 1) ⥅ ▹(c_wrap, 1)
 
   # x + f(x - 1)
-  link_ports!(out_sub_port(c_wrap, 1), in_sub_port(add, 1))
-  link_ports!(x, in_sub_port(add, 2))
-  link_ports!(out_sub_port(add, 1), in_sub_port(ite, 3))
-  link_ports!(out_sub_port(ite, 1), y)
+  ◃(c_wrap, 1) ⥅ (add, 1)
+  x ⥅ (add, 2)
+  (add, 1) ⥅ (ite, 3)
+  (ite, 1) ⥅ y
   c
 end
 
@@ -90,11 +89,11 @@ function dupl_id_arr()
   c = CompArrow(:dupl_id, 1, 2)
   id1 = add_sub_arr!(c, IdentityArrow())
   id2 = add_sub_arr!(c, IdentityArrow())
-  x, y, z = ports(c)
-  link_ports!(x, in_sub_port(id1, 1))
-  link_ports!(x, in_sub_port(id2, 1))
-  link_ports!(out_sub_port(id1, 1), y)
-  link_ports!(out_sub_port(id2, 1), z)
+  x, y, z = ⬧(c)
+  x ⥅ (id1, 1)
+  x ⥅ (id2, 1)
+  (id1, 1) ⥅ y
+  (id2, 1) ⥅ z
   c
 end
 
@@ -106,37 +105,37 @@ function det_policy_inner_arr()
   g = add_sub_arr!(c, IdentityArrow())
   ite = add_sub_arr!(c, CondArrow())
 
-  link_ports!((c, 1), (p, 1))
-  link_ports!((p, 1), (c, 1))
-  link_ports!((p, 1), (ite, 1))
-  link_ports!((c, 1), (f, 1))
-  link_ports!((f, 1), (ite, 2))
-  link_ports!((f, 2), (g, 1))
-  link_ports!((g, 1), (ite, 3))
-  link_ports!((ite, 1), (c, 2))
+  (c, 1) ⥅ (p, 1)
+  (p, 1) ⥅ (c, 1)
+  (p, 1) ⥅ (ite, 1)
+  (c, 1) ⥅ (f, 1)
+  (f, 1) ⥅ (ite, 2)
+  (f, 2) ⥅ (g, 1)
+  (g, 1) ⥅ (ite, 3)
+  (ite, 1) ⥅ (c, 2)
   c
 end
 
 "f(x,y) = (x+y) + (x+y)"
 function triple_add()
   c = CompArrow(:xyxy, 2, 1)
-  x, y, z = ports(c)
+  x, y, z = ⬧(c)
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a3 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
-  link_ports!((c, 1), (a1, 1))
-  link_ports!((c, 1), (a2, 1))
-  link_ports!((c, 2), (a1, 2))
-  link_ports!((c, 2), (a2, 2))
-  link_ports!((a1, 1), (a3, 1))
-  link_ports!((a2, 1), (a3, 2))
-  link_ports!((a3, 1), (c, 1))
+  (c, 1) ⥅ (a1, 1)
+  (c, 1) ⥅ (a2, 1)
+  (c, 2) ⥅ (a1, 2)
+  (c, 2) ⥅ (a2, 2)
+  (a1, 1) ⥅ (a3, 1)
+  (a2, 1) ⥅ (a3, 2)
+  (a3, 1) ⥅ (c, 1)
   c
 end
 
 function test_two_op()
   carr = CompArrow(:xyab, [:x, :y], [:a, :b])
-  x, y, a, b = sub_ports(carr)
+  x, y, a, b = ⬨(carr)
   z = x + y
   c = y * z
   c ⥅ a
@@ -159,7 +158,7 @@ end
 
 function cond_arr_eq()
   c = CompArrow(:xyx, [:x, :y], [:z])
-  x, y, z = ports(c)
+  x, y, z = ⬧(c)
   eq = add_sub_arr!(c, EqualArrow())
   ite = add_sub_arr!(c, CondArrow())
   x ⥅ (eq, 1)

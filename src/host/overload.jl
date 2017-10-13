@@ -3,7 +3,7 @@
 promote_constant(carr::CompArrow, sprt::SubPort) = sprt
 function promote_constant(carr::CompArrow, x)
   sarr = add_sub_arr!(carr, SourceArrow(x))
-  out_sub_port(sarr, 1)
+  ◃(sarr, 1)
 end
 
 function inner(ArrType, xs::Vararg{SubPort})
@@ -14,7 +14,7 @@ function inner(ArrType, xs::Vararg{SubPort})
   for (i, x) in enumerate(xs)
     link_ports!(x, (sarr, i))
   end
-  output = out_sub_ports(sarr)
+  output = ◃(sarr)
   if length(output) == 1
     output[1]
   else

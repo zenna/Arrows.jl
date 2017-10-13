@@ -100,10 +100,10 @@ end
 
 "∀ src -> dst ∈ orig"
 function inner_compose!(orig::SubArrow, sarr::SubArrow)
-  dsts = in_sub_ports(orig)
+  dsts = ▹(orig)
   srcs = src.(dsts)
-  as = in_sub_ports(sarr)
-  bs = out_sub_ports(sarr)
+  as = ▹(sarr)
+  bs = ◃(sarr)
   same(map(length, [srcs, dsts, as, bs])) || throw(DomainError())
   foreach(replace_link!, srcs, dsts, as, bs)
   bs

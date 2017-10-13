@@ -1,11 +1,11 @@
 "All source (projecting) sub_ports"
-src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, sub_ports(arr))
+src_sub_ports(arr::CompArrow)::Vector{SubPort} = ⬨(arr, is_src)
 
 "All source (projecting) sub_ports"
 all_src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, all_sub_ports(arr))
 
 "All destination (receiving) sub_ports"
-dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, sub_ports(arr))
+dst_sub_ports(arr::CompArrow)::Vector{SubPort} = ⬨(arr, is_dst)
 
 "All source (projecting) sub_ports"
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
@@ -17,7 +17,7 @@ in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
 
 "Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
-is_boundary(sprt::SubPort) = sprt ∈ sub_ports(sub_arrow(sprt))
+is_boundary(sprt::SubPort) = sprt ∈ ⬨(sub_arrow(sprt))
 
 "Is `port` within `arr` but not on boundary"
 strictly_in(sprt::SubPort, arr::CompArrow) = sprt ∈ inner_sub_ports(arr)
@@ -59,10 +59,10 @@ promote_right_port(port::Port) = promote_port(port)
 # # TODO: DomainError not assert
 # @assert parent(r) == c
 src_port(src_arr::SubArrow, src_id) =
-  self_parent(src_arr) ? in_sub_port(src_arr, src_id) : out_sub_port(src_arr, src_id)
+  self_parent(src_arr) ? ▹(src_arr, src_id) : ◃(src_arr, src_id)
 
 dst_port(dst_arr::SubArrow, dst_id) =
-  self_parent(dst_arr) ? out_sub_port(dst_arr, dst_id) : in_sub_port(dst_arr, dst_id)
+  self_parent(dst_arr) ? ◃(dst_arr, dst_id) : ▹(dst_arr, dst_id)
 
 promote_left_port(pid::Tuple{SubArrow, <:Integer}) = src_port(pid...)
 promote_right_port(pid::Tuple{SubArrow, <:Integer}) = dst_port(pid...)
@@ -90,7 +90,7 @@ function replace_sub_arr!(sarr::SubArrow, arr::Arrow, portidmap::PortIdMap)::Sub
   parr = parent(sarr)
   replarr = add_sub_arr!(parr, arr)
   subportmap = sub_port_map(sarr, replarr, portidmap)
-  for sport in sub_ports(sarr)
+  for sport in ⬨(sarr)
     for (l, r) in in_links(sport)
       link_ports!(l, subportmap[r])
     end
@@ -319,7 +319,7 @@ link_to_parent!(sprts::Vector{SubPort}, pred) =
 # FIXME: Deprecate in favour of sub_arrow filter
 "Link all `sprt::SubPort ∈ sarr` to parent if preds(sprt)"
 link_to_parent!(sarr::SubArrow, pred) =
-  link_to_parent!(sub_ports(sarr), pred)
+  link_to_parent!(⬨(sarr), pred)
 
 # FIXME: Deprecate this in favour of convenient syntax for filter vector ports
 "Link `sprt::SubPort ∈ sarr` to parent if `pred(sprt)``"
@@ -333,7 +333,7 @@ n▸ = num_in_ports
 n◂ = num_out_ports
 
 ## Printing ##
-# FIXME: rename mann to something meaningful 
+# FIXME: rename mann to something meaningful
 function mann(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows

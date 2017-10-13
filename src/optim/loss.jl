@@ -2,7 +2,7 @@
 function diff_arrow()
   carr = SubtractArrow() >> SqrArrow() >> SqrtArrow()
   rename!(carr, :diff)
-  set_error_port!(out_port(carr, 1))
+  set_error_port!(◂(carr, 1))
   carr
 end
 
@@ -14,7 +14,7 @@ end
 function meanerror(invarr::CompArrow)
   thebest = CompArrow(:thebest)
   sarr = add_sub_arr!(thebest, invarr)
-  ϵprts = filter(is(ϵ), ◂(invarr))
+  ϵprts = ◂(invarr, is(ϵ))
   meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
   i = 1
   foreach(Arrows.link_to_parent!, ▹(sarr))
@@ -58,7 +58,7 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
 
-  osports = out_sub_ports(invsarr)
+  osports = ◃(invsarr)
   error_port = is(ϵ) ∘ deref
   for (i, sprt) in enumerate(filter(!error_port, osports))
     sprt ⥅ (fwdsarr, i)

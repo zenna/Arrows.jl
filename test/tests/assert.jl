@@ -3,7 +3,7 @@ using Arrows
 
 function test_assert()
   carr = CompArrow(:xyx20, [:x, :y], [:z])
-  x, y, z = sub_ports(carr)
+  x, y, z = ⬨(carr)
   a = (2x + y)
   assert!(y > 100)
   a ⥅ z

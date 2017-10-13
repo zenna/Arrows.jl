@@ -10,7 +10,7 @@ end
 function bounded_totalize!(sarr::SubArrow)
   # TODO: Generalize this
   clipcarr = CompArrow(:clip, [:x], [:y])
-  x, y = sub_ports(clipcarr)
+  x, y = ⬨(clipcarr)
   bounds = domain_bounds(deref(sarr))
   clip(x, bounds...) ⥅ y
   inner_compose!(sarr, clipcarr)
@@ -18,7 +18,7 @@ end
 
 function nonneg_totalize!(sarr::SubArrow)
   clip_zero = CompArrow(:clip_zero, [:x], [:y])
-  x, y = sub_ports(clip_zero)
+  x, y = ⬨(clip_zero)
   max(x, 0) ⥅ y
   inner_compose!(sarr, clip_zero)
 end

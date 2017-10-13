@@ -6,8 +6,8 @@
 
 function pgf(arr::MulArrow)
   "As f^(-1)(z; θ) = (z/θ, θ), then the pgf becomes r(x, y) = (x*y, y)."
-  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θmul])
-  x, y, z, θ = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θ])
+  x, y, z, θ = ⬨(carr)
   x * y ⥅ z
   y ⥅ θ
   carr
@@ -15,8 +15,8 @@ end
 
 function pgf(arr::AddArrow)
   "As f^(-1)(z; θ) = (z-θ, θ), then the pgf becomes r(x, y) = (x+y, y)."
-  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θadd])
-  x, y, z, θ = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θ])
+  x, y, z, θ = ⬨(carr)
   x + y ⥅ z
   y ⥅ θ
   carr
@@ -24,8 +24,8 @@ end
 
 function pgf(arr::SubtractArrow)
   "As f^(-1)(z; θ) = (z+θ, θ), then the pgf becomes r(x, y) = (x-y, y)."
-  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θsub])
-  x, y, z, θ = sub_ports(carr)
+  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θ])
+  x, y, z, θ = ⬨(carr)
   x - y ⥅ z
   y ⥅ θ
   carr
@@ -86,7 +86,7 @@ end
 function pgf(arr::LessThanArrow)
   "As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z), then the pgf becomes r(x, y) = (x<y, x, abs(x-y))."
   carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
-  x, y, z, θ1, θ2 = sub_ports(carr)
+  x, y, z, θ1, θ2 = ⬨(carr)
   abs = add_sub_arr!(carr, AbsArrow())
   x < y ⥅ z
   x ⥅ θ1

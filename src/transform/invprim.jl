@@ -175,7 +175,7 @@ inv(arr::LessThanArrow, const_in::Vector{Bool}) = (inv_lt_arr(), Dict(1 => 4, 2 
 
 function inv_gt_arr()
   carr = CompArrow(:inv_gt, [:z, :y, :θinv_gt_arr], [:x])
-  z, y, θ, x = sub_ports(carr)
+  z, y, θ, x = ⬨(carr)
   addprop!(θp, deref(θ))
   assert!(z)
   (abs(θ) + y) ⥅ x
@@ -184,7 +184,7 @@ end
 
 function inv_lt_arr()
   carr = CompArrow(:inv_gt, [:z, :y, :θinv_lt_arr], [:x])
-  z, y, θ, x = sub_ports(carr)
+  z, y, θ, x = ⬨(carr)
   addprop!(θp, deref(θ))
   assert!(z)
   (y - abs(θ)) ⥅ x
