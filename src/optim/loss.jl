@@ -71,10 +71,10 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
 
   # Diffs between inputs to inv and outputs of fwd
   foreach(link_to_parent!, ▹(invsarr))
-  invinsprts = src.(▹(invsarr, !is(θp)))
-  fwdoutsprts = ◃(fwdsarr, !is(ϵ))
-  length(invinsprts) == length(fwdoutsprts) || throw(DomainError())
-  total = sumδ(invinsprts, fwdoutsprts)
+  inv▹ = src.(▹(invsarr, !is(θp)))
+  fwd◃ = ◃(fwdsarr, !is(ϵ))
+  length(inv▹) == length(fwd◃) || throw(ArgumentError("num(inv▹) != num(fwd◃)"))
+  total = sumδ(inv▹, fwd◃)
   loss = add_port_like!(carr, deref(total))
   total ⥅ loss
   addprop!(idϵ, loss)

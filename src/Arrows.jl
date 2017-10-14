@@ -125,7 +125,7 @@ export
   pgf,
   out_values,
   aprx_invert,
-  aprx_totalize!,
+  aprx_totalize,
   aprx_totalize!,
   domain_error,
   domain_error!,
