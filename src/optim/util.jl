@@ -36,12 +36,12 @@ function verify_loss(arr::CompArrow, inputs=nothing)
     end
     outs = pgfarr(inputs...)
     loss_values = domain_loss(outs...)
-    isapprox(loss_values[i], 0, atol=ϵtol) || throw(ArgumentError("Domain loss with pgf values should be 0, is $loss_values[i] instead."))
+    isapprox(loss_values[i], 0, atol=ϵtol) || throw(ArgumentError("Domain loss with pgf values should be 0, is $loss_values instead."))
 
     invarr = invert(arr)
     idloss = id_loss(arr, invarr)
     loss_values = idloss(outs...)
-    isapprox(loss_values[1], 0, atol=ϵtol) || throw(ArgumentError("Id loss with pgf values should be 0, is $loss_values[1] instead."))
+    isapprox(loss_values[1], 0, atol=ϵtol) || throw(ArgumentError("Id loss with pgf values should be 0, is $loss_values instead."))
 end
 
 "Runs optimization on the specified domain/id loss and (for now) prints the results."
