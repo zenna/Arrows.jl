@@ -12,12 +12,12 @@ pgf_out = pgf_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_src))
   Returns:
     A parameter generating function of carr that for a given input x outputs
     the corresponding value y as well as θ such that f^(-1)(y;θ) = x."""
-function pgf_change!(carr::CompArrow)
+function pgf_change!(carr::CompArrow, inner_pgf)
   for sarr in sub_arrows(carr)
-    replarr, port_map = pgf_in(sarr), id_portid_map(deref(sarr))
+    replarr, port_map = inner_pgf(sarr), id_portid_map(deref(sarr))
     replace_sub_arr!(sarr, replarr, port_map)
   end
   pgf_out(carr)
 end
 
-pgf(carr::CompArrow) = pgf_change!(deepcopy(carr))
+pgf(carr::CompArrow, inner_pgf=pgf_in) = pgf_change!(deepcopy(carr), inner_pgf)
