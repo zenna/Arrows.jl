@@ -185,6 +185,9 @@ export
 
   # Optimization
   optimize,
+  verify_loss,
+  verify_optim,
+  domain_ovrl,
 
   # Inverse Arrows
   InvDuplArrow,
@@ -284,6 +287,7 @@ include("host/filter.jl")
 # Optimziation and Learning #
 include("optim/loss.jl")
 include("optim/optimize.jl")
+include("optim/util.jl")
 include("gradient/gradient.jl")
 
 
