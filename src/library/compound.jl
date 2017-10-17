@@ -2,14 +2,14 @@
 function addn_accum(n::Integer)
   inp_names = [Symbol(:ϕ_, i) for i=1:n]
   carr = CompArrow(:addn, inp_names, [:sum])
-  vals = in_sub_ports(carr)
+  vals = ▹(carr)
   curr_val = first(vals)
   sum_vals = [curr_val]
   for i = 2:n
     addarr = add_sub_arr!(carr, AddArrow())
     link_ports!(curr_val, (addarr, 1))
     link_ports!(vals[i], (addarr, 2))
-    curr_val = out_sub_port(addarr, 1)
+    curr_val = ◃(addarr, 1)
     push!(sum_vals, curr_val)
   end
   link_ports!(curr_val, (carr, 1))

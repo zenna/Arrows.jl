@@ -14,16 +14,16 @@ function unlinkcall(f, name::ArrowName, sprts::SubPort...)::Tuple{SubPort}
   pprops = map(sprt -> Props(props(sprt); is_in_port=true), src_sprts)
   carr = CompArrow(name, [pprops...])
   # 2. Break all the kinks
-  f_outs = s(f(in_sub_ports(carr)...))
+  f_outs = s(f(▹(carr)...))
   # foreach(link_to_parent!, s(f(in_sub_ports(carr)...)))
   # 3. add carr to the parent, link sprts to in_ports of carr and return outports
   sarr = add_sub_arr!(parent_carr, carr)
-  foreach(sprts, in_sub_ports(sarr)) do parent_sprt, inner_sprt, f_outs
+  foreach(sprts, ▹(sarr)) do parent_sprt, inner_sprt, f_outs
     unlink_ports!(src(parent_sprt), parent_sprt)
     src(parent_sprt) ⥅ inner_sprt
     fouts ⥅ parent_sprt
   end
-  tuple(out_sub_ports(sarr)...)
+  tuple(◃(sarr)...)
 end
 
 unlinkcall(f, sprts::SubPort...) = unlinkcall(f, typeof(f).name.name, (sprts...))

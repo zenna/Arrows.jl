@@ -10,8 +10,8 @@ end
 # Hack until constant propagation is done
 function inv(sarr::SubArrow)
   carr = deref(sarr)
-  const_in = map(is_src_source, in_sub_ports(sarr))
-  for sprt in in_sub_ports(sarr)
+  const_in = map(is_src_source, ▹(sarr))
+  for sprt in ▹(sarr)
     arr = deref(src(sprt)).arrow
     if isa(arr, SourceArrow)
       @show arr.value

@@ -112,7 +112,7 @@ function graph_to_arrow(name::Symbol,
   c = CompArrow(name, I, O)
 
   # Make an in_port for every input ten
-  ten_in_port = Dict{AbstractTensor, SubPort}(zip(inp_tens, in_sub_ports(c)))
+  ten_in_port = Dict{AbstractTensor, SubPort}(zip(inp_tens, ▹(c)))
   for inp in inp_tens
     ten_in_port[inp]
   end
