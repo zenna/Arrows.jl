@@ -30,7 +30,7 @@ import DataStructures: PriorityQueue, peek, dequeue!
 using NamedTuples
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv
 
 import Base:  ^,
               +,
