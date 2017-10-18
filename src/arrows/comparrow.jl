@@ -296,12 +296,16 @@ end
 "Add a port like (i.e. same `Props`) to carr"
 function add_port_like!(carr::CompArrow, prt::Port, genname=true)
   prps = deepcopy(props(prt)) # FIXME: Copying prps twice, here and add_port!
-  if genname && name(prt) ∈ name.(⬧(carr))
-    typeof(name(prt))
-    nm = uniquename(name(prt), name.(⬧(carr)))
-    setprop!(nm, prps)
+  moniker = name(prt)
+  if genname && moniker ∈ name.(⬧(carr))
+    setpropunique!(carr, moniker, prps)
   end
   add_port!(carr, prps)
+end
+
+function setpropunique!(carr::CompArrow, moniker::Name, prps)
+  nm = uniquename(moniker, name.(⬧(carr)))
+  setprop!(nm, prps)
 end
 
 "All directed `Link`s (src_port, dst_port)"

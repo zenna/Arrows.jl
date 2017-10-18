@@ -21,6 +21,18 @@ function test_assignment()
 end
 
 
+function test_assignment_return()
+  carr, f = Arrows.@arr function f(z, y)
+    x = z + y
+    x
+  end
+  @test carr(3, 4) == (7,)
+  @test carr(3, 4) == (f(3, 4),)
+  @test Arrows.name(⬨(carr, 3)) == :x
+end
+
+
+
 function test_conditional1()
   carr, f = Arrows.@arr function f(x, y)
     if x > y
@@ -130,3 +142,4 @@ test_conditional_eq()
 test_conditional_complex()
 test_conditional_complex_wo_assignment()
 test_w_types()
+test_assignment_return()

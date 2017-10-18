@@ -137,6 +137,23 @@ splitvar(arg) =
       end
 
 
+function add_output_to_generated(carr::CompArrow, osprt::SubPort,
+                                context::Dict{Symbol, SubPort})::CompArrow
+  for (k, v) in context
+    if v == osprt
+      name = Name(k)
+      break
+    end
+  end
+  isdefined(:name) || (name = Name(:out))
+  z = add_port_like!(carr, deref(osprt))
+  osprt ⥅ z
+  setpropunique!(carr, name, props(z))
+  display(Arrows.name(z))
+  println("")
+  carr
+end
+
 """Extract information about the function, creates a `CompArrow` and transform
    the `Expr` recursively"""
 function transform_function(expr)
@@ -148,12 +165,11 @@ function transform_function(expr)
   args = [splitvar(var)[1] for var in args]
   args = [Symbol(s) for s in args]
   name = Symbol(args...)
-  carr = CompArrow(name, args, [:z])
+  carr = CompArrow(name, args, Symbol[])
   sports = ⬨(carr)
-  z = sports[end]
-  context = Dict([k=> v for (k,v) in zip(args, sports[1:end-1])])
+  context = Dict([k=> v for (k,v) in zip(args, sports[1:end])])
   osprt = transform_expr!(body, context, carr)
-  osprt ⥅ z
+  add_output_to_generated(carr, osprt, context)
   carr
 end
 
