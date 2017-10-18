@@ -28,7 +28,7 @@ function test_assignment_return()
   end
   @test carr(3, 4) == (7,)
   @test carr(3, 4) == (f(3, 4),)
-  @test Arrows.name(⬨(carr, 3)) == :x
+  @test Arrows.name(⬧(carr, 3)) == Arrows.Name(:x)
 end
 
 

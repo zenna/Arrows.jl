@@ -139,18 +139,17 @@ splitvar(arg) =
 
 function add_output_to_generated(carr::CompArrow, osprt::SubPort,
                                 context::Dict{Symbol, SubPort})::CompArrow
+  found = false
   for (k, v) in context
     if v == osprt
-      name = Name(k)
+      found, name_ = true, Name(k)
       break
     end
   end
-  isdefined(:name) || (name = Name(:out))
+  found || (name_ = Name(:out))
   z = add_port_like!(carr, deref(osprt))
   osprt ⥅ z
-  setpropunique!(carr, name, props(z))
-  display(Arrows.name(z))
-  println("")
+  setpropunique!(carr, name_, props(z))
   carr
 end
 
