@@ -49,6 +49,20 @@ function test_conditional_eq()
   @test carr(4, 3) == (f(4, 3),)
 end
 
+function test_tuples()
+  carr, f = Arrows.@arr function f(x, y)
+    if x == y
+      (2x + y, 1)
+    else
+      (2, 3x + y)
+    end
+  end
+  @test carr(4, 4) == (12, 1)
+  @test carr(4, 4) == (f(4, 4), 1)
+  @test carr(4, 3) == (2, 15)
+  @test carr(4, 3) == (2, f(4, 3))
+end
+
 
 function test_conditional_complex()
   carr, f = Arrows.@arr function f(x, y)
@@ -130,3 +144,4 @@ test_conditional_eq()
 test_conditional_complex()
 test_conditional_complex_wo_assignment()
 test_w_types()
+test_tuples()
