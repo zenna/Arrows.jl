@@ -12,14 +12,22 @@ end
 
 function func_return_expr(carr::CompArrow)
   coutnames = map(name, Arrows.out_values(sub_arrow(carr)))
-  retargs = Expr(:tuple, coutnames...)
+  retargs = if length(coutnames) == 1
+    coutnames[1]
+  else
+    Expr(:tuple, coutnames...)
+  end
   ret = Expr(:return, retargs)
 end
 
 "Assign expressio"
 function assign_expr(sarr::SubArrow, outnames::Vector, args...)
   outnames = map(name, tuple(Arrows.out_values(sarr)...))
-  lhs = Expr(:tuple, outnames...)
+  lhs = if length(outnames) == 1
+    outnames[1]
+  else
+    Expr(:tuple, outnames...)
+  end
   rhs = call_expr(deref(sarr), args...)
   Expr(:(=), lhs, rhs)
 end
