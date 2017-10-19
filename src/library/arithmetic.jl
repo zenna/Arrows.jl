@@ -54,7 +54,7 @@ name(::SqrArrow)::Symbol = :sqr
 struct AbsArrow <: PrimArrow end
 name(::AbsArrow)::Symbol = :abs
 
-sqr(x) = (x^2,)
+sqr(x) = x^2
 
 "log(b, x)"
 struct LogBaseArrow <: PrimArrow end
