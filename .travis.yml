@@ -19,6 +19,7 @@ script:
   - julia -e 'Pkg.add("Plots")'
   - julia -e 'Pkg.add("Luxor")'
   - julia -e 'Pkg.add("MacroTools")'
+  - julia -e 'Pkg.checkout("LightGraphs")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'
 after_success:
   # - julia -e 'cd(Pkg.dir("Arrows")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
