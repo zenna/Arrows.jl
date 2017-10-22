@@ -145,11 +145,10 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   # TODO CHECK NO NAME CONFLICTS
   arr = carr.sarr_name_to_arrow[carr.name]
   carr.sarr_name_to_arrow[carr.name]
-  for (pxport, vtxid) in arr.port_to_vtx_id
-    if pxport.arrname == carr.name
-      delete!(arr.port_to_vtx_id, pxport)
-      carr.port_to_vtx_id[ProxyPort(n, pxport.port_id)] = vtxid
-    end
+  to_delete = filter((pxport, vtx_id) -> pxport.arrname == carr.name, arr.port_to_vtx_id)
+  for (pxport, vtxid) in to_delete
+    delete!(arr.port_to_vtx_id, pxport)
+    carr.port_to_vtx_id[ProxyPort(n, pxport.port_id)] = vtxid
   end
   delete!(arr.sarr_name_to_arrow, carr.name)
   carr.sarr_name_to_arrow[n] = arr
