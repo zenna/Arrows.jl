@@ -10,8 +10,8 @@ end
 # Hack until constant propagation is done
 function inv(sarr::SubArrow)
   carr = deref(sarr)
-  const_in = map(is_src_source, in_sub_ports(sarr))
-  # for sprt in in_sub_ports(sarr)
+  const_in = map(is_src_source, ▹(sarr))
+  # for sprt in ▹(sarr)
   #   arr = deref(src(sprt)).arrow
   #   if isa(arr, SourceArrow)
   #     @show arr.value
@@ -65,12 +65,12 @@ Construct a parametric inverse of `arr`
 # Returns:
 - A parametric inverse of `arr`
 """
-function invert!(arr::CompArrow)::CompArrow
+function invert!(arr::CompArrow, inner_inv)::CompArrow
   check_reuse(arr)
   link_loose_dsts(carr) = link_to_parent!(carr, loose ∧ should_dst)
   outer = inv_rename! ∘ link_loose_dsts ∘ fix_links! ∘ invert_all_ports!
-  walk!(inv, outer, arr)
+  walk!(inner_inv, outer, arr)
 end
 
-invert(arr::CompArrow) = invert!(duplify!(deepcopy(arr)))
-aprx_invert(arr::CompArrow) = aprx_totalize!(domain_error!(invert(arr)))
+invert(arr::CompArrow, inner_inv=inv) = invert!(duplify!(deepcopy(arr)), inner_inv)
+aprx_invert(arr::CompArrow, inner_inv=inv) = aprx_totalize!(domain_error!(invert(arr, inner_inv)))

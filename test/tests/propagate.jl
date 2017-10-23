@@ -6,7 +6,7 @@ using Base.Test
 
 function test_propagate()
   carr = TestArrows.xy_plus_x_arr()
-  x, y, z = sub_ports(carr)
+  x, y, z = ⬨(carr)
   # Suppose we know the output has shape (1,2,3)
   shapes = Dict(z => Shape((1,2,3)))
   propagate!(carr, shapes)

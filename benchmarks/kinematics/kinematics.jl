@@ -124,14 +124,14 @@ end
 function fwd_2d_linkage(nlinks::Integer)
   inp_names = [Symbol(:ϕ_, i) for i=1:nlinks]
   carr = CompArrow(:fwd_kin, inp_names, [:x, :y])
-  angles = in_sub_ports(carr)
+  angles = ▹(carr)
   curr_angle = first(angles)
   sum_angles = [curr_angle]
   for i = 2:nlinks
     addarr = add_sub_arr!(carr, AddArrow())
     link_ports!(curr_angle, (addarr, 1))
     link_ports!(angles[i], (addarr, 2))
-    curr_angle = out_sub_port(addarr, 1)
+    curr_angle = ◃(addarr, 1)
     push!(sum_angles, curr_angle)
   end
 
@@ -149,7 +149,7 @@ function fwd_2d_linkage(nlinks::Integer)
     link_ports!((cosarr, 1), (total_cos, i))
   end
 
-  x, y = out_sub_ports(carr)
+  x, y = ◃(carr)
   link_ports!((total_sin, 1), x)
   link_ports!((total_cos, 1), y)
   carr
@@ -159,14 +159,14 @@ end
 function fwd_2d_linkage_obs(nlinks::Integer)
   inp_names = [Symbol(:ϕ_, i) for i=1:nlinks]
   carr = CompArrow(:fwd_kin, inp_names, [:x, :y])
-  angles = in_sub_ports(carr)
+  angles = ▹(carr)
   curr_angle = first(angles)
   sum_angles = [curr_angle]
   for i = 2:nlinks
     addarr = add_sub_arr!(carr, AddArrow())
     link_ports!(curr_angle, (addarr, 1))
     link_ports!(angles[i], (addarr, 2))
-    curr_angle = out_sub_port(addarr, 1)
+    curr_angle = ◃(addarr, 1)
     push!(sum_angles, curr_angle)
   end
 
@@ -177,7 +177,7 @@ function fwd_2d_linkage_obs(nlinks::Integer)
     link_ports!((sinarr, 1), (total_sin, i))
   end
 
-  midsumxs = out_sub_ports(total_sin)[2:end]
+  midsumxs = ◃(total_sin)[2:end]
 
   total_cos = add_sub_arr!(carr, Arrows.addn_accum_linke(length(sum_angles)))
   for (i, angle) in enumerate(sum_angles)
@@ -186,11 +186,11 @@ function fwd_2d_linkage_obs(nlinks::Integer)
     link_ports!((cosarr, 1), (total_cos, i))
   end
 
-  midsumys = out_sub_ports(total_cos)[2:end]
+  midsumys = ◃(total_cos)[2:end]
 
   @show midsumys, midsumxs
 
-  x, y = out_sub_ports(carr)
+  x, y = ◃(carr)
   link_ports!((total_sin, 1), x)
   link_ports!((total_cos, 1), y)
 

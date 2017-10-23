@@ -72,6 +72,17 @@ name(::MinArrow)::Symbol = :min
 struct MaxArrow <: PrimArrow end
 name(::MaxArrow)::Symbol = :max
 
+"x % y"
+struct ModArrow <: PrimArrow end
+name(::ModArrow)::Symbol = :%
+
+"ceil(x)"
+struct CeilArrow <: PrimArrow end
+name(::CeilArrow)::Symbol = :ceil
+
+"floor(x)"
+struct FloorArrow <: PrimArrow end
+name(::FloorArrow)::Symbol = :floor
 
 function expander_prop(prop_generator, typ)
   quote
@@ -82,9 +93,10 @@ end
 
 to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       CosArrow, ACosArrow, SqrtArrow, SqrArrow,
-                      AbsArrow, LogBaseArrow, NegArrow, ]
+                      AbsArrow, LogBaseArrow, NegArrow, CeilArrow,
+                      FloorArrow,]
 to_binary_functions = [AddArrow, DivArrow, SubtractArrow,
-                      MulArrow, MinArrow, MaxArrow]
+                      MulArrow, MinArrow, MaxArrow, ModArrow]
 codes_unary = map(f -> expander_prop(unary_arith_props, f), to_unary_functions)
 codes_binary = map(f -> expander_prop(bin_arith_props, f), to_binary_functions)
 foreach(eval, vcat(codes_unary, codes_binary))

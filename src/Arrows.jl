@@ -30,7 +30,7 @@ import DataStructures: PriorityQueue, peek, dequeue!
 using NamedTuples
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv
 
 import Base:  ^,
               +,
@@ -46,6 +46,7 @@ import Base:  ^,
               |,
               &,
               !,
+              %,
               cos,
               acos,
               sin,
@@ -65,7 +66,9 @@ import Base:  ^,
               ifelse,
               var,
               zero,
-              one
+              one,
+              floor,
+              ceil
 export
   conjoin,
   disjoin,
@@ -173,6 +176,9 @@ export
   SqrtArrow,
   CosArrow,
   DuplArrow,
+  ModArrow,
+  FloorArrow,
+  CeilArrow,
 
   # Compound
   addn,
@@ -296,8 +302,4 @@ include("../benchmarks/BenchmarkArrows.jl")
 # include("../analysis/analysis.jl")
 
 # Just for development for
-const tcarr = TestArrows.xy_plus_x_arr()
-const tsarr = sub_arrows(tcarr)[2]
-export tcarr, tsarr
-
 end

@@ -159,13 +159,13 @@ function rename!(carr::CompArrow, n::ArrowName)::CompArrow
   # TODO CHECK NO NAME CONFLICTS
   arr = carr.sarr_name_to_arrow[carr.name]
   carr.sarr_name_to_arrow[carr.name]
-  for (pxport, vtxid) in arr.port_to_vtx_id
-    if pxport.arrname == carr.name
-      delete!(arr.port_to_vtx_id, pxport)
-      new_pport = ProxyPort(n, pxport.port_id)
-      carr.vtx_id_to_port[vtxid] = new_pport
-      carr.port_to_vtx_id[new_pport] = vtxid
-    end
+  to_delete = filter((pxport, vtx_id) -> pxport.arrname == carr.name,
+                          arr.port_to_vtx_id)
+  for (pxport, vtxid) in to_delete
+    delete!(arr.port_to_vtx_id, pxport)
+    new_pport = ProxyPort(n, pxport.port_id)
+    carr.vtx_id_to_port[vtxid] = new_pport
+    carr.port_to_vtx_id[new_pport] = vtxid
   end
   delete!(arr.sarr_name_to_arrow, carr.name)
   delete!(arr.sarr_name_to_sarrow, carr.name)
