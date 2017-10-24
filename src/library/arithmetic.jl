@@ -57,8 +57,18 @@ name(::AbsArrow)::Symbol = :abs
 sqr(x) = x^2
 
 "log(b, x)"
+struct LogArrow <: PrimArrow end
+name(::LogArrow)::Symbol = :logbase
+props(::LogArrow) = unary_arith_props()
+
+"log(b, x)"
 struct LogBaseArrow <: PrimArrow end
 name(::LogBaseArrow)::Symbol = :logbase
+
+"x^y"
+struct PowArrow <: PrimArrow end
+name(::PowArrow)::Symbol = :^
+props(PowArrow) = bin_arith_props()
 
 "-x"
 struct NegArrow <: PrimArrow end

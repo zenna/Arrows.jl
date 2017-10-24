@@ -119,6 +119,7 @@ export
   known_const,
   known_not_const,
   const_propagator!,
+  compile,
 
   is_wired_ok,
   is_valid,
@@ -179,6 +180,9 @@ export
   ModArrow,
   FloorArrow,
   CeilArrow,
+  PowArrow,
+  LogArrow,
+  LogBaseArrow,
 
   # Compound
   addn,
@@ -287,11 +291,16 @@ include("optim/optimize.jl")
 include("gradient/gradient.jl")
 
 
-# Examples, etc #
+# Targets #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
-# include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
+include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
+
+# Compile to Julia by default
+compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
+interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
+
 
 include("apply/call.jl")
 
@@ -300,6 +309,10 @@ include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis
 # include("../analysis/analysis.jl")
+
+## Defaults
+
+
 
 # Just for development for
 end

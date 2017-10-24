@@ -55,6 +55,7 @@ function expr(carr::CompArrow)
   function_expr(carr, assigns)
 end
 
+"Recursively compile `carr` and all Subarrows of `carr int `Expr`s"
 function exprs(carr::CompArrow)
   names = []
   name_codes = Arrows.maprecur(carr) do scarr
