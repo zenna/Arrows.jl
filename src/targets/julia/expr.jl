@@ -36,8 +36,63 @@ end
 function function_expr(carr::CompArrow, assigns::Vector{Expr})
   decl = func_decl_expr(carr)
   ret = func_return_expr(carr)
-  funcblock = Expr(:block, assigns..., ret)
+  if length(assigns) > 1000
+    funcblock = function_splits(assigns, name(carr))
+  else
+    funcblock = Expr(:block, assigns..., ret)
+  end
   Expr(:function, decl, funcblock)
+end
+
+"""When a function contains many statements, it's more efficient to split
+them in smaller functions"""
+function function_splits(assigns, name)
+  answer = []
+  n = length(assigns)
+  k = 400
+  for i in 1:k:n
+    chunk = assigns[i:min(i+k-1, n)]
+    split_name =  Symbol(name, :__split_, i)
+    def, call = process_chunk(chunk, split_name)
+    push!(answer, def, call)
+  end
+  Expr(:block, answer...)
+end
+
+function process_chunk(assigns, name)
+  # XXX implicit precondition: no variable reuse
+  function process_outputs(assigns)
+    outputs = []
+    for assign in assigns
+      output = assign.args[1]
+      if isa(output, Expr)
+        push!(outputs, output.args...)
+      else
+        push!(outputs, output)
+      end
+    end
+    outputs
+  end
+  function process_inputs(assigns, out)
+    outputs = Set(out)
+    inputs = Set()
+    for assign in assigns
+      call = assign.args[2]
+      if isa(call, Expr) && call.head == :call
+        args = Set(call.args[2:end])
+        new = setdiff(args, outputs)
+        push!(inputs, args...)
+      end
+    end
+    collect(inputs)
+  end
+  outputs = process_outputs(assigns)
+  inputs = process_inputs(assigns, outputs)
+  decl = Expr(:call, name, inputs...)
+  ret = Expr(:return, Expr(:tuple, outputs...))
+  def = Expr(:function, decl, Expr(:block, assigns..., ret))
+  call = Expr(:(=), Expr(:tuple, outputs...), decl)
+  def, call
 end
 
 "Compile `arr` into an `Expr`"
