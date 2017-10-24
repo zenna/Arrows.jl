@@ -291,17 +291,15 @@ include("gradient/gradient.jl")
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
-# include("targets/tensorflow/tensorflow.jl") # TODO Make optional
+# include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
 
 include("apply/call.jl")
 
 include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
-#
-# # Analysis
-# include("../analysis/analysis.jl")
 
-# include("smt_solvers/z3interface.jl")
+# Analysis
+# include("../analysis/analysis.jl")
 
 # Just for development for
 end
