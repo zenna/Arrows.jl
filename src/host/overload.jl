@@ -1,4 +1,7 @@
 # Overload julia functions #
+import TakingBroadcastSeriously: @unfuse, broadcast_
+@unfuse SubPort
+
 
 promote_constant(carr::CompArrow, sprt::SubPort) = sprt
 function promote_constant(carr::CompArrow, x)

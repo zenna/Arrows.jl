@@ -18,9 +18,8 @@ function gen_fragcoords(width::Integer, height::Integer)
   return raster_space
 end
 
-"Render rays starting with raster_space according to geometry"
-function make_ro(r, raster_space, width, height)
-  nmatrices = 1
+"Render direction `rd` and origin `ro` starting with `raster_space`"
+function rd_ro(r, raster_space, width, height, nmatrices = 1)
   resolution = [width, height]
   # Normalise it to be bound between 0 1
   norm_raster_space = raster_space ./ reshape(resolution, 1, 1, 2)
@@ -29,14 +28,11 @@ function make_ro(r, raster_space, width, height)
   # Make pixels square by mul by aspect ratio
   aspect_ratio = resolution[1] / resolution[2]
   ndc_space = screen_space .* reshape([aspect_ratio, 1.0], (1, 1, 2))
+
   # Ray Direction
-
-  # Position on z-plane
-  scalars = ones(width, height, 1) * 1.0
+  scalars = ones(width, height, 1) * 1.0      # Position on z-plane
   ndc_xyz = cat(3, ndc_space, scalars) * 0.5  # Change focal length
-
-  # Put the origin farther along z-axis
-  ro = [0, 0, 1.5]
+  ro = [0, 0, 1.5]    # Put the origin farther along z-axis
 
   # Rotate both by same rotation matrix
   ro_t = reshape(ro, (1, 3)) * r
@@ -50,7 +46,8 @@ function make_ro(r, raster_space, width, height)
   # Increment by 0.5 since voxels are in [0, 1]
   ro_t = ro_t + 0.5
   ndc_t = ndc_t + 0.5
-  # Find normalise ray dirs from origin to image plane
+
+  # normalise ray dirs from origin to image plane
   unnorm_rd = ndc_t .- reshape(ro_t, (nmatrices, 1, 1, 3))
   norms = [norm(unnorm_rd[:,w,h,:]) for w = 1:size(unnorm_rd, 2), h = 1:size(unnorm_rd, 3)]
 
@@ -58,7 +55,9 @@ function make_ro(r, raster_space, width, height)
   return rd, ro_t
 end
 
-function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
+"Integrate one step along ray"
+function innerloop(voxels, step_sz_flat, left_over, orig, rd,
+                   step_sz, i, x_tiled, opt, nmatrices = 1)
   # Find the position (x,y,z) of ith step
   pos = orig .+ rd .* (step_sz * i)
 
@@ -66,7 +65,6 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tile
   voxel_indices = floor.(Int, pos * opt.res)
 
   p_int = clamp.(voxel_indices, 0, opt.res - 1)
-  nmatrices = 1
   indices = reshape(p_int, (nmatrices * opt.width * opt.height, 3))
 
   # convert to indices in flat list of voxels
@@ -76,18 +74,26 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tile
   tiled_indices = repeat(flat_indices, inner=opt.batch_size)
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
-  # println(i, "batched_indices", maximum(batched_indices), " ", minimum(batched_indices))
   attenuation = gather_nd(voxels, batched_indices)
-  # println(i, "voxels", mean(indices))
   exp.(-attenuation * opt.density .* step_sz_flat)
-
-  # left_over
 end
 
 "GatherND, from TensorFlow"
 function gather_nd(params, indices)
   indices = indices + 1
   [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
+end
+
+"GatherND, from TensorFlow"
+function gather_nd(params::Arrows.AbstractPort, indices::Arrows.AbstractPort)
+  res = Arrows.compose!(vcat(params, indices), GatherNdArrow())
+end
+
+"GatherND, from TensorFlow"
+function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3})
+  indices = SourceArrow(indices)
+  sarr = add_sub_arr!(parent(params), indices)
+  gather_nd(params, ◃(sarr))
 end
 
 "Generate rays origin and step size"
@@ -155,7 +161,7 @@ function render(voxels, rotation_matrix, opt)
   width, height, res = opt.width, opt.height, opt.res
   nmatrices = 1
   raster_space = gen_fragcoords(width, height)
-  rd, ro = make_ro(rotation_matrix, raster_space, width, height)
+  rd, ro = rd_ro(rotation_matrix, raster_space, width, height)
   orig, step_size = origin(rotation_matrix, opt, rd, ro, nmatrices)
 
   rd = reshape(rd, (nmatrices * width * height, 3))

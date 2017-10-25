@@ -28,9 +28,13 @@ module Arrows
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
 using NamedTuples
+# import NLopt
+# import ReverseDiff
+# import Base: gradient
+
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape
 
 import Base:  ^,
               +,
@@ -68,7 +72,8 @@ import Base:  ^,
               zero,
               one,
               floor,
-              ceil
+              ceil,
+              getindex
 export
   conjoin,
   disjoin,
@@ -285,26 +290,25 @@ include("host/overload.jl")
 include("host/filter.jl")
 
 
-# Optimziation and Learning #
-include("optim/loss.jl")
-include("optim/optimize.jl")
-include("gradient/gradient.jl")
+# # Optimziation and Learning #
+# include("optim/loss.jl")
+# include("optim/optimize.jl")
+# include("gradient/gradient.jl")
 
-
-# Targets #
+#
+# # Targets #
 include("targets/targets.jl")
 include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
 include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
-
-# Compile to Julia by default
+#
+# # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
-
 include("apply/call.jl")
 
-include("../test/TestArrows.jl")
+# include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis

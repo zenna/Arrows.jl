@@ -1,7 +1,17 @@
 using Arrows
+import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render
 using NamedTuples
 import JLD: load
-import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render
+
+function test_array_arrow()
+  carr = CompArrow(:render, [:voxel], [:img])
+  voxels, img = ⬨(carr)
+  opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
+            phong = false, density = 2)
+
+  render(voxels, STD_ROTATION_MATRIX, opt)
+end
+test_array_arrow()
 import Images: colorview, Gray
 
 function test_render()
@@ -43,6 +53,14 @@ function test_arrow_render()
     sport ⥅ (varr, id)
   end
   varr
+end
+
+function test_arrows_array()
+  opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
+            phong = false, density = 2)
+  nvox▹ = opt.batch_size * opt.res * opt.res * opt.res
+  ◃nvox = opt.batch_size * opt.width * opt.height
+  carr = CompArrow(:probe, [:voxel], [:img])
 end
 
 @time varr = test_arrow_render();
