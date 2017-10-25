@@ -59,7 +59,10 @@ end
 function innerloop(voxels, step_sz_flat, left_over, orig, rd,
                    step_sz, i, x_tiled, opt, nmatrices = 1)
   # Find the position (x,y,z) of ith step
-  pos = orig .+ rd .* (step_sz * i)
+  # pos = orig .+ rd .* (step_sz * i)
+  adj_rd = map(*, rd, steo_sz * i)
+  pos = map(+, orig, adj_rd)
+
 
   # convert to indices for voxel cube
   voxel_indices = floor.(Int, pos * opt.res)
@@ -75,7 +78,8 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
   attenuation = gather_nd(voxels, batched_indices)
-  exp.(-attenuation * opt.density .* step_sz_flat)
+  map(exp, -attenuation * opt.density, step_sz_flat)
+  # exp.(-attenuation * opt.density .* step_sz_flat)
 end
 
 "GatherND, from TensorFlow"
