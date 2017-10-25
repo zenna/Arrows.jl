@@ -53,11 +53,27 @@ function verify_optim(arr::CompArrow, inputs=rand(length(▸(arr, !is(θp)))), o
     optimizer = id_loss(arr, invarr)
     index = 1
   end
+  j=0
+  function savedata(data):
+    println("Step number $j...")
+    j += 1
+  end
   init = [outs..., rand(length(▸(optimizer, is(θp))))...]
-  error, argmin = optimize(optimizer, ▸(optimizer, is(θp)), ◂(optimizer, index), init)
+  error, argmin = optimize(optimizer, ▸(optimizer, is(θp)), ◂(optimizer, index), init;
+                            callbacks=[])
   println("The optimized $opt loss is $error.")
-
   opt_inputs = invarr(outs..., argmin...)
   opt_outs = arr(opt_inputs...)
   error, outs, opt_outs
 end
+#
+# "Plots the optimization loss vs iteration step for the given arrow
+# where the optimization method is specified by the given type."
+# function plot_optim(arr::CompArrow, n_trials::Integer, opt="id")
+# #
+# add = CompArrow(:test, [:x, :y], [:z])
+# x, y, z = ⬨(add)
+# x * y + x ⥅ z
+# add
+# verify_optim(add)
+#
