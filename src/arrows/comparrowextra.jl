@@ -11,20 +11,30 @@ dst_sub_ports(arr::CompArrow)::Vector{SubPort} = ⬨(arr, is_dst)
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
 
 "Is `sport` a port on one of the `SubArrow`s within `arr`"
-in(sport::SubPort, arr::CompArrow) = sport ∈ fall_sub_ports(arr)
+function in(sport::SubPort, carr::CompArrow)::Bool
+  sarr = sub_arrow(sport)
+  (sarr ∈ carr) &&  (0 < sport.port_id <= num_ports(sarr))
+end
 
 "Is `link` one of the links in `arr`?"
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
+
+"Is a name of a `SubArrow`"
+in(name::ArrowName, arr::CompArrow)::Bool =
+  haskey(arr.sarr_name_to_arrow, name)
 
 "Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
 is_boundary(sprt::SubPort) = sprt ∈ ⬨(sub_arrow(sprt))
 
 "Is `port` within `arr` but not on boundary"
-strictly_in(sprt::SubPort, arr::CompArrow) = sprt ∈ inner_sub_ports(arr)
+function strictly_in(sprt::SubPort, arr::CompArrow)
+  (sprt ∈ arr) && !on_boundary(sprt)
+end
 
 "Is `arr` a sub_arrow of composition `c_arr`"
-in(sarr::SubArrow, carr::CompArrow)::Bool = sarr ∈ all_sub_arrows(carr)
-
+function in(sarr::SubArrow, carr::CompArrow)::Bool
+  (parent(sarr) == carr) && (name(sarr) ∈ carr)
+end
 # Port Properties
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 props(subport::SubPort) = props(deref(subport))
@@ -232,43 +242,45 @@ end
 ## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_valid = false"
-function should_src(port::SubPort)::Bool
-  arr = parent(port)
-  if !(port in all_sub_ports(arr))
+function should_src(sport::SubPort)::Bool
+  arr = parent(sport)
+  if sport ∉ arr
     throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
-  if strictly_in(port, parent(port))
-    is_out_port(port)
+  if strictly_in(sport, parent(sport))
+    is_out_port(sport)
   else
-    is_in_port(port)
+    is_in_port(sport)
   end
 end
 
 "Should `port` be a dst in context `arr`? Maybe false iff is_valid=false"
-function should_dst(port::SubPort)::Bool
-  arr = parent(port)
-  if !(port in all_sub_ports(arr))
+function should_dst(sport::SubPort)::Bool
+  arr = parent(sport)
+  if sport ∉ arr
     throw(ArgumentError("Port $port not in ports of $(name(arr))"))
   end
-  if strictly_in(port, parent(port))
-    is_in_port(port)
+  if strictly_in(sport, parent(sport))
+    is_in_port(sport)
   else
-    is_out_port(port)
+    is_out_port(sport)
   end
 end
 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
-  for i = 1:LG.nv(arr.edges)
-    sarr = sub_port_vtx(arr, i)
+  seen = Set{Int}()
+  for (pxport, vtxid) in arr.port_to_vtx_id
+    sarr = SubPort(arr, pxport)
+    push!(seen, vtxid)
     if should_dst(sarr)
       # If it should be a desination
-      if !(LG.indegree(arr.edges, i) == 1 &&
-           LG.outdegree(arr.edges, i) == 0)
+      if !(LG.indegree(arr.edges, vtxid) == 1 &&
+           LG.outdegree(arr.edges, vtxid) == 0)
       # TODO: replace error with lens
-        errmsg = """vertex $i Port $(sarr) should be a dst but
-                    indeg is $(LG.indegree(arr.edges, i)) (should be 1)
-                    outdeg is $(LG.outdegree(arr.edges, i)) (should be 0)
+        errmsg = """vertex $vtxid Port $(sarr) should be a dst but
+                    indeg is $(LG.indegree(arr.edges, vtxid)) (should be 1)
+                    outdeg is $(LG.outdegree(arr.edges, vtxid)) (should be 0)
                   """
         warn(errmsg)
         return false
@@ -276,13 +288,20 @@ function is_wired_ok(arr::CompArrow)::Bool
     end
     if should_src(sarr)
       # if it should be a source
-      if !(LG.outdegree(arr.edges, i) > 0 || LG.indegree(arr.edges) == 1)
-        errmsg = """vertex $i Port $(sarr) is source but out degree is
-        $(LG.outdegree(arr.edges, i)) (should be >= 1)"""
+      if !(LG.outdegree(arr.edges, vtxid) > 0 || LG.indegree(arr.edges) == 1)
+        errmsg = """vertex $vtxid Port $(sarr) is source but out degree is
+        $(LG.outdegree(arr.edges, vtxid)) (should be >= 1)"""
         warn(errmsg)
         return false
       end
     end
+  end
+  n = LG.nv(arr.edges)
+  if !((length(seen) == n) && (max(seen...) == n))
+    errmsg = """The number of subports is $(length(seen)) but should
+    be $(n) or some port has a bigger vertex id $(max(seen...))"""
+    warn(errmsg)
+    return false
   end
   true
 end
