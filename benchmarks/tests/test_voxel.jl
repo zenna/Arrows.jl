@@ -9,7 +9,9 @@ function test_array_arrow()
   opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
             phong = false, density = 2)
 
-  render(voxels, STD_ROTATION_MATRIX, opt)
+  img_sprt = render(voxels, STD_ROTATION_MATRIX, opt)
+  link_ports!(img_sprt, img)
+  carr
 end
 test_array_arrow()
 import Images: colorview, Gray

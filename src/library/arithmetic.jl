@@ -1,3 +1,7 @@
+# Traits
+isscalar(::PrimArrow) = false
+isscalar(::Type{<:PrimArrow}) = Val{false}
+
 "x + y"
 struct AddArrow <: PrimArrow end
 name(::AddArrow)::Symbol = :+
@@ -98,6 +102,31 @@ function expander_prop(prop_generator, typ)
   end
 end
 
+# Unions
+ArithArrow = Union{AddArrow,
+                  SubtractArrow,
+                  DivArrow,
+                  MulArrow,
+                  ExpArrow,
+                  LogArrow,
+                  LogBaseArrow,
+                  ASinArrow,
+                  SinArrow,
+                  CosArrow,
+                  ACosArrow, 
+                  SqrtArrow,
+                  SqrArrow,
+                  AbsArrow,
+                  PowArrow,
+                  NegArrow,
+                  MinArrow,
+                  MaxArrow,
+                  ModArrow,
+                  CeilArrow,
+                  FloorArrow}
+
+isscalar(::Type{<:ArithArrow}) = Val{true}
+isscalar(::ArithArrow) = true
 
 to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       CosArrow, ACosArrow, SqrtArrow, SqrArrow,
