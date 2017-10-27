@@ -3,10 +3,10 @@ function expander(short_symb, f_symb)
   fname = Symbol(:get_, plural)
   # @show fname, plural
   quote
-  $fname(carr::CompArrow, i::Int) = $f_symb(carr, i)
-  $fname(carr::CompArrow, pred, xs...) = filter(pred, $plural(carr))[xs...]
-  $fname(carr::CompArrow, pred) = filter(pred, $plural(carr))
-  $fname(carr::CompArrow) = $plural(carr)
+  $fname(arr::Arrow, i::Int) = $f_symb(arr, i)
+  $fname(arr::Arrow, pred, xs...) = filter(pred, $plural(arr))[xs...]
+  $fname(arr::Arrow, pred) = filter(pred, $plural(arr))
+  $fname(arr::Arrow) = $plural(arr)
 
   $fname(sarr::SubArrow, i::Int) = $f_symb(sarr, i)
   $fname(sarr::SubArrow, pred, xs...) = filter(pred, $plural(sarr))[xs...]

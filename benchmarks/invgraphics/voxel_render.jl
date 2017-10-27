@@ -1,11 +1,9 @@
 using NamedTuples
 
-# For repeatability
-# STD_ROTATION_MATRIX = rand_rotation_matrices(nviews)
+# For repeatability: STD_ROTATION_MATRIX = rand_rotation_matrices(nviews)
 const STD_ROTATION_MATRIX = [0.94071758  -0.33430171 -0.05738258
                              -0.33835238 -0.91297877 -0.2280076
                              0.02383425  0.2339063 -0.97196698]
-
 
 "(width, height, 2) array, res[i,j] = [i,j] - ray dir based on an increment"
 function gen_fragcoords(width::Integer, height::Integer)
@@ -58,11 +56,15 @@ end
 "Integrate one step along ray"
 function innerloop(voxels, step_sz_flat, left_over, orig, rd,
                    step_sz, i, x_tiled, opt, nmatrices = 1)
+
   # Find the position (x,y,z) of ith step
   # pos = orig .+ rd .* (step_sz * i)
-  adj_rd = map(*, rd, steo_sz * i)
+  step_sz = repeat(step_sz, outer=(1, 3))
+  @show size(rd)
+  @show size(step_sz)
+  @show size(i)
+  adj_rd = map(*, rd, step_sz * i)
   pos = map(+, orig, adj_rd)
-
 
   # convert to indices for voxel cube
   voxel_indices = floor.(Int, pos * opt.res)
@@ -78,7 +80,12 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
   attenuation = gather_nd(voxels, batched_indices)
-  map(exp, -attenuation * opt.density, step_sz_flat)
+  @show typeof(attenuation)
+  # @show typeof(-attenuation * opt.density)
+  @show typeof(step_sz_flat)
+  res = map(exp, map(*, -attenuation * opt.density, step_sz_flat))
+  @show typeof(res)
+  res
   # exp.(-attenuation * opt.density .* step_sz_flat)
 end
 
@@ -90,14 +97,14 @@ end
 
 "GatherND, from TensorFlow"
 function gather_nd(params::Arrows.AbstractPort, indices::Arrows.AbstractPort)
-  res = Arrows.compose!(vcat(params, indices), GatherNdArrow())
+  res = Arrows.compose!(vcat(params, indices), GatherNdArrow())[1]
 end
 
 "GatherND, from TensorFlow"
 function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3})
   indices = SourceArrow(indices)
   sarr = add_sub_arr!(parent(params), indices)
-  gather_nd(params, ◃(sarr))
+  gather_nd(params, ◃(sarr, 1))
 end
 
 "Generate rays origin and step size"
@@ -110,9 +117,9 @@ function origin(rotation_matrix, opt, rd, ro, nmatrices)
   tn_true = min.(tn, tff)
   tff_true = max.(tn, tff)
 
-  # do X
   tn_x = tn_true[:, :, :, 1]
   tff_x = tff_true[:, :, :, 1]
+  # do X
   tmin = 0.0
   tmax = 10.0
   t0 = fill(tmin, size(tn_x))
@@ -144,7 +151,6 @@ function origin(rotation_matrix, opt, rd, ro, nmatrices)
   orig = reshape(orig, (nmatrices * width * height, 3))
   orig, step_size
 end
-
 
 """
 Renders `batch_size` `voxels` grids
@@ -180,7 +186,7 @@ function render(voxels, rotation_matrix, opt)
 
   left_over = ones((opt.batch_size, nmatrices * width * height,))
   for i = 0:opt.nsteps - 1
-    left_over = left_over .* innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt)
+    left_over = map(*, left_over, innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt))
   end
   left_over
 end

@@ -34,7 +34,8 @@ using NamedTuples
 
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
+  map, mean
 
 import Base:  ^,
               +,
@@ -74,7 +75,9 @@ import Base:  ^,
               floor,
               ceil,
               getindex
+
 export
+  lift,
   conjoin,
   disjoin,
   ∨,
@@ -288,7 +291,7 @@ include("sym/sym.jl")
 # Integration of arrow with julia #
 include("host/overload.jl")
 include("host/filter.jl")
-
+include("map.jl")
 
 # # Optimziation and Learning #
 # include("optim/loss.jl")
@@ -298,7 +301,6 @@ include("host/filter.jl")
 #
 # # Targets #
 include("targets/targets.jl")
-include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
 include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
 #
@@ -307,6 +309,7 @@ compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
+include("targets/julia/JuliaTarget.jl")
 
 # include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
