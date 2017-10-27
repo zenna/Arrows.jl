@@ -194,6 +194,7 @@ export
 
   # Compound
   addn,
+  gather_nd,
 
   # Optimization
   optimize,

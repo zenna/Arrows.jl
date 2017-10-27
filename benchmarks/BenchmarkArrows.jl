@@ -1,4 +1,4 @@
-"Benchmark example arrows"
+"Benchmark arrows"
 module BenchmarkArrows
 using Arrows
 import Arrows: add_sub_arr!,
