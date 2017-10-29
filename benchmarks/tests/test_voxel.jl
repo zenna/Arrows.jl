@@ -13,8 +13,36 @@ function test_array_arrow()
   link_ports!(img_sprt, img)
   carr
 end
-test_array_arrow()
-import Images: colorview, Gray
+
+
+function test_inv_array_arrow()
+  carr = test_array_arrow()
+  subinv(args...) = inv(args...)
+  # Hack until constant propagation is done
+  function subinv(sarr::SubArrow)
+    carr = deref(sarr)
+    const_in = map(Arrows.is_src_source, ▹(sarr))
+    subinv(deref(sarr), const_in)
+  end
+  function subinv(::Arrows.ReshapeArrow, const_in::Vector{Bool})
+    @show const_in
+    carr = CompArrow(:inv_reshape, [:x], [:z])
+    @show x, z = get_ports(carr)
+    @show src = add_sub_arr!(carr, SourceArrow((1, 32, 32, 32)))
+    @show reshp = add_sub_arr!(carr, Arrows.ReshapeArrow())
+    @show link_ports!(x, (reshp, 1))
+    @show link_ports!((src, 1), (reshp, 2))
+    @show link_ports!((reshp, 1), z)
+    @assert is_wired_ok(carr)
+    carr, Dict(1=>1, 2=>2, 3=>3)
+    println("ok im cheaiting!!!!!!!!")
+    @assert false
+  end
+  invcarr = invert(carr, subinv)
+end
+
+
+# import Images: colorview, Gray
 
 function test_render()
   path = joinpath(ENV["DATADIR"], "alio", "voxels", "voxels.jld")
@@ -65,11 +93,11 @@ function test_arrows_array()
   carr = CompArrow(:probe, [:voxel], [:img])
 end
 
-@time varr = test_arrow_render();
-println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
-println("testing if it's wired ok")
-@time is_wired_ok(varr)
-println("computing inverse")
-@time invvarr = invert(varr);
-println("inverse computed")
-# end
+# @time varr = test_arrow_render();
+# println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
+# println("testing if it's wired ok")
+# @time is_wired_ok(varr)
+# println("computing inverse")
+# @time invvarr = invert(varr);
+# println("inverse computed")
+# # end

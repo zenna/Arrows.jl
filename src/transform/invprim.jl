@@ -42,6 +42,12 @@ function unary_inv(arr::Arrow,
   invarr, port_map
 end
 
+function inv(::Arrows.ReshapeArrow, const_in::Vector{Bool})
+  @show const_in
+  @assert false
+end
+
+
 inv{O}(arr::DuplArrow{O}, const_in::Vector{Bool}) =
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 
