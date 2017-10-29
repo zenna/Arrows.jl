@@ -8,3 +8,8 @@ assert!(sport::SubPort) =
     link_ports!(sport, (add_sub_arr!(parent(sport), AssertArrow()), 1))
 
 fakeassert(x) = ()
+
+
+struct AssertFalseArrow <: PrimArrow
+    AssertFalseArrow() = error("AssertFalseArrow should not be instantiated")
+end

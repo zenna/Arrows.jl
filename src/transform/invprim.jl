@@ -72,6 +72,17 @@ inv(arr::MulArrow, const_in) =
              DivArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 
+# TODO: Fix this creating a parametric inverse of reshape
+# We may do _static_ analysis to determin the shape of the arrays
+inv(arr::RehapeArrow, const_in) =
+ binary_inv(arr,
+            const_in,
+            (x, y) -> AssertFalseArrow(),
+            AssertFalseArrow,
+            Dict(),
+            RehapeArrow,
+            Dict(1 => 3, 2 => 2, 3 => 1))
+
 inv_np(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
 inv_np(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
 "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
