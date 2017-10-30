@@ -47,7 +47,6 @@ function inv(::Arrows.ReshapeArrow, const_in::Vector{Bool})
   @assert false
 end
 
-
 inv{O}(arr::DuplArrow{O}, const_in::Vector{Bool}) =
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 

@@ -100,14 +100,28 @@ function replace_sub_arr!(sarr::SubArrow, arr::Arrow, portidmap::PortIdMap)::Sub
   parr = parent(sarr)
   replarr = add_sub_arr!(parr, arr)
   subportmap = sub_port_map(sarr, replarr, portidmap)
-  for sport in ⬨(sarr)
-    for (l, r) in in_links(sport)
-      link_ports!(l, subportmap[r])
-    end
-    for (l, r) in out_links(sport)
-      link_ports!(subportmap[l], r)
+  for (l, r) in subportmap
+    if is_dst(l)
+      for (a, b) in in_links(l)
+        link_ports!(a, l)
+      end
+    elseif is_src(l)
+      for (a, b) in out_links(l)
+        link_ports!(r, b)
+      end
     end
   end
+  #
+  #   link_ports!(l, r)
+  # end
+  # for sport in ⬨(sarr)
+  #   for (l, r) in in_links(sport)
+  #     link_ports!(l, subportmap[r])
+  #   end
+  #   for (l, r) in out_links(sport)
+  #     link_ports!(subportmap[l], r)
+  #   end
+  # end
   rem_sub_arr!(sarr)
   replarr
 end

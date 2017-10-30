@@ -69,8 +69,7 @@ struct SubPort <: AbstractPort
     if 0 < port_id <= num_ports(sarr)
       new(sarr, port_id)
     else
-      println("Invalid port_id: ", port_id)
-      throw(DomainError())
+      throw(ArgumentError("Invalid port_id: $port_id"))
     end
   end
 end

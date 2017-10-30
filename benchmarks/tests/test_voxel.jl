@@ -19,7 +19,7 @@ function test_inv_array_arrow()
   carr = test_array_arrow()
   subinv(args...) = inv(args...)
   # Hack until constant propagation is done
-  function subinv(sarr::SubArrow)
+  function subinv(sarr::Arrows.SubArrow)
     carr = deref(sarr)
     const_in = map(Arrows.is_src_source, ▹(sarr))
     subinv(deref(sarr), const_in)
@@ -35,11 +35,12 @@ function test_inv_array_arrow()
     @show link_ports!((reshp, 1), z)
     @assert is_wired_ok(carr)
     carr, Dict(1=>1, 2=>2, 3=>3)
-    println("ok im cheaiting!!!!!!!!")
     @assert false
   end
   invcarr = invert(carr, subinv)
 end
+
+test_inv_array_arrow()
 
 
 # import Images: colorview, Gray
