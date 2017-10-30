@@ -296,7 +296,7 @@ include("host/filter.jl")
 include("map.jl")
 
 # # Optimziation and Learning #
-# include("optim/loss.jl")
+include("optim/loss.jl")
 # include("optim/optimize.jl")
 # include("gradient/gradient.jl")
 
@@ -313,7 +313,7 @@ interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
 
-# include("../test/TestArrows.jl")
+include("../test/TestArrows.jl")
 include("../benchmarks/BenchmarkArrows.jl")
 
 # Analysis

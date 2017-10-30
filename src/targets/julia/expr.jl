@@ -6,12 +6,16 @@ import Base: broadcast
 broadcast(x::Symbol) = Symbol(:., x)
 
 # By default use the `name` of `carr` as its julia equivalent
-function call_expr(arr::Arrow, args...)
-  if Arrows.isscalar(arr)
+function call_expr(arr::PrimArrow, args...)
+  if Arrows.  isscalar(arr)
     Expr(:., name(arr), Expr(:tuple, args...))
   else
     Expr(:call, name(arr), args...)
   end
+end
+
+function call_expr(arr::CompArrow, args...)
+  Expr(:call, name(arr), args...)
 end
 # But we have some special cases
 call_expr{N}(arr::DuplArrow{N}, arg) = Expr(:call, dupl, arg, N)
