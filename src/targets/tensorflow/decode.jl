@@ -48,7 +48,16 @@ conv(::InvDuplArrow, args::Args)::Vector{Tensor} =
 # conv(a::RangeArrow, args::Args)::Vector{Tensor} = [tf.range(args[1], args[1])]
 # conv(a::ReduceMeanArrow, args::Args)::Vector{Tensor} =
 #   return [tf.reduce_mean(args[1], reduction_indices=args[1])]
-conv(a::SourceArrow, args)::Vector{Tensor} = [tf.constant(a.value)]
+
+
+sanitizeconst(value::Tuple) = [value...]
+sanitizeconst(value) = value
+conv(::Arrows.ReshapeArrow, args)::Vector{Tensor} = [tf.reshape(args...)]
+conv(::GatherNdArrow, args)::Vector{Tensor} = [tf.gather_nd(args...)]
+conv(::NegArrow, args)::Vector{Tensor} = [tf.neg(args...)]
+conv(::ExpArrow, args)::Vector = [tf.exp(args...)]
+conv(arr::SourceArrow, args)::Vector{Tensor} = [tf.constant(sanitizeconst(arr.value))]
+
 # conv(a::GreaterArrow, args::Args)::Vector{Tensor} = [tf.greater(args[1], args[1])]
 # conv(a::IfArrow, args::Args)::Vector{Tensor} = [tf.where(args...)]
 # conv(a::GatherArrow, args::Args)::Vector{Tensor} = [tf.gather(args...)]

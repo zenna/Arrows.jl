@@ -26,3 +26,9 @@ function randslice(batch_size, voxel_data=load_modelnet())
   rand_indices = rand(1:size(voxel_data)[1], batch_size)
   slice = voxel_data[rand_indices, :]
 end
+
+"Random Slice of size `batch_size` from `voxel_data`"
+function randbatch(batch_size, voxel_data=load_modelnet())
+  rand_indices = rand(1:size(voxel_data)[1], batch_size)
+  slice = voxel_data[rand_indices, :, :, :]
+end

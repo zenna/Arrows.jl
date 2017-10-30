@@ -11,6 +11,7 @@ import TensorFlow: Operation, Graph, Tensor, Session, get_op
 import Base: convert, hash, isequal, ==
 
 # #
+include("apply.jl")
 include("extensions.jl")
 # include("python.jl")
 # include("types.jl")
@@ -21,7 +22,7 @@ include("decode.jl")
 struct TFTarget <: Target end
 #
 "Compiles `arr` into `Expr` tensorflow program"
-compile(arr::Arrow, target::TFTarget) = Graph(arr)
+compile(arr::Arrow, target::Type{TFTarget}) = Graph(arr)
 # #
 # #
 # export graph_to_arrow,

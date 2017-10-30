@@ -82,7 +82,9 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   attenuation = gather_nd(voxels, batched_indices)
   @show typeof(attenuation)
   # @show typeof(-attenuation * opt.density)
-  @show typeof(step_sz_flat)
+  # @show typeof(step_sz_flat)
+  # @show size(attenuation)
+  # @show size(step_s)
   res = map(exp, map(*, -attenuation * opt.density, step_sz_flat))
   @show typeof(res)
   res
