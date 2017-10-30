@@ -1,7 +1,6 @@
 using Arrows
-import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render
+import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render, smallvoxels
 using NamedTuples
-import util: smallvoxels
 
 function test_array_arrow()
   carr = CompArrow(:render, [:voxel], [:img])
