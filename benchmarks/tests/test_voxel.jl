@@ -46,32 +46,27 @@ end
 function test_inv_array_arrow()
   carr = test_array_arrow()
    # Hack until constant propagation is done
-  function subinv(sarr::Arrows.SubArrow)
-    carr = deref(sarr)
-    const_in = map(Arrows.is_src_source, ▹(sarr))
-    subinv(sarr, deref(sarr), const_in)
-  end
-  subinv(sarr::Arrows.SubArrow, arr::Arrow, const_in) = inv(arr, const_in)
-  function subinv(sarr::Arrows.SubArrow, ::Arrows.ReshapeArrow, const_in::Vector{Bool})
-    @show const_in
-    carr = CompArrow(:inv_reshape, [:x], [:z])
-    @show x, z = get_ports(carr)
-    @show src = add_sub_arr!(carr, SourceArrow((1, 32, 32, 32)))
-    @show reshp = add_sub_arr!(carr, Arrows.ReshapeArrow())
-    @show link_ports!(x, (reshp, 1))
-    @show link_ports!((src, 1), (reshp, 2))
-    @show link_ports!((reshp, 1), z)
-    @assert is_wired_ok(carr)
-    carr, Dict(1=>1, 3=>2, 3=>2)
-  end
-  function subinv(sarr::Arrows.SubArrow, ::Arrows.GatherNdArrow, const_in::Vector{Bool})
-    v = deref(sub_arrow(Arrows.in_neighbors(▹(sarr, 2))[1])).value
-    @show size(v)
-    # @show Arrows.in_neighbors.(▹(sarr))
-    @assert false
-  end
-  invcarr = invert(carr, subinv)
+
+  # function subinv(sarr::Arrows.SubArrow)
+  #   carr = deref(sarr)
+  #   const_in = map(Arrows.is_src_source, ▹(sarr))
+  #   subinv(sarr, deref(sarr), const_in)
+  # end
+  # function subinv(sarr, dummy, const_in)
+  #   inv(deref)
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.ReshapeArrow, const_in::Vector{Bool})
+  #   Arrows.ReshapeArrow(), Dict(1=>3, 2=>2, 3=>1)
+  # end
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.GatherNdArrow, const_in::Vector{Bool})
+  #   Arrows.ScatterNdArrow(), Dict(1=>3, 2=>2, 3=>1)
+  # end
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.SourceArrow, const_in::Vector{Bool})
+  #   inv(deref(sarr), const_in)
+  # end
+  invcarr = invert(carr)
 end
+
+
 
 test_inv_array_arrow()
 # import Images: colorview, Gray

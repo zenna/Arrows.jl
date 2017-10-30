@@ -178,6 +178,7 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
+  ScatterNdArrow,
   ASinArrow,
   ACosArrow,
   SinArrow,
