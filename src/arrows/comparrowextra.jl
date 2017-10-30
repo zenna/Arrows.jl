@@ -103,7 +103,7 @@ function replace_sub_arr!(sarr::SubArrow, arr::Arrow, portidmap::PortIdMap)::Sub
   for (l, r) in subportmap
     if is_dst(l)
       for (a, b) in in_links(l)
-        link_ports!(a, l)
+        link_ports!(a, r)
       end
     elseif is_src(l)
       for (a, b) in out_links(l)
