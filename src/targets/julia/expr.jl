@@ -1,8 +1,26 @@
-## Expr ##
+## Compilation of Arrows to Exprs ##
+
+import Base: broadcast
+
+# This is a hack
+broadcast(x::Symbol) = Symbol(:., x)
+
+# By default use the `name` of `carr` as its julia equivalent
+function call_expr(arr::PrimArrow, args...)
+  if Arrows.  isscalar(arr)
+    Expr(:., name(arr), Expr(:tuple, args...))
+  else
+    Expr(:call, name(arr), args...)
+  end
+end
+
+function call_expr(arr::CompArrow, args...)
+  Expr(:call, name(arr), args...)
+end
+# But we have some special cases
 call_expr{N}(arr::DuplArrow{N}, arg) = Expr(:call, dupl, arg, N)
 call_expr{N}(arr::InvDuplArrow{N}, args...) = Expr(:call, inv_dupl, args...)
 call_expr(arr::SourceArrow, args...) = arr.value
-call_expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
 
 function func_decl_expr(carr::CompArrow)
   funcname = name(carr)
@@ -20,7 +38,7 @@ function func_return_expr(carr::CompArrow)
   ret = Expr(:return, retargs)
 end
 
-"Assign expressio"
+"Assign expression"
 function assign_expr(sarr::SubArrow, outnames::Vector, args...)
   outnames = map(name, tuple(Arrows.out_values(sarr)...))
   lhs = if length(outnames) == 1
@@ -55,6 +73,7 @@ function expr(carr::CompArrow)
   function_expr(carr, assigns)
 end
 
+"Recursively compile `carr` and all arrows it contains into `Expr`s"
 function exprs(carr::CompArrow)
   names = []
   name_codes = Arrows.maprecur(carr) do scarr

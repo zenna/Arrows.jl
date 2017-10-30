@@ -1,12 +1,77 @@
 using Arrows
+import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render, smallvoxels
 using NamedTuples
-import JLD: load
-import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render
-import Images: colorview, Gray
 
-function test_render()
-  path = joinpath(ENV["DATADIR"], "alio", "voxels", "voxels.jld")
-  voxels = load(path)["voxels"]
+function test_array_arrow()
+  carr = CompArrow(:render, [:voxel], [:img])
+  voxels, img = ⬨(carr)
+  opt = @NT(width = 256, height = 256, nsteps = 10, res = 32, batch_size = 10,
+            phong = false, density = 2)
+
+  img_sprt = render(voxels, STD_ROTATION_MATRIX, opt)
+  link_ports!(img_sprt, img)
+  carr
+end
+
+
+function test_array_render_arrow()
+  rendercarr = test_array_arrow()
+  @show x = rand(1:64)
+  img = carr(smallvoxels[x:x+1, :, :, :])
+end
+
+function tfapply(intens, outtens, args, sess=TensorFlow.Session())
+  TensorFlow.run(sess, TensorFlow.global_variables_initializer())
+  run(sess, outtens, Dict(zip(intens, args)))
+end
+
+function test_tf_render()
+  rendercarr = test_array_arrow()
+  tfrender = Arrows.TensorFlowTarget.Graph(rendercarr)
+  voxels = smallmodelnet()
+  sess = TensorFlow.Session(tfrender.graph)
+  outimg = tfapply(tfrender.in, tfrender.out, [randslice(10, voxels)], sess)
+end
+
+function test_render(voxels = modelnet())
+  opt = @NT(width = 256, height = 256, nsteps = 15, res = 32, batch_size = 1,
+            phong = false, density = 2)
+  x = rand(1:size(voxels, 1) - opt.batch_size)
+  voxels = voxels[x:x+opt.batch_size-1, :, :, :]
+  imgs = render(voxels, STD_ROTATION_MATRIX, opt)
+  img = reshape(imgs[1,:,:], (256, 256))
+  colorview(Gray, img)
+end
+
+function test_inv_array_arrow()
+  carr = test_array_arrow()
+   # Hack until constant propagation is done
+
+  # function subinv(sarr::Arrows.SubArrow)
+  #   carr = deref(sarr)
+  #   const_in = map(Arrows.is_src_source, ▹(sarr))
+  #   subinv(sarr, deref(sarr), const_in)
+  # end
+  # function subinv(sarr, dummy, const_in)
+  #   inv(deref)
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.ReshapeArrow, const_in::Vector{Bool})
+  #   Arrows.ReshapeArrow(), Dict(1=>3, 2=>2, 3=>1)
+  # end
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.GatherNdArrow, const_in::Vector{Bool})
+  #   Arrows.ScatterNdArrow(), Dict(1=>3, 2=>2, 3=>1)
+  # end
+  # function subinv(sarr::Arrows.SubArrow, ::Arrows.SourceArrow, const_in::Vector{Bool})
+  #   inv(deref(sarr), const_in)
+  # end
+  invcarr = invert(carr)
+end
+
+
+
+test_inv_array_arrow()
+# import Images: colorview, Gray
+
+function test_render(voxels = modelnet())
   opt = @NT(width = 256, height = 256, nsteps = 15, res = 32, batch_size = 8,
             phong = false, density = 2)
   x = rand(1:size(voxels, 1) - opt.batch_size)
@@ -45,11 +110,19 @@ function test_arrow_render()
   varr
 end
 
-@time varr = test_arrow_render();
-println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
-println("testing if it's wired ok")
-@time is_wired_ok(varr)
-println("computing inverse")
-@time invvarr = invert(varr);
-println("inverse computed")
-# end
+function test_arrows_array()
+  opt = @NT(width = 32, height = 32, nsteps = 3, res = 32, batch_size = 1,
+            phong = false, density = 2)
+  nvox▹ = opt.batch_size * opt.res * opt.res * opt.res
+  ◃nvox = opt.batch_size * opt.width * opt.height
+  carr = CompArrow(:probe, [:voxel], [:img])
+end
+
+# @time varr = test_arrow_render();
+# println("length(sub_arrows(varr)): $(length(sub_arrows(varr)))")
+# println("testing if it's wired ok")
+# @time is_wired_ok(varr)
+# println("computing inverse")
+# @time invvarr = invert(varr);
+# println("inverse computed")
+# # end

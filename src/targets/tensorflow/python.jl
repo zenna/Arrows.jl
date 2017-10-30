@@ -1,5 +1,4 @@
 import Base: convert, hash, isequal, ==
-using PyCall
 @pyimport tensorflow as pytf
 
 "Light wrapper around Tensor"

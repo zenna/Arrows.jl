@@ -1,6 +1,3 @@
-import NLopt
-import ReverseDiff
-
 "Construct loss julia function"
 function lossjl(▸idx, init, ϵprt::Port, callbacks)
   carrjl = julia(ϵprt.arrow)
