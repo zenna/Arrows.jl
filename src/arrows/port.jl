@@ -2,12 +2,12 @@
 An entry or exit to an Arrow, analogous to argument of multivariate function.
 A port is uniquely determined by the arrow it belongs to and an index
 """
-abstract type AbstractPort end
+abstract type AbstractPort{V} end
 
 "An interface to an `Arrow`"
-struct Port{A <: Arrow, T <: Integer} <: AbstractPort
+struct Port{V, A <: Arrow} <: AbstractPort{V}
   arrow::A
-  port_id::T
+  port_id::Int
 end
 
 "Barebone mechanism to add attributes to a `Port`: it either has label or not"

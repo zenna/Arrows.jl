@@ -22,7 +22,7 @@ function optimize(step!::Function,
                   pre_callbacks=[],
                   callbacks=[],
                   post_callbacks=[],
-                  cont=data -> data.i < maxiters,
+                  cont=data -> data.i < 100,
                   resetlog::Bool=true,
                   logdir::String="",
                   optimize::Bool=true,
@@ -35,19 +35,23 @@ function optimize(step!::Function,
 
   while cont(cb_data)
     if optimize
-      @show cur_loss, _ = step!()
+      @show cur_loss = step!()
     end
 
     cb_data = @NT(start_i=start_i, i=i, Stage=Run, loss=cur_loss)
     foreach(cb->apl(cb, cb_data), callbacks)
     i += 1
-    resetlog && reset_log()
+    # resetlog && reset_log()
   end
   # Post Callbacks
   cb_data = @NT(start_i=start_i, i=i, Stage=Post)
   foreach(cb->apl(cb, cb_data), post_callbacks)
-  cur_loss
 end
+
+
+deliver(x::Real) = x
+deliver(x::Array{<:Real}) = x
+deliver(f::Function) = f()
 
 """
 argmin_θ(ϵprt): find θ which minimizes ϵprt
@@ -68,30 +72,34 @@ function optimize(carr::CompArrow,
                   callbacks=[],
                   target=Type{TFTarget})
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
-  @show ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
-  tfarr = compile(carr, TFTarget)
-  @show loss = tfarr.out[ϵid]
-  sess = tf.Session(tfarr.graph)
-
-  ## Make Variables for ports that we are optimizing over
-  ## And Supply inptus to the rest
-  tf.as_default(tfarr.graph) do
-    run(sess, global_variables_initializer())
+  ▸idover = indexin(over, ▸(carr))
+  ▸idover = indexin(over, ▸(carr))
+  graph = tf.Graph()
+  tf.as_default(graph) do
+    intens = Tensor[]
+    phs = Dict{Tensor, Int}()
+    for (i, prt) in enumerate(▸(carr))
+      if prt ∈ over
+        push!(intens, tf.Variable(deliver(init[i]), name="varinp_$i"))
+      else
+        # FIXME: Specific type
+        ph = tf.placeholder(Float64, name="inp_$i")
+        push!(intens, ph)
+        phs[ph] = i
+      end
+    end
+    tfarr = Graph(carr, graph, intens)
+    ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
+    loss = tfarr.out[ϵid]
+    sess = tf.Session(graph)
     optimizer = train.AdamOptimizer()
     minimize_op = train.minimize(optimizer, loss)
+    run(sess, global_variables_initializer())
     function step!()
-      @show cur_loss, _ = run(sess, [loss, minimize_op])
+      phsvalmap = Dict(ph => deliver(init[id]) for (ph, id) in phs)
+      cur_loss, _ = run(sess, [loss, minimize_op], phsvalmap)
       cur_loss
     end
     return optimize(step!)
   end
-end
-
-function test_tf_optimize()
-  carr = Arrows.TestArrows.xy_plus_x_arr()
-  invcarr = aprx_invert(carr)
-  ϵprt = ◂(invcarr, is(ϵ), 1)
-  over = ▸(invcarr, is(θp))
-  lossarr = 1
-  optimize(invcarr, over, ϵprt, rand(length(▸(invcarr))), [], TFTarget)
 end

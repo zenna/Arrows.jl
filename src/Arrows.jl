@@ -235,7 +235,7 @@ include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
 include("value/const.jl")           # Const type
 
-include("arrows/trace.jl")          #
+# include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
