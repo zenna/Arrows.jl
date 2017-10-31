@@ -1,6 +1,7 @@
 using Base.Test
 using Arrows
 import Arrows.BenchmarkArrows: STD_ROTATION_MATRIX, render, smallmodelnet, randslice
+import Arrows.TensorFlowTarget: tfapply
 using NamedTuples
 
 fakevoxels(batch_size) = rand(batch_size, 32, 32, 32)
@@ -18,18 +19,13 @@ end
 
 test_array_arrow(opt)
 
-function test_array_render_arrow(voxels = smallmodelnet())
-  rendercarr = test_array_arrow()
+function test_array_render_arrow(opt, voxels = smallmodelnet())
+  rendercarr = test_array_arrow(opt)
   i = rand(1:10)
   img = rendercarr(voxels)
 end
 
-test_array_render_arrow(fakevoxels(10))
-
-function tfapply(intens, outtens, args, sess=TensorFlow.Session())
-  TensorFlow.run(sess, TensorFlow.global_variables_initializer())
-  run(sess, outtens, Dict(zip(intens, args)))
-end
+test_array_render_arrow(opt, fakevoxels(10))
 
 "Test TensorFlow render"
 function test_tf_render(opt, voxels = smallmodelnet())
@@ -51,12 +47,13 @@ end
 test_render(opt, fakevoxels(10))
 
 "Test inversion of render arrow"
-function test_inv_array_arrow()
-  carr = test_array_arrow()
+function test_inv_array_arrow(opt)
+  carr = test_array_arrow(opt)
   invcarr = invert(carr)
+  compile(invcarr)
 end
 
-test_inv_array_arrow()
+test_inv_array_arrow(opt)
 
 function test_arrow_render()
   # Render only uses a small subset of the input.
@@ -84,11 +81,3 @@ function test_arrow_render()
   end
   varr
 end
-
-function test_arrows_array(opt)
-  nvox▹ = opt.batch_size * opt.res * opt.res * opt.res
-  ◃nvox = opt.batch_size * opt.width * opt.height
-  carr = CompArrow(:probe, [:voxel], [:img])
-end
-
-test_arrows_array(opt)
