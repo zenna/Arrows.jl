@@ -33,6 +33,7 @@ prim_sym_interpret(::SubtractArrow, x, y)::Vector{Sym} = [x - y,]
 prim_sym_interpret(::MulArrow, x, y)::Vector{Sym} = [x * y,]
 prim_sym_interpret(::AddArrow, x, y)::Vector{Sym} = [x + y,]
 prim_sym_interpret(::DivArrow, x, y)::Vector{Sym} = [x / y,]
+prim_sym_interpret(::LogArrow, x)::Vector{Sym} = [log(x),]
 # SymPy doesnt support it
 # domainpreds(::DivArrow, x, y) = Set{Sym}([Ne(y, 0)])
 domainpreds(::Arrow, args...) = Set{Sym}()
