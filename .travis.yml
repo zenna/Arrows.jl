@@ -11,6 +11,7 @@ env:
   - DOCUMENTER_DEBUG="true" PYTHON=conda
 dist: trusty
 sudo: true
+fast_finish: true
 script:
   - julia -e 'Pkg.clone("NLopt")'
   - julia -e 'Pkg.build("NLopt")'

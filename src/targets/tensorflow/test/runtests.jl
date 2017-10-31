@@ -9,8 +9,7 @@ function pre_test(arr::Arrow)
 end
 
 function test_to_graph(arr)
-  @show arr
-  g = Arrows.TensorFlowTarget.Graph(arr)
+  Arrows.TensorFlowTarget.Graph(arr)
 end
 
 foreach(test_to_graph ∘ pre_test, plain_arrows())
@@ -20,7 +19,7 @@ function test_tf_optimize()
   invcarr = aprx_invert(carr)
   ϵprt = ◂(invcarr, is(ϵ), 1)
   over = ▸(invcarr, is(θp))
-  optimize(invcarr, over, ϵprt, rand(length(▸(invcarr))), [], TFTarget)
+  Arrows.TensorFlowTarget.optimize(invcarr, over, ϵprt, rand(length(▸(invcarr))), [], TFTarget)
 end
 
 test_tf_optimize()

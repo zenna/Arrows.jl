@@ -48,10 +48,9 @@ function optimize(step!::Function,
   foreach(cb->apl(cb, cb_data), post_callbacks)
 end
 
-
-deliver(x::Real) = x
-deliver(x::Array{<:Real}) = x
-deliver(f::Function) = f()
+take!(x::Real) = x
+take!(x::Array{<:Real}) = x
+take!(f::Function) = f()
 
 """
 argmin_θ(ϵprt): find θ which minimizes ϵprt
@@ -72,15 +71,13 @@ function optimize(carr::CompArrow,
                   callbacks=[],
                   target=Type{TFTarget})
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
-  ▸idover = indexin(over, ▸(carr))
-  ▸idover = indexin(over, ▸(carr))
   graph = tf.Graph()
   tf.as_default(graph) do
     intens = Tensor[]
     phs = Dict{Tensor, Int}()
     for (i, prt) in enumerate(▸(carr))
       if prt ∈ over
-        push!(intens, tf.Variable(deliver(init[i]), name="varinp_$i"))
+        push!(intens, tf.Variable(take!(init[i]), name="varinp_$i"))
       else
         # FIXME: Specific type
         ph = tf.placeholder(Float64, name="inp_$i")
@@ -96,7 +93,7 @@ function optimize(carr::CompArrow,
     minimize_op = train.minimize(optimizer, loss)
     run(sess, global_variables_initializer())
     function step!()
-      phsvalmap = Dict(ph => deliver(init[id]) for (ph, id) in phs)
+      phsvalmap = Dict(ph => take!(init[id]) for (ph, id) in phs)
       cur_loss, _ = run(sess, [loss, minimize_op], phsvalmap)
       cur_loss
     end

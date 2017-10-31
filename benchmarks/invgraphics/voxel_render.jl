@@ -60,9 +60,9 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   # Find the position (x,y,z) of ith step
   # pos = orig .+ rd .* (step_sz * i)
   step_sz = repeat(step_sz, outer=(1, 3))
-  @show size(rd)
-  @show size(step_sz)
-  @show size(i)
+  size(rd)
+  size(step_sz)
+  size(i)
   adj_rd = map(*, rd, step_sz * i)
   pos = map(+, orig, adj_rd)
 
@@ -80,13 +80,7 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
   attenuation = gather_nd(voxels, batched_indices)
-  @show typeof(attenuation)
-  # @show typeof(-attenuation * opt.density)
-  # @show typeof(step_sz_flat)
-  # @show size(attenuation)
-  # @show size(step_s)
   res = map(exp, map(*, -attenuation * opt.density, step_sz_flat))
-  @show typeof(res)
   res
   # exp.(-attenuation * opt.density .* step_sz_flat)
 end

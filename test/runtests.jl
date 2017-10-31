@@ -22,3 +22,10 @@ end
 println("Potentially stale exports: ")
 display(Base.Test.detect_ambiguities(Arrows))
 println()
+
+# Submodule Tests
+println("Running Compilation Target Tests")
+include("../src/targets/tensorflow/test/runtests.jl")
+
+println("Running Benchmark Tests")
+include("../benchmarks/tests/runtests.jl")

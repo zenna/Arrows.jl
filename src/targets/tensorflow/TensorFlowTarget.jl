@@ -1,6 +1,6 @@
 "Conversion to and from tensorflow graphs"
 module TensorFlowTarget
-import ..Arrows: Arrow, Target, CompArrow
+import ..Arrows: Arrow, Target, CompArrow, optimize
 using Arrows
 using PyCall
 using NamedTuples
@@ -8,7 +8,7 @@ import TensorFlow
 const tf = TensorFlow
 
 import TensorFlow: Operation, Graph, Tensor, Session, get_op
-import Base: convert, hash, isequal, ==
+import Base: convert, hash, isequal, ==, take!
 
 # #
 include("apply.jl")
@@ -26,7 +26,9 @@ struct TFTarget <: Target end
 compile(arr::Arrow, target::Type{TFTarget}) = Graph(arr)
 # #
 # #
-# export graph_to_arrow,
+export TFTarget,
+       optimize
+# graph_to_arrow,
 #        PyTensor,
 #        PyOperation,
 #        PyGraph

@@ -62,7 +62,7 @@ end
 is_valid(sarr::SubArrow) = name(sarr) ∈ parent(sarr)
 
 "A `Port` on a `SubArrow`"
-struct SubPort{V} <: AbstractPort{V}
+struct SubPort <: AbstractPort
   sub_arrow::SubArrow  # Parent arrow of arrow sport is attached to
   port_id::Int     # this is ith `port` of parent
   function SubPort(sarr::SubArrow, port_id::Integer)
@@ -114,13 +114,13 @@ props(sarr::SubArrow) = props(deref(sarr))
 
 # DEPRECATE
 "Make `port` an in_port"
-function set_in_port!{T}(prt::Port{T, <:CompArrow})
+function set_in_port!(prt::Port{<:CompArrow})
   setprop!(In(), props(prt))
 end
 
 # DEPRECATE
 "Make `port` an in_port"
-function make_out_port!{T}(prt::Port{T, <:CompArrow})
+function make_out_port!(prt::Port{<:CompArrow})
   setprop!(Out(), props(prt))
 end
 
@@ -255,7 +255,7 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
 end
 
 "Remove `prt` from a `CompArrow`"
-function rem_port!{T}(prt::Port{T, <:CompArrow})
+function rem_port!(prt::Port{<:CompArrow})
   carr = prt.arrow
   pxport = ProxyPort(name(carr), prt.port_id) # FIXME
   rem_pxport(pxport, carr)
