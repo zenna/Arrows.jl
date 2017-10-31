@@ -18,9 +18,6 @@ function gather_nd(params, indices, shape)
   indices = indices + 1
   answer = [params[indices[rr,:]...] for rr in
                         CartesianRange(size(indices)[1:end-1])]
-  @show size(indices)
-  @show size(params)
-  @show size(answer)
   answer
 end
 # struct GetIndexArrow <: PrimArrow end
