@@ -85,6 +85,8 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   # @show typeof(step_sz_flat)
   # @show size(attenuation)
   # @show size(step_s)
+  @show  opt.batch_size
+  step_sz_flat = repeat(step_sz_flat, outer=(opt.batch_size, 1))
   res = map(exp, map(*, -attenuation * opt.density, step_sz_flat))
   @show typeof(res)
   res
