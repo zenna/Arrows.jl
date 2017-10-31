@@ -65,6 +65,8 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   @show size(i)
   adj_rd = map(*, rd, step_sz * i)
   pos = map(+, orig, adj_rd)
+  res = opt.res
+  shape = (opt.batch_size, res * res * res)
 
   # convert to indices for voxel cube
   voxel_indices = floor.(Int, pos * opt.res)
@@ -79,7 +81,7 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
   tiled_indices = repeat(flat_indices, inner=opt.batch_size)
   batched_indices = [x_tiled tiled_indices]
   batched_indices = reshape(batched_indices, (opt.batch_size, length(flat_indices), 2))
-  attenuation = gather_nd(voxels, batched_indices)
+  attenuation = gather_nd(voxels, batched_indices, shape)
   @show typeof(attenuation)
   # @show typeof(-attenuation * opt.density)
   # @show typeof(step_sz_flat)
@@ -94,21 +96,25 @@ function innerloop(voxels, step_sz_flat, left_over, orig, rd,
 end
 
 "GatherND, from TensorFlow"
-function gather_nd(params, indices)
+function gather_nd(params, indices, shape)
   indices = indices + 1
   [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
 end
 
 "GatherND, from TensorFlow"
-function gather_nd(params::Arrows.AbstractPort, indices::Arrows.AbstractPort)
-  res = Arrows.compose!(vcat(params, indices), GatherNdArrow())[1]
+function gather_nd(params::Arrows.AbstractPort,
+                    indices::Arrows.AbstractPort, shape::Arrows.AbstractPort)
+  res = Arrows.compose!(vcat(params, indices, shape), GatherNdArrow())[1]
 end
 
 "GatherND, from TensorFlow"
-function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3})
+function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3},
+                   shape)
+  shape = SourceArrow(shape)
+  sarr_shape = add_sub_arr!(parent(params), shape)
   indices = SourceArrow(indices)
   sarr = add_sub_arr!(parent(params), indices)
-  gather_nd(params, ◃(sarr, 1))
+  gather_nd(params, ◃(sarr, 1), ◃(sarr_shape, 1))
 end
 
 "Generate rays origin and step size"
@@ -190,7 +196,9 @@ function render(voxels, rotation_matrix, opt)
 
   left_over = ones((opt.batch_size, nmatrices * width * height,))
   for i = 0:opt.nsteps - 1
-    left_over = map(*, left_over, innerloop(voxels, step_sz_flat, left_over, orig, rd, step_sz, i, x_tiled, opt))
+    left_over = map(*, left_over, innerloop(voxels, step_sz_flat, left_over,
+                                            orig, rd, step_sz, i,
+                                            x_tiled, opt))
   end
   left_over
 end

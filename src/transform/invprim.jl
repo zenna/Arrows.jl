@@ -48,7 +48,7 @@ end
 
 
 function inv(::Arrows.GatherNdArrow, const_in::Vector{Bool})
-  Arrows.ScatterNdArrow(), Dict(1=>3, 2=>2, 3=>1)
+  Arrows.ScatterNdArrow(), Dict(1=>4, 2=>2, 3=>3, 4=>1)
 end
 
 inv{O}(arr::DuplArrow{O}, const_in::Vector{Bool}) =

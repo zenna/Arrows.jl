@@ -1,7 +1,12 @@
 "Gather"
 struct GatherNdArrow <: PrimArrow end
 name(::GatherNdArrow)::Symbol = :gather_nd
-props(::GatherNdArrow) = bin_arith_props()
+function props(::GatherNdArrow)
+  [Props(true, :x, Any),
+   Props(true, :y, Any),
+   Props(true, :w, Any),
+   Props(false, :z, Any)]
+ end
 
 "Reshape"
 struct ReshapeArrow <: PrimArrow end
@@ -9,9 +14,14 @@ name(::ReshapeArrow)::Symbol = :reshape
 props(::ReshapeArrow) = bin_arith_props()
 
 "GatherND, from TensorFlow"
-function gather_nd(params, indices)
+function gather_nd(params, indices, shape)
   indices = indices + 1
-  [params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])]
+  answer = [params[indices[rr,:]...] for rr in
+                        CartesianRange(size(indices)[1:end-1])]
+  @show size(indices)
+  @show size(params)
+  @show size(answer)
+  answer
 end
 # struct GetIndexArrow <: PrimArrow end
 # name(::GetIndexArrow)::Symbol = :getindex
@@ -20,12 +30,19 @@ end
 # statically compute the shape of the target port
 struct ScatterNdArrow <: PrimArrow end
 name(::ScatterNdArrow)::Symbol = :scatter_nd
-props(::ScatterNdArrow) = bin_arith_props()
+function props(::ScatterNdArrow)
+  [Props(true, :x, Any),
+   Props(true, :y, Any),
+   Props(true, :w, Any),
+   Props(false, :z, Any)]
+ end
 
 
-function scatter_nd(params, indices)
-  answer = Array{Any, 3}(1,1024,2)
+function scatter_nd(params, indices, shape)
+  answer = Array{Any, length(shape)}(shape...)
   indices = indices + 1
+  @show size(indices)
+  @show size(params)
   for (idx,rr) in enumerate(CartesianRange(size(indices)[1:end-1]))
     answer[indices[rr,:]...] = params[idx]
   end
