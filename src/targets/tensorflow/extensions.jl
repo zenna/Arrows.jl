@@ -57,3 +57,29 @@ function get_const_op_value(const_op::Operation)
 end
 
 value_index(ten::Tensor) = ten.value_index
+
+"""Variance of a tensor, alongside the specified axis.
+
+# Arguments
+  x: A tensor or variable.
+  axis: An integer, the axis to compute the variance.
+  keepdims: A boolean, whether to keep the dimensions or not.
+      If `keepdims` is `False`, the rank of the tensor is reduced
+      by 1. If `keepdims` is `True`,
+      the reduced dimension is retained with length 1.
+
+# Returns
+  A tensor with the variance of elements of `x`.
+"""
+function reduce_var(x::tf.AbstractTensor; axis=nothing,
+                                                  keep_dims=false,
+                                                  name=nothing)
+  # Find mean then distance from mean
+  m = tf.reduce_mean(x, axis=axis, keep_dims=true)
+  devs_squared = tf.square(x - m)
+  tf.reduce_mean(devs_squared, axis=axis, keep_dims=keep_dims)
+end
+
+function reduce_var(x::Vector{<:tf.AbstractTensor})
+  reduce_mean(reduce_var(stack(x)))
+end

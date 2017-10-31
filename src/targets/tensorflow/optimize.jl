@@ -1,3 +1,6 @@
+@enum Stage Pre Run Post
+
+apl(f, data) = f(data)
 
 """
 Optimization.
@@ -11,50 +14,40 @@ Optimization.
 - `maxiters`: num of iterations
 - `cont`: function to determine when to stop (overrides maxiters)
 - `resetlog`: reset log data after every iteration if true
-- `log_dir`: directory to store data/logs (used by callbacks)
+- `logdir`: directory to store data/logs (used by callbacks)
 - `optimize`: optimize? (compute grads/change weights)
 - `start_i`: what index is this starting at (used by callbacks)
 """
 function optimize(step!::Function,
-                  writer=SummaryWriter(log_dir),
-                  close_writer::Bool=False,
-                  pre_callbacks=[]],
+                  pre_callbacks=[],
                   callbacks=[],
-                  post_callbacks=[]],
-                  maxiters=1000,
-                  cont=partial(max_iters, maxiters=maxiters),
-                  resetlog::Bool=True,
-                  log_dir::String="",
-                  optimize::Bool=True,
+                  post_callbacks=[],
+                  cont=data -> data.i < maxiters,
+                  resetlog::Bool=true,
+                  logdir::String="",
+                  optimize::Bool=true,
                   start_i::Integer=0)
   i = 0
-  cb_data = @NT(start_i, i, writer, None, getlog(), optimizer, log_dir, TrainMode.PRE)
+  cb_data = @NT(start_i=start_i, i=i, Stage=Pre)
 
   # Called once before optimization
-  foreach(cb->apl(cb, cb_data, pre_callbacks)
+  foreach(cb->apl(cb, cb_data), pre_callbacks)
 
-  while apl(cont, cb_data)
-    loss = loss_gen()
+  while cont(cb_data)
     if optimize
-      cur_loss, _ = step!()
+      @show cur_loss, _ = step!()
     end
 
-    cb_data = @NT(start_i, i, writer, loss.data[0], getlog(), optimizer,
-                           log_dir, TrainMode.RUN)
+    cb_data = @NT(start_i=start_i, i=i, Stage=Run, loss=cur_loss)
     foreach(cb->apl(cb, cb_data), callbacks)
     i += 1
     resetlog && reset_log()
-    end
   end
-
   # Post Callbacks
-  cb_data = @NT(start_i, i, writer, None, getlog(), optimizer, og_dir, TrainMode.POST)
-  foreach(cb->apl(cb, cb_data), callbacks)
-  if close_writer
-    writer.close()
-  end
+  cb_data = @NT(start_i=start_i, i=i, Stage=Post)
+  foreach(cb->apl(cb, cb_data), post_callbacks)
+  cur_loss
 end
-
 
 """
 argmin_θ(ϵprt): find θ which minimizes ϵprt
@@ -67,37 +60,38 @@ argmin_θ(ϵprt): find θ which minimizes ϵprt
 # Result
 - `θ_optim`: minimal value of ϵprt found
 - `argmin`: argmin of `over` found
-
 """
 function optimize(carr::CompArrow,
                   over::Vector{Port},
                   ϵprt::Port,
                   init::Vector,
                   callbacks=[],
-                  optim_args = @NT(tol=1e-5, alg=:LD_MMA),
                   target=Type{TFTarget})
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
-  ▸idx = indexin(over, ▸(carr))
-  @assert !(any(iszero.(▸idx)))
+  @show ϵid = findfirst(◂(ϵprt.arrow), ϵprt)
   tfarr = compile(carr, TFTarget)
+  @show loss = tfarr.out[ϵid]
   sess = tf.Session(tfarr.graph)
+
+  ## Make Variables for ports that we are optimizing over
+  ## And Supply inptus to the rest
   tf.as_default(tfarr.graph) do
     run(sess, global_variables_initializer())
     optimizer = train.AdamOptimizer()
-    minimize_op = train.minimize(optimizer, Loss)
+    minimize_op = train.minimize(optimizer, loss)
     function step!()
-      cur_loss, _ = run(sess, [Loss, minimize_op])
+      @show cur_loss, _ = run(sess, [loss, minimize_op])
       cur_loss
     end
-    return optimize(step!=step!)
+    return optimize(step!)
   end
 end
 
 function test_tf_optimize()
   carr = Arrows.TestArrows.xy_plus_x_arr()
   invcarr = aprx_invert(carr)
-  # L(x, y) is a
-  # Minimize the domain loss
-  lossarr = ...
-  optimize(lossarr, over, ϵprt, init, callbacks, optim_args, target=TFTarget)
+  ϵprt = ◂(invcarr, is(ϵ), 1)
+  over = ▸(invcarr, is(θp))
+  lossarr = 1
+  optimize(invcarr, over, ϵprt, rand(length(▸(invcarr))), [], TFTarget)
 end

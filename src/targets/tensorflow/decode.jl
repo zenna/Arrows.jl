@@ -13,7 +13,7 @@ conv(::LogBaseArrow, args::Args)::Vector{Tensor} =
 
 conv(::AddArrow, args::Args)::Vector{Tensor} = [tf.add(args...)]
 conv(::MulArrow, args::Args)::Vector{Tensor} = [tf.multiply(args...)]
-conv(::DivArrow, args::Args)::Vector{Tensor} = [tf.div(args...)]
+conv(::DivArrow, args::Args)::Vector{Tensor} = [args[1] / args[2]]
 # FIXME Deal with me in a better way
 # with tf.name_scope("Safe_Divide"):
 #     num = args[1]
@@ -21,13 +21,14 @@ conv(::DivArrow, args::Args)::Vector{Tensor} = [tf.div(args...)]
 #     safe_den = den + 1e-4
 #     return [tf.div(num, safe_den)]
 
+conv(::MeanArrow, args::Args)::Vector{Tensor} = [tf.reduce_mean(tf.stack(args), axis=1)]
+conv(::Arrows.ReduceVarArrow, args::Args)::Vector{Tensor} = [reduce_var(args)]
 conv(::SinArrow, args::Args)::Vector{Tensor} = [tf.sin(args...)]
-conv(::SubtractArrow, args::Args)::Vector{Tensor} = [tf.subtract(args...)]
+conv(::SubtractArrow, args::Args)::Vector{Tensor} = [args[1] - args[2]]
 conv(::CosArrow, args::Args)::Vector{Tensor} = [tf.cos(args...)]
 conv(::ASinArrow, args::Args)::Vector{Tensor} = [tf.asin(args...)]
 conv(::ACosArrow, args::Args)::Vector{Tensor} = [tf.acos(args...)]
-conv(::DuplArrow, args::Args)::Vector{Tensor} =
-  [args[1] for i in range(a.num_out_ports())]
+conv{N}(arr::DuplArrow{N}, args::Args)::Vector{Tensor} = [args[1] for i = 1:N]
 conv(::IdentityArrow, args::Args)::Vector{Tensor} = [tf.identity(args...)]
 conv(::InvDuplArrow, args::Args)::Vector{Tensor} =
   return [args[1]]
@@ -137,7 +138,6 @@ function Graph(carr::CompArrow,
                graph,
                intens::Vector{<:Tensor})
   # inputs need to be wrapped in identiy
-  print("AbaHoly moly!!!!!!!!!!!!!!!!!!")
   intens_wrapped = tf.identity(intens)
   out = interpret(conv, carr, intens_wrapped)
   return @NT(in=intens, out=out, graph=graph)
@@ -154,4 +154,7 @@ end
 
 "Converts a port to a placeholder"
 placeholder(prt::Port, graph=tf.get_def_graph()) =
-  tf.placeholder(Float32, name=name(prt).name)
+  tf.placeholder(Float32, name="inp_$(prt.port_id)")
+  # tf.placeholder(Float32, name=name(prt).name)
+
+# FIXME: Get the type for the placeholder from the type of the port

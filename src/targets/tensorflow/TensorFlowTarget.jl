@@ -17,6 +17,7 @@ include("extensions.jl")
 # include("types.jl")
 # include("to_arrow.jl")
 include("decode.jl")
+include("optimize.jl")
 # #
 "Tensorflow target for dispatch"
 struct TFTarget <: Target end
