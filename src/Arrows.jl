@@ -28,14 +28,16 @@ module Arrows
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
 using NamedTuples
-# import NLopt
-# import ReverseDiff
+using MacroTools
 # import Base: gradient
 
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
   map, mean
+import Base: getindex, setindex!
+
+import Base: is, in
 
 import Base:  ^,
               +,
@@ -300,26 +302,17 @@ include("optim/loss.jl")
 # include("optim/optimize.jl")
 # include("gradient/gradient.jl")
 
-#
 # # Targets #
 include("targets/targets.jl")
 include("targets/julia/ordered_sports.jl")
-include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
-#
+
 # # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
-
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
-
-# Analysis
-# include("../analysis/analysis.jl")
-
-## Defaults
 
 
 
