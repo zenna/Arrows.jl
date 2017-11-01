@@ -29,8 +29,6 @@ import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
 using NamedTuples
 using MacroTools
-# import Base: gradient
-
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
