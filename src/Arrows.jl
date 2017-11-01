@@ -27,15 +27,17 @@ module Arrows
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
-using NamedTuples
-# import NLopt
-# import ReverseDiff
+import NamedTuples: @NT, NamedTuple
+using MacroTools
 # import Base: gradient
 
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
   map, mean
+import Base: getindex, setindex!
+
+import Base: is, in
 
 import Base:  ^,
               +,
@@ -217,14 +219,13 @@ export
   id_loss,
 
   # compiler
-  order_sports
+  order_sports,
+
+  TestArrows
+
 # Code structures
-
-
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-
-# include("types.jl")
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -238,7 +239,7 @@ include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
 include("value/const.jl")           # Const type
 
-include("arrows/trace.jl")          #
+# include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
@@ -305,28 +306,16 @@ include("gradient/gradient.jl")
 # include("optim/optimize.jl")
 # include("gradient/gradient.jl")
 
-#
 # # Targets #
 include("targets/targets.jl")
 include("targets/julia/ordered_sports.jl")
-include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
-#
+
 # # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
-
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
 
-# Analysis
-# include("../analysis/analysis.jl")
-
-## Defaults
-
-
-
-# Just for development for
 end

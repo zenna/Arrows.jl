@@ -199,9 +199,17 @@ sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
 
 "`SubPort` of `sarr` which is `port`"
 function sub_port(sarr::SubArrow, port::Port)::SubPort
+<<<<<<< HEAD
   if port.arrow != deref(sarr)
     throw(ArgumentError("Port not on SubArrow"))
   end
+=======
+  @show sarr
+  @show port
+  @show deref(sarr)
+  @show port.arrow == deref(sarr)
+  port.arrow == deref(sarr) || throw(ArgumentError("Port not on SubArrow"))
+>>>>>>> separate-modules
   sub_port(sarr, port.port_id)
 end
 
