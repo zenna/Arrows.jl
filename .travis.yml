@@ -12,6 +12,8 @@ env:
 dist: trusty
 sudo: true
 script:
+  - julia -e 'Pkg.clone("TensorFlow")'
+  - julia -e 'Pkg.build("TensorFlow")'
   - julia -e 'Pkg.clone("NLopt")'
   - julia -e 'Pkg.build("NLopt")'
   - julia -e 'Pkg.clone(pwd())'
