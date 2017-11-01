@@ -1,4 +1,6 @@
 # Overload julia functions #
+# import TakingBroadcastSeriously: @unfuse, broadcast_
+# @unfuse SubPort
 
 promote_constant(carr::CompArrow, sprt::SubPort) = sprt
 function promote_constant(carr::CompArrow, x)
@@ -68,7 +70,8 @@ const ignoretyp = Set([DuplArrow,
                        InvDuplArrow,
                        EqualArrow,
                        MeanArrow,
-                       VarArrow])
+                       VarArrow,
+                       ReduceVarArrow])
 for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, subtypes(PrimArrow))
   arr = parrtyp()
   opa = name(arr)

@@ -1,6 +1,3 @@
-using NamedTuples
-import Base: is, in
-
 """
 A property that an entity (e.g. a `Port` or `Arrow` possess).
 

@@ -4,14 +4,18 @@ using ..Arrows
 importall ..Arrows
 
 import ..Arrows: interpret, expr
-import Arrows: interpret, Target
+import Arrows: interpret, Target, compile
 export interpret,
        expr
 
-"Used to dispatch on"
+"Julia target fordispatch"
 struct JLTarget <: Target end
 
 include("interpret.jl")
 include("expr.jl")
 
+"Compile `arr` into Julia program"
+compile(arr::Arrow, target::Type{JLTarget}) = JuliaTarget.exprs(arr)
+
+export compile
 end

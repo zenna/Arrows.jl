@@ -27,10 +27,17 @@ module Arrows
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
-using NamedTuples
+import NamedTuples: @NT, NamedTuple
+using MacroTools
+# import Base: gradient
+
 
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv
+  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
+  map, mean
+import Base: getindex, setindex!
+
+import Base: is, in
 
 import Base:  ^,
               +,
@@ -68,8 +75,11 @@ import Base:  ^,
               zero,
               one,
               floor,
-              ceil
+              ceil,
+              getindex
+
 export
+  lift,
   conjoin,
   disjoin,
   ∨,
@@ -119,6 +129,7 @@ export
   known_const,
   known_not_const,
   const_propagator!,
+  compile,
 
   is_wired_ok,
   is_valid,
@@ -169,6 +180,7 @@ export
   ExpArrow,
   NegArrow,
   GatherNdArrow,
+  ScatterNdArrow,
   ASinArrow,
   ACosArrow,
   SinArrow,
@@ -179,12 +191,19 @@ export
   ModArrow,
   FloorArrow,
   CeilArrow,
+  PowArrow,
+  LogArrow,
+  LogBaseArrow,
 
   # Compound
   addn,
+  gather_nd,
 
   # Optimization
   optimize,
+  verify_loss,
+  verify_optim,
+  domain_ovrl,
 
   # Inverse Arrows
   InvDuplArrow,
@@ -200,14 +219,13 @@ export
   id_loss,
 
   # compiler
-  order_sports
+  order_sports,
+
+  TestArrows
+
 # Code structures
-
-
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-
-# include("types.jl")
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -221,7 +239,7 @@ include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
 include("value/const.jl")           # Const type
 
-include("arrows/trace.jl")          #
+# include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
@@ -279,27 +297,25 @@ include("sym/sym.jl")
 # Integration of arrow with julia #
 include("host/overload.jl")
 include("host/filter.jl")
+include("map.jl")
 
-
-# Optimziation and Learning #
+# # Optimziation and Learning #
 include("optim/loss.jl")
-include("optim/optimize.jl")
+include("optim/util.jl")
 include("gradient/gradient.jl")
+# include("optim/optimize.jl")
+# include("gradient/gradient.jl")
 
-
-# Examples, etc #
+# # Targets #
 include("targets/targets.jl")
-include("targets/julia/JuliaTarget.jl")
 include("targets/julia/ordered_sports.jl")
-# include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
+
+# # Compile to Julia by default
+compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
+interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
-
+include("targets/julia/JuliaTarget.jl")
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
 
-# Analysis
-# include("../analysis/analysis.jl")
-
-# Just for development for
 end

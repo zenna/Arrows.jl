@@ -1,6 +1,3 @@
-import ReverseDiff
-import Base: gradient
-
 "Julia function which computes derivative of inputs of `prt.arrow` w.r.t `prt`"
 function gradient(prt::Port)
   carr = prt.arrow

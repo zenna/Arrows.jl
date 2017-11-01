@@ -9,9 +9,9 @@ sub_arrow(tracearrow::TraceArrow)::SubArrow = last(tracearrow.arrs)
 deref(trace::TraceArrow)::Arrow = deref(last(trace.arrs))
 
 "A port of a `TraceArrow`"
-struct TracePort{T <: Integer} <: AbstractPort
+struct TracePort <: AbstractPort
   arrow::TraceArrow
-  vertex_id::T
+  vertex_id::Int
 end
 
 "Which `SubPort` does this `traceport` trace to"

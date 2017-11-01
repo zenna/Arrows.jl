@@ -1,28 +1,39 @@
-# Order alphabetically
+# Traits
+isscalar(::PrimArrow) = false
+isscalar(::Type{<:PrimArrow}) = Val{false}
+
 "x + y"
 struct AddArrow <: PrimArrow end
 name(::AddArrow)::Symbol = :+
-
-"x / y"
-struct DivArrow <: PrimArrow end
-name(::DivArrow)::Symbol = :/
+lift(::typeof(+)) = AddArrow()
 
 "x - y"
 struct SubtractArrow <: PrimArrow end
 name(::SubtractArrow)::Symbol = :-
+lift(::typeof(-)) = SubtractArrow()
+
+"x / y"
+struct DivArrow <: PrimArrow end
+name(::DivArrow)::Symbol = :/
+lift(::typeof(/)) = DivArrow()
 
 "x * y"
 struct MulArrow <: PrimArrow end
 name(::MulArrow)::Symbol = :*
-
+lift(::typeof(*)) = MulArrow()
 
 "exp(x)"
 struct ExpArrow <: PrimArrow end
 name(::ExpArrow)::Symbol = :exp
+lift(::typeof(exp)) = ExpArrow()
 
 "log(x)"
 struct LogArrow <: PrimArrow end
 name(::LogArrow)::Symbol = :log
+
+"log(b, x)"
+struct LogBaseArrow <: PrimArrow end
+name(::LogBaseArrow)::Symbol = :logbase
 
 "asin(x)"
 struct ASinArrow <: PrimArrow end
@@ -50,15 +61,16 @@ name(::SqrtArrow)::Symbol = :sqrt
 struct SqrArrow <: PrimArrow end
 name(::SqrArrow)::Symbol = :sqr
 
+sqr(x) = x^2
+
 "abs(x)"
 struct AbsArrow <: PrimArrow end
 name(::AbsArrow)::Symbol = :abs
 
-sqr(x) = x^2
-
-"log(b, x)"
-struct LogBaseArrow <: PrimArrow end
-name(::LogBaseArrow)::Symbol = :logbase
+"x^y"
+struct PowArrow <: PrimArrow end
+name(::PowArrow)::Symbol = :^
+props(PowArrow) = bin_arith_props()
 
 "-x"
 struct NegArrow <: PrimArrow end
@@ -90,6 +102,31 @@ function expander_prop(prop_generator, typ)
   end
 end
 
+# Unions
+ArithArrow = Union{AddArrow,
+                  SubtractArrow,
+                  DivArrow,
+                  MulArrow,
+                  ExpArrow,
+                  LogArrow,
+                  LogBaseArrow,
+                  ASinArrow,
+                  SinArrow,
+                  CosArrow,
+                  ACosArrow, 
+                  SqrtArrow,
+                  SqrArrow,
+                  AbsArrow,
+                  PowArrow,
+                  NegArrow,
+                  MinArrow,
+                  MaxArrow,
+                  ModArrow,
+                  CeilArrow,
+                  FloorArrow}
+
+isscalar(::Type{<:ArithArrow}) = Val{true}
+isscalar(::ArithArrow) = true
 
 to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       CosArrow, ACosArrow, SqrtArrow, SqrArrow,
