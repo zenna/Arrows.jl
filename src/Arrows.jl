@@ -27,8 +27,10 @@ module Arrows
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
-using NamedTuples
+import NamedTuples: @NT, NamedTuple
 using MacroTools
+# import Base: gradient
+
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -214,14 +216,13 @@ export
   id_loss,
 
   # compiler
-  order_sports
+  order_sports,
+
+  TestArrows
+
 # Code structures
-
-
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-
-# include("types.jl")
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -312,7 +313,4 @@ include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
 include("../test/TestArrows.jl")
 
-
-
-# Just for development for
 end
