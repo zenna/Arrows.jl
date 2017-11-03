@@ -33,7 +33,6 @@ function dst_sub_port_values(carr::CompArrow, inputs::Vector)::Dict{SubPort, Any
   dst_val
 end
 
-"""Convert an comp_arrow to a tensorflow graph and add to graph"""
 function inner_interpret(sub_interpret,
                          carr::CompArrow,
                          inputs::Vector,

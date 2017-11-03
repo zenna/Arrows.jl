@@ -37,3 +37,5 @@ expr(arr::Arrow, args...) = Expr(:call, name(arr), args...)
 sub_interpret(sarr::SubArrow, xs::Vector) = sub_interpret(deref(sarr), xs)
 sub_interpret(parr::PrimArrow, xs::Vector) = JuliaTarget.interpret(parr, xs...)
 sub_interpret(carr::CompArrow, xs::Vector) = Arrows.interpret(sub_interpret, carr, xs)
+
+interpret(arr::Arrow, args, ::Type{JLTarget}) = interpret(sub_interpret, arr, args)
