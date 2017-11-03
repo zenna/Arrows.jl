@@ -251,6 +251,8 @@ include("combinators/compose.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
+include("propagate/newpropagate.jl")
+
 
 include("compile/policy.jl")
 include("compile/depend.jl")

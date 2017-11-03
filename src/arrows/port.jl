@@ -10,17 +10,6 @@ struct Port{A <: Arrow, T <: Integer} <: AbstractPort
   port_id::T
 end
 
-"Barebone mechanism to add attributes to a `Port`: it either has label or not"
-Label = Symbol
-
-# "Make a copy of `Props`, assign partial fields"
-# function Props(pprops;
-#                    is_in_port::Bool = pprops.is_in_port,
-#                    name::Symbol = pprops.name,
-#                    typ::Type = pprops.typ,
-#                    labels::Set{Label} = pprops.labels)
-#   deepcopy(Props(is_in_port, name, typ, labels))
-# end
 
 function Props(is_in_port::Bool, name::Symbol, typ::Type)
   dir = is_in_port ? In() : Out()
