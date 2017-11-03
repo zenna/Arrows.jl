@@ -200,7 +200,10 @@ export
   id_loss,
 
   # compiler
-  order_sports
+  compile,
+  order_sports,
+
+  TestArrows
 # Code structures
 
 
