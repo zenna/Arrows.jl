@@ -1,43 +1,61 @@
 "A trace within an arrow uniquely defines a trace `sub_arrow`"
-struct TraceArrow <: ArrowRef
+struct TraceSubArrow <: ArrowRef
   arrs::Vector{SubArrow}
 end
 
-TraceArrow(sarr::SubArrow) = TraceArrow([sarr])
-TraceArrow(carr::CompArrow) = TraceArrow(sub_arrow(carr))
-append(tarr::TraceArrow, sarr::SubArrow) = TraceArrow(vcat(tarr.arrs, sarr))
+"TraceSubArrow where `sarr` is the root"
+function TraceSubArrow(sarr::SubArrow)
+  deref(sarr) isa CompArrow || throw(ArgumentError("Root must be composite"))
+  TraceSubArrow([sarr])
+end
+
+"TraceSubArrow where subarrow of `carr` is the root"
+TraceSubArrow(carr::CompArrow) = TraceSubArrow(sub_arrow(carr))
+
+"`TraceSubArrow` from appending `sarr` to trace `tarr`"
+function append(tarr::TraceSubArrow, sarr::SubArrow)
+  sarr ∈ sub_arrows(tarr) || throw(ArgumentError("`sarr` not child of `tarr`"))
+  TraceSubArrow(vcat(tarr.arrs, sarr))
+end
 
 "Which `SubArrow` does `tracearrow` trace to"
-sub_arrow(tracearrow::TraceArrow)::SubArrow = last(tracearrow.arrs)
+sub_arrow(tracearrow::TraceSubArrow)::SubArrow = last(tracearrow.arrs)
 
-deref(trace::TraceArrow)::Arrow = deref(last(trace.arrs))
+"SubArrows of CompArrow that `tarr` refers to"
+sub_arrows(tarr::TraceSubArrow) = sub_arrows(deref(tarr))
 
-"A port of a `TraceArrow`"
-struct TracePort <: AbstractPort
-  trace_arrow::TraceArrow
+"Arrow that `trace` references"
+deref(trace::TraceSubArrow)::Arrow = deref(last(trace.arrs))
+
+"Port of a `TraceSubArrow`"
+struct TraceSubPort <: AbstractPort
+  trace_arrow::TraceSubArrow
   port_id::Int
 end
 
-"Trace ports of `tarr"
-trace_ports(tarr::TraceArrow) = [TracePort(tarr, i) for i = 1:length(get_ports(sub_arrow(tarr)))]
+"Trace ports of `tarr`"
+trace_ports(tarr::TraceSubArrow) =
+  [TraceSubPort(tarr, i) for i = 1:length(⬧(deref(tarr)))]
 
 "Which `SubPort` does this `traceport` trace to"
-function sub_port(traceport::TracePort)::SubPort
+function sub_port(traceport::TraceSubPort)::SubPort
   SubPort(sub_arrow(traceport.trace_arrow), traceport.port_id)
 end
 
-"A `Value` of a `TraceArrow`"
+"A `Value` of a `TraceSubArrow`"
 struct TraceValue <: Value
-  srcvalue::TracePort
+  parent::TraceArrow    # Composite TraceArrow that Value is within  
+  srcvalue::SourceValue
 end
 
-"Trace ports of `tarr"
-trace_values(tarr::TraceArrow) = [TraceValue(tarr, i) for i = 1:length(get_ports(sub_arrow(tarr)))]
+src(tprt::TraceSubPort) = TraceArrow( src(sub_port(tprt))
 
+"Trace values of `tarr"
+trace_values(tarr::TraceSubArrow) = [TraceValue(tarr, i) for i = 1:length(get_ports(sub_arrow(tarr)))]
 
-"Which `TracePort`s are represented by a `Value`"
-function ports(tracevalue::TraceValue)::Vector{TracePort}
+"Which `TraceSubPort`s are represented by a `Value`"
+function ports(tracevalue::TraceValue)::Vector{TraceSubPort}
   subport = sub_port(tracevalue.srcvalue)
   component = weakly_connected_component(subport)
-  [TracePort(tracearrow, subport.id) for subport in component]
+  [TraceSubPort(tracearrow, subport.id) for subport in component]
 end
