@@ -2,6 +2,13 @@
 # 1. recurse into CompArrow
 # 2. readd sarrs that are propagated to
 
+"Failure to unify different values of type `T`"
+struct UnificationError{T} <: Exception
+  vals::Vector{T}
+end
+
+Base.showerror(io::IO, e::UnificationError) = print(io, "Could not unify: ", e.vals)
+
 "Resolve inconsistencies of values"
 function resolve(new_props, old_props)
   @assert false
@@ -13,8 +20,8 @@ ValueProp = Dict{TraceValue, Props}
 function traceprop(carr::CompArrow,
                    prop::Function,
                    resolve::Function,
-                   trcarr::TraceSubArrow = TraceSubArrow(carr),
-                   valprp::ValueProp = ValueProp())
+                   tparent::TraceParent=TraceParent(carr),
+                   valprp::Dict{<:Value, Props})
   sarrs = sub_arrows(carr)
   while !isempty(sarrs)
     sarr = pop!(sarrs)
@@ -31,7 +38,6 @@ function traceprop(carr::CompArrow,
   valprp
 end
 
-
 function prop(carr::CompArrow, args...)
   traceprop(carr, prop, resolve, trcarr)
 end
@@ -40,23 +46,17 @@ function shapeprop(sarr::SubArrow, args...)
   shapeprop(deref(sarr), args...)
 end
 
-
-## Shape
-## -----
-
-
-"Size of an array"
-struct Size
-  dims::Array{Nullable{Int64},1}
-  rank_unknown::Bool
-end
-
-"Propagate shapes"
-function sizeprop(::AddArrow, xprops, yprops, zprops)
-  xprops, yprops, zprops
-  # check if any hvae shapes, if so, propagate to the rest
-  #
-  @assert false
+"Unify many values of type `T`"
+function unify{T}(::Type{T}, vals::T...)
+  mostprecise = first(vals)
+  if length(vals) == 1
+    return mostprecise
+  else
+    for val in vals[2:end]
+      mostprecise = unify(T, mostprecise, val)
+    end
+    return mostprecise
+  end
 end
 
 # "Propagate shapes"
@@ -67,7 +67,15 @@ end
 #   @assert false
 # end
 
-function test_tracepop()
+using Base.Test
+
+function unifybytype
+end
+
+function test_prop()
   carr = TestArrows.xy_plus_x_arr()
-  traceprop(carr, shapeprop, resolve)
+  x,y,z = ⬧(carr)
+  initprops = Dict(x=>Size([nothing, 10]), y=>Size([10, nothing]))
+  vals = traceprop(carr, shapeprop, unifybytype)
+  @test vals[z].shape = Size(10, 10)
 end

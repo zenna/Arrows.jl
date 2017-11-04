@@ -28,6 +28,7 @@ module Arrows
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
 import NamedTuples: @NT, NamedTuple
+import AutoHashEquals: @auto_hash_equals
 using MacroTools
 # import Base: gradient
 
@@ -270,10 +271,10 @@ include("library/boolean.jl")
 include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
+include("propagate/newpropagate.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
-include("propagate/newpropagate.jl")
 
 
 include("compile/policy.jl")
