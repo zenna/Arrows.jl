@@ -1,1 +1,0 @@
-clang++ -std=c++14 -I ../../../math/ -I ../../../math/lib/boost_1.58.0/ render.cpp -I ../../../math/lib/eigen_3.2.4/ -lnlopt

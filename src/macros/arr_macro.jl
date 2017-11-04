@@ -2,8 +2,6 @@
 # @arr function f(x::Int, y::Int)
 #   2x + y
 # end
-using MacroTools
-import Base: getindex, setindex!
 
 mutable struct DictProxy
   old_context::Dict

@@ -51,9 +51,13 @@ end
 
 """
 δ(f(f⁻¹(y)), y)
+# Arguments
+- `fwd`: f : x -> y
+- `inv`; f⁻¹ : y (× θ) -> x
+# Returns
+- `id_loss`: y (× θ) -> loss::Real where loss = δ(f(f⁻¹(y)), y)
 """
 function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
-  #FIXME why is this so complicated?
   carr = CompArrow(:id_loss) #FIXME, loses name of fwd/inv
   invsarr = add_sub_arr!(carr, inv)
   fwdsarr = add_sub_arr!(carr, fwd)
@@ -79,7 +83,6 @@ function id_loss!(fwd::Arrow, inv::Arrow)::Arrow
   total ⥅ loss
   addprop!(idϵ, loss)
   carr
-
 end
 
 id_loss(fwd::Arrow, inv::Arrow) = id_loss!(deepcopy(fwd), deepcopy(inv))

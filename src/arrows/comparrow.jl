@@ -69,8 +69,7 @@ struct SubPort <: AbstractPort
     if 0 < port_id <= num_ports(sarr)
       new(sarr, port_id)
     else
-      println("Invalid port_id: ", port_id)
-      throw(DomainError())
+      throw(ArgumentError("Invalid port_id: $port_id"))
     end
   end
 end
@@ -200,7 +199,9 @@ sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
 
 "`SubPort` of `sarr` which is `port`"
 function sub_port(sarr::SubArrow, port::Port)::SubPort
-  port.arrow == deref(sarr) || throw(ArgumentError("Port not on SubArrow"))
+  if port.arrow != deref(sarr)
+    throw(ArgumentError("Port not on SubArrow"))
+  end
   sub_port(sarr, port.port_id)
 end
 

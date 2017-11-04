@@ -1,6 +1,3 @@
-import NLopt
-import ReverseDiff
-
 "Construct loss julia function"
 function lossjl(▸idx, init, ϵprt::Port, callbacks)
   carrjl = julia(ϵprt.arrow)
@@ -58,7 +55,7 @@ function optimize(carr::CompArrow,
                   callbacks=[],
                   optim_args = @NT(tol=1e-5, alg=:LD_MMA))
   length(init) == length(▸(carr)) || throw(ArgumentError("Need init value ∀ ▸"))
-  ▸idx = indexin(over, ▸(carr))
+  ▸idx = indexin(over, ▸(carr)) # ids of ports we're optimizing over
   @assert !(any(iszero.(▸idx)))
   loss = lossjl(▸idx, init, ϵprt::Port, callbacks)
   opt = gen_opt(loss, length(over), optim_args)
