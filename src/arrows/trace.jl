@@ -1,5 +1,3 @@
-import Base:length
-
 """
 Parent of Trace. `sarrs[1]` is `root` of the trace.
 sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:n
@@ -75,16 +73,6 @@ function down(tarr::TraceSubArrow)
   TraceSubArrow(down(tarr.parent, tarr.leaf), sub_arrow(deref(tarr)))
 end
 
-# isroot(tarr::TraceSubArrow) = length(tarr.parent) == 1
-# "TraceSubArrow with `leaf` of `tarr` removed"
-# function pop(tarr::TraceSubArrow)
-#   !isroot(tarr) || throw(ArgumentError("Cannot Remove Root"))
-#   TraceSubArrow(tarr.sarrs[1:end-1])
-# end
-# pop!(tarr::TraceSubArrow) = (pop!(tarr.sarrs); tarr)
-
-# @pre !isroot "Cannot Remove Root" pop, pop!
-
 "TraceSubArrow where subarrow of `carr` is the root"
 TraceSubArrow(carr::CompArrow) = TraceSubArrow(sub_arrow(carr))
 
@@ -97,12 +85,6 @@ end
 "Which `SubArrow` does `tracearrow` trace to"
 sub_arrow(tarr::TraceSubArrow)::SubArrow = tarr.leaf
 
-# "`SubArrow`s of CompArrow that `tarr` refers to"
-# sub_arrows(tarr::TraceSubArrow) = sub_arrows(deref(tarr))
-#
-# "All `SubArrow`s (inc boundary) of CompArrow that `tarr` refers to"
-# all_sub_arrows(tarr::TraceSubArrow) = all_sub_arrows(deref(tarr))
-
 "Arrow that `trace` references"
 deref(tarr::TraceSubArrow)::Arrow = deref(tarr.leaf)
 
@@ -111,16 +93,6 @@ struct TraceSubPort <: AbstractPort
   trace_arrow::TraceSubArrow
   port_id::Int
 end
-
-# "`TraceSubPort` referencing `sprt` where trace is `parent`"
-# function TraceSubPort(parent::TraceSubArrow, sprt::SubPort)
-#   sub_arrow(sprt) ∈ all_sub_arrows(parent) || throw(ArgumentError("prt must be in parent"))
-#   if on_boundary(sprt)
-#     TraceSubPort(parent, sprt.port_id)
-#   else
-#     TraceSubPort(append(parent, sub_arrow(sprt)), sprt.port_id)
-#   end
-# end
 
 "`TraceSubPort` referencing `sprt` where trace is `parent`"
 function TraceSubPort(tparent::TraceParent, sprt::SubPort)
@@ -133,8 +105,6 @@ isequal(tprt1::TraceSubPort, tprt2::TraceSubPort)::Bool =
   isequal(tprt1.trace_arrow, tprt2.trace_arrow) && isequal(tprt1.port_id, tprt2.port_id)
 hash(tprt::TraceSubPort, h::UInt) = hash((tprt.trace_arrow, tprt.port_id), h)
 (==)(tprt1::TraceSubPort, tprt2::TraceSubPort) = isequal(tprt1, tprt2)
-
-# @pre TraceSubPort
 
 "Trace ports of `tarr`"
 trace_ports(tarr::TraceSubArrow) =
@@ -150,15 +120,7 @@ struct TraceValue <: Value
   srctprt::TraceSubPort    # Composite TraceArrow that Value is within
   TraceValue(tprt::TraceSubPort) = new(rootsrc(tprt))
 end
-#
-# "Parent `TraceArrow`"
-# function parenttarr(tprt::TraceSubPort)::TraceSubArrow
-#   if on_boundary(sub_port(tprt))
-#     tprt.trace_arrow
-#   else
-#     pop(tprt.trace_arrow)
-#   end
-# end
+
 
 "Parent `TraceArrow`"
 trace_parent(tprt::TraceSubPort)::TraceParent = trace_parent(tprt.trace_arrow)
@@ -172,8 +134,8 @@ All `trcsprt` wtihin a `TraceValue` share the same `rootsrc`
 """
 function rootsrc(tprt::TraceSubPort)::TraceSubPort
   println("Got here!!!!!")
-  @show srcsprt = src(sub_port(tprt))
-  @show tparent = trace_parent(tprt)
+  srcsprt = src(sub_port(tprt))
+  tparent = trace_parent(tprt)
   if on_boundary(srcsprt)
     if isroot(tparent)
       println("Found Source on root\n")
@@ -193,9 +155,6 @@ function rootsrc(tprt::TraceSubPort)::TraceSubPort
     return rootsrc(TraceSubPort(down(srctarr), srcsprt.port_id))
   else
     # @assert false #on_boundary(srcsprt)
-    @show deref(srcsprt)
-    @show deref(sub_arrow(srcsprt))
-    @show isroot(tparent)
     @assert deref(sub_arrow(srcsprt)) isa PrimArrow || isroot(tparent)
     println("Found Source on primitive\n")
     return TraceSubPort(tparent, srcsprt)
@@ -210,62 +169,15 @@ hash(tval::TraceValue, h::UInt) = hash(rootsrc(tval), h)
 "Trace values of `tarr"
 trace_values(tarr::TraceSubArrow) = [TraceValue(tarr, i) for i = 1:length(get_ports(sub_arrow(tarr)))]
 
-using Base.Test
-function test_dept(nlayers = 5)
-  carr = TestArrows.nested_core(nlayers)
-  sarrs = [sub_arrow(carr)]
-  parent = carr
-  for i = 1:nlayers + 1
-    sarr = sub_arrows(parent)[1]
-    push!(sarrs, sarr)
-    parent = deref(sarr)
-  end
-  root = TraceParent(carr)
-  tparent = root
-  tarrs = []
-  for sarr in sarrs[2:end]
-    tarr = TraceSubArrow(tparent, sarr)
-    tparent = down(tparent, sarr)
-    push!(tarrs, tarr)
-  end
-
-  xtprts = TraceSubPort[]
-  ytprts = TraceSubPort[]
-  for tarr in tarrs
-    push!(xtprts, TraceSubPort(tarr, 1))
-    push!(ytprts, TraceSubPort(tarr, 2))
-    # if deref(tarr) isa CompArrow
-    #   sarr = sub_arrows(tarr)[1]
-    #   xsprt = ⬨(sarr, 1) # 1st fort of only child sarr
-    #   push!(xtprts, TraceSubPort(tarr, xsprt))
-    #
-    #   ysprt = ⬨(sarr, 2) # 1st fort of only child sarr
-    #   push!(ytprts, TraceSubPort(tarr, ysprt))
-    # end
-  end
-  xtvals = [TraceValue(xtprt) for xtprt in xtprts]
-  @show sub_port(xtvals[1].srctprt)
-  @show sub_port(xtvals[2].srctprt)
-  @show xtvals[2].srctprt.trace_arrow
-  @show xtvals[1].srctprt.trace_arrow
-  @show xtvals[1].srctprt.trace_arrow == xtvals[2].srctprt.trace_arrow
-  @show xtvals[2].srctprt.port_id == xtvals[1].srctprt.port_id
-  @test xtvals[1] == xtvals[2]
-  @test same(xtvals)
-  ytvals = [TraceValue(ytprt) for ytprt in ytprts]
-  println("ALLA!!\n\n")
-  for ytval in ytvals
-    @show ytval.srctprt.trace_arrow
-  end
-  @test same(ytvals)
-  @test first(xtvals) != first(ytvals)
-  @show xtvals[1].srctprt
+# Printing #
+function string(tparent::TraceParent)
+  join([string("  [", i, "]: ", sarr) for (i, sarr) in enumerate(tparent.sarrs)], "\n")
 end
 
-# Printing #
+show(io::IO, tparent::TraceParent) = print(io, string(tparent))
+
 function string(tarr::TraceSubArrow)
-  return ""
-  sarrsstring = join([string("  [", i, "]: ", sarr) for (i, sarr) in enumerate(tarr.sarrs)], "\n")
+  sarrsstring = join([string("  [", i, "]: ", sarr) for (i, sarr) in enumerate(tarr.parent.sarrs)], "\n")
   """Trace Arrow
   $(sub_arrow(tarr))
 
