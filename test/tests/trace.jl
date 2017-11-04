@@ -1,5 +1,6 @@
 using Base.Test
 using Arrows
+import Arrows: TraceParent, TraceSubPort, TraceSubArrow, TraceValue, down
 
 function test_dept(nlayers = 5)
   carr = TestArrows.nested_core(nlayers)
@@ -26,6 +27,8 @@ function test_dept(nlayers = 5)
     push!(ytprts, TraceSubPort(tarr, 2))
   end
   xtvals = [TraceValue(xtprt) for xtprt in xtprts]
+  ytvals = [TraceValue(ytprt) for ytprt in ytprts]
+
   @test same(xtvals)
   @test same(ytvals)
   @test first(xtvals) != first(ytvals)

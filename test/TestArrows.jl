@@ -172,7 +172,7 @@ function cond_arr_eq()
 end
 
 "Make a nested function with `core_arrow` at core, `nlevels` levels deep"
-function nested_core(nlevels=3, core_arrow=SqrtArrow())
+function nested_core(nlevels=3, core_arrow=SinArrow())
   carr1 = CompArrow(Symbol(:l, 1), [:x], [:y])
   parr = carr1
   sarrs = []

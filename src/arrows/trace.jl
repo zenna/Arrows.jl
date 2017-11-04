@@ -133,30 +133,23 @@ projects back through the trace to find the original source.
 All `trcsprt` wtihin a `TraceValue` share the same `rootsrc`
 """
 function rootsrc(tprt::TraceSubPort)::TraceSubPort
-  println("Got here!!!!!")
   srcsprt = src(sub_port(tprt))
   tparent = trace_parent(tprt)
   if on_boundary(srcsprt)
     if isroot(tparent)
-      println("Found Source on root\n")
       return TraceSubPort(tparent, srcsprt)
     else
-      # @assert false #on_boundary(srcsprt)
       # If the source is on boundary and its not a root, need to recurse up
-      println("GOING UP!!")
       srctarr = TraceSubArrow(tparent, sub_arrow(srcsprt))
       return rootsrc(TraceSubPort(up(srctarr), srcsprt.port_id))
     end
   elseif deref(sub_arrow(srcsprt)) isa CompArrow
     # If the source is on a CompArrow we need to recursve down
-    # @assert false #on_boundary(srcsprt)
-    println("GOING DOWN!!")
     srctarr = TraceSubArrow(tparent, sub_arrow(srcsprt))
     return rootsrc(TraceSubPort(down(srctarr), srcsprt.port_id))
   else
     # @assert false #on_boundary(srcsprt)
     @assert deref(sub_arrow(srcsprt)) isa PrimArrow || isroot(tparent)
-    println("Found Source on primitive\n")
     return TraceSubPort(tparent, srcsprt)
   end
 end
