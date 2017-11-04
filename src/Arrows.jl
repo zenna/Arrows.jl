@@ -209,6 +209,8 @@ export
 
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
+include("util/pre.jl")      # methods that should be in LightGraphs
+
 
 # include("types.jl")
 
