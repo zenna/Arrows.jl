@@ -219,13 +219,17 @@ export
   id_loss,
 
   # compiler
+  compile,
   order_sports,
 
   TestArrows
+# Code structures
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
+include("util/pre.jl")      # methods that should be in LightGraphs
+
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -239,12 +243,12 @@ include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
 include("value/const.jl")           # Const type
 
-# include("arrows/trace.jl")          #
+include("arrows/trace.jl")          #
 
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
-include("library/sigmoid.jl")     # Methods common to library functions
+include("library/sigmoid.jl")       # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -269,6 +273,8 @@ include("combinators/compose.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
+include("propagate/newpropagate.jl")
+
 
 include("compile/policy.jl")
 include("compile/depend.jl")

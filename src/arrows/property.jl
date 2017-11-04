@@ -12,6 +12,9 @@ mutable struct Props
   labels::Set{DataType}   # Properties which exist or dont
 end
 
+"Empty properties"
+Props() = Props(@NT(), Set{DataType}())
+
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
 
