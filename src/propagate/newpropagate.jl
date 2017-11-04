@@ -13,7 +13,7 @@ ValueProp = Dict{TraceValue, Props}
 function traceprop(carr::CompArrow,
                    prop::Function,
                    resolve::Function,
-                   trcarr::TraceArrow = TraceArrow(carr),
+                   trcarr::TraceSubArrow = TraceSubArrow(carr),
                    valprp::ValueProp = ValueProp())
   sarrs = sub_arrows(carr)
   while !isempty(sarrs)
@@ -59,13 +59,13 @@ function sizeprop(::AddArrow, xprops, yprops, zprops)
   @assert false
 end
 
-"Propagate shapes"
-function sizeprop(::ReshapepArrow, xprops, yprops, zprops)
-  xprops, yprops, zprops
-  # check if any hvae shapes, if so, propagate to the rest
-  #
-  @assert false
-end
+# "Propagate shapes"
+# function sizeprop(::Arrows.ReshapeArrow, xprops, yprops, zprops)
+#   xprops, yprops, zprops
+#   # check if any hvae shapes, if so, propagate to the rest
+#   #
+#   @assert false
+# end
 
 function test_tracepop()
   carr = TestArrows.xy_plus_x_arr()

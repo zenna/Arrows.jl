@@ -399,10 +399,11 @@ sub_arrow(sport::SubPort)::SubArrow = sport.sub_arrow
 "(self) sub_arrow reference to `arr`"
 sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
 
+"`CompArrow` that `sarr` is component in"
 parent(sarr::SubArrow)::CompArrow = sarr.parent
-parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
 
-
+"`CompArrow` that `sub_arrow(sprt)` is component in"
+parent(sprt::SubPort)::CompArrow = parent(sub_arrow(sprt))
 
 """
 Helper function to translate LightGraph functions to Port functions

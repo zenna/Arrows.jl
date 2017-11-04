@@ -186,14 +186,11 @@ function nested_core(nlevels=3, core_arrow=SqrtArrow())
 
   sarr = add_sub_arr!(carr, core_arrow)
   push!(sarrs, sarr)
-  @show [parent(sarr) for sarr in reverse(sarrs)]
   for sarr in reverse(sarrs)
     x, y = ⬨(sarr)
     xx, yy = ⬨(parent(sarr))
     xx ⥅ x
     y ⥅ yy
-    @show ok = is_wired_ok(parent(sarr))
-    @assert ok
   end
   carr1
 end
@@ -206,7 +203,7 @@ function all_test_arrows()
    dupl_id_arr(),
    det_policy_inner_arr(),
    triple_add(),
-   weird_arr()
+   weird_arr(),
    nested_core()]
 end
 
