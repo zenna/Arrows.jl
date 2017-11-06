@@ -327,7 +327,7 @@ include("targets/julia/ordered_sports.jl")
 
 # # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
-interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
+interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
