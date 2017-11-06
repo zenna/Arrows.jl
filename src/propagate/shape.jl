@@ -30,15 +30,7 @@ end
 
 Size(t::Size) = copy(t)
 
-"Propagate shapes"
-function sizeprop(::AddArrow, xprops, yprops, zprops)
-  xprops, yprops, zprops
-  # check if any hvae shapes, if so, propagate to the rest
-  #
-  @assert false
-end
-
-function unify(::Type{Size}, size1::Size, size2::Size)
+function meet(size1::Size, size2::Size)
   # If either ndims unknown then return other
   if size1.ndims_unknown && size2.ndims_unknown
     size1
@@ -47,12 +39,10 @@ function unify(::Type{Size}, size1::Size, size2::Size)
   elseif size2.ndims_unknown
     size1
   elseif ndims(size1) != ndims(size2)
-    throw(UnificationError([size1, size2]))
+    throw(MeetError([size1, size2]))
   else
     dims = Vector{Nullable{Int}}(ndims(size1))
     for i = 1:ndims(size1)
-      @show size1
-      @show size2
       # Both Null => Null
       if isnull(size1[i]) && isnull(size2[i])
         dims[i] = nothing
@@ -61,10 +51,31 @@ function unify(::Type{Size}, size1::Size, size2::Size)
       elseif isnull(size2[i])
         dims[i] = size1[i]
       else
-        get(size1[i]) == get(size2[i]) || throw(UnificationError([size1[i], size2[i]]))
+        get(size1[i]) == get(size2[i]) || throw(MeetError([size1[i], size2[i]]))
         dims[i] = size1[i]
       end
     end
     Size(dims)
+  end
+end
+
+@pre meet !disjoint(size1, size2) "Cannot meet Size which are disjoint"
+
+# Primitives
+
+"Propagate shapes"
+function sizeprop(arr::ArithArrow, props)::SubPropType
+  szs = Size[]
+  !isempty(props) && @show [collect(keys(val)) for val in values(props)]
+  for prop in values(props)
+    if :size in keys(prop)
+      push!(szs, prop[:size])
+    end
+  end
+  if isempty(szs)
+    SubPropType()
+  else
+    unionsz = meet(szs...)
+    SubPropType(prt.port_id => PropType(:size => unionsz) for prt in ⬧(arr))
   end
 end

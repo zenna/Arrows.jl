@@ -101,6 +101,7 @@ export
   link_ports!,
   ⥅,
   ⥆,
+  port_id,
   add_sub_arr!,
   rem_sub_arr,
   replace_sub_arr!,
@@ -223,7 +224,10 @@ export
   compile,
   order_sports,
 
-  TestArrows
+  TestArrows,
+  Size,
+  meetall,
+  meet
 # Code structures
 
 # Code structures
@@ -271,10 +275,12 @@ include("library/boolean.jl")
 include("combinators/compose.jl")
 
 # Compilation and application of an arrow #
+include("propagate/meet.jl")          # Meeting of domains
 include("propagate/newpropagate.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
+include("propagate/concrete.jl")
 
 
 include("compile/policy.jl")

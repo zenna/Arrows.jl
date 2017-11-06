@@ -36,7 +36,7 @@ end
 hasduplicates(xs) = length(unique(xs)) != length(xs)
 
 "Split a collection `xs` by a predicate"
-function split{T}(pred, xs::Vector{T})
+function partition{T}(pred, xs::Vector{T})
   in = T[]
   out = T[]
   foreach(x -> pred(x) ? push!(in, x) : push!(out, x), xs)
@@ -122,3 +122,19 @@ product(::Type{Bool}, n::Integer) = product((true, false), n)
 
 "Product of `n` copies of `xs`: `xs₁ × xs₂ × ⋯ × xsₙ`"
 product(xs, n::Integer) = Iterators.product([xs for i = 1:n]...)
+
+"Get type of first param of unary method"
+function firstparam(m::Method)
+  m.sig.parameters[2]
+end
+
+"""Apply every method in`f` applicable to x:T; acccumulate all results
+# Arguments
+- `f: x::T -> y::T`
+# Returns
+- [method(x) for method in f if f(::T) exists]
+"""
+function accumapply{T}(f::Function, x::T)
+  allmethods = methodswith.(T, f, true)
+  results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
+end

@@ -10,6 +10,7 @@ struct Port{A <: Arrow} <: AbstractPort
   port_id::Int
 end
 
+port_id(prt::Port) = prt.port_id
 
 function Props(is_in_port::Bool, name::Symbol, typ::Type)
   dir = is_in_port ? In() : Out()
@@ -40,6 +41,7 @@ function port(arr::Arrow, i::Integer)::Port
     throw(DomainError())
   end
 end
+
 
 "all ports of arrow"
 ports(arr::Arrow)::Vector{Port} = [Port(arr, i) for i = 1:num_ports(arr)]

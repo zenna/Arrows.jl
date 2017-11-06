@@ -423,7 +423,7 @@ function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
 end
 
 "`sport` is number `port_id(sport)` `SubPort` on `sub_arrow(sport)`"
-port_id(sport::SubPort)::Integer = sport.port_id
+port_id(sprt::SubPort)::Integer = sprt.port_id
 
 # Not in minimal integeral #########################################
 vertex_id(sport::SubPort)::VertexId =

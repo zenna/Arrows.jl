@@ -1,8 +1,10 @@
 """
 A property that an entity (e.g. a `Port` or `Arrow` possess).
 
+desiderata:
 - A property may be existential, e.g. this port is an error port
 - Or a property may take on values e.g. the name of this port is `x`
+- Use hierarchies
 """
 abstract type Prop end
 
@@ -13,7 +15,7 @@ mutable struct Props
 end
 
 "Empty properties"
-Props() = Props(@NT(), Set{DataType}())
+Props() = Props(@NT()(), Set{DataType}())
 
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
