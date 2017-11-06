@@ -227,7 +227,9 @@ export
   TestArrows,
   Size,
   meetall,
-  meet
+  meet,
+
+  accumapply
 # Code structures
 
 # Code structures
