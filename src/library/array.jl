@@ -35,13 +35,18 @@ function props(::ScatterNdArrow)
  end
 
 
-function scatter_nd(params, indices, shape)
+function scatter_nd(params, indices, shape, missing_values)
   answer = Array{Any, length(shape)}(shape...)
   indices = indices + 1
-  @show size(indices)
-  @show size(params)
   for (idx,rr) in enumerate(CartesianRange(size(indices)[1:end-1]))
     answer[indices[rr,:]...] = params[idx]
+  end
+  i = 1
+  for iter in eachindex(answer)
+    if !isassigned(answer, iter)
+      answer[iter] = missing_values[i]
+      i += 1
+    end
   end
   answer
 end
