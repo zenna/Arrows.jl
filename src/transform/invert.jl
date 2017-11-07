@@ -2,7 +2,7 @@
 is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
 
 "Inversion of "
-function inv(arr::CompArrow, const_in)
+function inv(arr::CompArrow, sarr::SubArrow, const_in)
   @assert !any(const_in)
   (invert(arr), id_portid_map(arr))
 end
@@ -11,7 +11,7 @@ end
 function inv(sarr::SubArrow)
   carr = deref(sarr)
   const_in = map(is_src_source, ▹(sarr))
-  inv(deref(sarr), const_in)
+  inv(deref(sarr), sarr, const_in)
 end
 # FIXME? is it ok to use invert!, what about source
 

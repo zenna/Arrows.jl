@@ -46,6 +46,17 @@ function props(::ScatterNdArrow)
    Props(false, :z, Any)]
  end
 
+abinterprets(::ScatterNdArrow) = [sizeprop]
+
+function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
+  @show Dict(id => collect(keys(vals)) for (id, vals) in abvals)
+  if 3 ∈ keys(abvals) && :value ∈ keys(abvals[3])
+    @show sz = abvals[3][:value].value
+    IdAbValues(5 => AbValues(:size => Size([sz...])))
+  else
+    IdAbValues()
+  end
+end
 
 function scatter_nd(params, indices, shape, missing_values)
   answer = Array{Any, length(shape)}(shape...)

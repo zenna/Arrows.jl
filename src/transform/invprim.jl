@@ -42,19 +42,33 @@ function unary_inv(arr::Arrow,
   invarr, port_map
 end
 
-function inv(::Arrows.ReshapeArrow, const_in::Vector{Bool})
-  Arrows.ReshapeArrow(), Dict(1=>3, 2=>2, 3=>1)
+"Inverse reshape must take the shape of `value`"
+function inv(::Arrows.ReshapeArrow, sarr::SubArrow, const_in::Vector{Bool})
+  const_in[2] || throw(ArgumentError("Nonconst indices unimplemented"))
+  # HACK: Do const propagation properly
+  val = (10, 32, 32, 32)
+  warn("HACK: ADDRESS ME!")
+  # val = deref(src(▹(sarr, 2))).arrow.value
+  source = SourceArrow(val)
+  carr = CompArrow(:inv_reshape_comp, [:z], [:x])
+  z, x = ⬨(carr)
+  srcsarr = add_sub_arr!(carr, source)
+  rshparr = add_sub_arr!(carr, ReshapeArrow())
+  z ⥅ (rshparr, 1)
+  (srcsarr, 1) ⥅ (rshparr, 2)
+  (rshparr, 1) ⥅ x
+  @assert is_wired_ok(carr)
+  carr, Dict(3=>1, 1=>2)
 end
 
-
-function inv(::Arrows.GatherNdArrow, const_in::Vector{Bool})
+function inv(::Arrows.GatherNdArrow, sarr::SubArrow, const_in::Vector{Bool})
   Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
-inv{O}(arr::DuplArrow{O}, const_in::Vector{Bool}) =
+inv{O}(arr::DuplArrow{O}, sarr::SubArrow, const_in::Vector{Bool}) =
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 
-inv(arr::AddArrow, const_in) =
+inv(arr::AddArrow, sarr::SubArrow, const_in) =
   binary_inv(arr,
               const_in,
               inv_add,
@@ -63,7 +77,7 @@ inv(arr::AddArrow, const_in) =
               SubtractArrow,
               Dict(3 => 1, 2 => 2, 1 => 3))
 
-inv(arr::SubtractArrow, const_in) =
+inv(arr::SubtractArrow, sarr::SubArrow, const_in) =
   binary_inv(arr,
              const_in,
              inv_sub,
@@ -72,7 +86,7 @@ inv(arr::SubtractArrow, const_in) =
              AddArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 
-inv(arr::MulArrow, const_in) =
+inv(arr::MulArrow, sarr::SubArrow, const_in) =
   binary_inv(arr,
              const_in,
              inv_mul,
@@ -81,10 +95,10 @@ inv(arr::MulArrow, const_in) =
              DivArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 
-inv_np(arr::CosArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
-inv_np(arr::SinArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
+inv_np(arr::CosArrow, sarr::SubArrow, const_in) = unary_inv(arr, const_in, ACosArrow)
+inv_np(arr::SinArrow, sarr::SubArrow, const_in) = unary_inv(arr, const_in, ASinArrow)
 "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
-function inv(arr::CosArrow, const_in)
+function inv(arr::CosArrow, sarr::SubArrow, const_in)
   inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_cos)
   addprop!(θp, deref(θ))
@@ -129,7 +143,7 @@ end
 
 "The parametric inverse of sin, sin^(-1)(y; θ) = πθ + (-1)^θ * asin(y)."
 # (-1)^θ is implemented as θ % 2 == 0 ? 1 : -1
-function inv(arr::SinArrow, const_in)
+function inv(arr::SinArrow, sarr::SubArrow, const_in)
   inv_sin = CompArrow(:inv_sin, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_sin)
   addprop!(θp, deref(θ))
@@ -167,16 +181,13 @@ function inv(arr::SinArrow, const_in)
   inv_sin, Dict(1 => 3, 2 => 1)
 end
 
-inv(arr::ExpArrow, const_in) = unary_inv(arr, const_in, LogArrow)
-
-inv(arr::SourceArrow, const_in::Vector{Bool}) = (SourceArrow(arr.value), Dict(1 => 1))
-
-inv(arr::NegArrow, const_in) = unary_inv(arr, const_in, NegArrow)
-inv(arr::IdentityArrow, const_in) = unary_inv(arr, const_in, IdentityArrow)
-
-inv(arr::AssertArrow, const_in::Vector{Bool}) = (SourceArrow(true), Dict(1 => 1))
-inv(arr::GreaterThanArrow, const_in::Vector{Bool}) = (inv_gt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
-inv(arr::LessThanArrow, const_in::Vector{Bool}) = (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
+inv(arr::ExpArrow, sarr::SubArrow, const_in) = unary_inv(arr, const_in, LogArrow)
+inv(arr::SourceArrow, sarr::SubArrow, const_in::Vector{Bool}) = (SourceArrow(arr.value), Dict(1 => 1))
+inv(arr::NegArrow, sarr::SubArrow, const_in) = unary_inv(arr, const_in, NegArrow)
+inv(arr::IdentityArrow, sarr::SubArrow, const_in) = unary_inv(arr, const_in, IdentityArrow)
+inv(arr::AssertArrow, sarr::SubArrow, const_in::Vector{Bool}) = (SourceArrow(true), Dict(1 => 1))
+inv(arr::GreaterThanArrow, sarr::SubArrow, const_in::Vector{Bool}) = (inv_gt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
+inv(arr::LessThanArrow, sarr::SubArrow, const_in::Vector{Bool}) = (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
 
 function inv_gt_arr()
   carr = CompArrow(:inv_gt, [:z, :y, :θinv_gt_arr], [:x])
