@@ -26,14 +26,19 @@ end
 function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
   @show args
   @show typeof(args)
+  @show typeof(x.value)
   [RefnSym(Sym(x.value))]
 end
 
-prim_sym_interpret(::SubtractArrow, x, y)::Vector{Sym} = [x - y,]
-prim_sym_interpret(::MulArrow, x, y)::Vector{Sym} = [x * y,]
-prim_sym_interpret(::AddArrow, x, y)::Vector{Sym} = [x + y,]
-prim_sym_interpret(::DivArrow, x, y)::Vector{Sym} = [x / y,]
-prim_sym_interpret(::LogArrow, x)::Vector{Sym} = [log(x),]
+prim_sym_interpret(::SubtractArrow, x, y)::Vector{Sym} = [x .- y,]
+prim_sym_interpret(::MulArrow, x, y)::Vector{Sym} = [x .* y,]
+prim_sym_interpret(::AddArrow, x, y)::Vector{Sym} = [x .+ y,]
+function prim_sym_interpret(::DivArrow, x, y)::Vector{Sym}
+  @show x
+  @show y
+  [x ./ y,]
+end
+prim_sym_interpret(::LogArrow, x)::Vector{Sym} = [log.(x),]
 # SymPy doesnt support it
 # domainpreds(::DivArrow, x, y) = Set{Sym}([Ne(y, 0)])
 domainpreds(::Arrow, args...) = Set{Sym}()
@@ -51,7 +56,8 @@ sym_interpret(sarr::SubArrow, args) = sym_interpret(deref(sarr), args)
 
 function Sym(prps::Props)
   # TODO: Add Type assumption
-  symbols(string(name(prps)))
+  ustring = string(name(prps))
+  symbols(filter(isascii, ustring))
 end
 
 Sym(prt::Port) = Sym(props(prt))

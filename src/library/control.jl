@@ -15,6 +15,7 @@ props{O}(::DuplArrow{O}) =
 
 name{O}(::DuplArrow{O}) = Symbol(:dupl_, O)
 DuplArrow(n::Integer) = DuplArrow{n}()
+abinterprets(::DuplArrow) = [sizeprop]
 
 "`(x, x, ..., x)` `n` times"
 dupl(x, n)::Tuple = tuple((x for i = 1:n)...)

@@ -176,6 +176,11 @@ TraceValue(tparent::TraceParent, sprt::SubPort) =
 "Trace ports of `tarr`"
 trace_values(tarr::TraceSubArrow) = map(TraceValue, trace_ports(tarr))
 
+# FIXME: Maybe rename this, a sprt could be in many trace values, so name
+# should reflect its teh root
+"`TraceValue` where parent `sprt` is root `TraceParent`"
+trace_value(sprt::SubPort) = TraceValue(TraceParent(deref(sprt.sub_arrow)), sprt)
+
 "SubPorts ∈ Value"
 function SrcValue(tval::TraceValue)::SrcValue
   SrcValue(sub_port(tval.srctprt))

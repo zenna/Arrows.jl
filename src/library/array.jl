@@ -12,6 +12,17 @@ function props(::GatherNdArrow)
 struct ReshapeArrow <: PrimArrow end
 name(::ReshapeArrow)::Symbol = :reshape
 props(::ReshapeArrow) = bin_arith_props()
+abinterprets(::ReshapeArrow) = [sizeprop]
+function sizeprop(::ReshapeArrow, props::IdAbValues)
+  # size of the output is value of second input
+  # does the second input have the property :value
+  if 2 ∈ keys(props) && has(:value)(props[2])
+    @show outsz = [props[2][:value].value...]
+    IdAbValues(3 => AbValues(:size => Size(outsz)))
+  else
+    IdAbValues()
+  end
+end
 
 "GatherND, from TensorFlow"
 function gather_nd(params, indices, shape)
@@ -31,17 +42,23 @@ function props(::ScatterNdArrow)
   [Props(true, :x, Any),
    Props(true, :y, Any),
    Props(true, :w, Any),
+   Props(true, :v, Any),
    Props(false, :z, Any)]
  end
 
 
-function scatter_nd(params, indices, shape)
+function scatter_nd(params, indices, shape, missing_values)
   answer = Array{Any, length(shape)}(shape...)
   indices = indices + 1
-  @show size(indices)
-  @show size(params)
   for (idx,rr) in enumerate(CartesianRange(size(indices)[1:end-1]))
     answer[indices[rr,:]...] = params[idx]
+  end
+  i = 1
+  for iter in eachindex(answer)
+    if !isassigned(answer, iter)
+      answer[iter] = missing_values[i]
+      i += 1
+    end
   end
   answer
 end

@@ -64,18 +64,17 @@ end
 # Primitives
 
 "Propagate shapes"
-function sizeprop(arr::ArithArrow, props)::SubPropType
+function sizeprop(arr::Arrow, props)::IdAbValues
   szs = Size[]
-  !isempty(props) && @show [collect(keys(val)) for val in values(props)]
   for prop in values(props)
     if :size in keys(prop)
       push!(szs, prop[:size])
     end
   end
   if isempty(szs)
-    SubPropType()
+    IdAbValues()
   else
     unionsz = meet(szs...)
-    SubPropType(prt.port_id => PropType(:size => unionsz) for prt in ⬧(arr))
+    IdAbValues(prt.port_id => AbValues(:size => unionsz) for prt in ⬧(arr))
   end
 end

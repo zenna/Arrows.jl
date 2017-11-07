@@ -7,6 +7,7 @@ props{I}(::MeanArrow{I}) =
 name(::MeanArrow) = :mean
 MeanArrow(n::Integer) = MeanArrow{n}()
 mean(args...) = sum(args)/length(args)
+abinterprets(::MeanArrow) = [sizeprop]
 
 "Variance"
 struct VarArrow{I} <: PrimArrow end
@@ -26,6 +27,6 @@ props{I}(::ReduceVarArrow{I}) =
   [[Props(true, Symbol(:x, i), Any) for i=1:I]...,
     Props(false, :y, Any)]
 
-# FIXME `reduce_var` and `var` dont handle combinations of ports and numbers 
+# FIXME `reduce_var` and `var` dont handle combinations of ports and numbers
 reduce_var(args::Vararg{SubPort}) = var([args...])
 reduce_var(xs::Vararg{<:Real}) = var(xs)

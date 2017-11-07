@@ -3,7 +3,8 @@ using Base.Test
 include("common.jl")
 
 exclude = ["policy.jl",
-           "optimize.jl"]
+           "optimize.jl",
+           "value.jl"]
 test_dir = joinpath(Pkg.dir("Arrows"), "test", "tests")
 tests = setdiff(readdir(test_dir), exclude)
 

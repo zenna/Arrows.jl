@@ -229,7 +229,8 @@ export
   meetall,
   meet,
 
-  accumapply
+  accumapply,
+  trace_value
 # Code structures
 
 # Code structures
@@ -252,6 +253,15 @@ include("value/const.jl")           # Const type
 
 include("arrows/trace.jl")          #
 
+
+# Compilation and application of an arrow #
+include("propagate/meet.jl")          # Meeting of domains
+include("propagate/newpropagate.jl")
+# include("propagate/propagate.jl")
+include("propagate/shape.jl")
+# include("propagate/const.jl")
+include("propagate/concrete.jl")
+
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
@@ -269,6 +279,7 @@ include("library/compound.jl")
 include("library/pgfprim.jl")
 
 include("library/inv_control.jl")
+include("library/inv_array.jl")
 include("library/inv_arith.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
@@ -276,13 +287,6 @@ include("library/boolean.jl")
 # Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
 
-# Compilation and application of an arrow #
-include("propagate/meet.jl")          # Meeting of domains
-include("propagate/newpropagate.jl")
-include("propagate/propagate.jl")
-include("propagate/shape.jl")
-include("propagate/const.jl")
-include("propagate/concrete.jl")
 
 
 include("compile/policy.jl")

@@ -113,7 +113,7 @@ ArithArrow = Union{AddArrow,
                   ASinArrow,
                   SinArrow,
                   CosArrow,
-                  ACosArrow, 
+                  ACosArrow,
                   SqrtArrow,
                   SqrArrow,
                   AbsArrow,
@@ -125,6 +125,7 @@ ArithArrow = Union{AddArrow,
                   CeilArrow,
                   FloorArrow}
 
+abinterprets(::ArithArrow) = [sizeprop]
 isscalar(::Type{<:ArithArrow}) = Val{true}
 isscalar(::ArithArrow) = true
 

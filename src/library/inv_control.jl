@@ -7,6 +7,7 @@ props{I}(::InvDuplArrow{I}) =
 
 name{I}(::InvDuplArrow{I}) = Symbol(:inv_dupl_, I)
 InvDuplArrow(n::Integer) = InvDuplArrow{n}()
+abinterprets(::InvDuplArrow) = [sizeprop]
 
 "f(x, x) = (x,)"
 function inv_dupl(xs...)
@@ -15,6 +16,7 @@ function inv_dupl(xs...)
 end
 
 function inv_dupl(xs::Array...)
+  ## TODO: Simplify!
   base = first(xs)
   answer = similar(base)
   err = "All inputs to invdupl should have the same size $(size.(xs))"

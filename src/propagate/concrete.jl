@@ -3,12 +3,14 @@ struct ConcreteValue{T}
   value::T
 end
 
+abinterprets(::Arrow) = [valueprop]
+
 function meet(x::ConcreteValue, y::ConcreteValue)
   x == y || throw(MeetError, [x, y])
   x
 end
 
-function valueprop(arr::Arrow, props::SubPropType)::SubPropType
+function valueprop(arr::Arrow, props::IdAbValues)::IdAbValues
   # Does every _inport_ have the property
   # If all the inputs are known compute the function and return the output
   # @show keys.(props)
@@ -19,11 +21,8 @@ function valueprop(arr::Arrow, props::SubPropType)::SubPropType
     args = [props[prt.port_id][:value].value for (i, prt) in enumerate(▸(arr))]
     res = interpret(arr, args...)
     cres = ConcreteValue.(res)
-    SubPropType(prt.port_id => PropType(:value => cres[i]) for (i, prt) in enumerate(◂(arr)))
+    IdAbValues(prt.port_id => AbValues(:value => cres[i]) for (i, prt) in enumerate(◂(arr)))
   else
-    SubPropType()
+    IdAbValues()
   end
 end
-
-valueprop(arr::SourceArrow, props::SubPropType) =
-  SubPropType(1 => PropType(:value => ConcreteValue(arr.value)))

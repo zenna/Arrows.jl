@@ -65,3 +65,14 @@ function lightwalk(inner, outer, carr::CompArrow)::CompArrow
   foreach(inner, sub_arrows(carr))
   outer(carr)
 end
+
+"Simple recursive walk"
+function simplewalk(f::Function, carr::CompArrow)
+  sarrs = sub_arrows(carr)
+  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  res = f.(ptarrs)
+  for csarr in csarrs
+    res = vcat(res, simplewalk(f, deref(csarr)))
+  end
+  res
+end

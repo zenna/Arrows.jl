@@ -361,6 +361,11 @@ link_to_parent!(carr::CompArrow, pred)::CompArrow =
 
 ## Convenience
 
+"Is any subarrow of `carr` of type ArrowType?"
+hasarrtype(carr::CompArrow, ArrowType::Type) =
+  any(arr->arr isa ArrowType, Arrows.simplewalk(deref, carr))
+
+
 # FIXME: Deprecate
 n▸ = num_in_ports
 n◂ = num_out_ports
