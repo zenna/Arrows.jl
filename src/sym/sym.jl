@@ -27,11 +27,24 @@ RefnSym(prt::Port) = RefnSym(Sym(prt))
 
 
 domainpreds(::Arrow, args...) = Set{SymUnion}()
-function domainpreds{N}(::InvDuplArrow{N}, xs::Vararg{SymUnion, N})
-  x1 = first(xs)
-  f = x-> :($(x) == $(x1))
-  Set{SymUnion}(map(f, xs[2:end]))
+# function domainpreds{N}(::InvDuplArrow{N}, xs::Vararg{SymUnion, N})
+#   x1 = first(xs)
+#   f = x-> :($(x) == $(x1))
+#   Set{SymUnion}(map(f, xs[2:end]))
+# end
+
+function domainpreds(::InvDuplArrow, x1::Array,
+                        xs::Vararg)
+  answer = Set{SymUnion}()
+  for x in xs
+    for (left, right) in zip(x1, x)
+      e = :($(left) == $(right))
+      push!(answer, e)
+    end
+  end
+  answer
 end
+
 
 +(x::PureSymbolic, y::SymUnion) = :($(x) + $(y))
 -(x::PureSymbolic, y::SymUnion) = :($(x) - $(y))
@@ -42,6 +55,12 @@ end
 -(x::SymUnion, y::PureSymbolic) = :($(x) - $(y))
 /(x::SymUnion, y::PureSymbolic) = :($(x) / $(y))
 *(x::SymUnion, y::PureSymbolic) = :($(x) * $(y))
+
++(x::PureSymbolic, y::PureSymbolic) = :($(x) + $(y))
+-(x::PureSymbolic, y::PureSymbolic) = :($(x) - $(y))
+/(x::PureSymbolic, y::PureSymbolic) = :($(x) / $(y))
+*(x::PureSymbolic, y::PureSymbolic) = :($(x) * $(y))
+
 
 
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
