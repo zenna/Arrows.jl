@@ -31,6 +31,7 @@ function props(::ScatterNdArrow)
   [Props(true, :x, Any),
    Props(true, :y, Any),
    Props(true, :w, Any),
+   Props(true, :v, Any),
    Props(false, :z, Any)]
  end
 

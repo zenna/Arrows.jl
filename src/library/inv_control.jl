@@ -15,6 +15,7 @@ function inv_dupl(xs...)
 end
 
 function inv_dupl(xs::Array...)
+  ## TODO: Simplify!
   base = first(xs)
   answer = similar(base)
   err = "All inputs to invdupl should have the same size $(size.(xs))"
