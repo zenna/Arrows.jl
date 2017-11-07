@@ -1,4 +1,5 @@
-SymUnion = Union{Expr, Array, Number, Symbol}
+PureSymbolic = Union{Expr, Symbol}
+SymUnion = Union{PureSymbolic, Array, Tuple, Number}
 
 
 "Refined Symbol {x | pred}"
@@ -6,6 +7,12 @@ struct RefnSym
   var::SymUnion
   preds::Set{} # Conjunction of predicates
 end
+
+struct SymbolPrx
+  var::SymUnion
+end
+
+getindex(s::SymbolPrx, i::Int) = Expr(:ref, s.var, i)
 
 "Unconstrained Symbol"
 RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
@@ -26,10 +33,16 @@ function domainpreds{N}(::InvDuplArrow{N}, xs::Vararg{SymUnion, N})
   Set{SymUnion}(map(f, xs[2:end]))
 end
 
-+(x::SymUnion, y::SymUnion) = :($(x) + $(y))
--(x::SymUnion, y::SymUnion) = :($(x) - $(y))
-/(x::SymUnion, y::SymUnion) = :($(x) / $(y))
-*(x::SymUnion, y::SymUnion) = :($(x) * $(y))
++(x::PureSymbolic, y::SymUnion) = :($(x) + $(y))
+-(x::PureSymbolic, y::SymUnion) = :($(x) - $(y))
+/(x::PureSymbolic, y::SymUnion) = :($(x) / $(y))
+*(x::PureSymbolic, y::SymUnion) = :($(x) * $(y))
+
++(x::SymUnion, y::PureSymbolic) = :($(x) + $(y))
+-(x::SymUnion, y::PureSymbolic) = :($(x) - $(y))
+/(x::SymUnion, y::PureSymbolic) = :($(x) / $(y))
+*(x::SymUnion, y::PureSymbolic) = :($(x) * $(y))
+
 
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
 prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
@@ -39,6 +52,22 @@ prim_sym_interpret(::LogArrow, x) = [log.(x),]
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
   [first(xs)]
+end
+
+function prim_sym_interpret(::ScatterNdArrow, z, indices, shape, θs)
+  @show z
+  @show indices
+  @show shape
+  @show θs
+  [scatter_nd(SymbolPrx(z), indices, shape, SymbolPrx(θs)),]
+end
+
+function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
+  @show args
+  @show typeof(args)
+  @show typeof(x.value)
+  @show x.value
+  [RefnSym(x.value)]
 end
 
 
