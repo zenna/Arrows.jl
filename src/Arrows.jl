@@ -30,7 +30,7 @@ import DataStructures: PriorityQueue, peek, dequeue!
 import NamedTuples: @NT, NamedTuple
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
-# import Base: gradient
+import Base: gradient
 
 
 import Base: convert, union, first, ndims, print, println, string, show,
@@ -318,8 +318,8 @@ include("map.jl")
 include("optim/loss.jl")
 include("optim/util.jl")
 include("gradient/gradient.jl")
-# include("optim/optimize.jl")
-# include("gradient/gradient.jl")
+include("optim/optimize.jl")
+include("gradient/gradient.jl")
 
 # # Targets #
 include("targets/targets.jl")

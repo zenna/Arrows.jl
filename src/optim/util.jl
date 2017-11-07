@@ -25,9 +25,10 @@ function domain_ovrl(arr::CompArrow, newinv=inv)
   dmloss, index
 end
 
+"x: -> δ(arr(x), outs)"
 function naive_loss(arr::CompArrow, outs)
   length(outs) == length(◃(arr)) || throw(ArgumentError("Invalid length for given outs."))
-  naive = CompArrow(:naive_loss)
+  naive = CompArrow(Symbol(:naive_loss_, name(arr)))
   sarr = add_sub_arr!(naive, arr)
   foreach(link_to_parent!, ▹(sarr))
   foreach(link_to_parent!, ◃(sarr))
