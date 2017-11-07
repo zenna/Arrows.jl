@@ -1,6 +1,3 @@
-using NamedTuples
-import Base: is, in
-
 """
 A property that an entity (e.g. a `Port` or `Arrow` possess).
 
@@ -14,6 +11,9 @@ mutable struct Props
   namedprops::NamedTuple  # Properties
   labels::Set{DataType}   # Properties which exist or dont
 end
+
+"Empty properties"
+Props() = Props(@NT(), Set{DataType}())
 
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())

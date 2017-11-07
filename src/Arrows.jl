@@ -27,15 +27,17 @@ module Arrows
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
-using NamedTuples
-# import NLopt
-# import ReverseDiff
+import NamedTuples: @NT, NamedTuple
+using MacroTools
 # import Base: gradient
 
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
   map, mean
+import Base: getindex, setindex!
+
+import Base: is, in
 
 import Base:  ^,
               +,
@@ -199,6 +201,9 @@ export
 
   # Optimization
   optimize,
+  verify_loss,
+  verify_optim,
+  domain_ovrl,
 
   # Inverse Arrows
   InvDuplArrow,
@@ -214,14 +219,17 @@ export
   id_loss,
 
   # compiler
-  order_sports
+  compile,
+  order_sports,
+
+  TestArrows
 # Code structures
 
-
+# Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
+include("util/pre.jl")      # methods that should be in LightGraphs
 
-# include("types.jl")
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -240,7 +248,7 @@ include("arrows/trace.jl")          #
 # Library #
 include("library/common.jl")        # Methods common to library functions
 include("library/distances.jl")     # Methods common to library functions
-include("library/sigmoid.jl")     # Methods common to library functions
+include("library/sigmoid.jl")       # Methods common to library functions
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -265,6 +273,8 @@ include("combinators/compose.jl")
 include("propagate/propagate.jl")
 include("propagate/shape.jl")
 include("propagate/const.jl")
+include("propagate/newpropagate.jl")
+
 
 include("compile/policy.jl")
 include("compile/depend.jl")
@@ -297,31 +307,21 @@ include("map.jl")
 
 # # Optimziation and Learning #
 include("optim/loss.jl")
+include("optim/util.jl")
+include("gradient/gradient.jl")
 # include("optim/optimize.jl")
 # include("gradient/gradient.jl")
 
-#
 # # Targets #
 include("targets/targets.jl")
 include("targets/julia/ordered_sports.jl")
-include("targets/tensorflow/TensorFlowTarget.jl") # TODO Make optional
-#
+
 # # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
-
 include("../test/TestArrows.jl")
-include("../benchmarks/BenchmarkArrows.jl")
 
-# Analysis
-# include("../analysis/analysis.jl")
-
-## Defaults
-
-
-
-# Just for development for
 end

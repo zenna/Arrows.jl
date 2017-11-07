@@ -5,22 +5,11 @@ A port is uniquely determined by the arrow it belongs to and an index
 abstract type AbstractPort end
 
 "An interface to an `Arrow`"
-struct Port{A <: Arrow, T <: Integer} <: AbstractPort
+struct Port{A <: Arrow} <: AbstractPort
   arrow::A
-  port_id::T
+  port_id::Int
 end
 
-"Barebone mechanism to add attributes to a `Port`: it either has label or not"
-Label = Symbol
-
-# "Make a copy of `Props`, assign partial fields"
-# function Props(pprops;
-#                    is_in_port::Bool = pprops.is_in_port,
-#                    name::Symbol = pprops.name,
-#                    typ::Type = pprops.typ,
-#                    labels::Set{Label} = pprops.labels)
-#   deepcopy(Props(is_in_port, name, typ, labels))
-# end
 
 function Props(is_in_port::Bool, name::Symbol, typ::Type)
   dir = is_in_port ? In() : Out()

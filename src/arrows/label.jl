@@ -1,3 +1,6 @@
+"Barebone mechanism to add attributes to a `Port`: it either has label or not"
+Label = Symbol
+
 "Does `port` have `label` `lb`?"
 has_port_label(pprops::Props, lb::Label) = lb ∈ pprops.labels
 has_port_label(prt::Port, lb::Label) = has_port_label(props(prt), lb)

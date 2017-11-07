@@ -171,6 +171,31 @@ function cond_arr_eq()
   c
 end
 
+"Make a nested function with `core_arrow` at core, `nlevels` levels deep"
+function nested_core(nlevels=3, core_arrow=SinArrow())
+  carr1 = CompArrow(Symbol(:l, 1), [:x], [:y])
+  parr = carr1
+  sarrs = []
+  local carr
+  for i = 1:nlevels
+    carr = CompArrow(Symbol(:nested_l, i + 1), [:x], [:y])
+    sarr = add_sub_arr!(parr, carr)
+    push!(sarrs, sarr)
+    parr = carr
+  end
+
+  sarr = add_sub_arr!(carr, core_arrow)
+  push!(sarrs, sarr)
+  for sarr in reverse(sarrs)
+    x, y = ⬨(sarr)
+    xx, yy = ⬨(parent(sarr))
+    xx ⥅ x
+    y ⥅ yy
+  end
+  carr1
+end
+
+
 "all test arrows"
 function all_test_arrows()
   [xy_plus_x_arr(),
@@ -178,7 +203,8 @@ function all_test_arrows()
    dupl_id_arr(),
    det_policy_inner_arr(),
    triple_add(),
-   weird_arr()]
+   weird_arr(),
+   nested_core()]
 end
 
 function is_plain(arr::CompArrow)

@@ -217,7 +217,7 @@ function src(sport::SubPort)::SubPort
     sport
   else
     in_neighs = in_neighbors(sport)
-    @assert length(in_neighs) == 1 length(in_neighs)
+    length(in_neighs) == 1 || throw(ArgumentError("#in_neighs of $(sport) should be 1 but is $(length(in_neighs))"))
     first(in_neighs)
   end
 end

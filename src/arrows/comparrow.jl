@@ -199,7 +199,9 @@ sub_port(sarr::SubArrow, port_id::Integer) = SubPort(sarr, port_id)
 
 "`SubPort` of `sarr` which is `port`"
 function sub_port(sarr::SubArrow, port::Port)::SubPort
-  port.arrow == deref(sarr) || throw(ArgumentError("Port not on SubArrow"))
+  if port.arrow != deref(sarr)
+    throw(ArgumentError("Port not on SubArrow"))
+  end
   sub_port(sarr, port.port_id)
 end
 
@@ -398,10 +400,11 @@ sub_arrow(sport::SubPort)::SubArrow = sport.sub_arrow
 "(self) sub_arrow reference to `arr`"
 sub_arrow(arr::CompArrow) = sub_arrow(arr, name(arr))
 
+"`CompArrow` that `sarr` is component in"
 parent(sarr::SubArrow)::CompArrow = sarr.parent
-parent(sarr::SubPort)::CompArrow = parent(sub_arrow(sarr))
 
-
+"`CompArrow` that `sub_arrow(sprt)` is component in"
+parent(sprt::SubPort)::CompArrow = parent(sub_arrow(sprt))
 
 """
 Helper function to translate LightGraph functions to Port functions
