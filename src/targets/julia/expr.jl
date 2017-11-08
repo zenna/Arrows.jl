@@ -10,7 +10,7 @@ function call_expr(arr::PrimArrow, args...)
   if Arrows.  isscalar(arr)
     sizes = map(arg->Expr(:call, :size, arg), args)
     @show sizes
-    expr1 = Expr(:call, :println, "SIZES!!!", sizes...)
+    expr1 = Expr(:call, :println, "SIZES!!!", typeof(arr), sizes...)
     expr2 = Expr(:., name(arr), Expr(:tuple, args...))
     Expr(:block, expr1, expr2)
   else
