@@ -48,15 +48,33 @@ function props(::ScatterNdArrow)
 
 abinterprets(::ScatterNdArrow) = [sizeprop]
 
+mutable struct FakeArray
+  count
+end
+FakeArray() = FakeArray(0)
+
+function getindex(x::FakeArray, index)
+  x.count += 1
+end
+
 function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
   @show Dict(id => collect(keys(vals)) for (id, vals) in abvals)
   if 3 ∈ keys(abvals) && :value ∈ keys(abvals[3])
     @show sz = abvals[3][:value].value
-    IdAbValues(5 => AbValues(:size => Size([sz...])))
+    sizes = IdAbValues(5 => AbValues(:size => Size([sz...])))
+    if haskey(abvals, 2) && haskey(abvals[2], :value)
+      indices = abvals[2][:value].value
+      params = FakeArray()
+      missing = FakeArray()
+      scatter_nd(params, indices, sz, missing)
+      sizes[4] = AbValues(:size => Size([missing.count,]))
+    end
+    sizes
   else
     IdAbValues()
   end
 end
+
 
 function scatter_nd(params, indices, shape, missing_values)
   answer = Array{Any, length(shape)}(shape...)
