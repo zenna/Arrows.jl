@@ -2,16 +2,21 @@
 is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
 
 "Inversion of "
-function inv(arr::CompArrow, sarr::SubArrow, const_in)
+function inv(arr::CompArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
   @assert !any(const_in)
   (invert(arr), id_portid_map(arr))
 end
 
 # Hack until constant propagation is done
-function inv(sarr::SubArrow)
+function inv(sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues)
   carr = deref(sarr)
+  # FIXME: Remove const_in, now that we have abtvals
   const_in = map(is_src_source, ▹(sarr))
-  inv(deref(sarr), sarr, const_in)
+  inv(deref(sarr), sarr, const_in, tparent, abtvals)
 end
 # FIXME? is it ok to use invert!, what about source
 
@@ -51,6 +56,18 @@ end
 "Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
+function remove_dead_arrows(carr)
+  foreach(sub_arrows(carr)) do sarr
+    nloose = length(filter(loose, sub_ports(sarr)))
+    if nloose == length(sub_ports(sarr))
+      rem_sub_arr!(sarr)
+    else
+      @assert nloose == 0 "All or none ports should be zero, but is $nloose"
+    end
+  end
+  carr
+end
+
 """
 Construct a parametric inverse of `arr`
 # Arguments:
@@ -59,12 +76,28 @@ Construct a parametric inverse of `arr`
 # Returns:
 - A parametric inverse of `arr`
 """
-function invert!(arr::CompArrow, inner_inv)::CompArrow
+function invert!(arr::CompArrow,
+                 inner_inv,
+                 abtvals::AbTraceValues)::CompArrow
+
   check_reuse(arr)
-  link_loose_dsts(carr) = link_to_parent!(carr, loose ∧ should_dst)
-  outer = inv_rename! ∘ link_loose_dsts ∘ fix_links! ∘ invert_all_ports!
-  walk!(inner_inv, outer, arr)
+  link_param_ports(carr) = link_to_parent!(carr, loose ∧ should_dst)
+  outer = inv_rename! ∘ remove_dead_arrows ∘ link_param_ports ∘ fix_links! ∘ invert_all_ports!
+  tracewalk!(inner_inv, outer, arr, abtvals)
 end
 
-invert(arr::CompArrow, inner_inv=inv) = invert!(duplify!(deepcopy(arr)), inner_inv)
-aprx_invert(arr::CompArrow, inner_inv=inv) = aprx_totalize!(domain_error!(invert(arr, inner_inv)))
+"copy and `invert!` `arr`"
+function invert(arr::CompArrow,
+                inner_inv=inv,
+                sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())::CompArrow
+  abvals = traceprop!(arr, sprtabvals)
+  warn("INVERT MUTATES")
+  invert!(arr, inner_inv, abvals)
+end
+
+"Invert `arr`, approximately totalize, and check the `domain_error`"
+function aprx_invert(arr::CompArrow,
+                     inner_inv=inv,
+                     sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
+  aprx_totalize!(domain_error!(invert(arr, inner_inv, sprtabvals)))
+end

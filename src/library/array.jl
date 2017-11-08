@@ -17,7 +17,8 @@ function sizeprop(::ReshapeArrow, props::IdAbValues)
   # size of the output is value of second input
   # does the second input have the property :value
   if 2 ∈ keys(props) && has(:value)(props[2])
-    @show outsz = [props[2][:value].value...]
+    @show typeof(props[2][:value].value)
+    outsz = [props[2][:value].value...]
     IdAbValues(3 => AbValues(:size => Size(outsz)))
   else
     IdAbValues()

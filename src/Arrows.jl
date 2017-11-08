@@ -297,6 +297,7 @@ include("apply/interpret.jl")
 
 # Graph Transformations #
 include("transform/walk.jl")
+include("transform/tracewalk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/pgf.jl")
