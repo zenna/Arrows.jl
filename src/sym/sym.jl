@@ -35,14 +35,14 @@ domainpreds(::Arrow, args...) = Set{SymUnion}()
 
 function domainpreds(::InvDuplArrow, x1::Array,
                         xs::Vararg)
-  answer = Set{SymUnion}()
+  answer = Array{SymUnion, 1}()
   for x in xs
     for (left, right) in zip(x1, x)
       e = :($(left) == $(right))
       push!(answer, e)
     end
   end
-  answer
+  Set{SymUnion}(answer)
 end
 
 
@@ -60,6 +60,8 @@ end
 -(x::PureSymbolic, y::PureSymbolic) = :($(x) - $(y))
 /(x::PureSymbolic, y::PureSymbolic) = :($(x) / $(y))
 *(x::PureSymbolic, y::PureSymbolic) = :($(x) * $(y))
+log(x::SymUnion) = :(log($(x)))
+neg(x::SymUnion) = :(-$(x))
 
 
 
@@ -68,16 +70,13 @@ prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
 prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]
 prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
+prim_sym_interpret(::NegArrow, x) = [neg.(x),]
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
   [first(xs)]
 end
 
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape, θs)
-  @show z
-  @show indices
-  @show shape
-  @show θs
   [scatter_nd(SymbolPrx(z), indices, shape, SymbolPrx(θs)),]
 end
 
@@ -85,7 +84,6 @@ function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
   @show args
   @show typeof(args)
   @show typeof(x.value)
-  @show x.value
   [RefnSym(x.value)]
 end
 
@@ -93,9 +91,9 @@ end
 function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
   vars = [arg.var for arg in args]
   preds = Set[arg.preds for arg in args]
-  @show outputs = prim_sym_interpret(parr, vars...)
-  @show dompreds = domainpreds(parr, vars...)
-  @show allpreds = union(dompreds, preds...)
+  outputs = prim_sym_interpret(parr, vars...)
+  dompreds = domainpreds(parr, vars...)
+  allpreds = union(dompreds, preds...)
   map(var -> RefnSym(var, allpreds), outputs)
 end
 
