@@ -262,6 +262,7 @@ include("library/compound.jl")
 include("library/pgfprim.jl")
 
 include("library/inv_control.jl")
+include("library/inv_array.jl")
 include("library/inv_arith.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
