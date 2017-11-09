@@ -1,13 +1,11 @@
-"Shape of an Array"
-struct Shape{T <: Integer, N}
-  sizes::Tuple{Vararg{T, N}}
-end
-
 "Size (shape) of an array. Can have missing elements"
 @auto_hash_equals struct Size
   dims::Vector{Nullable{Int}}
   ndims_unknown::Bool
 end
+
+# FIXME: is this is a bad use of thre `get`
+Base.get(sz::Size)::Vector{Int} = map(get, sz.dims)
 
 @invariant Size ndims_unknown ⇒ isempty(dims)
 
@@ -51,6 +49,8 @@ function meet(size1::Size, size2::Size)
       elseif isnull(size2[i])
         dims[i] = size1[i]
       else
+        # @show size1
+        # @show size2
         get(size1[i]) == get(size2[i]) || throw(MeetError([size1[i], size2[i]]))
         dims[i] = size1[i]
       end
@@ -77,4 +77,10 @@ function sizeprop(arr::Arrow, props)::IdAbValues
     unionsz = meet(szs...)
     IdAbValues(prt.port_id => AbValues(:size => unionsz) for prt in ⬧(arr))
   end
+end
+
+function show(io::IO, sz::Size)
+  ok = (i->isnull(i) ? "?" : get(i)).(sz.dims)
+  ok = join(ok, ",")
+  print(io, string("Size($ok)"))
 end
