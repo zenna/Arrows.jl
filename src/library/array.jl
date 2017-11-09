@@ -25,6 +25,10 @@ function sizeprop(::ReshapeArrow, props::IdAbValues)
   end
 end
 
+function Base.reshape(array::Array, newshape::Array)
+  reshape(array, (newshape...))
+end
+
 "GatherND, from TensorFlow"
 function gather_nd(params, indices, shape)
   indices = indices + 1
