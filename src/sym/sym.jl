@@ -1,6 +1,12 @@
-PureSymbolic = Union{Expr, Symbol}
-SymUnion = Union{PureSymbolic, Array, Tuple, Number}
+## PureSymbolic = Union{Expr, Symbol}
+##SymUnion = Union{PureSymbolic, Array, Tuple, Number}
+mutable struct SymUnion
+  value
+  hsh::UInt
+end
 
+SymUnion(value) = SymUnion(value, hash(value))
+hash(x::SymUnion, h) = hash(x.hsh, h)
 
 "Refined Symbol {x | pred}"
 struct RefnSym
@@ -12,7 +18,7 @@ struct SymbolPrx
   var::SymUnion
 end
 
-getindex(s::SymbolPrx, i::Int) = Expr(:ref, s.var, i)
+getindex(s::SymbolPrx, i::Int) = SymUnion(Expr(:ref, s.var.value, i))
 
 "Unconstrained Symbol"
 RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
@@ -20,7 +26,7 @@ RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
 function Sym(prps::Props)
   # TODO: Add Type assumption
   ustring = string(name(prps))
-  Symbol(ustring)
+  SymUnion(Symbol(ustring))
 end
 Sym(prt::Port) = Sym(props(prt))
 RefnSym(prt::Port) = RefnSym(Sym(prt))
@@ -38,30 +44,22 @@ function domainpreds(::InvDuplArrow, x1::Array,
   answer = Array{SymUnion, 1}()
   for x in xs
     for (left, right) in zip(x1, x)
-      e = :($(left) == $(right))
-      push!(answer, e)
+      e = :($(left.value) == $(right.value))
+      push!(answer, SymUnion(e))
     end
   end
+  @show answer[end]
+  @show length(answer)
   Set{SymUnion}(answer)
 end
 
 
-+(x::PureSymbolic, y::SymUnion) = :($(x) + $(y))
--(x::PureSymbolic, y::SymUnion) = :($(x) - $(y))
-/(x::PureSymbolic, y::SymUnion) = :($(x) / $(y))
-*(x::PureSymbolic, y::SymUnion) = :($(x) * $(y))
-
-+(x::SymUnion, y::PureSymbolic) = :($(x) + $(y))
--(x::SymUnion, y::PureSymbolic) = :($(x) - $(y))
-/(x::SymUnion, y::PureSymbolic) = :($(x) / $(y))
-*(x::SymUnion, y::PureSymbolic) = :($(x) * $(y))
-
-+(x::PureSymbolic, y::PureSymbolic) = :($(x) + $(y))
--(x::PureSymbolic, y::PureSymbolic) = :($(x) - $(y))
-/(x::PureSymbolic, y::PureSymbolic) = :($(x) / $(y))
-*(x::PureSymbolic, y::PureSymbolic) = :($(x) * $(y))
-log(x::SymUnion) = :(log($(x)))
-neg(x::SymUnion) = :(-$(x))
++(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) + $(y.value)))
+-(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) - $(y.value)))
+/(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) / $(y.value)))
+*(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
+log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
+neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
 
 
 
@@ -77,14 +75,15 @@ function prim_sym_interpret{N}(::InvDuplArrow{N},
 end
 
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape, θs)
-  [scatter_nd(SymbolPrx(z), indices, shape, SymbolPrx(θs)),]
+  expr = scatter_nd(SymbolPrx(z), indices.value, shape.value, SymbolPrx(θs))
+  [expr,]
 end
 
 function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
   @show args
   @show typeof(args)
   @show typeof(x.value)
-  [RefnSym(x.value)]
+  [RefnSym(SymUnion(x.value))]
 end
 
 
@@ -94,7 +93,17 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
   outputs = prim_sym_interpret(parr, vars...)
   dompreds = domainpreds(parr, vars...)
   allpreds = union(dompreds, preds...)
-  map(var -> RefnSym(var, allpreds), outputs)
+  f = var -> RefnSym(var, allpreds)
+  if length(outputs) > 0 && isa(outputs[1], Array)
+    s = size(outputs)
+    answer = Array{Any, ndims(outputs)}(size(outputs)...)
+    for iter in eachindex(outputs)
+      answer[iter] = map(f, outputs[iter])
+    end
+  else
+    answer = map(f, outputs)
+  end
+  answer
 end
 
 
