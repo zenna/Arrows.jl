@@ -11,7 +11,7 @@ end
 "Decrement priortiy of `sprt`"
   lower!(pq::ArrowColors, sarr::SubArrow) = if !self_parent(sarr) pq[sarr] -= 1 end
 
-"Decrement SubArrows "
+"Decrement SubArrows"
 function known_colors(carr::CompArrow)::ArrowColors
   pq = colors(carr)
   foreach(out_neighbors(▹(carr))) do dst_sprt
@@ -85,4 +85,20 @@ function interpret(sub_interpret,
                            inputs,
                            colors,
                            dst_val)
+end
+
+"Intepret for debug, `pre` is applied to inputs to each subarrow, and
+ `post` to outputs"
+function interpret(sub_interpret,
+                   carr::CompArrow,
+                   inputs::Vector,
+                   pre::Function,
+                   post::Function)
+  function prepost(args...)
+    pre(args...)
+    res = sub_interpret(args...)
+    post(res...)
+    res
+  end
+  interpret(prepost, carr, inputs)
 end
