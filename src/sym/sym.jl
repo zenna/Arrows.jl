@@ -3,9 +3,11 @@
 mutable struct SymUnion
   value
   hsh::UInt
+  placeholder::Bool
 end
 
-SymUnion(value) = SymUnion(value, hash(value))
+SymUnion(value) = SymUnion(value, hash(value), false)
+SymPlaceHolder() = SymUnion(false, hash(false), true)
 hash(x::SymUnion, h) = hash(x.hsh, h)
 
 "Refined Symbol {x | pred}"
@@ -74,8 +76,9 @@ function prim_sym_interpret{N}(::InvDuplArrow{N},
   [first(xs)]
 end
 
-function prim_sym_interpret(::ScatterNdArrow, z, indices, shape, θs)
-  expr = scatter_nd(SymbolPrx(z), indices.value, shape.value, SymbolPrx(θs))
+function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
+  expr = prim_scatter_nd(SymbolPrx(z), indices.value, shape.value,
+                          SymPlaceHolder())
   [expr,]
 end
 
@@ -95,7 +98,6 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
   allpreds = union(dompreds, preds...)
   f = var -> RefnSym(var, allpreds)
   if length(outputs) > 0 && isa(outputs[1], Array)
-    s = size(outputs)
     answer = Array{Any, ndims(outputs)}(size(outputs)...)
     for iter in eachindex(outputs)
       answer[iter] = map(f, outputs[iter])
