@@ -83,6 +83,11 @@ struct DomainErr <: Err end
 domϵ = DomainErr
 superscript(::Type{DomainErr}) = :ᵈᵒᵐᵋ
 
+"Supervised Loss"
+struct SupervisedErr <: Err end
+supϵ = SupervisedErr
+superscript(::Type{SupervisedErr}) = :ˢᵘᵖᵋ
+
 "Parameter Property"
 type Param <: Prop end
 θp = Param

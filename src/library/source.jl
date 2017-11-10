@@ -1,5 +1,5 @@
 "Takes no input simple emits a `value::T`"
-struct SourceArrow{T} <: PrimArrow
+@auto_hash_equals struct SourceArrow{T} <: PrimArrow
   value::T
 end
 

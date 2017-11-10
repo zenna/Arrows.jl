@@ -17,12 +17,12 @@ function TraceParent(carr::CompArrow)
   TraceParent([sub_arrow(carr)])
 end
 
-"Number of levels in trace"
-length(tparent::TraceParent) = length(tparent.sarrs)
+# "Number of levels in trace"
+# length(tparent::TraceParent) = length(tparent.sarrs)
 @invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
 
 "Is `tparent` the root: i.e. parentless"
-isroot(tparent::TraceParent) = length(tparent) == 1
+isroot(tparent::TraceParent) = length(tparent.sarrs) == 1 #length(tparent) == 1
 
 "Get lower most context"
 bottom(tparent::TraceParent)::SubArrow = tparent.sarrs[end]
@@ -56,7 +56,7 @@ hash(tarr::TraceSubArrow, h::UInt) = hash((tarr.parent, tarr.leaf), h)
 (==)(tarr1::TraceSubArrow, tarr2::TraceSubArrow) = isequal(tarr1, tarr2)
 
 "`TraceSubArrow` where `sarr` is the root"
-function TraceSubArrow(sarr::SubArrow)
+function TraceSubArrow(sarr::SubArrow)::TraceSubArrow
   deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
   TraceSubArrow(TraceParent([sarr]), sarr)
 end
@@ -118,6 +118,13 @@ hash(tprt::TraceSubPort, h::UInt) = hash((tprt.trace_arrow, tprt.port_id), h)
 trace_ports(tarr::TraceSubArrow) =
   [TraceSubPort(tarr, i) for i = 1:length(⬧(deref(tarr)))]
 
+in_trace_ports(tarr::TraceSubArrow) =
+  [TraceSubPort(tarr, prt.port_id) for prt in ▸(deref(tarr))]
+
+out_trace_ports(tarr::TraceSubArrow) =
+  [TraceSubPort(tarr, prt.port_id) for prt in ◂(deref(tarr))]
+
+
 "Which `SubPort` does this `traceport` trace to"
 function sub_port(tprt::TraceSubPort)::SubPort
   SubPort(sub_arrow(tprt.trace_arrow), tprt.port_id)
@@ -175,6 +182,10 @@ TraceValue(tparent::TraceParent, sprt::SubPort) =
 
 "Trace ports of `tarr`"
 trace_values(tarr::TraceSubArrow) = map(TraceValue, trace_ports(tarr))
+
+in_trace_values(tarr::TraceSubArrow) = map(TraceValue, in_trace_ports(tarr))
+
+out_trace_values(tarr::TraceSubArrow) = map(TraceValue, out_trace_ports(tarr))
 
 # FIXME: Maybe rename this, a sprt could be in many trace values, so name
 # should reflect its teh root

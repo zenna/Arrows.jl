@@ -230,7 +230,14 @@ export
   meet,
 
   accumapply,
-  trace_value
+  trace_value,
+  psl,
+  supervised,
+  traceprop!,
+  UnknownArrow,
+  simpletracewalk,
+  trace_values
+
 # Code structures
 
 # Code structures
@@ -307,6 +314,8 @@ include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
+include("transform/supervised.jl")
+
 
 # Macros
 include("macros/arr_macro.jl")
@@ -323,7 +332,7 @@ include("map.jl")
 include("optim/loss.jl")
 include("optim/util.jl")
 include("gradient/gradient.jl")
-# include("optim/optimize.jl")
+include("optim/optimize.jl")
 include("gradient/gradient.jl")
 
 # # Targets #

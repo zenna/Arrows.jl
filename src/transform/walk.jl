@@ -66,13 +66,25 @@ function lightwalk(inner, outer, carr::CompArrow)::CompArrow
   outer(carr)
 end
 
-"Simple recursive walk"
+"Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
 function simplewalk(f::Function, carr::CompArrow)
   sarrs = sub_arrows(carr)
   csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
   res = f.(ptarrs)
   for csarr in csarrs
     res = vcat(res, simplewalk(f, deref(csarr)))
+  end
+  res
+end
+
+"Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
+function simpletracewalk(f::Function, carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  sarrs = sub_arrows(carr)
+  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  tarrs = TraceSubArrow[TraceSubArrow(tparent, ptarr) for ptarr in ptarrs]
+  res = map(f, tarrs)
+  for csarr in csarrs
+    res = vcat(res, simpletracewalk(f, deref(csarr), down(tparent, csarr)))
   end
   res
 end

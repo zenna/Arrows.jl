@@ -30,7 +30,6 @@ props{I}(::ReduceVarArrow{I}) =
 # FIXME `reduce_var` and `var` dont handle combinations of ports and numbers
 reduce_var(args::Vararg{SubPort}) = var([args...])
 reduce_var(xs::Vararg{<:Real}) = var(xs)
-reduce_var(xs::Vararg{<:Real}) = var(xs)
 function reduce_var(xs::Vararg{<:Array})
   xs = [xs...]
   meanval = mean(xs)
