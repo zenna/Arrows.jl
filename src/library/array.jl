@@ -25,6 +25,10 @@ function sizeprop(::ReshapeArrow, props::IdAbValues)
   end
 end
 
+function Base.reshape(array::Array, newshape::Array)
+  reshape(array, (newshape...))
+end
+
 "GatherND, from TensorFlow"
 function gather_nd(params, indices, shape)
   indices = indices + 1
@@ -43,7 +47,6 @@ function props(::ScatterNdArrow)
   [Props(true, :x, Any),
    Props(true, :y, Any),
    Props(true, :w, Any),
-   Props(true, :v, Any),
    Props(false, :z, Any)]
  end
 
@@ -62,33 +65,18 @@ function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
   @show Dict(id => collect(keys(vals)) for (id, vals) in abvals)
   if 3 ∈ keys(abvals) && :value ∈ keys(abvals[3])
     @show sz = abvals[3][:value].value
-    sizes = IdAbValues(5 => AbValues(:size => Size([sz...])))
-    if haskey(abvals, 2) && haskey(abvals[2], :value)
-      indices = abvals[2][:value].value
-      params = FakeArray()
-      missing = FakeArray()
-      scatter_nd(params, indices, sz, missing)
-      sizes[4] = AbValues(:size => Size([missing.count,]))
-    end
-    sizes
+    IdAbValues(4 => AbValues(:size => Size([sz...])))
   else
     IdAbValues()
   end
 end
 
 
-function scatter_nd(params, indices, shape, missing_values)
-  answer = Array{Any, length(shape)}(shape...)
+function scatter_nd(params, indices, shape)
+  answer = Array{Float64, length(shape)}(shape...)
   indices = indices + 1
   for (idx,rr) in enumerate(CartesianRange(size(indices)[1:end-1]))
     answer[indices[rr,:]...] = params[idx]
-  end
-  i = 1
-  for iter in eachindex(answer)
-    if !isassigned(answer, iter)
-      answer[iter] = missing_values[i]
-      i += 1
-    end
   end
   answer
 end
