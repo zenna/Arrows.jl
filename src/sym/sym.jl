@@ -62,7 +62,19 @@ end
 *(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
 log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
 neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
+var(xs::Array{SymUnion}) = SymUnion(:())
 
+function s_arrayed(xs::Array{SymUnion}, name)
+  values = [x.value for x in xs]
+  SymUnion(:($(name)($(values))))
+end
+s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
+function s_var(xs::Vararg{<:Array})
+  x1 = xs[1]
+  answer = Array()
+  f = iter-> s_arrayed([x[iter] for x in xs], :var)
+  [f(iter) for iter in eachindex(x1)]
+end
 
 
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
@@ -71,6 +83,7 @@ prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]
 prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
 prim_sym_interpret(::NegArrow, x) = [neg.(x),]
+prim_sym_interpret{N}(::DuplArrow{N}, x) = [x  for _ in 1:N]
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
   [first(xs)]
@@ -79,7 +92,15 @@ end
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
   expr = prim_scatter_nd(SymbolPrx(z), indices.value, shape.value,
                           SymPlaceHolder())
-  [expr,]
+  [SymUnion(expr),]
+end
+
+function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg{SymUnion, N})
+  [s_arrayed([xs...], :reduce_var),]
+end
+
+function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg{SymUnion, N})
+  [s_arrayed([xs...], :mean),]
 end
 
 function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
