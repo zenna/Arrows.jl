@@ -3,11 +3,10 @@
 mutable struct SymUnion
   value
   hsh::UInt
-  placeholder::Bool
 end
-
-SymUnion(value) = SymUnion(value, hash(value), false)
-SymPlaceHolder() = SymUnion(false, hash(false), true)
+token_name = :τᵗᵒᵏᵉⁿ
+SymUnion(value) = SymUnion(value, hash(value))
+SymPlaceHolder() = SymUnion(token_name)
 hash(x::SymUnion, h) = hash(x.hsh, h)
 
 "Refined Symbol {x | pred}"
@@ -90,8 +89,9 @@ function prim_sym_interpret{N}(::InvDuplArrow{N},
 end
 
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
-  expr = prim_scatter_nd(SymbolPrx(z), indices.value, shape.value,
+  arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices.value, shape.value,
                           SymPlaceHolder())
+  expr = map(sym->sym.value, arrayed_sym)
   [SymUnion(expr),]
 end
 
