@@ -7,7 +7,8 @@ end
 token_name = :τᵗᵒᵏᵉⁿ
 SymUnion(value) = SymUnion(value, hash(value))
 SymPlaceHolder() = SymUnion(token_name)
-hash(x::SymUnion, h) = hash(x.hsh, h)
+hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
+unsym(sym::SymUnion) = sym.value
 
 "Refined Symbol {x | pred}"
 struct RefnSym
@@ -23,6 +24,7 @@ getindex(s::SymbolPrx, i::Int) = SymUnion(Expr(:ref, s.var.value, i))
 
 "Unconstrained Symbol"
 RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
+
 
 function Sym(prps::Props)
   # TODO: Add Type assumption
@@ -88,8 +90,15 @@ function prim_sym_interpret{N}(::InvDuplArrow{N},
   [first(xs)]
 end
 
+function prim_sym_interpret{N}(::InvDuplArrow{N},
+                                xs::Vararg)::Vector{SymUnion}
+  [SymUnion(map(unsym, first(xs)))]
+end
+
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
-  arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices.value, shape.value,
+  indices = map(unsym, indices)
+  shape = map(unsym, shape)
+  arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
                           SymPlaceHolder())
   expr = map(sym->sym.value, arrayed_sym)
   [SymUnion(expr),]
@@ -118,21 +127,22 @@ end
 
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
-  vars = [arg.var for arg in args]
+  vars = [SymUnion.(arg.var.value) for arg in args]
   preds = Set[arg.preds for arg in args]
   outputs = prim_sym_interpret(parr, vars...)
   dompreds = domainpreds(parr, vars...)
   allpreds = union(dompreds, preds...)
   f = var -> RefnSym(var, allpreds)
   if length(outputs) > 0 && isa(outputs[1], Array)
-    answer = Array{Any, ndims(outputs)}(size(outputs)...)
+    sym_unions = Array{SymUnion, ndims(outputs)}(size(outputs)...)
     for iter in eachindex(outputs)
-      answer[iter] = map(f, outputs[iter])
+      sym_output = SymUnion(map(unsym, outputs[iter]))
+      sym_unions[iter] =  sym_output
     end
   else
-    answer = map(f, outputs)
+    sym_unions = outputs
   end
-  answer
+  map(f, sym_unions)
 end
 
 
