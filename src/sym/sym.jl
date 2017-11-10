@@ -103,6 +103,12 @@ function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg{SymUnion, N})
   [s_arrayed([xs...], :mean),]
 end
 
+function  prim_sym_interpret(::Arrows.ReshapeArrow, data::Arrows.SymUnion,
+                            shape::Arrows.SymUnion)
+  expr = :(reshape($(data.value), $(shape.value)))
+  [SymUnion(expr),]
+end
+
 function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
   @show args
   @show typeof(args)
