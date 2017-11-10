@@ -1,7 +1,11 @@
 "An unknown arrow is an arrow whose definition is not known"
-struct UnknownArrow <: PrimArrow
+mutable struct UnknownArrow <: PrimArrow
   name::Symbol
   props::Vector{Props}
+  func::Function
+  function UnknownArrow(name::Symbol, props::Vector{Props})
+    new(name, props)
+  end
 end
 
 props(farr::UnknownArrow) = farr.props
