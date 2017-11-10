@@ -101,3 +101,17 @@ function fwd_loss(arr::Arrow)
   addprop!(idϵ, loss)
   carr
 end
+
+"From `f:y -> x`, `f: y -> error::Error oflosstype`"
+function floss(arr::Arrow, lossf::Function, custϵ::Type{Err}=ϵ)
+  carr = CompArrow(Symbol(:lx_, name(arr)))
+  sarr = add_sub_arr!(carr, arr)
+  foreach(link_to_parent!, ▹(sarr))
+  xs = map(src, ▹(sarr, !is(θp)))
+  total = lossf(xs, ◃(sarr))
+  loss = add_port_like!(carr, deref(total))
+  total ⥅ loss
+  addprop!(custϵ, loss)
+  @assert is_wired_ok(carr)
+  carr
+end

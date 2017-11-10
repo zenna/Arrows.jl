@@ -168,6 +168,7 @@ export
 
   SourceArrow,
   AssertArrow,
+  UnknownArrow,
 
   MeanArrow,
   VarArrow,
@@ -253,6 +254,7 @@ include("arrows/port.jl")           # Ports and Port Attirbutes
 include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
+include("arrows/unknown.jl")        # Unknown (uninterpreted) Arrows
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue

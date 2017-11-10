@@ -91,7 +91,7 @@ function invert(arr::CompArrow,
                 inner_inv=inv,
                 sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())::CompArrow
   warn("INVERT MUTATES")
-  # arr = deepcopy(arr)
+  arr = deepcopy(arr)
   duplify!(arr)
   abvals = traceprop!(arr, sprtabvals)
   invert!(arr, inner_inv, abvals)
