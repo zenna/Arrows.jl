@@ -31,3 +31,12 @@ props(::LessThanArrow) = ineq_props
 struct EqualArrow <: PrimArrow end
 name(::EqualArrow) = :(==)
 props(::EqualArrow) = ineq_props
+
+IneqArrows = Union{GreaterThanArrow,
+                   GreaterThanEqualArrow,
+                   LessThanEqualArrow,
+                   LessThanArrow,
+                   EqualArrow}
+abinterprets(::IneqArrows) = [sizeprop]
+isscalar(::Type{<:IneqArrows}) = Val{true}
+isscalar(::IneqArrows) = true

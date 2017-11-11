@@ -37,3 +37,13 @@ function reduce_var(xs::Vararg{<:Array})
   dists = [(meanval - x).^2 for x in xs]
   variance = mean(mean(dists))
 end
+
+"Reduce and sum"
+struct ReduceSumArrow <: PrimArrow
+  axis::Int
+  keepdims::Bool
+end
+name(::ReduceSumArrow) = :reduce_sum
+props(::ReduceSumArrow) = [Props(true, :x, Any),
+                           Props(false, :y, Any)]
+reduce_sum(xs::Array, axis) = sum(xs, axis)  

@@ -5,11 +5,15 @@ function portapply!(arr::Arrow, sprts::SubPort...)
   @assert all(should_src, sprts)
   sarr = add_sub_arr!(parent, arr)
   foreach(⥅, sprts, ▹(sarr))
-  ◃(sarr)
+  if length(◃(sarr)) == 1
+    ◃(sarr, 1)
+  else
+    ◃(sarr)
+  end
 end
 
 (arr::CompArrow)(sprts::SubPort...) = portapply!(arr, sprts...)
 
 for Arrtype in filter(isleaftype, subtypes(PrimArrow))
-  (arr::Arrtype)(sprts::SubPort) = portapply!(arr, sprts...)
+  (arr::Arrtype)(sprts::SubPort...) = portapply!(arr, sprts...)
 end
