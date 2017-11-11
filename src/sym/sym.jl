@@ -154,12 +154,28 @@ sym_interpret(carr::CompArrow, args) =
     outs = interpret(sym_interpret, carr, inp)
     allpreds = Set{SymUnion}()
     foreach(out -> union!(allpreds, out.preds), outs)
-    θs = Set{Expr}()
-    g = (x->find_gather_params!(x, θs)) ∘ Arrows.unsym
-    foreach(g, allpreds)
-    allpreds, θs
+    filter_gather_θ!(carr, inp, allpreds)
+    allpreds
     #filter(pred -> pred ∉ remove, allpreds)
   end
+
+function filter_gather_θ!(carr::CompArrow, ports, constraints)
+  inp = map(Arrows.Sym, ▸(carr))
+  all_gather_θ = Set{Expr}()
+  for (id, p) in enumerate(inp)
+    if startswith(String(p.value), String(:θgather))
+      exprs = ports[id].var.value
+      union!(all_gather_θ, exprs)
+    end
+  end
+  θs = Set{Expr}()
+  g = (x->find_gather_params!(x, θs)) ∘ Arrows.unsym
+  foreach(g, constraints)
+  unused_θ = setdiff(all_gather_θ, θs)
+  foreach(constraints) do cons
+    remove_unused_θs!(cons.value, unused_θ)
+  end
+end
 
 function expand_θ(θ, sz::Size)
   shape = get(sz)
@@ -205,5 +221,21 @@ function find_gather_params!(expr, θs)
     end
   end
   expr.args = map(x->find_gather_params!(x, θs), expr.args)
+  expr
+end
+
+function remove_unused_θs!(expr, θs)
+  if !isa(expr, Expr)
+    return expr
+  end
+  if expr.head == :call
+    if expr.args[1] == :+
+      if (expr.args[2] ∈ θs) || (expr.args[3] ∈ θs)
+        id = expr.args[2] ∈ θs ? 3 : 2
+        return expr.args[id]
+      end
+    end
+  end
+  expr.args = map(x->remove_unused_θs!(x, θs), expr.args)
   expr
 end
