@@ -239,3 +239,25 @@ function remove_unused_θs!(expr, θs)
   expr.args = map(x->remove_unused_θs!(x, θs), expr.args)
   expr
 end
+
+function is_simple(expr)
+  if isa(expr, Symbol)
+    return true
+  end
+  isa(expr, Expr) && (expr.head == :ref) && is_simple(expr.args[1])
+end
+
+function find_assignments(constraints)
+  assignments = Dict()
+  for expr in unsym.(collect(constraints))
+    @assert expr.head == :call
+    @assert expr.args[1] == :(==)
+    left, right = expr.args[2:end]
+    if is_simple(left)
+      assignments[left] = right
+    elseif is_simple(right)
+      assignments[right] = left
+    end
+  end
+  assignments
+end
