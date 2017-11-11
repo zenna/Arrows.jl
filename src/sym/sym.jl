@@ -198,14 +198,12 @@ function find_gather_params!(expr, θs)
   if expr.head == :call
     if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
       ref = if expr.args[2] == Arrows.token_name
-        expr.args[2] = 0
         expr.args[3]
         else
-          expr.args[3] = 0
           expr.args[2]
         end
         push!(θs, ref)
-      return expr
+      return ref
     end
   end
   expr.args = map(x->find_gather_params!(x, θs), expr.args)
