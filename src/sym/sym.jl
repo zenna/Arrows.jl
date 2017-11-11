@@ -149,3 +149,22 @@ end
 sym_interpret(sarr::SubArrow, args) = sym_interpret(deref(sarr), args)
 sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
+
+
+
+function find_gather_params(expr)
+  if !isa(expr, Expr)
+    return Set{Expr}()
+  end
+  if expr.head == :call
+    if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
+      ref = if expr.args[2] == Arrows.token_name
+        expr.args[3]
+        else
+          expr.args[2]
+        end
+      return Set{Expr}([ref,])
+    end
+  end
+  union(map(find_gather_params, expr.args)...)
+end
