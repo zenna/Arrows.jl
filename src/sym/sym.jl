@@ -38,8 +38,6 @@ RefnSym(prt::Port) = RefnSym(Sym(prt))
 domainpreds(::Arrow, args...) = Set{SymUnion}()
 function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion,
                         xs::Vararg)
-  @show x1
-  @show xs
   symbols = map(xs) do x
     :($(x.value) == $(x1.value))
   end
@@ -121,9 +119,6 @@ function  prim_sym_interpret(::Arrows.ReshapeArrow, data::Arrows.SymUnion,
 end
 
 function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
-  @show args
-  @show typeof(args)
-  @show typeof(x.value)
   [RefnSym(SymUnion(x.value))]
 end
 
@@ -155,8 +150,7 @@ sym_interpret(carr::CompArrow, args) =
 
   "Constraints on inputs to `carr`"
   function constraints(carr::CompArrow)
-    inp = map(RefnSym, ▸(carr))
-    expand_in_ports!(carr, inp)
+    inp = symbol_in_ports(carr)
     outs = interpret(sym_interpret, carr, inp)
     allpreds = Set{SymUnion}()
     foreach(out -> union!(allpreds, out.preds), outs)
@@ -176,20 +170,25 @@ function expand_θ(θ, sz::Size)
   symbols
 end
 
-function expand_in_ports!(arr::CompArrow, inp::Vector{RefnSym})
+function symbol_in_ports(arr::CompArrow)
   trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
+  inp = (Vector{RefnSym} ∘ n▸)(arr)
   for (id, sport) in enumerate(▹(arr))
+    sym = (Sym ∘ deref)(sport)
     tv = trace_value(sport)
     if haskey(trcp, tv)
       inferred = trcp[tv]
       if haskey(inferred, :size)
         sz = inferred[:size]
         expand = x->expand_θ(x, sz)
-        sym_arr = (expand ∘ SymbolPrx)(inp[id].var)
+        sym_arr = (expand ∘ SymbolPrx)(sym)
         inp[id] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
+        continue
       end
     end
+    inp[id] = RefnSym(sym)
   end
+  inp
 end
 
 
