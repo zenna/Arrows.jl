@@ -107,11 +107,46 @@ function floss(arr::Arrow, lossf::Function, custϵ::Type{Err}=ϵ)
   carr = CompArrow(Symbol(:lx_, name(arr)))
   sarr = add_sub_arr!(carr, arr)
   foreach(link_to_parent!, ▹(sarr))
+  foreach(link_to_parent!, ◃(sarr, is(ϵ)))
   xs = map(src, ▹(sarr, !is(θp)))
-  total = lossf(xs, ◃(sarr))
+  total = lossf(xs, ◃(sarr, !is(ϵ)))
   loss = add_port_like!(carr, deref(total))
   total ⥅ loss
   addprop!(custϵ, loss)
+  @assert is_wired_ok(carr)
+  carr
+end
+
+# ""
+# function accum(f, prts::Port)
+#   all(is(◂), prts) || throw(ArgumentError("Must be outport"))
+#   f = CompArrow()
+#   sprts = map(sub_port, prts)
+#   srcs = map(src, sprts)
+#   unlinked = map(unlink_ports!, srcs, sprts)
+#   @assert all(unlinked)
+#   newoutputs =
+#
+
+""
+function accum(f::Function, arr::Arrow, prts::Port...; keepouts=false)
+  all(is_out_port, prts) || throw(ArgumentError("Must be outport"))
+  carr = CompArrow(Symbol(:f, name(arr)))
+  sarr = add_sub_arr!(carr, arr)
+  for sprt in sub_ports(sarr)
+    if keepouts || deref(sprt) ∉ prts
+      link_to_parent!(sprt)
+    end
+  end
+
+  sprts = [get_sub_ports(sarr, prt.port_id) for prt in prts]
+  @show outsprts = f(sprts...)
+  if outsprts isa Array
+    foreach(link_to_parent!, outsprts)
+  else
+    link_to_parent!(outsprts)
+  end
+
   @assert is_wired_ok(carr)
   carr
 end

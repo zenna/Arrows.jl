@@ -164,6 +164,8 @@ export
   ▹,
   θp,
   ϵ,
+  idϵ,
+  domϵ,
   addprop!,
 
   SourceArrow,
@@ -237,7 +239,10 @@ export
   traceprop!,
   UnknownArrow,
   simpletracewalk,
-  trace_values
+  trace_values,
+  is,
+  add!,
+  link_to_parent!
 
 # Code structures
 
@@ -295,7 +300,7 @@ include("library/boolean.jl")
 
 # Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
-
+include("combinators/portapply.jl")
 
 
 include("compile/policy.jl")

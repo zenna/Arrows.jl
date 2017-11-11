@@ -29,6 +29,18 @@ end
 
 xy_plus_x_jl(x, y) = x * y + x
 
+function abc_arr()
+  carr = CompArrow(:xyx, [:a, :b, :c], Symbol[])
+  a, b, c = ⬨(carr)
+  d = a + b * c + a
+  e = a + b - c
+  Arrows.link_to_parent!(d)
+  Arrows.link_to_parent!(e)
+  @assert is_wired_ok(carr)
+  carr
+end
+
+
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
   z, θ, x, y = ⬨(carr)

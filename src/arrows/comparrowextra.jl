@@ -212,16 +212,21 @@ end
 src_sub_arrow(port::SubPort)::SubArrow = sub_arrow(src(port))
 
 "`src_port` such that `src_port -> port`"
-function src(sport::SubPort)::SubPort
-  if is_src(sport)
-    sport
-  else
-    in_neighs = in_neighbors(sport)
-    length(in_neighs) == 1 || throw(ArgumentError("#in_neighs of $(sport) should be 1 but is $(length(in_neighs))"))
+function src(sprt::SubPort)::SubPort
+  if is_src(sprt)
+    sprt
+  elseif is_dst(sprt)
+    in_neighs = in_neighbors(sprt)
+    length(in_neighs) == 1 || throw(ArgumentError("#in_neighs of $(sprt) should be 1 but is $(length(in_neighs))"))
     first(in_neighs)
+  elseif should_src(sprt)
+    sprt
+  else
+    throw(ArgumentError("No `src` $sprt should be dst but has no in_link "))
   end
 end
 
+# FIXME: Overly restrictive Fix dst like we fixed `src`
 "`dst_sprt` such that `sprt -> dst_psrt` and `dst_sprt` is unique"
 function dst(sprt::SubPort)::SubPort
   if is_dst(sprt)

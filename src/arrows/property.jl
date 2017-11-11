@@ -21,7 +21,7 @@ labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
 
 "Add property `P` to `prps`"
-addprop!(P::Type{<:Prop}, prps::Props) = push!(prps.labels, P)
+addprop!(P::Type{<:Prop}, prps::Props)::Props = (push!(prps.labels, P); prps)
 
 function addprop(P::Type{<:Prop}, prps::Props)
   prps = deepcopy(prps)
@@ -64,6 +64,9 @@ isin(dir::Direction) = dir.isin
 isout(dir::Direction) = !(isin(dir))
 isin(prps::Props) = isin(prps.namedprops.direction)
 isout(prps::Props) = isout(prps.namedprops.direction)
+
+"Lambda which adds `P` to its argument"
+add!(P::Type{<:Prop}) = prps -> addprop!(P, prps)
 
 "Error"
 abstract type Err <: Prop end

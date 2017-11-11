@@ -9,6 +9,7 @@ function promote_constant(carr::CompArrow, x)
 end
 
 function inner(ArrType, xs::Vararg{SubPort})
+  xs = map(src, xs)
   # xs = map(x -> promote_constant(carr, x), xs)
   carr = anyparent(xs...)
   sarr = add_sub_arr!(carr, ArrType())
