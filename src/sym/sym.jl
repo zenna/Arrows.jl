@@ -152,19 +152,23 @@ sym_interpret(carr::CompArrow, args) =
 
 
 
-function find_gather_params(expr)
+function find_gather_params!(expr, θs)
   if !isa(expr, Expr)
-    return Set{Expr}()
+    return expr
   end
   if expr.head == :call
     if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
       ref = if expr.args[2] == Arrows.token_name
+        expr.args[2] = 0
         expr.args[3]
         else
+          expr.args[3] = 0
           expr.args[2]
         end
-      return Set{Expr}([ref,])
+        push!(θs, ref)
+      return expr
     end
   end
-  union(map(find_gather_params, expr.args)...)
+  expr.args = map(x->find_gather_params!(x, θs), expr.args)
+  return expr
 end
