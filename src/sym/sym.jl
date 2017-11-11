@@ -151,6 +151,45 @@ sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
 
 
+  "Constraints on inputs to `carr`"
+  function constraints(carr::CompArrow)
+    inp = map(RefnSym, ▸(carr))
+    expand_in_ports!(carr, inp)
+    outs = interpret(sym_interpret, carr, inp)
+    allpreds = Set{SymUnion}()
+    foreach(out -> union!(allpreds, out.preds), outs)
+    θs = Set{Expr}()
+    g = (x->find_gather_params!(x, θs)) ∘ Arrows.unsym
+    foreach(g, allpreds)
+    allpreds, θs
+    #filter(pred -> pred ∉ remove, allpreds)
+  end
+
+function expand_θ(θ, sz::Size)
+  shape = get(sz)
+  symbols = Array{Arrows.SymUnion, ndims(sz)}(shape...)
+  for iter in eachindex(symbols)
+    symbols[iter] = θ[iter]
+  end
+  symbols
+end
+
+function expand_in_ports!(arr::CompArrow, inp::Vector{RefnSym})
+  trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
+  for (id, sport) in enumerate(▹(arr))
+    tv = trace_value(sport)
+    if haskey(trcp, tv)
+      inferred = trcp[tv]
+      if haskey(inferred, :size)
+        sz = inferred[:size]
+        expand = x->expand_θ(x, sz)
+        sym_arr = (expand ∘ SymbolPrx)(inp[id].var)
+        inp[id] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
+      end
+    end
+  end
+end
+
 
 function find_gather_params!(expr, θs)
   if !isa(expr, Expr)
