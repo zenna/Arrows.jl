@@ -36,11 +36,15 @@ RefnSym(prt::Port) = RefnSym(Sym(prt))
 
 
 domainpreds(::Arrow, args...) = Set{SymUnion}()
-# function domainpreds{N}(::InvDuplArrow{N}, xs::Vararg{SymUnion, N})
-#   x1 = first(xs)
-#   f = x-> :($(x) == $(x1))
-#   Set{SymUnion}(map(f, xs[2:end]))
-# end
+function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion,
+                        xs::Vararg)
+  @show x1
+  @show xs
+  symbols = map(xs) do x
+    :($(x.value) == $(x1.value))
+  end
+  Set{SymUnion}(SymUnion.(symbols))
+end
 
 function domainpreds(::InvDuplArrow, x1::Array,
                         xs::Vararg)
@@ -51,8 +55,6 @@ function domainpreds(::InvDuplArrow, x1::Array,
       push!(answer, SymUnion(e))
     end
   end
-  @show answer[end]
-  @show length(answer)
   Set{SymUnion}(answer)
 end
 
