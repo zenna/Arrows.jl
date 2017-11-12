@@ -155,7 +155,7 @@ sym_interpret(carr::CompArrow, args) =
     allpreds = Set{SymUnion}()
     foreach(out -> union!(allpreds, out.preds), outs)
     θs = filter_gather_θ!(carr, inp, allpreds)
-    allpreds, θs
+    ConstraintInfo(allpreds, θs)
     #filter(pred -> pred ∉ remove, allpreds)
   end
 
@@ -250,20 +250,7 @@ function replace!(left::Union{Expr, Symbol}, right, expr::Expr)
   end
 end
 
-build_symbol_to_constraint(expr, θs, mapping) = false
 
-function build_symbol_to_constraint(expr::Expr, θs, mapping)
-  for arg in expr.args
-    if arg ∈ θs
-      if !haskey(mapping, arg)
-        mapping[arg] = Set{Expr}()
-      end
-      push!(mapping[arg], expr)
-    else
-      build_symbol_to_constraint(arg, θs, mapping)
-    end
-  end
-end
 
 
 symbolic_includes(left, right) = false
@@ -280,44 +267,71 @@ function symbolic_includes(left, right::Expr)
   false
 end
 
-
-function find_assignments(constraints, θs)
-  exprs = unsym.(collect(constraints))
-  mapping = Dict()
-  foreach(exprs) do expr
-    f = x -> build_symbol_to_constraint(x, θs, mapping)
-    foreach(f, expr.args[2:end])
-
+assign_if_possible(info, left, right) = false
+function assign_if_possible(info, left::Union{Symbol, Expr}, right)
+  if left ∉ info.θs
+    return false
   end
-  assignments = Dict()
-
-  assign_if_possible(left, right) = false
-  function assign_if_possible(left::Union{Symbol, Expr}, right)
-    if left ∉ θs
-      return false
-    end
-    if symbolic_includes(left, right)
-      warn("""parameters that appear in both sides of equalities cannot be
-      solved""")
-      false
-    elseif left != right
-      assignments[left] = right
-      if haskey(mapping, left)
-        foreach(mapping[left]) do expr
-          replace!(left, right, expr)
-        end
+  if symbolic_includes(left, right)
+    warn("""parameters that appear in both sides of equalities cannot be
+    solved""")
+    false
+  elseif left != right
+    info.assignments[left] = right
+    if haskey(info.mapping, left)
+      foreach(info.mapping[left]) do expr
+        replace!(left, right, expr)
       end
-      true
+    end
+    true
+  end
+end
+
+mutable struct ConstraintInfo
+  exprs::Vector{Expr}
+  θs::Set{Union{Symbol, Expr}}
+  mapping::Dict
+  unsat::Set{SymUnion}
+  assignments::Dict
+  function ConstraintInfo(allpreds::Set, θs)
+    c = new()
+    c.exprs = unsym.(collect(allpreds))
+    c.θs = θs
+    c.mapping = Dict()
+    c.unsat = Set{SymUnion}()
+    c.assignments = Dict()
+    c
+  end
+end
+
+function build_symbol_to_constraint(info::ConstraintInfo)
+  foreach(info.exprs) do expr
+    f = x -> build_symbol_to_constraint(info, x)
+    foreach(f, expr.args[2:end])
+  end
+end
+
+build_symbol_to_constraint(info::ConstraintInfo, expr) = false
+
+function build_symbol_to_constraint(info::ConstraintInfo, expr::Expr)
+  for arg in expr.args
+    if arg ∈ info.θs
+      if !haskey(info.mapping, arg)
+        info.mapping[arg] = Set{Expr}()
+      end
+      push!(info.mapping[arg], expr)
+    else
+      build_symbol_to_constraint(info, arg)
     end
   end
-  unsolved = Set{SymUnion}()
-  for expr in exprs
+end
+function find_assignments(info)
+  build_symbol_to_constraint(info)
+  for expr in info.exprs
     @assert expr.head == :call
     @assert expr.args[1] == :(==)
     left, right = expr.args[2:end]
-    if !assign_if_possible(left, right)
-      !assign_if_possible(right, left) && push!(unsolved, SymUnion(expr))
-    end
+    f = (l, r) -> assign_if_possible(info, l, r)
+    !f(left, right) && !f(right, left) && push!(info.unsat, SymUnion(expr))
   end
-  assignments, unsolved
 end
