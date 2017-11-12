@@ -44,6 +44,22 @@ struct ReduceSumArrow <: PrimArrow
   keepdims::Bool
 end
 name(::ReduceSumArrow) = :reduce_sum
-props(::ReduceSumArrow) = [Props(true, :x, Any),
-                           Props(false, :y, Any)]
-reduce_sum(xs::Array, axis) = sum(xs, axis)  
+props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
+reduce_sum(xs::Array, axis) = sum(xs, axis)
+
+struct InvReduceSumArrow <: PrimArrow
+  sz::Size      # Size of the input to the reduce arrow it inverts
+  axis::Int     # Axis reduce arrow inverted on
+end
+name(::InvReduceSumArrow) = :inv_reduce_sum_arrow
+function props(arr::InvReduceSumArrow)
+  # need one set of parameters for every element of reduced axis
+  nθ = get(arr.sz)[arr.axis] - 1
+  θprops = [Props(true, Symbol(:θ, i), Any) for i = 1:nθ]
+  foreach(add!(θp), θprops)
+  vcat(Props(true, :y, Any), θprops, Props(false, :x, Any))
+end
+
+function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, abvals::IdAbValues)
+  InvReduceSumArrow(abvals[1][:size], arr.axis), Dict(:x=>:x, :y=>:y)
+end

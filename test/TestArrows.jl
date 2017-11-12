@@ -244,7 +244,9 @@ function all_test_arrows()
    det_policy_inner_arr(),
    triple_add(),
    weird_arr(),
-   nested_core()]
+   nested_core(),
+   ifelsesimple(),
+   ifelsesimple2()]
 end
 
 function is_plain(arr::CompArrow)

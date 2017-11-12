@@ -35,3 +35,13 @@ props(::IfElseArrow) =   [Props(true, :i, Bool),
                           Props(true, :e, Real),
                           Props(false, :y, Real)]
 name(::IfElseArrow) = :ifelse
+
+function inv(arr::Arrows.IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
+  carr = CompArrow(:inv_ite, [:y, :θi, :θmissing], [:i, :t, :e])
+  y, θi, θmissing, i, t, e = ⬨(carr)
+  θi ⥅ i
+  ifelse(θi, y, θmissing) ⥅ t
+  ifelse(θi, θmissing, y) ⥅ e
+  @assert is_wired_ok(carr)
+  carr, Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+end

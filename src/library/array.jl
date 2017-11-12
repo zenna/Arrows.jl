@@ -29,6 +29,23 @@ function Base.reshape(array::Array, newshape::Array)
   reshape(array, (newshape...))
 end
 
+"Inverse reshape must take the shape of `value`"
+function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbValues)
+  const_in(arr, abvals)[2] || throw(ArgumentError("Nonconst indices unimplemented"))
+  # The input shape to the inverse is shape of the input to the forward arr
+  sz = abvals[1][:size]
+  source = SourceArrow(get(sz))
+  carr = CompArrow(:inv_reshape_comp, [:z], [:x])
+  z, x = ⬨(carr)
+  srcsarr = add_sub_arr!(carr, source)
+  rshparr = add_sub_arr!(carr, ReshapeArrow())
+  z ⥅ (rshparr, 1)
+  (srcsarr, 1) ⥅ (rshparr, 2)
+  (rshparr, 1) ⥅ x
+  @assert is_wired_ok(carr)
+  carr, Dict(3=>1, 1=>2)
+end
+
 "GatherND, from TensorFlow"
 function gather_nd(params, indices, shape)
   indices = indices + 1

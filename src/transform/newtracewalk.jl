@@ -61,11 +61,13 @@ function newtracewalk(replace::Function,
   # Do the rewiring
   for (l, r) in links(carr)
     portmap = oldnewpmap[l.sub_arrow]
+    l.port_id ∉ keys(portmap) && continue
     new_port_id = portmap[l.port_id] # Port id in replacement
     new_sarr = sarrmap[l.sub_arrow]
     l⬨ = sub_port(new_sarr, new_port_id)
 
     portmap = oldnewpmap[r.sub_arrow]
+    r.port_id ∉ keys(portmap) && continue
     new_port_id = portmap[r.port_id] # Port id in replacement
     new_sarr = sarrmap[r.sub_arrow]
     r⬨ = sub_port(new_sarr, new_port_id)

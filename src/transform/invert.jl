@@ -12,7 +12,7 @@ end
 function need_switch(l::Link)
   needswitch1 = should_src(l[1]) ⊻ is_src(l[1])
   needswitch2 = should_dst(l[2]) ⊻ is_dst(l[2])
-  @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2"
+  @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2 $l"
   needswitch1
 end
 

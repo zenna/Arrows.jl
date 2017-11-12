@@ -49,12 +49,8 @@ end
 "Inverse reshape must take the shape of `value`"
 function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbValues)
   const_in(arr, abvals)[2] || throw(ArgumentError("Nonconst indices unimplemented"))
-
   # The input shape to the inverse is shape of the input to the forward arr
-  tarr = TraceSubArrow(tparent, sarr)
-  tvals = trace_values(tarr)
-  # @show tvals[1] ∈ abtvals
-  sz = abtvals[tvals[1]][:size]
+  sz = abvals[1][:size]
   source = SourceArrow(get(sz))
   carr = CompArrow(:inv_reshape_comp, [:z], [:x])
   z, x = ⬨(carr)
@@ -67,11 +63,11 @@ function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbValues)
   carr, Dict(3=>1, 1=>2)
 end
 
-function inv(::Arrows.GatherNdArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(::GatherNdArrow, sarr::SubArrow, abvals::IdAbValues)
   Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
-function inv{O}(::Arrows.DuplArrow{O}, sarr::SubArrow, abvals::IdAbValues)
+function inv{O}(::DuplArrow{O}, sarr::SubArrow, abvals::IdAbValues)
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 end
 
@@ -113,7 +109,7 @@ function inv_np(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
    unary_inv(arr, const_in(arr, abvals), ASinArrow)
  end
 
- "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
+"The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
 function inv(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
   inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_cos)
@@ -213,10 +209,10 @@ function inv(arr::IdentityArrow, sarr::SubArrow, abvals::IdAbValues)
   unary_inv(arr, const_in(arr, abvals), IdentityArrow)
 end
 
-function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
-  (SourceArrow(true), Dict(1 => 1))
-end
+# function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
+#   SourceArrow(true), Dict(1 => 1)
+# end
 
 function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbValues)
-  SqrArrow(), Dict(1=>2, 2=>1)
+  SqrArrow(), Dict(:x=>:x, :y=>:y)
 end
