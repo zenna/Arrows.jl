@@ -25,9 +25,9 @@ function inv(arr::Arrows.ReduceSumArrow,
              abtvals::AbTraceValues)
 
   tarr = TraceSubArrow(tparent, sarr)
-  @show trace_values(tarr)
-  @show tarr
-  # @show [tval ∈ keys(abtvals) for tval in ]
+  # @show tarr
+  # @show trace_values(tarr)
+  @show all(tval ∈ keys(abtvals) for tval in tvals)
   @assert false
   InvReduceSumArrow()
 end

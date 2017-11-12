@@ -91,7 +91,6 @@ end
 function invert(arr::CompArrow,
                 inner_inv=inv,
                 sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())::CompArrow
-  # warn("INVERT MUTATES")
   arr = deepcopy(arr)
   duplify!(arr)
   sprtabvals = Dict{SubPort, AbValues}(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
