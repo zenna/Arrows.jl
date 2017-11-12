@@ -27,7 +27,13 @@ function xy_plus_x_arr()
   c
 end
 
-xy_plus_x_jl(x, y) = x * y + x
+"x * y + x"
+function twoxy_plus_x_arr()
+  c = CompArrow(:xyx, [:x, :y], [:z])
+  x, y, z = ⬨(c)
+  x>2+x*y + x ⥅ z
+  c
+end
 
 function abc_arr()
   carr = CompArrow(:xyx, [:a, :b, :c], Symbol[])
@@ -40,10 +46,10 @@ function abc_arr()
   carr
 end
 
-function ifelsetest()
+function ifelseconst()
   carr = CompArrow(:ifelse1, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  d = ifelse(c > b,
+  d = ifelse(c > 3,
              a + b,
              a * b)
   d ⥅ z
@@ -246,7 +252,8 @@ function all_test_arrows()
    weird_arr(),
    nested_core(),
    ifelsesimple(),
-   ifelsesimple2()]
+   ifelsesimple2(),
+   ifelseconst()]
 end
 
 function is_plain(arr::CompArrow)

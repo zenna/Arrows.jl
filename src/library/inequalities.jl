@@ -9,10 +9,12 @@ struct GreaterThanArrow <: PrimArrow end
 name(::GreaterThanArrow)::Symbol = :>
 props(::GreaterThanArrow) = ineq_props
 
-function inv(arr::GreaterThanArrow, sarr::SubArrow, idabvals::IdAbValues)
-  if 1 ∈ keys(idabvals) && [:value] in keys(idabvals[1])
+function inv(arr::GreaterThanArrow, sarr::SubArrow, abvals::IdAbValues)
+  # @show abvals
+  @show 2 ∈ keys(abvals)
+  if 1 ∈ keys(abvals) && :value in keys(abvals[1])
     inv_gt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
-  elseif 2 ∈ keys(idabvals) && [:value] in keys(idabvals[1])
+  elseif 2 ∈ keys(abvals) && :value in keys(abvals[2])
     inv_gt_ycnst(), Dict(:x => :x, :y => :y, :z => :z)
   else # FIXME: Check that no ports are know, because z could be known
     inv_gt_arr(), Dict(:x => :x, :y => :y, :z => :z)
