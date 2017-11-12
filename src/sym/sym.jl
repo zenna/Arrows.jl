@@ -241,43 +241,60 @@ function remove_unused_θs!(expr::Expr, θs)
   expr
 end
 
-is_simple(expr) = false
-is_simple(expr::Symbol) = true
-function is_simple(expr::Expr)
-  (expr.head == :ref) && is_simple(expr.args[1])
-end
 
-replace!(left::Union{Expr, Symbol}, right, expr) = nothing
 function replace!(left::Union{Expr, Symbol}, right, expr::Expr)
   for (id, e) in enumerate(expr.args)
     if e == left
       expr.args[id] = right
+    end
+  end
+end
+
+build_symbol_to_constraint(expr, θs, mapping) = false
+
+function build_symbol_to_constraint(expr::Expr, θs, mapping)
+  for arg in expr.args
+    if arg ∈ θs
+      if !haskey(mapping, arg)
+        mapping[arg] = Set{Expr}()
+      end
+      push!(mapping[arg], expr)
     else
-      replace!(left, right, e)
+      build_symbol_to_constraint(arg, θs, mapping)
     end
   end
 end
 
 
 
-function find_assignments(constraints)
+
+function find_assignments(constraints, θs)
   exprs = unsym.(collect(constraints))
+  mapping = Dict()
+  foreach(exprs) do expr
+    f = x -> build_symbol_to_constraint(x, θs, mapping)
+    foreach(f, expr.args[2:end])
+
+  end
   assignments = Dict()
+
   function assign_if_possible(left, right)
-    if !is_simple(left)
+    if left ∉ θs
       return false
     end
-    if false && left ∈ right #TODO write `in`
+    if left ∈ right #TODO write `in`
       warn("""parameters that appear in both sides of equalities cannot be
       handled""")
+      false
     elseif left != right
       assignments[left] = right
-      foreach(exprs) do expr
-        @show expr
-        replace!(left, right, expr)
+      if haskey(mapping, left)
+        foreach(mapping[left]) do expr
+          replace!(left, right, expr)
+        end
       end
+      true
     end
-    true
   end
   for expr in exprs
     @assert expr.head == :call
