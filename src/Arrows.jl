@@ -242,7 +242,8 @@ export
   trace_values,
   is,
   add!,
-  link_to_parent!
+  link_to_parent!,
+  AbVlaues
 
 # Code structures
 
@@ -290,15 +291,16 @@ include("library/inequalities.jl")
 include("library/control.jl")
 include("library/array.jl")
 include("library/compound.jl")
-
-include("library/pgfprim.jl")
-
-include("library/inv_control.jl")
-include("library/inv_array.jl")
-include("library/inv_arith.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
 
+# Inv Arrows
+include("library/inv_control.jl")
+include("library/inv_array.jl")
+include("library/inv_arith.jl")
+
+# PGF Primitives
+include("library/pgfprim.jl")
 # Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
 include("combinators/portapply.jl")

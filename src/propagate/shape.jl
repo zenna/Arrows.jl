@@ -4,6 +4,8 @@
   ndims_unknown::Bool
 end
 
+Size(dims::Tuple{Vararg{<:Int}}) = Size([dims...])
+
 # FIXME: is this is a bad use of thre `get`
 Base.get(sz::Size)::Vector{Int} = map(get, sz.dims)
 

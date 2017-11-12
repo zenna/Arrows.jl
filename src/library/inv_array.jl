@@ -12,3 +12,22 @@ function inv_gather()
   (scatter, 1) ⥅ x
   c
 end
+
+struct InvReduceSumArrow <: PrimArrow
+  xs::Size
+  axis::Int
+end
+
+function inv(arr::Arrows.ReduceSumArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+
+  tarr = TraceSubArrow(tparent, sarr)
+  @show trace_values(tarr)
+  @show tarr
+  # @show [tval ∈ keys(abtvals) for tval in ]
+  @assert false
+  InvReduceSumArrow()
+end

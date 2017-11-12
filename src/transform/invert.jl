@@ -1,3 +1,4 @@
+
 "Is `sprt` (function of) output of `SourceArrow`, i.e. constant"
 is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
 
@@ -90,9 +91,10 @@ end
 function invert(arr::CompArrow,
                 inner_inv=inv,
                 sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())::CompArrow
-  warn("INVERT MUTATES")
+  # warn("INVERT MUTATES")
   arr = deepcopy(arr)
   duplify!(arr)
+  sprtabvals = Dict{SubPort, AbValues}(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
   invert!(arr, inner_inv, abvals)
 end
