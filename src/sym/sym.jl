@@ -22,14 +22,26 @@ struct SymbolPrx
   var::SymUnion
 end
 
+# TODO: generate this list dynamically
+scalar_names = Set{Symbol}([:+, :-, :*, :/, :exp, :log, :logbase, :asin, :sin,
+                            :cos, :acos, :sqrt, :sqr, :abs, :^, :min, :max,
+                            :%, :ceil, :floor])
 function getindex(s::SymbolPrx, i::Int)
+  ref_expr = v-> Expr(:ref, v, i)
+  inner_getindex(v) = v
+  inner_getindex(v::Array) = getindex(v,i)
+  inner_getindex(v::Symbol) = ref_expr(v)
+  function inner_getindex(v::Expr)
+    if v.head == :call && (v.args[1] ∈ scalar_names)
+      args = vcat(v.args[1], map(inner_getindex, v.args[2:end]))
+      Expr(v.head, args...)
+    else
+      ref_expr(v)
+    end
+  end
   sym = s.var
   v = sym.value
-  if isa(v, Array)
-    SymUnion(getindex(v,i))
-  else
-    SymUnion(Expr(:ref, sym.value, i), hash(i, sym.hsh))
-  end
+  SymUnion(inner_getindex(v), hash(i, sym.hsh))
 end
 
 "Unconstrained Symbol"
