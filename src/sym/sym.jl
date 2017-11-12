@@ -9,6 +9,8 @@ SymUnion(value) = SymUnion(value, hash(value))
 SymPlaceHolder() = SymUnion(token_name)
 hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
 unsym(sym::SymUnion) = sym.value
+sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
+sym_unsym(sym::SymUnion)  = sym
 
 "Refined Symbol {x | pred}"
 struct RefnSym
@@ -106,23 +108,24 @@ end
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
   indices = map(unsym, indices)
   shape = map(unsym, shape)
-  z = SymUnion(unsym.(z))
+  z = sym_unsym(z)
   arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
                           SymPlaceHolder())
   expr = map(sym->sym.value, arrayed_sym)
   [SymUnion(expr),]
 end
 
-function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg{SymUnion, N})
-  [s_arrayed([xs...], :reduce_var),]
+function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg)
+  [s_arrayed([sym_unsym(x) for x in xs], :reduce_var),]
 end
 
-function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg{SymUnion, N})
-  [s_arrayed([xs...], :mean),]
+function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg)
+  [s_arrayed([sym_unsym(x) for x in xs], :mean),]
 end
 
 function  prim_sym_interpret(::Arrows.ReshapeArrow, data::Arrows.SymUnion,
-                            shape::Arrows.SymUnion)
+                            shape)
+  shape = sym_unsym(shape)
   expr = :(reshape($(data.value), $(shape.value)))
   [SymUnion(expr),]
 end
