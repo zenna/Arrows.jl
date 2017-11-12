@@ -266,6 +266,19 @@ function build_symbol_to_constraint(expr::Expr, θs, mapping)
 end
 
 
+symbolic_includes(left, right) = false
+symbolic_includes(left::Symbol, right::Symbol) = left == right
+function symbolic_includes(left, right::Expr)
+  if left == right
+    return true
+  end
+  for arg in right.args
+    if symbolic_includes(left, arg)
+      return true
+    end
+  end
+  false
+end
 
 
 function find_assignments(constraints, θs)
@@ -278,13 +291,14 @@ function find_assignments(constraints, θs)
   end
   assignments = Dict()
 
-  function assign_if_possible(left, right)
+  assign_if_possible(left, right) = false
+  function assign_if_possible(left::Union{Symbol, Expr}, right)
     if left ∉ θs
       return false
     end
-    if left ∈ right #TODO write `in`
+    if symbolic_includes(left, right)
       warn("""parameters that appear in both sides of equalities cannot be
-      handled""")
+      solved""")
       false
     elseif left != right
       assignments[left] = right
@@ -296,13 +310,14 @@ function find_assignments(constraints, θs)
       true
     end
   end
+  unsolved = Set{SymUnion}()
   for expr in exprs
     @assert expr.head == :call
     @assert expr.args[1] == :(==)
     left, right = expr.args[2:end]
     if !assign_if_possible(left, right)
-      assign_if_possible(right, left)
+      !assign_if_possible(right, left) && push!(unsolved, SymUnion(expr))
     end
   end
-  assignments
+  assignments, unsolved
 end
