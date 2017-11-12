@@ -21,6 +21,9 @@ end
 # length(tparent::TraceParent) = length(tparent.sarrs)
 @invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
 
+"Root `sarr`"
+root(tparent::TraceParent) = tparent.sarrs[1]
+
 "Is `tparent` the root: i.e. parentless"
 isroot(tparent::TraceParent) = length(tparent.sarrs) == 1 #length(tparent) == 1
 

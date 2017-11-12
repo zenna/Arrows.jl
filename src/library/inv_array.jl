@@ -23,11 +23,13 @@ function inv(arr::Arrows.ReduceSumArrow,
              const_in::Vector{Bool},
              tparent::TraceParent,
              abtvals::AbTraceValues)
-
+  @show root(tparent)
   tarr = TraceSubArrow(tparent, sarr)
+  @assert false
+  tvals = trace_values(tarr)
   # @show tarr
   # @show trace_values(tarr)
-  @show all(tval ∈ keys(abtvals) for tval in tvals)
   @assert false
+  @show all(tval ∈ keys(abtvals) for tval in tvals)
   InvReduceSumArrow()
 end

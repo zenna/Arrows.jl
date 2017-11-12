@@ -301,6 +301,7 @@ include("library/inv_arith.jl")
 
 # PGF Primitives
 include("library/pgfprim.jl")
+
 # Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
 include("combinators/portapply.jl")
@@ -315,6 +316,7 @@ include("apply/interpret.jl")
 # Graph Transformations #
 include("transform/walk.jl")
 include("transform/tracewalk.jl")
+include("transform/newtracewalk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/pgf.jl")

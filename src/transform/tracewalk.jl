@@ -5,6 +5,7 @@ function subtracewalk(inner::Function,
             tparent::TraceParent,
             abtvals::AbTraceValues)
   tparent = down(tparent, sarr)
+  @show root(tparent)
   inner(sarr, tparent, abtvals)
 end
 
@@ -13,6 +14,7 @@ function subtracewalk(inner::Function,
             sarr::SubArrow,
             tparent::TraceParent,
             abtvals::AbTraceValues)
+  @show root(tparent)
   inner(sarr, tparent, abtvals)
 end
 
@@ -42,7 +44,9 @@ function tracewalk!(inner::Function,
                     carr::CompArrow,
                     abtvals::AbTraceValues=traceprop!(carr))::CompArrow
   # FIXME: Is this copy necessary?
+  println("\nEntering tracewalk")
   tparent = TraceParent(carr)
+  @show root(tparent)
   for sarr in sub_arrows(carr)
     replarr, port_map = portmapize(subtracewalk(inner, sarr, tparent, abtvals)...)
     replace_sub_arr!(sarr, replarr, port_map)
