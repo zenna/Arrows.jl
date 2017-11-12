@@ -247,16 +247,44 @@ function is_simple(expr)
   isa(expr, Expr) && (expr.head == :ref) && is_simple(expr.args[1])
 end
 
+function replace!(left::Union{Expr, Symbol}, right, expr)
+  if !isa(expr, Expr)
+    return
+  end
+  for (id, e) in enumerate(expr.args)
+    if e == left
+      expr.args[id] = right
+    else
+      replace!(left, right, e)
+    end
+  end
+end
+
 function find_assignments(constraints)
+  exprs = unsym.(collect(constraints))
   assignments = Dict()
-  for expr in unsym.(collect(constraints))
+  function assign_if_possible(left, right)
+    if !is_simple(left)
+      return false
+    end
+    if false && left ∈ right #TODO write `in`
+      warn("""parameters that appear in both sides of equalities cannot be
+      handled""")
+    elseif left != right
+      assignments[left] = right
+      foreach(exprs) do expr
+        @show expr
+        replace!(left, right, expr)
+      end
+    end
+    true
+  end
+  for expr in exprs
     @assert expr.head == :call
     @assert expr.args[1] == :(==)
     left, right = expr.args[2:end]
-    if is_simple(left)
-      assignments[left] = right
-    elseif is_simple(right)
-      assignments[right] = left
+    if !assign_if_possible(left, right)
+      assign_if_possible(right, left)
     end
   end
   assignments
