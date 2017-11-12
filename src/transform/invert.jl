@@ -1,16 +1,5 @@
-
 "Is `sprt` (function of) output of `SourceArrow`, i.e. constant"
 is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
-
-# "Inversion of "
-# function inv(arr::CompArrow,
-#              sarr::SubArrow,
-#              const_in::Vector{Bool},
-#              tparent::TraceParent,
-#              abtvals::AbTraceValues)
-#   @assert !any(const_in)
-#   (invert(arr), id_portid_map(arr))
-# end
 
 # Hack until constant propagation is done
 function inv(sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues)
@@ -69,36 +58,7 @@ function remove_dead_arrows!(carr)
   carr
 end
 
-# """
-# Construct a parametric inverse of `arr`
-# # Arguments:
-# - `arr`: Arrow to invert
-# - `dispatch`: Dict mapping arrow class to invert function
-# # Returns:
-# - A parametric inverse of `arr`
-# """
-# function invert!(arr::CompArrow,
-#                  inner_inv,
-#                  abtvals::AbTraceValues)::CompArrow
-#
-#   check_reuse(arr)
-#   link_param_ports!(carr) = link_to_parent!(carr, loose ∧ should_dst)
-#   outer = inv_rename! ∘ remove_dead_arrows! ∘ link_param_ports ∘ fix_links! ∘ invert_all_ports!
-#   tracewalk!(inner_inv, outer, arr, abtvals)
-# end
-#
-#
-#
-# "copy and `invert!` `arr`"
-# function invert(arr::CompArrow,
-#                 inner_inv=inv,
-#                 sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())::CompArrow
-#   arr = deepcopy(arr)
-#   duplify!(arr)
-#   sprtabvals = Dict{SubPort, AbValues}(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
-#   abvals = traceprop!(arr, sprtabvals)
-#   invert!(arr, inner_inv, abvals)
-# end
+link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
 "Invert `arr`, approximately totalize, and check the `domain_error`"
 function aprx_invert(arr::CompArrow,
@@ -106,16 +66,6 @@ function aprx_invert(arr::CompArrow,
                      sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
   aprx_totalize!(domain_error!(invert(arr, inner_inv, sprtabvals)))
 end
-
-# Issue
-# invert is modifying the comparrow, will the trace_values be valid?
-# inv is not being passed through to composite arrows, its usuing the default
-# traceparent is not being passed through, its using the default
-
-# Does inv need to mutate at all?
-# New
-
-link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
 function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
   pmap = id_portid_map(carr)
