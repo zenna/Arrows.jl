@@ -195,7 +195,3 @@ end
 # function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
 #   SourceArrow(true), Dict(1 => 1)
 # end
-
-function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbValues)
-  SqrArrow(), Dict(:x=>:x, :y=>:y)
-end

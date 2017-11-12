@@ -82,10 +82,12 @@ struct LessThanArrow <: PrimArrow end
 name(::LessThanArrow)::Symbol = :(<)
 props(::LessThanArrow) = ineq_props
 
-function inv(arr::LessThanArrow, sarr::SubArrow, idabvals::IdAbValues)
-  if 1 ∈ keys(idabvals) && [:value] in keys(idabvals[1])
+function inv(arr::LessThanArrow, sarr::SubArrow, abvals::IdAbValues)
+  if 1 ∈ keys(abvals) && :value in keys(abvals[1])
+    # @assert false
     inv_lt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
-  elseif 2 ∈ keys(idabvals) && [:value] in keys(idabvals[1])
+  elseif 2 ∈ keys(abvals) && :value in keys(abvals[2])
+    # @assert false
     inv_lt_ycnst(), Dict(:x => :x, :y => :y, :z => :z)
   else
     inv_lt_arr(), Dict(:x => :x, :y => :y, :z => :z)

@@ -29,9 +29,17 @@ end
 
 "x * y + x"
 function twoxy_plus_x_arr()
-  c = CompArrow(:xyx, [:x, :y], [:z])
-  x, y, z = ⬨(c)
-  x>2+x*y + x ⥅ z
+  c = CompArrow(:xyx, [:x, :y], [:z1, :z2])
+  x, y, z1, z2 = ⬨(c)
+  (x*y)>2*x ⥅ z1
+  sqrt(y+x*3)<(3*y+2) ⥅ z2
+  c
+end
+
+function sqrt_check()
+  c = CompArrow(:xyx, [:x], [:y])
+  x, y = ⬨(c)
+  sqrt(x) ⥅ y
   c
 end
 
@@ -253,7 +261,8 @@ function all_test_arrows()
    nested_core(),
    ifelsesimple(),
    ifelsesimple2(),
-   ifelseconst()]
+   ifelseconst(),
+   twoxy_plus_x_arr()]
 end
 
 function is_plain(arr::CompArrow)

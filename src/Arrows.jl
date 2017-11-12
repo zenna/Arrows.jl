@@ -339,7 +339,6 @@ include("optim/loss.jl")
 include("optim/util.jl")
 include("gradient/gradient.jl")
 include("optim/optimize.jl")
-include("gradient/gradient.jl")
 
 # # Targets #
 include("targets/targets.jl")
