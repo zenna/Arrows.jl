@@ -12,12 +12,6 @@ end
 
 port_id(prt::Port) = prt.port_id
 
-function Props(is_in_port::Bool, name::Symbol, typ::Type)
-  dir = is_in_port ? In() : Out()
-  Props(@NT(direction = dir,
-            name = Name(name),
-            typ = Typ(typ)))
-end
 "Port properties of `port`"
 props(prt::AbstractPort) = props(prt.arrow)[prt.port_id]
 labels(prt::AbstractPort) = labels(props(prt))

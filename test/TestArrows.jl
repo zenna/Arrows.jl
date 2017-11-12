@@ -40,6 +40,27 @@ function abc_arr()
   carr
 end
 
+function ifelsetest()
+  carr = CompArrow(:ifelse1, [:a, :b, :c], [:z])
+  a, b, c, z = ⬨(carr)
+  d = ifelse(c > b,
+             a + b,
+             a * b)
+  d ⥅ z
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function ifelsesimple()
+  carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
+  a, b, c, d, e = ⬨(carr)
+  ee = ifelse(a > b,
+             c,
+             d)
+  ee ⥅ e
+  @assert is_wired_ok(carr)
+  carr
+end
 
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])

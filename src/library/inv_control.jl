@@ -35,3 +35,17 @@ function inv_dupl(xs::Array...)
   end
   answer
 end
+
+function inv(arr::Arrows.IfElseArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  carr = CompArrow(:inv_ite, [:y, :θi, :θmissing], [:i, :t, :e])
+  y, θi, θmissing, i, t, e = ⬨(carr)
+  θi ⥅ i
+  ifelse(θi, y, θmissing) ⥅ t
+  ifelse(θi, θmissing, y) ⥅ e
+  @assert is_wired_ok(carr)
+  carr, Dict(1 => 4, 2 => 5, 3 => 6, 4 => 1)
+end

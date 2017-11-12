@@ -278,15 +278,11 @@ function inv(arr::GreaterThanArrow,
              const_in::Vector{Bool},
              tparent::TraceParent,
              abtvals::AbTraceValues)
+  tarr = TraceSubArrow(tparent, sarr)
+  tvals = trace_values(tarr)
+  @show any(tval in keys(abtvals) for tval in tvals)
+  # sz = abtvals[tvals[1]][:size]
   (inv_gt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
-end
-
-function inv(arr::LessThanArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
 end
 
 function inv_gt_arr()
@@ -298,6 +294,14 @@ function inv_gt_arr()
   carr
 end
 
+function inv(arr::LessThanArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
+end
+
 function inv_lt_arr()
   carr = CompArrow(:inv_gt, [:z, :y, :θinv_lt_arr], [:x])
   z, y, θ, x = ⬨(carr)
@@ -305,4 +309,12 @@ function inv_lt_arr()
   assert!(z)
   (y - abs(θ)) ⥅ x
   carr
+end
+
+function inv(arr::SqrtArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  SqrArrow(), Dict(1=>2, 2=>1)
 end

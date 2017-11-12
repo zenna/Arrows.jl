@@ -4,3 +4,4 @@ SymPy
 NamedTuples
 MacroTools
 AutoHashEquals
+ReverseDiff

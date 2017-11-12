@@ -17,6 +17,13 @@ end
 "Empty properties"
 Props() = Props(@NT()(), Set{DataType}())
 
+function Props(is_in_port::Bool, name::Symbol, typ::Type)
+  dir = is_in_port ? In() : Out()
+  Props(@NT(direction = dir,
+            name = Name(name),
+            typ = Typ(typ)))
+end
+
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
 

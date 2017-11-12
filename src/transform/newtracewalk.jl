@@ -1,3 +1,12 @@
+function idportmap(arr1::Arrow, arr2::Arrow, idpmap::PortIdMap)
+  # TODO: Some checking here
+  idpmap
+end
+
+function idportmap(arr1::Arrow, arr2::Arrow, spmap::Dict{Symbol, Symbol})
+  PortIdMap(⬧(arr1, s1).port_id => ⬧(arr2, s2).port_id for (s1, s2) in spmap)
+end
+
 "Go down iff CompArrow"
 function maybedown(replace::Function,
                    carr::CompArrow,
@@ -42,10 +51,11 @@ function newtracewalk(replace::Function,
 
   # Handle Primitives
   for sarr in sub_arrows(carr)
-    replarr, port_map = portmapize(maybedown(replace, deref(sarr), sarr, abtvals, tparent)...)
+    replarr, some_port_map = maybedown(replace, deref(sarr), sarr, abtvals, tparent)
+    id_port_map = idportmap(deref(sarr), replarr, some_port_map)
     newsarr = add_sub_arr!(newcarr, replarr)
     sarrmap[sarr] = newsarr
-    oldnewpmap[sarr] = port_map
+    oldnewpmap[sarr] = id_port_map
   end
 
   # Do the rewiring

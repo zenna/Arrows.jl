@@ -1,5 +1,7 @@
 symb_id_portid_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(names.(ports(arr))))
 id_portid_map(arr::Arrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
+
+# Conversion between different port map types
 portmapize(arr::Arrow, portmap::PortIdMap) = (arr, portmap)
 portmapize(arr::Arrow) = (arr, id_portid_map(arr))
 

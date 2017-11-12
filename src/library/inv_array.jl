@@ -14,8 +14,16 @@ function inv_gather()
 end
 
 struct InvReduceSumArrow <: PrimArrow
-  xs::Size
-  axis::Int
+  sz::Size      # Size of the input to the reduce arrow it inverts
+  axis::Int     # Axis reduce arrow inverted on
+end
+name(::InvReduceSumArrow) = :inv_reduce_sum_arrow
+function props(arr::InvReduceSumArrow)
+  # need one set of parameters for every element of reduced axis
+  nθ = get(arr.sz)[arr.axis] - 1
+  θprops = [Props(true, Symbol(:θ, i), Any) for i = 1:nθ]
+  foreach(add!(θp), θprops)
+  vcat(Props(true, :y, Any), θprops, Props(false, :x, Any))
 end
 
 function inv(arr::Arrows.ReduceSumArrow,
@@ -23,13 +31,11 @@ function inv(arr::Arrows.ReduceSumArrow,
              const_in::Vector{Bool},
              tparent::TraceParent,
              abtvals::AbTraceValues)
-  @show root(tparent)
+  # @show root(tparent)
   tarr = TraceSubArrow(tparent, sarr)
-  @assert false
   tvals = trace_values(tarr)
-  # @show tarr
-  # @show trace_values(tarr)
-  @assert false
-  @show all(tval ∈ keys(abtvals) for tval in tvals)
-  InvReduceSumArrow()
+  sz = abtvals[tvals[1]][:size]
+  @show arr = InvReduceSumArrow(sz, arr.axis)
+  warn("CONSTANT HACK")
+  arr, Dict(1=>4, 2=>1)
 end

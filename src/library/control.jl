@@ -31,7 +31,7 @@ name(::IdentityArrow) = :identity
 "ifelse(i, t, e)`"
 struct IfElseArrow <: PrimArrow end
 props(::IfElseArrow) =   [Props(true, :i, Bool),
-                               Props(true, :t, Real),
-                               Props(true, :e, Real),
-                               Props(false, :y, Real)]
+                          Props(true, :t, Real),
+                          Props(true, :e, Real),
+                          Props(false, :y, Real)]
 name(::IfElseArrow) = :ifelse
