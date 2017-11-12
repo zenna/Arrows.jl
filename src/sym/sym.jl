@@ -20,7 +20,15 @@ struct SymbolPrx
   var::SymUnion
 end
 
-getindex(s::SymbolPrx, i::Int) = SymUnion(Expr(:ref, s.var.value, i))
+function getindex(s::SymbolPrx, i::Int)
+  sym = s.var
+  v = sym.value
+  if isa(v, Array)
+    SymUnion(getindex(v,i))
+  else
+    SymUnion(Expr(:ref, sym.value, i), hash(i, sym.hsh))
+  end
+end
 
 "Unconstrained Symbol"
 RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
@@ -98,6 +106,7 @@ end
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
   indices = map(unsym, indices)
   shape = map(unsym, shape)
+  z = SymUnion(unsym.(z))
   arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
                           SymPlaceHolder())
   expr = map(sym->sym.value, arrayed_sym)
