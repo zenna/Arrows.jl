@@ -1,15 +1,6 @@
 "Is `sprt` (function of) output of `SourceArrow`, i.e. constant"
 is_src_source(sprt::SubPort) = isa(deref(src(sprt)).arrow, SourceArrow)
 
-# Hack until constant propagation is done
-function inv(sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues)
-  carr = deref(sarr)
-  # FIXME: Remove const_in, now that we have abtvals
-  const_in = map(is_src_source, ▹(sarr))
-  inv(deref(sarr), sarr, const_in, tparent, abtvals)
-end
-# FIXME? is it ok to use invert!, what about source
-
 "Check that no subports with more than out outgoing edge"
 function check_reuse(arr)
   if !no_reuse(arr)
@@ -19,7 +10,6 @@ end
 
 "Do I need to switch this `link`"
 function need_switch(l::Link)
-  @show l
   needswitch1 = should_src(l[1]) ⊻ is_src(l[1])
   needswitch2 = should_dst(l[2]) ⊻ is_dst(l[2])
   @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2"
@@ -76,7 +66,8 @@ end
 
 function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
   const_in = map(is_src_source, ▹(sarr))
-  inv(parr, sarr, const_in, tparent, abtvals)
+  idabvals = tarr_idabvals(TraceSubArrow(tparent, sarr), abtvals)
+  inv(parr, sarr, idabvals)
 end
 
 "copy and `invert!` `arr`"

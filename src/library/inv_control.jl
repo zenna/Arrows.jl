@@ -36,11 +36,7 @@ function inv_dupl(xs::Array...)
   answer
 end
 
-function inv(arr::Arrows.IfElseArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::Arrows.IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
   carr = CompArrow(:inv_ite, [:y, :θi, :θmissing], [:i, :t, :e])
   y, θi, θmissing, i, t, e = ⬨(carr)
   θi ⥅ i

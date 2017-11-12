@@ -32,7 +32,6 @@ import AutoHashEquals: @auto_hash_equals
 using MacroTools
 import Base: gradient
 
-
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
   map, mean
@@ -243,21 +242,19 @@ export
   is,
   add!,
   link_to_parent!,
-  AbVlaues
-
-# Code structures
+  AbVlaues,
+  gradient
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/pre.jl")      # methods that should be in LightGraphs
-include("util/generators.jl")      # methods that should be in LightGraphs
-
+include("util/pre.jl")              # methods that should be in LightGraphs
+include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
-include("arrows/property.jl")           # Ports and Port Attirbutes
-include("arrows/port.jl")           # Ports and Port Attirbutes
+include("arrows/property.jl")       # Properties
+include("arrows/port.jl")           # Ports
 include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
@@ -267,21 +264,18 @@ include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
 include("value/const.jl")           # Const type
 
-include("arrows/trace.jl")          #
+include("arrows/trace.jl")          # Arrow Traces
 
-
-# Compilation and application of an arrow #
-include("propagate/meet.jl")          # Meeting of domains
-include("propagate/newpropagate.jl")
-# include("propagate/propagate.jl")
-include("propagate/shape.jl")
-# include("propagate/const.jl")
+# Abstract interpretation based propagation
+include("propagate/meet.jl")        # Meeting (intersection) of domains
+include("propagate/propagate.jl")
+include("propagate/size.jl")
 include("propagate/concrete.jl")
 
 # Library #
-include("library/common.jl")        # Methods common to library functions
-include("library/distances.jl")     # Methods common to library functions
-include("library/sigmoid.jl")       # Methods common to library functions
+include("library/common.jl")
+include("library/distances.jl")
+include("library/sigmoid.jl")
 
 include("library/assert.jl")
 include("library/source.jl")
@@ -307,6 +301,7 @@ include("combinators/compose.jl")
 include("combinators/portapply.jl")
 
 
+# Compilation and application of an arrow #
 include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
@@ -327,7 +322,6 @@ include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
 include("transform/supervised.jl")
-
 
 # Macros
 include("macros/arr_macro.jl")

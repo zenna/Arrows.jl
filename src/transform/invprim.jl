@@ -1,3 +1,7 @@
+function const_in(arr::Arrow, abvals::IdAbValues)
+  [pid in keys(abvals) && :value in keys(abvals[pid]) for pid in port_id.(▸(arr))]
+end
+
 # FIXME: Switch to symbols instead of numbers
 # TODO: Add is_valid for These portmaps to check
 const BIN_PORT_MAP = Dict(1 => 3, 2 => 4, 3 => 1)
@@ -43,12 +47,8 @@ function unary_inv(arr::Arrow,
 end
 
 "Inverse reshape must take the shape of `value`"
-function inv(::Arrows.ReshapeArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  const_in[2] || throw(ArgumentError("Nonconst indices unimplemented"))
+function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbValues)
+  const_in(arr, abvals)[2] || throw(ArgumentError("Nonconst indices unimplemented"))
 
   # The input shape to the inverse is shape of the input to the forward arr
   tarr = TraceSubArrow(tparent, sarr)
@@ -67,43 +67,27 @@ function inv(::Arrows.ReshapeArrow,
   carr, Dict(3=>1, 1=>2)
 end
 
-function inv(::Arrows.GatherNdArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(::Arrows.GatherNdArrow, sarr::SubArrow, abvals::IdAbValues)
   Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
-function inv{O}(::Arrows.DuplArrow{O},
-                sarr::SubArrow,
-                const_in::Vector{Bool},
-                tparent::TraceParent,
-                abtvals::AbTraceValues)
+function inv{O}(::Arrows.DuplArrow{O}, sarr::SubArrow, abvals::IdAbValues)
   (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
 end
 
-function inv(arr::AddArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbValues)
   binary_inv(arr,
-              const_in,
-              inv_add,
-              SubtractArrow,
-              Dict(1 => 2, 2 => 3, 3 => 1),
-              SubtractArrow,
-              Dict(3 => 1, 2 => 2, 1 => 3))
+             const_in(arr, abvals),
+             inv_add,
+             SubtractArrow,
+             Dict(1 => 2, 2 => 3, 3 => 1),
+             SubtractArrow,
+             Dict(3 => 1, 2 => 2, 1 => 3))
 end
 
-function inv(arr::SubtractArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbValues)
   binary_inv(arr,
-             const_in,
+             const_in(arr, abvals),
              inv_sub,
              AddArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
@@ -111,13 +95,9 @@ function inv(arr::SubtractArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv(arr::MulArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::MulArrow, sarr::SubArrow, abvals::IdAbValues)
   binary_inv(arr,
-             const_in,
+             const_in(arr, abvals),
              inv_mul,
              DivArrow,
              Dict(1 => 2, 2 => 3, 3 => 1),
@@ -125,28 +105,16 @@ function inv(arr::MulArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv_np(arr::CosArrow,
-                sarr::SubArrow,
-                const_in::Vector{Bool},
-                tparent::TraceParent,
-                abtvals::AbTraceValues)
-   unary_inv(arr, const_in, ACosArrow)
+function inv_np(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
+   unary_inv(arr, const_in(arr, abvals), ACosArrow)
 end
 
-function inv_np(arr::SinArrow,
-                sarr::SubArrow,
-                const_in::Vector{Bool},
-                tparent::TraceParent,
-                abtvals::AbTraceValues)
-   unary_inv(arr, const_in, ASinArrow)
+function inv_np(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
+   unary_inv(arr, const_in(arr, abvals), ASinArrow)
  end
 
  "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
- function inv(arr::CosArrow,
-              sarr::SubArrow,
-              const_in::Vector{Bool},
-              tparent::TraceParent,
-              abtvals::AbTraceValues)
+function inv(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
   inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_cos)
   addprop!(θp, deref(θ))
@@ -191,11 +159,7 @@ end
 
 "The parametric inverse of sin, sin^(-1)(y; θ) = πθ + (-1)^θ * asin(y)."
 # (-1)^θ is implemented as θ % 2 == 0 ? 1 : -1
-function inv(arr::SinArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::SinArrow, sarr::SubArrow, abvals::IdAbValues)
   inv_sin = CompArrow(:inv_sin, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_sin)
   addprop!(θp, deref(θ))
@@ -233,50 +197,26 @@ function inv(arr::SinArrow,
   inv_sin, Dict(1 => 3, 2 => 1)
 end
 
-function inv(arr::ExpArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  unary_inv(arr, const_in, LogArrow)
+function inv(arr::ExpArrow, sarr::SubArrow, abvals::IdAbValues)
+  unary_inv(arr, const_in(arr, abvals), LogArrow)
 end
 
-function inv(arr::SourceArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::SourceArrow, sarr::SubArrow, abvals::IdAbValues)
   (SourceArrow(arr.value), Dict(1 => 1))
 end
 
-function inv(arr::NegArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  unary_inv(arr, const_in, NegArrow)
+function inv(arr::NegArrow, sarr::SubArrow, abvals::IdAbValues)
+  unary_inv(arr, const_in(arr, abvals), NegArrow)
 end
 
-function inv(arr::IdentityArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  unary_inv(arr, const_in, IdentityArrow)
+function inv(arr::IdentityArrow, sarr::SubArrow, abvals::IdAbValues)
+  unary_inv(arr, const_in(arr, abvals), IdentityArrow)
 end
 
-function inv(arr::AssertArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
   (SourceArrow(true), Dict(1 => 1))
 end
 
-function inv(arr::SqrtArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
+function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbValues)
   SqrArrow(), Dict(1=>2, 2=>1)
 end
