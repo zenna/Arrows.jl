@@ -174,13 +174,17 @@ sym_interpret(carr::CompArrow, args) =
 function filter_gather_θ!(carr::CompArrow, ports, constraints)
   inp = map(Arrows.Sym, ▸(carr))
   all_gather_θ = Set{Expr}()
-  non_gather_θ = Set{Symbol}()
+  non_gather_θ = Set{Union{Symbol, Expr}}()
   for (id, p) in enumerate(inp)
     exprs = ports[id].var.value
     if startswith(String(p.value), String(:θgather))
       union!(all_gather_θ, exprs)
     else
-      push!(non_gather_θ, exprs)
+      if isa(exprs, AbstractArray)
+        union!(non_gather_θ, exprs)
+      else
+        push!(non_gather_θ, exprs)
+      end
     end
   end
   θs = Set{Expr}()
@@ -225,6 +229,7 @@ end
 
 
 find_gather_params!(expr, θs) = expr
+find_gather_params!(expr::Array, θs) = map(e->find_gather_params!(e, θs), expr)
 function find_gather_params!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
