@@ -15,6 +15,7 @@ function maybedown(replace::Function,
                    tparent::TraceParent)
   replace(parr, sarr, tparent, abtvals)
 end
+
 """
 Traverses `carr`, applies `replace` to each subarrow then `outer` to parent.
 
@@ -41,11 +42,8 @@ function newtracewalk(replace::Function,
 
   # Handle Primitives
   for sarr in sub_arrows(carr)
-    # newtparent = maybedown(deref(sarr), sarr, tparent)
     replarr, port_map = portmapize(maybedown(replace, deref(sarr), sarr, abtvals, tparent)...)
     newsarr = add_sub_arr!(newcarr, replarr)
-    @show replarr
-    @show newsarr
     sarrmap[sarr] = newsarr
     oldnewpmap[sarr] = port_map
   end

@@ -117,24 +117,24 @@ end
 
 link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
-function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues)
-  # For a composite arrowe we need to link parametr ports
+function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
   pmap = id_portid_map(carr)
   f = inv_rename! ∘ remove_dead_arrows! ∘ link_param_ports! ∘ fix_links! ∘ invert_all_ports!
   f(carr), pmap
 end
 
-function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues)
+function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
   const_in = map(is_src_source, ▹(sarr))
   inv(parr, sarr, const_in, tparent, abtvals)
 end
 
 "copy and `invert!` `arr`"
 function invert(arr::CompArrow,
-                   inner_inv=inv,
-                   sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
+                inner_inv=inv,
+                sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
   arr = duplify(arr)
   sprtabvals = Dict{SubPort, AbValues}(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
-  newtracewalk(invreplace, arr, abvals)[1]
+  custinvreplace = (arr, sarr, tparent, abtvals) -> invreplace(arr, sarr, tparent, abtvals; inv=inner_inv)
+  newtracewalk(custinvreplace, arr, abvals)[1]
 end
