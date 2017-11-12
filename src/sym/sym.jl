@@ -154,18 +154,21 @@ sym_interpret(carr::CompArrow, args) =
     outs = interpret(sym_interpret, carr, inp)
     allpreds = Set{SymUnion}()
     foreach(out -> union!(allpreds, out.preds), outs)
-    filter_gather_θ!(carr, inp, allpreds)
-    allpreds
+    θs = filter_gather_θ!(carr, inp, allpreds)
+    allpreds, θs
     #filter(pred -> pred ∉ remove, allpreds)
   end
 
 function filter_gather_θ!(carr::CompArrow, ports, constraints)
   inp = map(Arrows.Sym, ▸(carr))
   all_gather_θ = Set{Expr}()
+  non_gather_θ = Set{Symbol}()
   for (id, p) in enumerate(inp)
+    exprs = ports[id].var.value
     if startswith(String(p.value), String(:θgather))
-      exprs = ports[id].var.value
       union!(all_gather_θ, exprs)
+    else
+      push!(non_gather_θ, exprs)
     end
   end
   θs = Set{Expr}()
@@ -175,6 +178,7 @@ function filter_gather_θ!(carr::CompArrow, ports, constraints)
   foreach(constraints) do cons
     remove_unused_θs!(cons.value, unused_θ)
   end
+  union(θs, non_gather_θ)
 end
 
 function expand_θ(θ, sz::Size)
@@ -208,10 +212,8 @@ function symbol_in_ports(arr::CompArrow)
 end
 
 
-function find_gather_params!(expr, θs)
-  if !isa(expr, Expr)
-    return expr
-  end
+find_gather_params!(expr, θs) = expr
+function find_gather_params!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
       id = expr.args[2] == Arrows.token_name ? 3 : 2
@@ -224,10 +226,9 @@ function find_gather_params!(expr, θs)
   expr
 end
 
-function remove_unused_θs!(expr, θs)
-  if !isa(expr, Expr)
-    return expr
-  end
+
+remove_unused_θs!(expr, θs) = expr
+function remove_unused_θs!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+
       if (expr.args[2] ∈ θs) || (expr.args[3] ∈ θs)
@@ -240,17 +241,14 @@ function remove_unused_θs!(expr, θs)
   expr
 end
 
-function is_simple(expr)
-  if isa(expr, Symbol)
-    return true
-  end
-  isa(expr, Expr) && (expr.head == :ref) && is_simple(expr.args[1])
+is_simple(expr) = false
+is_simple(expr::Symbol) = true
+function is_simple(expr::Expr)
+  (expr.head == :ref) && is_simple(expr.args[1])
 end
 
-function replace!(left::Union{Expr, Symbol}, right, expr)
-  if !isa(expr, Expr)
-    return
-  end
+replace!(left::Union{Expr, Symbol}, right, expr) = nothing
+function replace!(left::Union{Expr, Symbol}, right, expr::Expr)
   for (id, e) in enumerate(expr.args)
     if e == left
       expr.args[id] = right
@@ -259,6 +257,8 @@ function replace!(left::Union{Expr, Symbol}, right, expr)
     end
   end
 end
+
+
 
 function find_assignments(constraints)
   exprs = unsym.(collect(constraints))
