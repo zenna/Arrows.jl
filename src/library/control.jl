@@ -36,12 +36,62 @@ props(::IfElseArrow) =   [Props(true, :i, Bool),
                           Props(false, :y, Real)]
 name(::IfElseArrow) = :ifelse
 
-function inv(arr::Arrows.IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
-  carr = CompArrow(:inv_ite, [:y, :θi, :θmissing], [:i, :t, :e])
+function inv(arr::IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
+  @show const_in(arr, abvals)
+  # @show abvals
+
+  if isconst(2, abvals) && isconst(3, abvals)
+    abvals[2][:value] != abvals[3][:value] || throw(ArgumentError("Constness Combination not supported"))
+    invifelse_teconst_diff(), Dict(:i => :i, :t => :t, :y => :y)
+  elseif isconst(2, abvals)
+    invifelse_tconst(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+  elseif isconst(3, abvals)
+    invifelse_econst(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+  elseif all(i->!isconst(i, abtvals), port_id(⬧(arr)))
+    throw(ArgumentError("Constness Combination not supported"))
+    invifelse_fullpi(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+  else
+    @show abvals
+    throw(ArgumentError("Constness Combination not supported"))
+  end
+end
+
+"`t`then and `e` else constant but not same"
+function invifelse_teconst_diff()
+  carr = CompArrow(:inv_ifelse, [:y, :t], [:i])
+  y, t, i = ⬨(carr)
+  ii = ifelse(EqualArrow()(y, t), true, false)
+  ii ⥅ i
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function invifelse_tconst()
+  carr = CompArrow(:inv_ifelse, [:y, :t, :θi, :θmissing], [:i, :e])
+  y, t, θi, θmissing, i, e = ⬨(carr)
+  ii = ifelse(EqualArrow()(y, t), θi, false)
+  ii ⥅ i
+  ifelse(ii, θmissing, y) ⥅ e
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function invifelse_econst()
+  carr = CompArrow(:inv_ifelse, [:y, :e, :θi, :θmissing], [:i, :t])
+  y, e, θi, θmissing, i = ⬨(carr)
+  ii = ifelse(EqualArrow()(y, e), θi, true)
+  ii ⥅ i
+  ifelse(ii, y, θmissing) ⥅ e
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function invifelse_fullpi()
+  carr = CompArrow(:inv_ifelse, [:y, :θi, :θmissing], [:i, :t, :e])
   y, θi, θmissing, i, t, e = ⬨(carr)
   θi ⥅ i
   ifelse(θi, y, θmissing) ⥅ t
   ifelse(θi, θmissing, y) ⥅ e
   @assert is_wired_ok(carr)
-  carr, Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+  carr
 end
