@@ -273,44 +273,6 @@ function inv(arr::AssertArrow,
   (SourceArrow(true), Dict(1 => 1))
 end
 
-function inv(arr::GreaterThanArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  tarr = TraceSubArrow(tparent, sarr)
-  tvals = trace_values(tarr)
-  @show any(tval in keys(abtvals) for tval in tvals)
-  # sz = abtvals[tvals[1]][:size]
-  (inv_gt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
-end
-
-function inv_gt_arr()
-  carr = CompArrow(:inv_gt, [:z, :y, :θinv_gt_arr], [:x])
-  z, y, θ, x = ⬨(carr)
-  addprop!(θp, deref(θ))
-  assert!(z)
-  (abs(θ) + y) ⥅ x
-  carr
-end
-
-function inv(arr::LessThanArrow,
-             sarr::SubArrow,
-             const_in::Vector{Bool},
-             tparent::TraceParent,
-             abtvals::AbTraceValues)
-  (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
-end
-
-function inv_lt_arr()
-  carr = CompArrow(:inv_gt, [:z, :y, :θinv_lt_arr], [:x])
-  z, y, θ, x = ⬨(carr)
-  addprop!(θp, deref(θ))
-  assert!(z)
-  (y - abs(θ)) ⥅ x
-  carr
-end
-
 function inv(arr::SqrtArrow,
              sarr::SubArrow,
              const_in::Vector{Bool},

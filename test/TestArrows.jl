@@ -54,9 +54,16 @@ end
 function ifelsesimple()
   carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
   a, b, c, d, e = ⬨(carr)
-  ee = ifelse(a > b,
-             c,
-             d)
+  ee = ifelse(a > b, c, d)
+  ee ⥅ e
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function ifelsesimple2()
+  carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
+  a, b, c, d, e = ⬨(carr)
+  ee = ifelse(a > b, c, d)
   ee ⥅ e
   @assert is_wired_ok(carr)
   carr

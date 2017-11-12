@@ -78,6 +78,51 @@ struct LessThanEqualArrow <: PrimArrow end
 name(::LessThanEqualArrow)::Symbol = :(<=)
 props(::LessThanEqualArrow) = ineq_props
 
+function inv(arr::LessThanArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  (inv_lt_arr(), Dict(1 => 4, 2 => 2, 3 => 1))
+end
+
+"Complete parameric inverse for >"
+function inv_lt_ycnst()
+  carr = CompArrow(:inv_lt_xcnst, [:z, :y, :θ], [:x])
+  z, y, θ, x = ⬨(carr)
+  ifelse(z, y + abs(θ), y - abs(θ)) ⥅ x
+  @assert is_wired_ok(carr)
+  carr
+end
+
+"Complete parameric inverse for >"
+function inv_lt_xcnst()
+  carr = CompArrow(:inv_lt_xcnst, [:z, :x, :θ], [:y])
+  z, x, θ, y = ⬨(carr)
+  ifelse(z, x - abs(θ), x + abs(θ)) ⥅ y
+  @assert is_wired_ok(carr)
+  carr
+end
+
+function inv_lt_arr()
+  carr = CompArrow(:inv_lt, [:z, :θ1, :θ2], [:x, :y])
+  z, θ1, θ2, x, y = ⬨(carr)
+  θ1 ⥅ x
+  ifelse(z, θ1 - θ2, θ1 + θ2) ⥅ y
+  @assert is_wired_ok(carr)
+  carr
+end
+
+
+# function inv_lt_arr()
+#   carr = CompArrow(:inv_gt, [:z, :y, :θinv_lt_arr], [:x])
+#   z, y, θ, x = ⬨(carr)
+#   addprop!(θp, deref(θ))
+#   assert!(z)
+#   (y - abs(θ)) ⥅ x
+#   carr
+# end
+
 "x < y"
 struct LessThanArrow <: PrimArrow end
 name(::LessThanArrow)::Symbol = :(<)
