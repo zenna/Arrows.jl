@@ -22,6 +22,7 @@ function interpret(::GatherNdArrow, params::Array, indices::Array{<:Integer})
   ([params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])],)
 end
 interpret(::NegArrow, x) = (-x,)
+interpret{N}(::Arrows.DuplArrow{N}, x) = tuple((x for i = 1:N)...)
 
 ## Expr ##
 expr(arr::SourceArrow, args...) = arr.value
@@ -34,5 +35,5 @@ sub_interpret(carr::CompArrow, xs::Vector) =
 interpret(arr::Arrow, args, ::Type{JLTarget}) =
   interpret(sub_interpret, arr, args)
 
-  interpret(arr::Arrow, args, ::Type{JLTarget}, pre::Function, post::Function) =
-    interpret(sub_interpret, arr, args, pre, post)
+interpret(arr::Arrow, args, ::Type{JLTarget}, pre::Function, post::Function) =
+  interpret(sub_interpret, arr, args, pre, post)

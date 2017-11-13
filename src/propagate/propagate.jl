@@ -7,6 +7,13 @@ IdAbValues = Dict{Int, AbValues}
 "Abstract TraceValues assigns abtract values to TraceValues"
 TraceAbValues = Dict{TraceValue, AbValues}
 
+"Mapping from port name to AbValues"
+NmAbValues = Dict{Symbol, AbValues}
+
+"You get the picture"
+SprtAbValues = Dict{SubPort, AbValues}
+
+
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `val_abval` assuming `sprt` is on root"
 Base.get(val_abval::Dict{TraceValue, AbValues}, sprt::SubPort) =

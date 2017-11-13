@@ -18,8 +18,8 @@ props(::InvBroadcastArrow) = [Props(true, :y, Any), Props(false, :x, Any)]
 function valueprop(arr::BroadcastArrow, abvals::IdAbValues)::IdAbValues
   # @show abvals
   if 1 ∈ keys(abvals) && 2 ∈ keys(abvals)
-    @show abvals[1]
-    @show abvals[2]
+    # @show abvals[1]
+    # @show abvals[2]
     # @assert false
   end
   IdAbValues()

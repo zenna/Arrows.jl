@@ -245,7 +245,10 @@ export
   AbValues,
   gradient,
   source,
-  bcast
+  bcast,
+  NmAbValues,
+  SprtAbValues,
+  PrtAbValues
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities

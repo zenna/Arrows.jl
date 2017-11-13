@@ -37,22 +37,22 @@ props(::IfElseArrow) =   [Props(true, :i, Bool),
 name(::IfElseArrow) = :ifelse
 abinterprets(::IfElseArrow) = [sizeprop]
 
-function inv(arr::IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
-  @show const_in(arr, abvals)
-  # @show abvals
+function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbValues)
+  constin = const_in(arr, idabv)
+  # @show idabv
 
-  if isconst(2, abvals) && isconst(3, abvals)
-    abvals[2][:value] != abvals[3][:value] || throw(ArgumentError("Constness Combination not supported"))
-    invifelse_teconst_diff(), Dict(:i => :i, :t => :t, :y => :y)
-  elseif isconst(2, abvals)
+  if constin[2] && constin[3]
+    idabv[2][:value] != idabv[3][:value] || throw(ArgumentError("Constness Combination not supported"))
+    invifelse_teconst_diff(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+  elseif constin[2]
     invifelse_tconst(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
-  elseif isconst(3, abvals)
+  elseif constin[3]
     invifelse_econst(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
-  elseif all(i->!isconst(i, abtvals), port_id(⬧(arr)))
-    throw(ArgumentError("Constness Combination not supported"))
+  elseif all(i->!constin[i], port_id.(get_in_ports(arr)))
     invifelse_fullpi(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
   else
-    @show abvals
+    @show constin
+    @show idabv
     throw(ArgumentError("Constness Combination not supported"))
   end
 end

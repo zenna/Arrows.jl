@@ -53,7 +53,7 @@ link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
 "Invert `arr`, approximately totalize, and check the `domain_error`"
 function aprx_invert(arr::CompArrow,
-                     inner_inv=inv,
+                     inner_inv::Function=inv,
                      sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
   aprx_totalize!(domain_error!(invert(arr, inner_inv, sprtabvals)))
 end

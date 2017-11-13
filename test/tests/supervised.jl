@@ -10,6 +10,8 @@ end
 function test_foreign_arr(arr = TestArrows.xy_plus_x_arr())
   invarr = aprx_invert(arr)
   pslarr = Arrows.psl(invarr)
+  @show invarr
+  @show pslarr
   pslarr = invarr
   superarr = Arrows.supervised(arr, pslarr)
   suploss = Arrows.supervisedloss(superarr)
