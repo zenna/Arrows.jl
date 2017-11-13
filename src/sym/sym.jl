@@ -370,3 +370,75 @@ function find_assignments(info)
   end
   info
 end
+
+
+function solve(carr::CompArrow)
+  info = constraints(carr)
+  find_assignments(info)
+
+  g = x->x.var.value
+  h(x::AbstractArray) = Set(x)
+  h(x) = Set([x,])
+  inp_set = map(h ∘ g, info.inp)
+  assigns = map(_->Dict(),info.inp)
+  for (k,v) in info.assignments
+    for (id, s) in enumerate(inp_set)
+      if  k ∈ s
+        assigns[id][k] = v
+      end
+    end
+  end
+
+
+  assigns_2 = assigns[2]
+
+  # this is not ok. There are many examples that may breake this
+  extract_expr_modulo_index(v) = v
+  extract_expr_modulo_index(v::Symbol) = v
+  function extract_expr_modulo_index(v::Expr)
+    if v.head == :ref
+      extract_expr_modulo_index(v.args[1])
+    else
+      args = map(extract_expr_modulo_index, v.args)
+      Expr(v.head, args...)
+    end
+  end
+
+  param_idx = 2
+  by_block = Dict()
+  for (k,v) in assigns_2
+    index = extract_expr_modulo_index(v)
+    if !haskey(by_block, index)
+      by_block[index] = Vector()
+    end
+    push!(by_block[index], (k, v))
+  end
+
+
+  length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
+
+  function extract_index(v::Expr)
+    assert(v.head == :ref)
+    v.args[2]
+  end
+
+  function generate_gather(indexed_elements)
+    indices = [extract_index(x) for x in indexed_elements]
+  end
+
+  function generate_scatter(indexed_elements, dst_lenght)
+    indices = [extract_index(x) for x in indexed_elements]
+    indices, (dst_lenght,)
+  end
+
+
+  ## build scatter_nd
+  answer = Vector()
+  for (k, pairs) in by_block
+    g = generate_gather(map(x->x[2], pairs))
+    shape =
+    s = generate_scatter(map(x->x[1], pairs), length_of(info, param_idx))
+    push!(answer, (g,s))
+  end
+  answer
+end
