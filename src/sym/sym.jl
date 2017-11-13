@@ -372,26 +372,39 @@ function find_assignments(info)
 end
 
 
-function solve(carr::CompArrow)
-  info = constraints(carr)
-  find_assignments(info)
-
-  g = x->x.var.value
-  h(x::AbstractArray) = Set(x)
-  h(x) = Set([x,])
-  inp_set = map(h ∘ g, info.inp)
+function compute_assigns_by_portn(info::ConstraintInfo)
+  as_expr = x->x.var.value
+  as_set(x::AbstractArray) = Set(x)
+  as_set(x) = Set([x,])
+  inp_set = map(as_set ∘ as_expr, info.inp)
   assigns = map(_->Dict(),info.inp)
   for (k,v) in info.assignments
-    for (id, s) in enumerate(inp_set)
-      if  k ∈ s
+    for (id, set) in enumerate(inp_set)
+      if  k ∈ set
         assigns[id][k] = v
       end
     end
   end
+  assigns
+end
 
+length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
 
-  assigns_2 = assigns[2]
+function extract_index(v::Expr)
+  assert(v.head == :ref)
+  v.args[2]
+end
 
+function generate_gather(indexed_elements)
+  indices = [extract_index(x) for x in indexed_elements]
+end
+
+function generate_scatter(indexed_elements, dst_lenght)
+  indices = [extract_index(x) for x in indexed_elements]
+  indices, (dst_lenght,)
+end
+
+function extract_computation_blocks(assigns)
   # this is not ok. There are many examples that may breake this
   extract_expr_modulo_index(v) = v
   extract_expr_modulo_index(v::Symbol) = v
@@ -403,42 +416,33 @@ function solve(carr::CompArrow)
       Expr(v.head, args...)
     end
   end
-
-  param_idx = 2
   by_block = Dict()
-  for (k,v) in assigns_2
+  for (k,v) in assigns
     index = extract_expr_modulo_index(v)
     if !haskey(by_block, index)
       by_block[index] = Vector()
     end
     push!(by_block[index], (k, v))
   end
+  by_block
+end
+
+function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
+    by_block = extract_computation_blocks(assigns)
+    answer = Vector()
+    for (k, pairs) in by_block
+      g = generate_gather(map(x->x[2], pairs))
+      s = generate_scatter(map(x->x[1], pairs), length_of(info, idx))
+      push!(answer, (g,s))
+    end
+    answer
+end
 
 
-  length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
-
-  function extract_index(v::Expr)
-    assert(v.head == :ref)
-    v.args[2]
+function solve(carr::CompArrow)
+  info = constraints(carr)
+  assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
+  map(enumerate(assigns_by_port)) do args
+    create_assignment_graph_for(info, args...)
   end
-
-  function generate_gather(indexed_elements)
-    indices = [extract_index(x) for x in indexed_elements]
-  end
-
-  function generate_scatter(indexed_elements, dst_lenght)
-    indices = [extract_index(x) for x in indexed_elements]
-    indices, (dst_lenght,)
-  end
-
-
-  ## build scatter_nd
-  answer = Vector()
-  for (k, pairs) in by_block
-    g = generate_gather(map(x->x[2], pairs))
-    shape =
-    s = generate_scatter(map(x->x[1], pairs), length_of(info, param_idx))
-    push!(answer, (g,s))
-  end
-  answer
 end
