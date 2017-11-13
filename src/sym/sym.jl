@@ -22,6 +22,22 @@ struct SymbolPrx
   var::SymUnion
 end
 
+mutable struct ConstraintInfo
+  exprs::Vector{Expr}
+  θs::Set{Union{Symbol, Expr}}
+  mapping::Dict
+  unsat::Set{SymUnion}
+  assignments::Dict
+  inp::Vector{RefnSym}
+  function ConstraintInfo()
+    c = new()
+    c.mapping = Dict()
+    c.unsat = Set{SymUnion}()
+    c.assignments = Dict()
+    c
+  end
+end
+
 # TODO: generate this list dynamically
 scalar_names = Set{Symbol}([:+, :-, :*, :/, :exp, :log, :logbase, :asin, :sin,
                             :cos, :acos, :sqrt, :sqr, :abs, :^, :min, :max,
@@ -172,19 +188,28 @@ sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
 
 
-  "Constraints on inputs to `carr`"
-  function constraints(carr::CompArrow)
-    inp = symbol_in_ports(carr)
-    outs = interpret(sym_interpret, carr, inp)
-    allpreds = Set{SymUnion}()
-    foreach(out -> union!(allpreds, out.preds), outs)
-    θs = filter_gather_θ!(carr, inp, allpreds)
-    ConstraintInfo(allpreds, θs)
-    #filter(pred -> pred ∉ remove, allpreds)
-  end
+"Constraints on inputs to `carr`"
+function constraints(carr::CompArrow)
+  info = ConstraintInfo()
+  symbol_in_ports(carr, info)
+  outs = interpret(sym_interpret, carr, info.inp)
+  allpreds = Set{SymUnion}()
+  foreach(out -> union!(allpreds, out.preds), outs)
+  filter_gather_θ!(carr, info, allpreds)
+  add_preds(info, allpreds)
+  info
+  #filter(pred -> pred ∉ remove, allpreds)
+end
 
-function filter_gather_θ!(carr::CompArrow, ports, constraints)
+"solve constraints on inputs to `carr`"
+function solve(carr::CompArrow)
+  info = constraints(carr)
+  find_assignments(info)
+end
+
+function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   inp = map(Arrows.Sym, ▸(carr))
+  ports = info.inp
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
   for (id, p) in enumerate(inp)
@@ -207,6 +232,7 @@ function filter_gather_θ!(carr::CompArrow, ports, constraints)
     remove_unused_θs!(cons.value, unused_θ)
   end
   union(θs, non_gather_θ)
+  add_θs(info, θs)
 end
 
 function expand_θ(θ, sz::Size)
@@ -218,7 +244,7 @@ function expand_θ(θ, sz::Size)
   symbols
 end
 
-function symbol_in_ports(arr::CompArrow)
+function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
   trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
   inp = (Vector{RefnSym} ∘ n▸)(arr)
   for (id, sport) in enumerate(▹(arr))
@@ -236,7 +262,7 @@ function symbol_in_ports(arr::CompArrow)
     end
     inp[id] = RefnSym(sym)
   end
-  inp
+  info.inp = inp
 end
 
 
@@ -316,22 +342,9 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
   end
 end
 
-mutable struct ConstraintInfo
-  exprs::Vector{Expr}
-  θs::Set{Union{Symbol, Expr}}
-  mapping::Dict
-  unsat::Set{SymUnion}
-  assignments::Dict
-  function ConstraintInfo(allpreds::Set, θs)
-    c = new()
-    c.exprs = unsym.(collect(allpreds))
-    c.θs = θs
-    c.mapping = Dict()
-    c.unsat = Set{SymUnion}()
-    c.assignments = Dict()
-    c
-  end
-end
+
+add_preds(info::ConstraintInfo, allpreds::Set) = info.exprs = unsym.(collect(allpreds))
+add_θs(info::ConstraintInfo, θs) = info.θs = θs
 
 function build_symbol_to_constraint(info::ConstraintInfo)
   foreach(info.exprs) do expr
@@ -363,4 +376,5 @@ function find_assignments(info)
     f = (l, r) -> assign_if_possible(info, l, r)
     !f(left, right) && !f(right, left) && push!(info.unsat, SymUnion(expr))
   end
+  info
 end
