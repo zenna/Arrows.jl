@@ -3,7 +3,7 @@ function subtracewalk(inner::Function,
             carr::CompArrow,
             sarr::SubArrow,
             tparent::TraceParent,
-            abtvals::AbTraceValues)
+            abtvals::TraceAbValues)
   tparent = down(tparent, sarr)
   @show root(tparent)
   inner(sarr, tparent, abtvals)
@@ -13,7 +13,7 @@ function subtracewalk(inner::Function,
             parr::PrimArrow,
             sarr::SubArrow,
             tparent::TraceParent,
-            abtvals::AbTraceValues)
+            abtvals::TraceAbValues)
   @show root(tparent)
   inner(sarr, tparent, abtvals)
 end
@@ -21,7 +21,7 @@ end
 function subtracewalk(inner::Function,
             sarr::SubArrow,
             tparent::TraceParent,
-            abtvals::AbTraceValues)
+            abtvals::TraceAbValues)
   subtracewalk(inner, deref(sarr), sarr, tparent, abtvals)
 end
 
@@ -42,7 +42,7 @@ Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
 function tracewalk!(inner::Function,
                     outer::Function,
                     carr::CompArrow,
-                    abtvals::AbTraceValues=traceprop!(carr))::CompArrow
+                    abtvals::TraceAbValues=traceprop!(carr))::CompArrow
   # FIXME: Is this copy necessary?
   println("\nEntering tracewalk")
   tparent = TraceParent(carr)

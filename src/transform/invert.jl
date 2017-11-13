@@ -58,13 +58,13 @@ function aprx_invert(arr::CompArrow,
   aprx_totalize!(domain_error!(invert(arr, inner_inv, sprtabvals)))
 end
 
-function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
+function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbValues; inv=inv)
   pmap = id_portid_map(carr)
   f = inv_rename! ∘ remove_dead_arrows! ∘ link_param_ports! ∘ fix_links! ∘ invert_all_ports!
   f(carr), pmap
 end
 
-function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::AbTraceValues; inv=inv)
+function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbValues; inv=inv)
   const_in = map(is_src_source, ▹(sarr))
   idabvals = tarr_idabvals(TraceSubArrow(tparent, sarr), abtvals)
   inv(parr, sarr, idabvals)

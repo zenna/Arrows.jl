@@ -5,7 +5,7 @@ AbValues = Dict{Symbol, Any}
 IdAbValues = Dict{Int, AbValues}
 
 "Abstract TraceValues assigns abtract values to TraceValues"
-AbTraceValues = Dict{TraceValue, AbValues}
+TraceAbValues = Dict{TraceValue, AbValues}
 
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `val_abval` assuming `sprt` is on root"
@@ -44,7 +44,7 @@ function cycle_abinterprets(arr::PrimArrow, abvals::IdAbValues)
 end
 
 "Mapping from `port_id` of `tarr` to abstract values within `abtvals`"
-function tarr_idabvals(tarr::TraceSubArrow, abtvals::AbTraceValues)::IdAbValues
+function tarr_idabvals(tarr::TraceSubArrow, abtvals::TraceAbValues)::IdAbValues
   # Get IdAbValues from tarr
   tvals = trace_values(tarr)
   validids = [prt.port_id for prt in ⬧(deref(tarr)) if tvals[prt.port_id] in keys(abtvals)]
@@ -61,7 +61,7 @@ Propagation
 - `val_abval` - mutates and returns val_abval with propagated values
 """
 function traceprop!(carr::CompArrow,
-                    val_abval::AbTraceValues=AbTraceValues(),
+                    val_abval::TraceAbValues=TraceAbValues(),
                     tparent::TraceParent=TraceParent(carr))
   Time = Int
   tarrs = inner_trace_arrows(carr)
