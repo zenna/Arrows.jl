@@ -395,13 +395,37 @@ function extract_index(v::Expr)
   v.args[2]
 end
 
-function generate_gather(indexed_elements)
-  indices = [extract_index(x) for x in indexed_elements]
+function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3},
+                    shape_tuple)
+  shape = SourceArrow(shape_tuple)
+  indices = SourceArrow(indices)
+  sarr_shape =  add_sub_arr!(parent(params), shape)
+  sarr = add_sub_arr!(parent(params), indices)
+  gather_nd(params, ◃(sarr, 1), ◃(sarr_shape, 1))
 end
 
-function generate_scatter(indexed_elements, dst_lenght)
-  indices = [extract_index(x) for x in indexed_elements]
-  indices, (dst_lenght,)
+function generate_gather(carr::CompArrow, indexed_elements, shape)
+  indices = SourceArrow([extract_index(x) for x in indexed_elements])
+  shape = SourceArrow(shape)
+  sarr_shape =  add_sub_arr!(carr, shape)
+  sarr = add_sub_arr!(carr, indices)
+  sarr_gather =  add_sub_arr!(carr, GatherNdArrow())
+  (carr, 1) ⥅ (sarr_gather, 1)
+  (sarr, 1) ⥅ (sarr_gather, 2)
+  (sarr_shape, 1) ⥅ (sarr_gather, 3)
+  sarr_gather
+end
+
+function generate_scatter(carr::CompArrow, indexed_elements, shape)
+  indices = SourceArrow([extract_index(x) for x in indexed_elements])
+  shape = SourceArrow(shape)
+  sarr_shape =  add_sub_arr!(carr, shape)
+  sarr = add_sub_arr!(carr, indices)
+  sarr_scatter =  add_sub_arr!(carr, ScatterNdArrow())
+  (sarr, 1) ⥅ (sarr_scatter, 2)
+  (sarr_shape, 1) ⥅ (sarr_scatter, 3)
+  (sarr_scatter, 1) ⥅ (carr, 1)
+  sarr_scatter
 end
 
 function extract_computation_blocks(assigns)
@@ -431,9 +455,13 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     by_block = extract_computation_blocks(assigns)
     answer = Vector()
     for (k, pairs) in by_block
-      g = generate_gather(map(x->x[2], pairs))
-      s = generate_scatter(map(x->x[1], pairs), length_of(info, idx))
-      push!(answer, (g,s))
+      carr = CompArrow(:connector, [:x], [:z])
+      inputs = map(x->x[2], pairs)
+      outputs = map(x->x[1], pairs)
+      g = generate_gather(carr, inputs, size(inputs))
+      s = generate_scatter(carr, outputs, length_of(info, idx))
+      (g,1) ⥅ (s,1)
+      push!(answer, carr)
     end
     answer
 end
