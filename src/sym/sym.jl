@@ -47,15 +47,7 @@ function getindex(s::SymbolPrx, i::Int)
   ref_expr = v-> Expr(:ref, v, i)
   inner_getindex(v) = v
   inner_getindex(v::Array) = getindex(v,i)
-  inner_getindex(v::Symbol) = ref_expr(v)
-  function inner_getindex(v::Expr)
-    if v.head == :call && (v.args[1] ∈ scalar_names)
-      args = vcat(v.args[1], map(inner_getindex, v.args[2:end]))
-      Expr(v.head, args...)
-    else
-      ref_expr(v)
-    end
-  end
+  inner_getindex(v::Union{Symbol, Expr}) = ref_expr(v)
   sym = s.var
   v = sym.value
   SymUnion(inner_getindex(v), hash(i, sym.hsh))
