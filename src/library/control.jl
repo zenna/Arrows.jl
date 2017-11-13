@@ -35,6 +35,7 @@ props(::IfElseArrow) =   [Props(true, :i, Bool),
                           Props(true, :e, Real),
                           Props(false, :y, Real)]
 name(::IfElseArrow) = :ifelse
+abinterprets(::IfElseArrow) = [sizeprop]
 
 function inv(arr::IfElseArrow, sarr::SubArrow, abvals::IdAbValues)
   @show const_in(arr, abvals)

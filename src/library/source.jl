@@ -5,6 +5,7 @@ end
 
 name(::SourceArrow) = :source
 props{T}(::SourceArrow{T}) =  [Props(false, :x, T)]
+source(value) = SourceArrow(value)
 
 # FIXME: Specialize this to things which have sizes, maybe
 function sizeprop{T}(arr::SourceArrow{T}, props::IdAbValues)

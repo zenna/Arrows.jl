@@ -46,6 +46,18 @@ end
 name(::ReduceSumArrow) = :reduce_sum
 props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 reduce_sum(xs::Array, axis) = sum(xs, axis)
+abinterprets(::ReduceSumArrow) = [sizeprop]
+function sizeprop(arr::ReduceSumArrow, abvals::IdAbValues)::IdAbValues
+  # FIXME: Assumes keepdims is true
+  if 1 ∈ keys(abvals) && :size in keys(abvals[1])
+    sz = abvals[1][:size]
+    outsz = deepcopy(sz)
+    outsz.dims[arr.axis] = 1
+    IdAbValues(2 => AbValues(:size => outsz))
+  else
+    IdAbValues()
+  end
+end
 
 struct InvReduceSumArrow <: PrimArrow
   sz::Size      # Size of the input to the reduce arrow it inverts

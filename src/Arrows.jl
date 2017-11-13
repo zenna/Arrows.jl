@@ -242,8 +242,10 @@ export
   is,
   add!,
   link_to_parent!,
-  AbVlaues,
-  gradient
+  AbValues,
+  gradient,
+  source,
+  bcast
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
@@ -279,6 +281,7 @@ include("library/sigmoid.jl")
 
 include("library/assert.jl")
 include("library/source.jl")
+include("library/broadcast.jl")
 
 include("library/arithmetic.jl")
 include("library/inequalities.jl")
