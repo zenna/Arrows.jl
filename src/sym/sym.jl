@@ -29,6 +29,7 @@ mutable struct ConstraintInfo
   unsat::Set{SymUnion}
   assignments::Dict
   inp::Vector{RefnSym}
+  port_to_index::Dict{SymUnion, Number}
   function ConstraintInfo()
     c = new()
     c.mapping = Dict()
@@ -208,13 +209,11 @@ function solve(carr::CompArrow)
 end
 
 function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
-  inp = map(Arrows.Sym, ▸(carr))
-  ports = info.inp
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
-  for (id, p) in enumerate(inp)
-    exprs = ports[id].var.value
-    if startswith(String(p.value), String(:θgather))
+  for (name, idx) in info.port_to_index
+    exprs = info.inp[idx].var.value
+    if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
     else
       if isa(exprs, AbstractArray)
@@ -231,8 +230,7 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   foreach(constraints) do cons
     remove_unused_θs!(cons.value, unused_θ)
   end
-  union(θs, non_gather_θ)
-  add_θs(info, θs)
+  info.θs = union(θs, non_gather_θ)
 end
 
 function expand_θ(θ, sz::Size)
@@ -246,9 +244,11 @@ end
 
 function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
   trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
-  inp = (Vector{RefnSym} ∘ n▸)(arr)
-  for (id, sport) in enumerate(▹(arr))
+  info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
+  info.port_to_index = Dict{SymUnion, Number}()
+  for (idx, sport) in enumerate(▹(arr))
     sym = (Sym ∘ deref)(sport)
+    info.port_to_index[sym] = idx
     tv = trace_value(sport)
     if haskey(trcp, tv)
       inferred = trcp[tv]
@@ -256,13 +256,12 @@ function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
         sz = inferred[:size]
         expand = x->expand_θ(x, sz)
         sym_arr = (expand ∘ SymbolPrx)(sym)
-        inp[id] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
+        inp[idx] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
         continue
       end
     end
-    inp[id] = RefnSym(sym)
+    inp[idx] = RefnSym(sym)
   end
-  info.inp = inp
 end
 
 
@@ -343,8 +342,9 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
 end
 
 
-add_preds(info::ConstraintInfo, allpreds::Set) = info.exprs = unsym.(collect(allpreds))
-add_θs(info::ConstraintInfo, θs) = info.θs = θs
+function add_preds(info::ConstraintInfo, allpreds::Set)
+  info.exprs = unsym.(collect(allpreds))
+end
 
 function build_symbol_to_constraint(info::ConstraintInfo)
   foreach(info.exprs) do expr
