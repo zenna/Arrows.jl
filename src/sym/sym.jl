@@ -551,14 +551,13 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     if has_initializer
       initial_sarr = sarr_for_block(info, moniker)
       ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
-      # (initial_sarr,1) ⥅ (connector_sarr, n▸(connector_arr))
     end
 
     connectors = Vector()
     if isa(info.inp[idx].var.value, Symbol)
       #TODO handle equations with scalars
       warn("equations with scalars are not handled")
-      return connectors
+      return connector_sarr
     end
 
 
@@ -577,12 +576,12 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
 
 
     first = ◃(connectors[1],1)
-    sport = has_initializer ? ▸(connector_arr, n▸(connector_arr)) + first : first
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
     foreach(connectors[2:end]) do c
       sport = sport + ◃(c, 1)
     end
     sport ⥅ (connector_arr, 1)
-    connector_arr
+    connector_sarr
 end
 
 
