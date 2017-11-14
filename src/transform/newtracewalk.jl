@@ -57,10 +57,7 @@ function newtracewalk(replace::Function,
     newsarr = add_sub_arr!(newcarr, replarr)
     sarrmap[sarr] = newsarr
     oldnewpmap[sarr] = id_port_map
-    @show replarr
-    @show deref(sarr)
-    @show id_port_map
-    @assert all(pid ∈ values(id_port_map) for pid in port_id.(◂(replarr)))
+    # @assert all(pid ∈ values(id_port_map) for pid in port_id.(◂(replarr)))
     # @assert length(⬧(replarr)) == length(⬧(sarr))
   end
 
@@ -80,7 +77,6 @@ function newtracewalk(replace::Function,
     l⬨ ⥅ r⬨
   end
   retcarr, retpmap = replace(newcarr, sub_arrow(newcarr), tparent, abtvals)
-  @show sub_arrows(retcarr)
   @assert is_wired_ok(retcarr)
   retcarr, retpmap
 end

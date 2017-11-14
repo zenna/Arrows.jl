@@ -49,9 +49,6 @@ function inner_interpret(sub_interpret,
     push!(seen, sarr)
     inputs = [dst_val[sprt] for sprt in ▹(sarr)]
     outputs = sub_interpret(sarr, inputs)
-    @show sarr
-    @show outputs
-
     @assert length(outputs) == length(◂(sarr)) "diff num outputs"
 
     # Decrement the priority of each subarrow connected to this arrow

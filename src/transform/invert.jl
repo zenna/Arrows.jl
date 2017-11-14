@@ -42,22 +42,19 @@ inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
 function remove_dead_arrows!(carr)
   # iterate until none left
-  @show carr
   nremoved = 1
   while nremoved != 0
     nremoved = 0
     for sarr in sub_arrows(carr)
       nloose = length(filter(loose, sub_ports(sarr)))
-      @show nloose
       if nloose > 0
-        println("removing: ", sarr)
+        # println("removing: ", sarr)
         rem_sub_arr!(sarr)
         nremoved = nremoved + 1
       end
     end
-    println("removed $nremoved !")
+    # println("removed $nremoved !")
   end
-  print("Donea")
   carr
 end
 
