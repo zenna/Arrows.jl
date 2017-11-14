@@ -28,8 +28,11 @@ mutable struct ConstraintInfo
   mapping::Dict
   unsat::Set{SymUnion}
   assignments::Dict
+  assigns_by_portn::Vector
+  unassigns_by_portn::Vector
   inp::Vector{RefnSym}
   port_to_index::Dict{SymUnion, Number}
+  master_carr::CompArrow
   function ConstraintInfo()
     c = new()
     c.mapping = Dict()
@@ -194,11 +197,6 @@ function constraints(carr::CompArrow)
   #filter(pred -> pred ∉ remove, allpreds)
 end
 
-"solve constraints on inputs to `carr`"
-function solve(carr::CompArrow)
-  info = constraints(carr)
-  find_assignments(info)
-end
 
 function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
@@ -378,14 +376,25 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   as_set(x) = Set([x,])
   inp_set = map(as_set ∘ as_expr, info.inp)
   assigns = map(_->Dict(),info.inp)
+  θs = copy(info.θs)
   for (k,v) in info.assignments
     for (id, set) in enumerate(inp_set)
-      if  k ∈ set
+      if k ∈ set
         assigns[id][k] = v
+        pop!(θs, k)
       end
     end
   end
-  assigns
+  unassigns = map(_->Set(),info.inp)
+  for θ in θs
+    for (id, set) in enumerate(inp_set)
+      if θ ∈ set
+        push!(unassigns[id], θ)
+      end
+    end
+  end
+  info.unassigns_by_portn = unassigns
+  info.assigns_by_portn = assigns
 end
 
 length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
@@ -452,24 +461,63 @@ end
 
 function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     by_block = extract_computation_blocks(assigns)
-    answer = Vector()
-    for (k, pairs) in by_block
-      carr = CompArrow(:connector, [:x], [:z])
+    connectors = Vector()
+    if isa(info.inp[idx].var.value, Symbol)
+      #TODO handle equations with scalars
+      warn("equations with scalars are not handled")
+      return connectors
+    end
+
+    inputs = (x->(x,x)).(collect(info.unassigns_by_portn[idx]))
+    if length(inputs) > 0
+      with_inputs = 1
+    else
+      with_inputs = 0
+    end
+
+    connector_arr = CompArrow(:connector,
+                          (length ∘ keys)(by_block) + with_inputs,
+                          1)
+    connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+
+    function create_inner_connector(pairs)
+      carr = CompArrow(:inner_connector, [:x], [:z])
+      sarr = add_sub_arr!(connector_arr, carr)
       inputs = map(x->x[2], pairs)
       outputs = map(x->x[1], pairs)
       g = generate_gather(carr, inputs, size(inputs))
       s = generate_scatter(carr, outputs, length_of(info, idx))
       (g,1) ⥅ (s,1)
-      push!(answer, carr)
+      sarr
     end
-    answer
+
+
+    with_inputs > 0 &&  push!(connectors, create_inner_connector(inputs))
+
+    for (k, pairs) in by_block
+      carr = create_inner_connector(pairs)
+      push!(connectors, carr)
+    end
+
+    for (in_p, c) in zip(▹(connector_arr), connectors)
+      in_p ⥅ (c, 1)
+    end
+    sport = ◃(connectors[1],1)
+    foreach(connectors[2:end]) do c
+      sport = sport + ◃(c, 1)
+    end
+    sport ⥅ (connector_arr, 1)
+    connector_arr
 end
 
 
+"solve constraints on inputs to `carr`"
 function solve(carr::CompArrow)
   info = constraints(carr)
   assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
-  map(enumerate(assigns_by_port)) do args
+  info.master_carr = CompArrow(:solver_θ)
+  carrs = map(enumerate(assigns_by_port)) do args
     create_assignment_graph_for(info, args...)
   end
+  carrs, info
 end
