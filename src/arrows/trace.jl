@@ -17,8 +17,6 @@ function TraceParent(carr::CompArrow)
   TraceParent([sub_arrow(carr)])
 end
 
-# "Number of levels in trace"
-# length(tparent::TraceParent) = length(tparent.sarrs)
 @invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
 
 "Root `sarr`"

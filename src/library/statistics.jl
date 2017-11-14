@@ -47,10 +47,10 @@ name(::ReduceSumArrow) = :reduce_sum
 props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 reduce_sum(xs::Array, axis) = sum(xs, axis)
 abinterprets(::ReduceSumArrow) = [sizeprop]
-function sizeprop(arr::ReduceSumArrow, abvals::IdAbValues)::IdAbValues
+function sizeprop(arr::ReduceSumArrow, idabv::IdAbValues)::IdAbValues
   # FIXME: Assumes keepdims is true
-  if 1 ∈ keys(abvals) && :size in keys(abvals[1])
-    sz = abvals[1][:size]
+  if 1 ∈ keys(idabv) && :size in keys(idabv[1])
+    sz = idabv[1][:size]
     outsz = deepcopy(sz)
     outsz.dims[arr.axis] = 1
     IdAbValues(2 => AbValues(:size => outsz))
@@ -72,6 +72,7 @@ function props(arr::InvReduceSumArrow)
   vcat(Props(true, :y, Any), θprops, Props(false, :x, Any))
 end
 
-function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, abvals::IdAbValues)
-  InvReduceSumArrow(abvals[1][:size], arr.axis), Dict(:x=>:x, :y=>:y)
+function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbValues)
+  @show idabv
+  InvReduceSumArrow(idabv[1][:size], arr.axis), Dict(:x=>:x, :y=>:y)
 end

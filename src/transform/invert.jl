@@ -10,9 +10,9 @@ end
 
 "Do I need to switch this `link`"
 function need_switch(l::Link)
-  @show l
-  @show l[1].sub_arrow
-  @show l[2].sub_arrow
+  # @show l
+  # @show l[1].sub_arrow
+  # @show l[2].sub_arrow
   needswitch1 = should_src(l[1]) ⊻ is_src(l[1])
   needswitch2 = should_dst(l[2]) ⊻ is_dst(l[2])
   @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2 $l"
@@ -42,29 +42,24 @@ inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
 function remove_dead_arrows!(carr)
   # iterate until none left
+  @show carr
   nremoved = 1
   while nremoved != 0
     nremoved = 0
     for sarr in sub_arrows(carr)
       nloose = length(filter(loose, sub_ports(sarr)))
-      rem_sub_arr!(sarr)
-      nremoved = nremoved + 1
+      @show nloose
+      if nloose > 0
+        println("removing: ", sarr)
+        rem_sub_arr!(sarr)
+        nremoved = nremoved + 1
+      end
     end
     println("removed $nremoved !")
   end
+  print("Donea")
   carr
 end
-
-#       # if nloose == length(sub_ports(sarr))
-#       #   rem_sub_arr!(sarr)
-#       # else
-#       #   @show sarr
-#       #   @assert nloose == 0 "All or none ports should be zero, but is $nloose"
-#       # end
-#     end
-#   end
-#   carr
-# end
 
 link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 

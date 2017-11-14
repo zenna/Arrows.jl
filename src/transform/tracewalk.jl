@@ -52,5 +52,8 @@ function tracewalk!(inner::Function,
     replace_sub_arr!(sarr, replarr, port_map)
   end
 
-  outer(carr)
+  @assert false
+  retcarr = outer(carr)
+  @assert is_wired_ok(retcarr)
+  retcarr
 end

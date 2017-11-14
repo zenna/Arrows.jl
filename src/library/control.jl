@@ -31,8 +31,8 @@ function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbValues)
   elseif all(i->!constin[i], port_id.(get_in_ports(arr)))
     invifelse_fullpi(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
   else
-    @show constin
-    @show idabv
+    # @show constin
+    # @show idabv
     throw(ArgumentError("Constness Combination not supported"))
   end
 end

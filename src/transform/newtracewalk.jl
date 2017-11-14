@@ -4,7 +4,7 @@ function idportmap(arr1::Arrow, arr2::Arrow, idpmap::PortIdMap)
 end
 
 function idportmap(arr1::Arrow, arr2::Arrow, spmap::Dict{Symbol, Symbol})
-  @show spmap
+  # @show spmap
   PortIdMap(⬧(arr1, s1).port_id => ⬧(arr2, s2).port_id for (s1, s2) in spmap)
 end
 
@@ -74,5 +74,8 @@ function newtracewalk(replace::Function,
     r⬨ = sub_port(new_sarr, new_port_id)
     l⬨ ⥅ r⬨
   end
-  replace(newcarr, sub_arrow(newcarr), tparent, abtvals)
+  retcarr, retpmap = replace(newcarr, sub_arrow(newcarr), tparent, abtvals)
+  @show sub_arrows(retcarr)
+  @assert is_wired_ok(retcarr)
+  retcarr, retpmap
 end
