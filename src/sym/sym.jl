@@ -475,13 +475,13 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
       with_inputs = 0
     end
 
-    connector_arr = CompArrow(:connector,
+    connector_arr = CompArrow(gensym(:connector),
                           (length ∘ keys)(by_block) + with_inputs,
                           1)
     connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
     function create_inner_connector(pairs)
-      carr = CompArrow(:inner_connector, [:x], [:z])
+      carr = CompArrow(gensym(:inner_connector), [:x], [:z])
       sarr = add_sub_arr!(connector_arr, carr)
       inputs = map(x->x[2], pairs)
       outputs = map(x->x[1], pairs)
@@ -515,7 +515,7 @@ end
 function solve(carr::CompArrow)
   info = constraints(carr)
   assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
-  info.master_carr = CompArrow(:solver_θ)
+  info.master_carr = CompArrow(gensym(:solver_θ))
   carrs = map(enumerate(assigns_by_port)) do args
     create_assignment_graph_for(info, args...)
   end
