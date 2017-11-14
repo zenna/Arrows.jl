@@ -44,7 +44,6 @@ end
 
 "Assign expression"
 function assign_expr(sarr::SubArrow, outnames::Vector, args...)
-  outnames = map(name, tuple(Arrows.out_values(sarr)...))
   lhs = if length(outnames) == 1
     outnames[1]
   else

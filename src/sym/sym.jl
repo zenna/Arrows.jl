@@ -22,6 +22,28 @@ struct SymbolPrx
   var::SymUnion
 end
 
+mutable struct ConstraintInfo
+  exprs::Vector{Expr}
+  θs::Set{Union{Symbol, Expr}}
+  mapping::Dict
+  unsat::Set{SymUnion}
+  assignments::Dict
+  assigns_by_portn::Vector
+  unassigns_by_portn::Vector
+  inp::Vector{RefnSym}
+  port_to_index::Dict{SymUnion, Number}
+  master_carr::CompArrow
+  names_to_inital_sarr::Dict{Union{Symbol, Expr}, SubArrow}
+  function ConstraintInfo()
+    c = new()
+    c.mapping = Dict()
+    c.unsat = Set{SymUnion}()
+    c.assignments = Dict()
+    c.names_to_inital_sarr = Dict()
+    c
+  end
+end
+
 # TODO: generate this list dynamically
 scalar_names = Set{Symbol}([:+, :-, :*, :/, :exp, :log, :logbase, :asin, :sin,
                             :cos, :acos, :sqrt, :sqr, :abs, :^, :min, :max,
@@ -30,15 +52,7 @@ function getindex(s::SymbolPrx, i::Int)
   ref_expr = v-> Expr(:ref, v, i)
   inner_getindex(v) = v
   inner_getindex(v::Array) = getindex(v,i)
-  inner_getindex(v::Symbol) = ref_expr(v)
-  function inner_getindex(v::Expr)
-    if v.head == :call && (v.args[1] ∈ scalar_names)
-      args = vcat(v.args[1], map(inner_getindex, v.args[2:end]))
-      Expr(v.head, args...)
-    else
-      ref_expr(v)
-    end
-  end
+  inner_getindex(v::Union{Symbol, Expr}) = ref_expr(v)
   sym = s.var
   v = sym.value
   SymUnion(inner_getindex(v), hash(i, sym.hsh))
@@ -172,24 +186,26 @@ sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
 
 
-  "Constraints on inputs to `carr`"
-  function constraints(carr::CompArrow)
-    inp = symbol_in_ports(carr)
-    outs = interpret(sym_interpret, carr, inp)
-    allpreds = Set{SymUnion}()
-    foreach(out -> union!(allpreds, out.preds), outs)
-    θs = filter_gather_θ!(carr, inp, allpreds)
-    ConstraintInfo(allpreds, θs)
-    #filter(pred -> pred ∉ remove, allpreds)
-  end
+"Constraints on inputs to `carr`"
+function constraints(carr::CompArrow)
+  info = ConstraintInfo()
+  symbol_in_ports(carr, info)
+  outs = interpret(sym_interpret, carr, info.inp)
+  allpreds = Set{SymUnion}()
+  foreach(out -> union!(allpreds, out.preds), outs)
+  filter_gather_θ!(carr, info, allpreds)
+  add_preds(info, allpreds)
+  info
+  #filter(pred -> pred ∉ remove, allpreds)
+end
 
-function filter_gather_θ!(carr::CompArrow, ports, constraints)
-  inp = map(Arrows.Sym, ▸(carr))
+
+function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
-  for (id, p) in enumerate(inp)
-    exprs = ports[id].var.value
-    if startswith(String(p.value), String(:θgather))
+  for (name, idx) in info.port_to_index
+    exprs = info.inp[idx].var.value
+    if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
     else
       if isa(exprs, AbstractArray)
@@ -206,7 +222,7 @@ function filter_gather_θ!(carr::CompArrow, ports, constraints)
   foreach(constraints) do cons
     remove_unused_θs!(cons.value, unused_θ)
   end
-  union(θs, non_gather_θ)
+  info.θs = union(θs, non_gather_θ)
 end
 
 function expand_θ(θ, sz::Size)
@@ -218,11 +234,13 @@ function expand_θ(θ, sz::Size)
   symbols
 end
 
-function symbol_in_ports(arr::CompArrow)
+function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
   trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
-  inp = (Vector{RefnSym} ∘ n▸)(arr)
-  for (id, sport) in enumerate(▹(arr))
+  info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
+  info.port_to_index = Dict{SymUnion, Number}()
+  for (idx, sport) in enumerate(▹(arr))
     sym = (Sym ∘ deref)(sport)
+    info.port_to_index[sym] = idx
     tv = trace_value(sport)
     if haskey(trcp, tv)
       inferred = trcp[tv]
@@ -230,13 +248,12 @@ function symbol_in_ports(arr::CompArrow)
         sz = inferred[:size]
         expand = x->expand_θ(x, sz)
         sym_arr = (expand ∘ SymbolPrx)(sym)
-        inp[id] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
+        inp[idx] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
         continue
       end
     end
-    inp[id] = RefnSym(sym)
+    inp[idx] = RefnSym(sym)
   end
-  inp
 end
 
 
@@ -316,21 +333,9 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
   end
 end
 
-mutable struct ConstraintInfo
-  exprs::Vector{Expr}
-  θs::Set{Union{Symbol, Expr}}
-  mapping::Dict
-  unsat::Set{SymUnion}
-  assignments::Dict
-  function ConstraintInfo(allpreds::Set, θs)
-    c = new()
-    c.exprs = unsym.(collect(allpreds))
-    c.θs = θs
-    c.mapping = Dict()
-    c.unsat = Set{SymUnion}()
-    c.assignments = Dict()
-    c
-  end
+
+function add_preds(info::ConstraintInfo, allpreds::Set)
+  info.exprs = unsym.(collect(allpreds))
 end
 
 function build_symbol_to_constraint(info::ConstraintInfo)
@@ -363,4 +368,251 @@ function find_assignments(info)
     f = (l, r) -> assign_if_possible(info, l, r)
     !f(left, right) && !f(right, left) && push!(info.unsat, SymUnion(expr))
   end
+  info
+end
+
+
+function compute_assigns_by_portn(info::ConstraintInfo)
+  as_expr = x->x.var.value
+  as_set(x::AbstractArray) = Set(x)
+  as_set(x) = Set([x,])
+  inp_set = map(as_set ∘ as_expr, info.inp)
+  assigns = map(_->Dict(),info.inp)
+  θs = copy(info.θs)
+  for (k,v) in info.assignments
+    for (id, set) in enumerate(inp_set)
+      if k ∈ set
+        assigns[id][k] = v
+        pop!(θs, k)
+      end
+    end
+  end
+  unassigns = map(_->Set(),info.inp)
+  for θ in θs
+    for (id, set) in enumerate(inp_set)
+      if θ ∈ set
+        push!(unassigns[id], θ)
+      end
+    end
+  end
+  info.unassigns_by_portn = unassigns
+  info.assigns_by_portn = assigns
+end
+
+length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
+
+extract_index(v::Int) = v - 1
+function extract_index(v::Expr)
+  assert(v.head == :ref)
+  extract_index(v.args[2])
+end
+
+function extract_indices(elements::AbstractArray)
+    indices = map(extract_index, elements)
+    n = length(indices)
+    reshape(indices, (n, 1))
+end
+
+function generate_gather(carr::CompArrow, indexed_elements, shape)
+  indices = extract_indices(indexed_elements)
+  indices = SourceArrow(indices)
+  shape = SourceArrow(shape)
+  sarr_shape =  add_sub_arr!(carr, shape)
+  sarr = add_sub_arr!(carr, indices)
+  sarr_gather =  add_sub_arr!(carr, GatherNdArrow())
+  (carr, 1) ⥅ (sarr_gather, 1)
+  (sarr, 1) ⥅ (sarr_gather, 2)
+  (sarr_shape, 1) ⥅ (sarr_gather, 3)
+  sarr_gather
+end
+
+function generate_scatter(carr::CompArrow, indexed_elements, shape)
+  indices = extract_indices(indexed_elements)
+  indices = SourceArrow(indices)
+  shape = SourceArrow(shape)
+  sarr_shape =  add_sub_arr!(carr, shape)
+  sarr = add_sub_arr!(carr, indices)
+  sarr_scatter =  add_sub_arr!(carr, ScatterNdArrow())
+  (sarr, 1) ⥅ (sarr_scatter, 2)
+  (sarr_shape, 1) ⥅ (sarr_scatter, 3)
+  (sarr_scatter, 1) ⥅ (carr, 1)
+  sarr_scatter
+end
+
+# this is not ok. There are many examples that may breake this
+extract_expr_modulo_index(v) = v
+extract_expr_modulo_index(v::Symbol) = v
+function extract_expr_modulo_index(v::Expr)
+  if v.head == :ref
+    extract_expr_modulo_index(v.args[1])
+  else
+    args = map(extract_expr_modulo_index, v.args)
+    Expr(v.head, args...)
+  end
+end
+
+function extract_computation_blocks(assigns)
+  by_block = Dict()
+  for (k,v) in assigns
+    index = extract_expr_modulo_index(v)
+    if !haskey(by_block, index)
+      by_block[index] = Vector()
+    end
+    push!(by_block[index], (k, v))
+  end
+  by_block
+end
+
+function name(info::ConstraintInfo, idx)
+  value = info.inp[idx].var.value
+  if isa(value, Symbol)
+    expr = value
+  else
+    expr = value[1]
+  end
+  extract_expr_modulo_index(expr)
+end
+function create_first_step_of_connection(info)
+  for (idx, unassign) in enumerate(info.unassigns_by_portn)
+    if length(unassign) > 0
+      connector_arr = CompArrow(gensym(:connector_first), [:x], [:z])
+      if isa(info.inp[idx].var.value, Symbol)
+        sarr = Arrows.add_sub_arr!(connector_arr, IdentityArrow())
+      else
+        pairs = Vector()
+        values = collect(unassign)
+        for (id_, dst) in enumerate(sort(values, by=Arrows.extract_index))
+          push!(pairs, (dst, id_))
+        end
+        sarr = create_inner_connector(info, connector_arr, pairs,  idx)
+      end
+      (connector_arr, 1) ⥅ (sarr, 1)
+      (sarr, 1) ⥅ (connector_arr, 1)
+      connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+      info.names_to_inital_sarr[name(info, idx)] = connector_sarr
+      link_to_parent!(▹(connector_sarr, 1))
+    end
+  end
+end
+
+function create_inner_connector(info::ConstraintInfo,
+                                connector_arr::CompArrow,
+                                pairs, idx)
+  carr = CompArrow(gensym(:inner_connector), [:x], [:z])
+  sarr = add_sub_arr!(connector_arr, carr)
+  inputs = map(x->x[2], pairs)
+  outputs = map(x->x[1], pairs)
+  g = generate_gather(carr, inputs, size(inputs))
+  s = generate_scatter(carr, outputs, length_of(info, idx))
+  (g,1) ⥅ (s,1)
+  sarr
+end
+
+extract_variables(v) = Set()
+extract_variables(v::Symbol) = Set([v,])
+function extract_variables(v::Expr)
+  if v.head == :call
+    args = v.args[2:end]
+  else
+    args = v.args
+  end
+  union(map(extract_variables, args)...)
+end
+
+function sarr_for_block(info::ConstraintInfo, moniker::Union{Expr, Symbol})
+
+  if haskey(info.names_to_inital_sarr, moniker)
+    info.names_to_inital_sarr[moniker]
+  else
+    variables = extract_variables(moniker)
+    context = Dict()
+    for v in variables
+      sarr = sarr_for_block(info, v)
+      context[v] = ◃(sarr, 1)
+    end
+    M = Module()
+    for (k,v) in context
+           eval(M, :($k = $v))
+    end
+    sport = eval(M, moniker)
+    info.names_to_inital_sarr[moniker] = sub_arrow(sport)
+  end
+end
+
+function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
+    by_block = extract_computation_blocks(assigns)
+    moniker = name(info, idx)
+    has_initializer = haskey(info.names_to_inital_sarr, moniker)
+    connector_arr = CompArrow(gensym(:connector),
+                      (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
+                      1)
+    connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+
+    if has_initializer
+      initial_sarr = sarr_for_block(info, moniker)
+      ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
+    end
+
+    connectors = Vector()
+    if isa(info.inp[idx].var.value, Symbol)
+      if has_initializer
+        ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
+      end
+      #TODO handle equations with scalars
+      warn("equations with scalars are not handled")
+      return connector_sarr
+    end
+
+
+    input_id = 0
+    for (block, pairs) in by_block
+      input_id += 1
+      carr = create_inner_connector(info,
+                                      connector_arr,
+                                      pairs, idx)
+      push!(connectors, carr)
+      block_sarr = sarr_for_block(info, block)
+      (block_sarr, 1) ⥅ (connector_sarr, input_id)
+      (connector_arr, input_id) ⥅ (carr, 1)
+    end
+
+
+    first = ◃(connectors[1],1)
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
+    foreach(connectors[2:end]) do c
+      sport = sport + ◃(c, 1)
+    end
+    sport ⥅ (connector_arr, 1)
+    connector_sarr
+end
+
+function connect_target(info::ConstraintInfo, carr::CompArrow, sarrs)
+  sarr_target = add_sub_arr!(info.master_carr, carr)
+  foreach(link_to_parent!, ◃(sarr_target))
+  for (idx, sarr) in enumerate(sarrs)
+    vals = info.inp[idx].var.value
+    if isa(vals, Array)
+      sarr_shape = add_sub_arr!(info.master_carr, SourceArrow(size(vals)))
+      sarr_reshape = add_sub_arr!(info.master_carr, ReshapeArrow())
+      (sarr, 1) ⥅ (sarr_reshape, 1)
+      (sarr_shape, 1) ⥅ (sarr_reshape, 2)
+      outp = ◃(sarr_reshape, 1)
+    else
+      outp = ◃(sarr, 1)
+    end
+    outp ⥅ (sarr_target, idx)
+  end
+end
+
+"solve constraints on inputs to `carr`"
+function solve(carr::CompArrow)
+  info = constraints(carr)
+  assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
+  info.master_carr = CompArrow(gensym(:solver_θ))
+  create_first_step_of_connection(info)
+  sarrs = map(enumerate(assigns_by_port)) do args
+    create_assignment_graph_for(info, args...)
+  end
+  connect_target(info, carr, sarrs)
+  sarrs, info
 end
