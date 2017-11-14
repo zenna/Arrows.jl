@@ -288,6 +288,7 @@ include("library/broadcast.jl")
 
 include("library/arithmetic.jl")
 include("library/inequalities.jl")
+include("library/dupl.jl")
 include("library/control.jl")
 include("library/array.jl")
 include("library/compound.jl")

@@ -1,0 +1,41 @@
+"Duplicates input `O` times dupl_n_(x) = (x,...x)"
+struct DuplArrow{O} <: PrimArrow end
+
+props{O}(::DuplArrow{O}) =
+  [Props(true, :x, Any),
+   [Props(false, Symbol(:y, i), Any) for i=1:O]...]
+
+name{O}(::DuplArrow{O}) = Symbol(:dupl_, O)
+DuplArrow(n::Integer) = DuplArrow{n}()
+abinterprets(::DuplArrow) = [sizeprop]
+
+function constprop(arr::DuplArrow, idabv::IdAbValues)::IdAbValues
+  # If any re constant all are constant!
+  if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
+    # @assert false
+    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+  else
+    IdAbValues()
+  end
+end
+
+# FIXME: implement valueprop for dupl
+
+function inv{O}(arr::DuplArrow{O}, sarr::SubArrow, idabv::IdAbValues)
+  if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
+    DuplArrow(O), Dict(i => i for i=1:O)
+  else
+    (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
+  end
+end
+
+"`(x, x, ..., x)` `n` times"
+dupl(x, n)::Tuple = tuple((x for i = 1:n)...)
+
+"f(x) = (x,)"
+struct IdentityArrow <: PrimArrow end
+
+props(::IdentityArrow) =
+  [Props(true, :x, Any), Props(false, :y, Any)]
+
+name(::IdentityArrow) = :identity

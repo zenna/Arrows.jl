@@ -4,8 +4,6 @@ function idportmap(arr1::Arrow, arr2::Arrow, idpmap::PortIdMap)
 end
 
 function idportmap(arr1::Arrow, arr2::Arrow, spmap::Dict{Symbol, Symbol})
-  @show arr1
-  @show arr2
   @show spmap
   PortIdMap(⬧(arr1, s1).port_id => ⬧(arr2, s2).port_id for (s1, s2) in spmap)
 end

@@ -46,10 +46,6 @@ function inv(::GatherNdArrow, sarr::SubArrow, abvals::IdAbValues)
   Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
-function inv{O}(::DuplArrow{O}, sarr::SubArrow, abvals::IdAbValues)
-  (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
-end
-
 function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbValues)
   binary_inv(arr,
              const_in(arr, abvals),

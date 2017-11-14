@@ -27,6 +27,20 @@ function valueprop(arr::BroadcastArrow, abvals::IdAbValues)::IdAbValues
   IdAbValues()
 end
 
-function inv(::BroadcastArrow, sarr::SubArrow, abvals::IdAbValues)
-  InvBroadcastArrow(), Dict(:x => :x, :y => :y)
+function constprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
+  # If any re constant all are constant!
+  if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
+    # @assert false
+    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+  else
+    IdAbValues()
+  end
+end
+
+function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
+  if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
+    BroadcastArrow(), Dict(:x => :x, :y => :y)
+  else
+    InvBroadcastArrow(), Dict(:x => :x, :y => :y)
+  end
 end

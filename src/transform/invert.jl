@@ -41,16 +41,30 @@ end
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
 function remove_dead_arrows!(carr)
-  foreach(sub_arrows(carr)) do sarr
-    nloose = length(filter(loose, sub_ports(sarr)))
-    if nloose == length(sub_ports(sarr))
+  # iterate until none left
+  nremoved = 1
+  while nremoved != 0
+    nremoved = 0
+    for sarr in sub_arrows(carr)
+      nloose = length(filter(loose, sub_ports(sarr)))
       rem_sub_arr!(sarr)
-    else
-      @assert nloose == 0 "All or none ports should be zero, but is $nloose"
+      nremoved = nremoved + 1
     end
+    println("removed $nremoved !")
   end
   carr
 end
+
+#       # if nloose == length(sub_ports(sarr))
+#       #   rem_sub_arr!(sarr)
+#       # else
+#       #   @show sarr
+#       #   @assert nloose == 0 "All or none ports should be zero, but is $nloose"
+#       # end
+#     end
+#   end
+#   carr
+# end
 
 link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
