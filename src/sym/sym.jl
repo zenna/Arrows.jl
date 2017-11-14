@@ -399,9 +399,10 @@ end
 
 length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
 
+extract_index(v::Int) = v - 1
 function extract_index(v::Expr)
   assert(v.head == :ref)
-  v.args[2] - 1
+  extract_index(v.args[2])
 end
 
 function extract_indices(elements::AbstractArray)
@@ -459,6 +460,20 @@ function extract_computation_blocks(assigns)
   by_block
 end
 
+
+function create_inner_connector(info::ConstraintInfo,
+                                connector_arr::CompArrow,
+                                pairs, idx)
+  carr = CompArrow(gensym(:inner_connector), [:x], [:z])
+  sarr = add_sub_arr!(connector_arr, carr)
+  inputs = map(x->x[2], pairs)
+  outputs = map(x->x[1], pairs)
+  g = generate_gather(carr, inputs, size(inputs))
+  s = generate_scatter(carr, outputs, length_of(info, idx))
+  (g,1) ⥅ (s,1)
+  sarr
+end
+
 function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     by_block = extract_computation_blocks(assigns)
     connectors = Vector()
@@ -479,23 +494,14 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
                           (length ∘ keys)(by_block) + with_inputs,
                           1)
     connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
-
-    function create_inner_connector(pairs)
-      carr = CompArrow(gensym(:inner_connector), [:x], [:z])
-      sarr = add_sub_arr!(connector_arr, carr)
-      inputs = map(x->x[2], pairs)
-      outputs = map(x->x[1], pairs)
-      g = generate_gather(carr, inputs, size(inputs))
-      s = generate_scatter(carr, outputs, length_of(info, idx))
-      (g,1) ⥅ (s,1)
-      sarr
-    end
+    creator = pairs->create_inner_connector(info, connector_arr, pairs, idx)
 
 
-    with_inputs > 0 &&  push!(connectors, create_inner_connector(inputs))
+    with_inputs > 0 &&  push!(connectors,
+                              creator(inputs))
 
     for (k, pairs) in by_block
-      carr = create_inner_connector(pairs)
+      carr = creator(pairs)
       push!(connectors, carr)
     end
 
