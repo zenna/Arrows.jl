@@ -19,6 +19,8 @@ end
 abinterprets(::SourceArrow{<:Union{Array, Number}}) = [sizeprop]
 valueprop(arr::SourceArrow, props::IdAbValues) =
   IdAbValues(1 => AbValues(:value => ConcreteValue(arr.value)))
+constprop(arr::SourceArrow, props::IdAbValues)::IdAbValues =
+  IdAbValues(1 => AbValues(:isconst => true))
 
 # FIXME, Specialize this for different types
 zero(::Type{SubPort}) = SourceArrow(0)

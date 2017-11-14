@@ -9,12 +9,12 @@ struct GreaterThanArrow <: PrimArrow end
 name(::GreaterThanArrow)::Symbol = :>
 props(::GreaterThanArrow) = ineq_props
 
-function inv(arr::GreaterThanArrow, sarr::SubArrow, abvals::IdAbValues)
-  # @show abvals
-  @show 2 ∈ keys(abvals)
-  if 1 ∈ keys(abvals) && :value in keys(abvals[1])
+function inv(arr::GreaterThanArrow, sarr::SubArrow, idabv::IdAbValues)
+  # @show idabv
+  @show 2 ∈ keys(idabv)
+  if isconst(1, idabv)
     inv_gt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
-  elseif 2 ∈ keys(abvals) && :value in keys(abvals[2])
+  elseif isconst(2, idabv)
     inv_gt_ycnst(), Dict(:x => :x, :y => :y, :z => :z)
   else # FIXME: Check that no ports are know, because z could be known
     inv_gt_arr(), Dict(:x => :x, :y => :y, :z => :z)
@@ -82,11 +82,11 @@ struct LessThanArrow <: PrimArrow end
 name(::LessThanArrow)::Symbol = :(<)
 props(::LessThanArrow) = ineq_props
 
-function inv(arr::LessThanArrow, sarr::SubArrow, abvals::IdAbValues)
-  if 1 ∈ keys(abvals) && :value in keys(abvals[1])
+function inv(arr::LessThanArrow, sarr::SubArrow, idabv::IdAbValues)
+  if isconst(1, idabv)
     # @assert false
     inv_lt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
-  elseif 2 ∈ keys(abvals) && :value in keys(abvals[2])
+  elseif isconst(2, idabv)
     # @assert false
     inv_lt_ycnst(), Dict(:x => :x, :y => :y, :z => :z)
   else

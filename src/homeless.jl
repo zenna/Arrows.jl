@@ -1,4 +1,4 @@
-o# Little functions without a home
+# Little functions without a home
 
 "Comp"
-arrsinside(arr::) = Set(simpletracewalk(Arrows.name ∘ deref, a))
+arrsinside(arr::Arrow) = Set(simpletracewalk(Arrows.name ∘ deref, arr))

@@ -13,12 +13,12 @@ struct ReshapeArrow <: PrimArrow end
 name(::ReshapeArrow)::Symbol = :reshape
 props(::ReshapeArrow) = bin_arith_props()
 abinterprets(::ReshapeArrow) = [sizeprop]
-function sizeprop(::ReshapeArrow, props::IdAbValues)
+function sizeprop(::ReshapeArrow, idabv::IdAbValues)
   # size of the output is value of second input
   # does the second input have the property :value
-  if 2 ∈ keys(props) && has(:value)(props[2])
-    @show typeof(props[2][:value].value)
-    outsz = [props[2][:value].value...]
+  if 2 ∈ keys(idabv) && has(:value)(idabv[2])
+    @show typeof(idabv[2][:value].value)
+    outsz = [idabv[2][:value].value...]
     IdAbValues(3 => AbValues(:size => Size(outsz)))
   else
     IdAbValues()

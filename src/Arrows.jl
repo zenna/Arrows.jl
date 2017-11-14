@@ -246,6 +246,7 @@ export
   gradient,
   source,
   bcast,
+  IdAbValues,
   NmAbValues,
   SprtAbValues,
   PrtAbValues
@@ -267,8 +268,6 @@ include("arrows/unknown.jl")        # Unknown (uninterpreted) Arrows
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
-include("value/const.jl")           # Const type
-
 include("arrows/trace.jl")          # Arrow Traces
 
 # Abstract interpretation based propagation
@@ -276,6 +275,7 @@ include("propagate/meet.jl")        # Meeting (intersection) of domains
 include("propagate/propagate.jl")
 include("propagate/size.jl")
 include("propagate/concrete.jl")
+include("propagate/const.jl")           # Const type
 
 # Library #
 include("library/common.jl")
@@ -358,4 +358,5 @@ include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
 include("../test/TestArrows.jl")
 
+include("homeless.jl")    # Unosrted
 end

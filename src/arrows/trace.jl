@@ -190,6 +190,10 @@ in_trace_values(tarr::TraceSubArrow) = map(TraceValue, in_trace_ports(tarr))
 
 out_trace_values(tarr::TraceSubArrow) = map(TraceValue, out_trace_ports(tarr))
 
+"All the trace values inside `carr`"
+inner_trace_values(carr::CompArrow)::Vector{TraceValue} =
+  unique(vcat(trace_values.(inner_trace_arrows(carr))...))
+
 # FIXME: Maybe rename this, a sprt could be in many trace values, so name
 # should reflect its teh root
 "`TraceValue` where parent `sprt` is root `TraceParent`"

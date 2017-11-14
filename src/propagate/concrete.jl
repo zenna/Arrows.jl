@@ -3,7 +3,12 @@ struct ConcreteValue{T}
   value::T
 end
 
-abinterprets(::Arrow) = [valueprop]
+"All arrows can do constant propagation and value propagation"
+abinterprets(::Arrow) = [valueprop, constprop]
+
+function meet(x::Bool, y::Bool)
+  x == y || throw(MeetError, [x, y])
+end
 
 function meet(x::ConcreteValue, y::ConcreteValue)
   x == y || throw(MeetError, [x, y])

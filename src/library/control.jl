@@ -42,8 +42,10 @@ function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbValues)
   # @show idabv
 
   if constin[2] && constin[3]
-    idabv[2][:value] != idabv[3][:value] || throw(ArgumentError("Constness Combination not supported"))
-    invifelse_teconst_diff(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
+    warn("fixme")
+    # idabv[2][:value] != idabv[3][:value] || throw(ArgumentError("Constness Combination not supported"))
+    # no e! could have been no t but chose arbitrarily, ramifications?
+    invifelse_teconst_diff(), Dict(:i => :i, :t => :t, :y => :y)
   elseif constin[2]
     invifelse_tconst(), Dict(:i => :i, :t => :t, :e => :e, :y => :y)
   elseif constin[3]

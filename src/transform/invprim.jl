@@ -1,7 +1,3 @@
-function const_in(arr::Arrow, abvals::IdAbValues)
-  [pid in keys(abvals) && :value in keys(abvals[pid]) for pid in port_id.(▸(arr))]
-end
-
 # FIXME: Switch to symbols instead of numbers
 # TODO: Add is_valid for These portmaps to check
 const BIN_PORT_MAP = Dict(1 => 3, 2 => 4, 3 => 1)
