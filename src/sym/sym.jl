@@ -33,11 +33,13 @@ mutable struct ConstraintInfo
   inp::Vector{RefnSym}
   port_to_index::Dict{SymUnion, Number}
   master_carr::CompArrow
+  names_to_inital_sarr::Dict{Symbol, SubArrow}
   function ConstraintInfo()
     c = new()
     c.mapping = Dict()
     c.unsat = Set{SymUnion}()
     c.assignments = Dict()
+    c.names_to_inital_sarr = Dict()
     c
   end
 end
@@ -437,18 +439,19 @@ function generate_scatter(carr::CompArrow, indexed_elements, shape)
   sarr_scatter
 end
 
-function extract_computation_blocks(assigns)
-  # this is not ok. There are many examples that may breake this
-  extract_expr_modulo_index(v) = v
-  extract_expr_modulo_index(v::Symbol) = v
-  function extract_expr_modulo_index(v::Expr)
-    if v.head == :ref
-      extract_expr_modulo_index(v.args[1])
-    else
-      args = map(extract_expr_modulo_index, v.args)
-      Expr(v.head, args...)
-    end
+# this is not ok. There are many examples that may breake this
+extract_expr_modulo_index(v) = v
+extract_expr_modulo_index(v::Symbol) = v
+function extract_expr_modulo_index(v::Expr)
+  if v.head == :ref
+    extract_expr_modulo_index(v.args[1])
+  else
+    args = map(extract_expr_modulo_index, v.args)
+    Expr(v.head, args...)
   end
+end
+
+function extract_computation_blocks(assigns)
   by_block = Dict()
   for (k,v) in assigns
     index = extract_expr_modulo_index(v)
@@ -460,6 +463,37 @@ function extract_computation_blocks(assigns)
   by_block
 end
 
+function name(info::ConstraintInfo, idx)
+  value = info.inp[idx].var.value
+  if isa(value, Symbol)
+    expr = value
+  else
+    expr = value[1]
+  end
+  extract_expr_modulo_index(expr)
+end
+function create_first_step_of_connection(info)
+  for (idx, unassign) in enumerate(info.unassigns_by_portn)
+    if length(unassign) > 0
+      connector_arr = CompArrow(gensym(:connector_first), [:x], [:z])
+      if isa(info.inp[idx].var.value, Symbol)
+        sarr = Arrows.add_sub_arr!(connector_arr, IdentityArrow())
+      else
+        pairs = Vector()
+        values = collect(unassign)
+        for (id_, dst) in enumerate(sort(values, by=Arrows.extract_index))
+          push!(pairs, (dst, id_))
+        end
+        sarr = create_inner_connector(info, connector_arr, pairs,  idx)
+      end
+      (connector_arr, 1) ⥅ (sarr, 1)
+      (sarr, 1) ⥅ (connector_arr, 1)
+      connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+      info.names_to_inital_sarr[name(info, idx)] = connector_sarr
+      link_to_parent!(▹(connector_sarr, 1))
+    end
+  end
+end
 
 function create_inner_connector(info::ConstraintInfo,
                                 connector_arr::CompArrow,
@@ -483,25 +517,17 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
       return connectors
     end
 
-    inputs = (x->(x,x)).(collect(info.unassigns_by_portn[idx]))
-    if length(inputs) > 0
-      with_inputs = 1
-    else
-      with_inputs = 0
-    end
-
+    moniker = name(info, idx)
+    extra = haskey(info.names_to_inital_sarr, moniker) ? 1 : 0
     connector_arr = CompArrow(gensym(:connector),
-                          (length ∘ keys)(by_block) + with_inputs,
-                          1)
+                      (length ∘ keys)(by_block) + extra,
+                      1)
     connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
-    creator = pairs->create_inner_connector(info, connector_arr, pairs, idx)
-
-
-    with_inputs > 0 &&  push!(connectors,
-                              creator(inputs))
 
     for (k, pairs) in by_block
-      carr = creator(pairs)
+      carr = create_inner_connector(info,
+                                      connector_arr,
+                                      pairs, idx)
       push!(connectors, carr)
     end
 
@@ -522,6 +548,7 @@ function solve(carr::CompArrow)
   info = constraints(carr)
   assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))
+  create_first_step_of_connection(info)
   carrs = map(enumerate(assigns_by_port)) do args
     create_assignment_graph_for(info, args...)
   end
