@@ -23,7 +23,7 @@ end
 
 function inv{O}(arr::DuplArrow{O}, sarr::SubArrow, idabv::IdAbValues)
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
-    DuplArrow(O), Dict(i => i for i=1:O)
+    DuplArrow(O), Dict(i => i for i=1:O + 1)
   else
     (InvDuplArrow(O), merge(Dict(1 => O + 1), Dict(i => i - 1 for i = 2:O+1)))
   end

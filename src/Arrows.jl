@@ -249,7 +249,11 @@ export
   IdAbValues,
   NmAbValues,
   SprtAbValues,
-  PrtAbValues
+  PrtAbValues,
+  XAbValues,
+  in_trace_values,
+  out_trace_values,
+  Sampler
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities

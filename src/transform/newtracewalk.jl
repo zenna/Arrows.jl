@@ -57,6 +57,11 @@ function newtracewalk(replace::Function,
     newsarr = add_sub_arr!(newcarr, replarr)
     sarrmap[sarr] = newsarr
     oldnewpmap[sarr] = id_port_map
+    @show replarr
+    @show deref(sarr)
+    @show id_port_map
+    @assert all(pid ∈ values(id_port_map) for pid in port_id.(◂(replarr)))
+    # @assert length(⬧(replarr)) == length(⬧(sarr))
   end
 
   # Do the rewiring

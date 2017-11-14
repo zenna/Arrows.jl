@@ -13,6 +13,9 @@ NmAbValues = Dict{Symbol, AbValues}
 "You get the picture"
 SprtAbValues = Dict{SubPort, AbValues}
 
+"All kinds of AbValues"
+XAbValues = Union{SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
+
 
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `val_abval` assuming `sprt` is on root"
@@ -123,5 +126,14 @@ function traceprop!(carr::CompArrow,
   val_abval = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
   traceprop!(carr, val_abval)
 end
+
+"Convenience for specifying abstraact values for subports on root"
+function traceprop!(carr::CompArrow,
+                    nmabv::NmAbValues)
+  tparent = TraceParent(carr)
+  sprtabv = SprtAbValues(⬨(carr, nm) => abv for (nm, abv) in nmabv)
+  traceprop!(carr, sprtabv)
+end
+
 
 @pre traceprop! !isrecursive(carr)

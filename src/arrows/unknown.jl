@@ -16,3 +16,9 @@ function UnknownArrow(name::Symbol, n::Integer, m::Integer)
   outprts = [Props(false, Symbol(:y_, i), Any) for i = 1:m]
   UnknownArrow(name, vcat(inprts, outprts))
 end
+
+function UnknownArrow(name::Symbol, innms::Vector{Symbol}, outnms::Vector{Symbol})
+  inprts = [Props(true, innm, Any) for innm in innms]
+  outprts = [Props(false, outnm, Any) for outnm in outnms]
+  UnknownArrow(name, vcat(inprts, outprts))
+end
