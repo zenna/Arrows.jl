@@ -586,6 +586,23 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     connector_sarr
 end
 
+function connect_target(info::ConstraintInfo, carr::CompArrow, sarrs)
+  sarr_target = add_sub_arr!(info.master_carr, carr)
+  foreach(link_to_parent!, ◃(sarr_target))
+  for (idx, sarr) in enumerate(sarrs)
+    vals = info.inp[idx].var.value
+    if isa(vals, Array)
+      sarr_shape = add_sub_arr!(info.master_carr, SourceArrow(size(vals)))
+      sarr_reshape = add_sub_arr!(info.master_carr, ReshapeArrow())
+      (sarr, 1) ⥅ (sarr_reshape, 1)
+      (sarr_shape, 1) ⥅ (sarr_reshape, 2)
+      outp = ◃(sarr_reshape, 1)
+    else
+      outp = ◃(sarr, 1)
+    end
+    outp ⥅ (sarr_target, idx)
+  end
+end
 
 "solve constraints on inputs to `carr`"
 function solve(carr::CompArrow)
@@ -596,8 +613,6 @@ function solve(carr::CompArrow)
   sarrs = map(enumerate(assigns_by_port)) do args
     create_assignment_graph_for(info, args...)
   end
-  foreach(sarrs) do sarr
-    link_to_parent!(◃(sarr, 1))
-  end
+  connect_target(info, carr, sarrs)
   sarrs, info
 end
