@@ -5,9 +5,9 @@ mutable struct SymUnion
   hsh::UInt
 end
 token_name = :τᵗᵒᵏᵉⁿ
-SymUnion(value) = SymUnion(value, hash(value))
+SymUnion(value) = SymUnion(value, 0)
 SymPlaceHolder() = SymUnion(token_name)
-hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
+#hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
 unsym(sym::SymUnion) = sym.value
 sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
 sym_unsym(sym::SymUnion)  = sym
@@ -55,7 +55,7 @@ function getindex(s::SymbolPrx, i::Int)
   inner_getindex(v::Union{Symbol, Expr}) = ref_expr(v)
   sym = s.var
   v = sym.value
-  SymUnion(inner_getindex(v), hash(i, sym.hsh))
+  SymUnion(inner_getindex(v), 0)
 end
 
 "Unconstrained Symbol"
@@ -585,11 +585,15 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
       (connector_arr, input_id) ⥅ (carr, 1)
     end
 
-
-    first = ◃(connectors[1],1)
-    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
-    foreach(connectors[2:end]) do c
-      sport = sport + ◃(c, 1)
+    @assert n▸(connector_arr) > 0
+    if length(connectors) > 0
+      first = ◃(connectors[1],1)
+      sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
+      foreach(connectors[2:end]) do c
+        sport = sport + ◃(c, 1)
+      end
+    else
+      sport = ▹(connector_arr, n▸(connector_arr))
     end
     sport ⥅ (connector_arr, 1)
     connector_sarr
