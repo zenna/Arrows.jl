@@ -555,11 +555,13 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
 
     connectors = Vector()
     if isa(info.inp[idx].var.value, Symbol)
+      if has_initializer
+        ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
+      end
       #TODO handle equations with scalars
       warn("equations with scalars are not handled")
       return connector_sarr
     end
-
 
 
     input_id = 0
@@ -591,8 +593,11 @@ function solve(carr::CompArrow)
   assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))
   create_first_step_of_connection(info)
-  carrs = map(enumerate(assigns_by_port)) do args
+  sarrs = map(enumerate(assigns_by_port)) do args
     create_assignment_graph_for(info, args...)
   end
-  carrs, info
+  foreach(sarrs) do sarr
+    link_to_parent!(◃(sarr, 1))
+  end
+  sarrs, info
 end
