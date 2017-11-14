@@ -33,7 +33,7 @@ mutable struct ConstraintInfo
   inp::Vector{RefnSym}
   port_to_index::Dict{SymUnion, Number}
   master_carr::CompArrow
-  names_to_inital_sarr::Dict{Symbol, SubArrow}
+  names_to_inital_sarr::Dict{Union{Symbol, Expr}, SubArrow}
   function ConstraintInfo()
     c = new()
     c.mapping = Dict()
@@ -508,6 +508,37 @@ function create_inner_connector(info::ConstraintInfo,
   sarr
 end
 
+extract_variables(v) = Set()
+extract_variables(v::Symbol) = Set([v,])
+function extract_variables(v::Expr)
+  if v.head == :call
+    args = v.args[2:end]
+  else
+    args = v.args
+  end
+  union(map(extract_variables, args)...)
+end
+
+function sarr_for_block(info::ConstraintInfo, moniker::Union{Expr, Symbol})
+
+  if haskey(info.names_to_inital_sarr, moniker)
+    info.names_to_inital_sarr[moniker]
+  else
+    variables = extract_variables(moniker)
+    context = Dict()
+    for v in variables
+      sarr = sarr_for_block(info, v)
+      context[v] = ◃(sarr, 1)
+    end
+    M = Module()
+    for (k,v) in context
+           eval(M, :($k = $v))
+    end
+    sport = eval(M, moniker)
+    info.names_to_inital_sarr[moniker] = sub_arrow(sport)
+  end
+end
+
 function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     by_block = extract_computation_blocks(assigns)
     connectors = Vector()
@@ -518,23 +549,30 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
     end
 
     moniker = name(info, idx)
-    extra = haskey(info.names_to_inital_sarr, moniker) ? 1 : 0
+    has_initializer = haskey(info.names_to_inital_sarr, moniker)
     connector_arr = CompArrow(gensym(:connector),
-                      (length ∘ keys)(by_block) + extra,
+                      (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
                       1)
     connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
-    for (k, pairs) in by_block
+    input_id = 0
+    for (block, pairs) in by_block
+      input_id += 1
       carr = create_inner_connector(info,
                                       connector_arr,
                                       pairs, idx)
       push!(connectors, carr)
+      block_sarr = sarr_for_block(info, block)
+      (block_sarr, 1) ⥅ (connector_sarr, input_id)
+      (connector_arr, input_id) ⥅ (carr, 1)
+    end
+    if has_initializer
+      initial_sarr = sarr_for_block(info, moniker)
+      (connector_sarr, input_id) ⥅ (initial_sarr,1)
     end
 
-    for (in_p, c) in zip(▹(connector_arr), connectors)
-      in_p ⥅ (c, 1)
-    end
-    sport = ◃(connectors[1],1)
+    first = ◃(connectors[1],1)
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
     foreach(connectors[2:end]) do c
       sport = sport + ◃(c, 1)
     end
