@@ -131,6 +131,15 @@ function prim_sym_interpret{N}(::InvDuplArrow{N},
   [SymUnion(map(unsym, first(xs)))]
 end
 
+function  prim_sym_interpret(::Arrows.ReshapeArrow,
+                              data::Array{Arrows.SymUnion,2},
+                              shape::Array{Arrows.SymUnion,1})
+  data = map(unsym, data)
+  shape = map(unsym, shape)
+  [SymUnion(reshape(data, shape)),]
+
+end
+
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
   indices = map(unsym, indices)
   shape = map(unsym, shape)
@@ -614,5 +623,5 @@ function solve(carr::CompArrow)
     create_assignment_graph_for(info, args...)
   end
   connect_target(info, carr, sarrs)
-  sarrs, info
+  info.master_carr, info
 end
