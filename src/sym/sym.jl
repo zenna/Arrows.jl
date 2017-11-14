@@ -392,20 +392,18 @@ length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
 
 function extract_index(v::Expr)
   assert(v.head == :ref)
-  v.args[2]
+  v.args[2] - 1
 end
 
-function gather_nd(params::Arrows.AbstractPort, indices::Array{Int64,3},
-                    shape_tuple)
-  shape = SourceArrow(shape_tuple)
-  indices = SourceArrow(indices)
-  sarr_shape =  add_sub_arr!(parent(params), shape)
-  sarr = add_sub_arr!(parent(params), indices)
-  gather_nd(params, ◃(sarr, 1), ◃(sarr_shape, 1))
+function extract_indices(elements::AbstractArray)
+    indices = map(extract_index, elements)
+    n = length(indices)
+    reshape(indices, (n, 1))
 end
 
 function generate_gather(carr::CompArrow, indexed_elements, shape)
-  indices = SourceArrow([extract_index(x) for x in indexed_elements])
+  indices = extract_indices(indexed_elements)
+  indices = SourceArrow(indices)
   shape = SourceArrow(shape)
   sarr_shape =  add_sub_arr!(carr, shape)
   sarr = add_sub_arr!(carr, indices)
@@ -417,7 +415,8 @@ function generate_gather(carr::CompArrow, indexed_elements, shape)
 end
 
 function generate_scatter(carr::CompArrow, indexed_elements, shape)
-  indices = SourceArrow([extract_index(x) for x in indexed_elements])
+  indices = extract_indices(indexed_elements)
+  indices = SourceArrow(indices)
   shape = SourceArrow(shape)
   sarr_shape =  add_sub_arr!(carr, shape)
   sarr = add_sub_arr!(carr, indices)
