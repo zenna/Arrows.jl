@@ -35,3 +35,8 @@ function inv_mul()
   link_ports!(θ, y)
   c
 end
+
+"Inverse multiplication"
+function inv_div()
+  @assert false
+end
