@@ -695,21 +695,6 @@ function sarr_for_variable(info::ConstraintInfo, moniker::Symbol)
   end
 end
 
-function sarr_for_block(info::ConstraintInfo, moniker::Expr)
-
-  if haskey(info.names_to_inital_sarr, moniker)
-    info.names_to_inital_sarr[moniker]
-  else
-    variables = extract_variables(moniker)
-    context = Dict()
-    for v in variables
-      sarr = sarr_for_block(info, v)
-      context[v] = ◃(sarr, 1)
-    end
-
-  end
-end
-
 function create_special_assignment_graph_for(info::ConstraintInfo,
                                               sarr::SubArrow,
                                               idx)
