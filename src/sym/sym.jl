@@ -479,30 +479,41 @@ function extract_indices(elements::AbstractArray)
     reshape(indices, (n, 1))
 end
 
-function generate_gather(carr::CompArrow, indexed_elements, shape)
-  indices = extract_indices(indexed_elements)
-  indices = SourceArrow(indices)
-  shape = SourceArrow(shape)
-  sarr_shape =  add_sub_arr!(carr, shape)
-  sarr = add_sub_arr!(carr, indices)
-  sarr_gather =  add_sub_arr!(carr, GatherNdArrow())
-  (carr, 1) ⥅ (sarr_gather, 1)
-  (sarr, 1) ⥅ (sarr_gather, 2)
-  (sarr_shape, 1) ⥅ (sarr_gather, 3)
-  sarr_gather
+function generate_function(context::Dict, moniker)
+  M = Module()
+  for (k,v) in context
+         eval(M, :($k = $v))
+  end
+  eval(M, moniker)
 end
 
-function generate_scatter(carr::CompArrow, indexed_elements, shape)
+function generate_gather(indexed_elements, shape)
+  carr = CompArrow(gensym(:gather_wire), 1, 1)
   indices = extract_indices(indexed_elements)
   indices = SourceArrow(indices)
   shape = SourceArrow(shape)
   sarr_shape =  add_sub_arr!(carr, shape)
-  sarr = add_sub_arr!(carr, indices)
+  sarr_indices = add_sub_arr!(carr, indices)
+  sarr_gather =  add_sub_arr!(carr, GatherNdArrow())
+  (carr, 1) ⥅ (sarr_gather, 1)
+  (sarr_indices, 1) ⥅ (sarr_gather, 2)
+  (sarr_shape, 1) ⥅ (sarr_gather, 3)
+  (sarr_gather, 1) ⥅ (carr, 1)
+  carr
+end
+
+function generate_scatter(indexed_elements, shape)
+  carr = CompArrow(gensym(:scatter_wire), 1, 1)
+  indices = extract_indices(indexed_elements)
+  indices = SourceArrow(indices)
+  shape = SourceArrow(shape)
+  sarr_shape =  add_sub_arr!(carr, shape)
+  sarr_indics = add_sub_arr!(carr, indices)
   sarr_scatter =  add_sub_arr!(carr, ScatterNdArrow())
-  (sarr, 1) ⥅ (sarr_scatter, 2)
+  (sarr_indics, 1) ⥅ (sarr_scatter, 2)
   (sarr_shape, 1) ⥅ (sarr_scatter, 3)
   (sarr_scatter, 1) ⥅ (carr, 1)
-  sarr_scatter
+  carr
 end
 
 factor_indices(v, indices::Set) = v
@@ -580,8 +591,9 @@ end
 
 
 function create_inner_special_connector(info::ConstraintInfo,
-                                connector_arr::CompArrow,
-                                pairs, idx)
+                                pairs, idx,
+                                variables,
+                                moniker)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
   full_expr = first(outputs)
@@ -595,39 +607,68 @@ function create_inner_special_connector(info::ConstraintInfo,
     sport ⥅ (c, 1)
     inv_c = Arrows.invert(c)
     sarr = add_sub_arr!(carr, inv_c)
-    (gather, 1) ⥅ (sarr, 1)
-    sarr
+    gather ⥅ (sarr, 1)
+    ◃(sarr, 1)
   end
   actual_name = name(info, idx)
   pairs = zip(outputs, inputs)
   create_inner_connector_private(info,
-          connector_arr,
           compute_arrow_special,
-          pairs, idx)
+          pairs, idx,
+          variables,
+          moniker)
 end
 
 function create_inner_connector(info::ConstraintInfo,
-                                connector_arr::CompArrow,
-                                pairs, idx)
+                                pairs, idx,
+                                variables,
+                                moniker)
   f = (carr, g) -> g
   create_inner_connector_private(info,
-                                  connector_arr,
                                   f,
+                                  pairs, idx,
+                                  variables,
+                                  moniker)
+end
+
+function create_inner_connector(info::ConstraintInfo,
+                                  connector_arr::CompArrow,
                                   pairs, idx)
+  inputs = map(x->x[2], pairs)
+  outputs = map(x->x[1], pairs)
+  carr = CompArrow(gensym(:inner_connector), 1, 1)
+  sarr = add_sub_arr!(connector_arr, carr)
+  g = generate_gather(inputs, size(inputs))
+  s = generate_scatter(outputs, length_of(info, idx))
+  g_sarr = add_sub_arr!(carr, g)
+  scatter_sarr = add_sub_arr!(carr, s)
+  (g_sarr, 1) ⥅ (scatter_sarr, 1)
+  sarr
 end
 
 function create_inner_connector_private(info::ConstraintInfo,
-                                connector_arr::CompArrow,
-                                middle_arr_creator,
-                                pairs, idx)
-  carr = CompArrow(gensym(:inner_connector), [:x], [:z])
-  sarr = add_sub_arr!(connector_arr, carr)
+                  middle_arr_creator,
+                  pairs, idx,
+                  variables,
+                  moniker)
+  n = length(variables)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
-  g = generate_gather(carr, inputs, size(inputs))
-  s = generate_scatter(carr, outputs, length_of(info, idx))
-  middle = middle_arr_creator(carr, g)
-  (middle,1) ⥅ (s,1)
+  carr = CompArrow(gensym(:inner_connector), n, 1)
+  sarr = add_sub_arr!(info.master_carr, carr)
+  g = generate_gather(inputs, size(inputs))
+  s = generate_scatter(outputs, length_of(info, idx))
+  scatter_sarr = add_sub_arr!(carr, s)
+  context = Dict()
+  for (idx, v) in enumerate(variables)
+    (sarr_for_variable(info, v),1) ⥅ (sarr, idx)
+    g_sarr = add_sub_arr!(carr, g)
+    (carr, idx) ⥅ (g_sarr, 1)
+    context[v] = ◃(g_sarr, 1)
+  end
+  sport = generate_function(context, moniker)
+  middle = middle_arr_creator(carr, sport)
+  middle ⥅ (scatter_sarr,1)
   sarr
 end
 
@@ -642,7 +683,7 @@ function extract_variables(v::Expr)
   union(map(extract_variables, args)...)
 end
 
-function sarr_for_block(info::ConstraintInfo, moniker::Symbol)
+function sarr_for_variable(info::ConstraintInfo, moniker::Symbol)
   if haskey(info.names_to_inital_sarr, moniker)
     info.names_to_inital_sarr[moniker]
   else
@@ -662,12 +703,7 @@ function sarr_for_block(info::ConstraintInfo, moniker::Expr)
       sarr = sarr_for_block(info, v)
       context[v] = ◃(sarr, 1)
     end
-    M = Module()
-    for (k,v) in context
-           eval(M, :($k = $v))
-    end
-    sport = eval(M, moniker)
-    info.names_to_inital_sarr[moniker] = sub_arrow(sport)
+
   end
 end
 
@@ -690,17 +726,13 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
   connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
   (sarr, 1) ⥅ (connector_sarr, 1)
 
-  connectors = Vector()
   last_sport = ▹(connector_arr, 1)
   for (input_id, (block, pairs)) in enumerate(by_block)
-    carr = create_inner_special_connector(info,
-                                    connector_arr,
-                                    pairs, idx)
-    push!(connectors, carr)
-    block_sarr = sarr_for_block(info, block)
-    (block_sarr, 1) ⥅ (connector_sarr, input_id + 1)
-    (connector_arr, input_id + 1) ⥅ (carr, 1)
-    last_sport = last_sport + ◃(carr, 1)
+    sarr = create_inner_special_connector(info, pairs, idx,
+                                          extract_variables(block),
+                                          block)
+    (sarr, 1) ⥅ (connector_sarr, input_id + 1)
+    last_sport = last_sport +  ▹(connector_arr, input_id + 1)
   end
 
   last_sport ⥅ (connector_arr, 1)
@@ -718,11 +750,10 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
   connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
   if has_initializer
-    initial_sarr = sarr_for_block(info, moniker)
+    initial_sarr = sarr_for_variable(info, moniker)
     ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
   end
 
-  connectors = Vector()
   if isa(info.inp[idx].var.value, Symbol)
     if has_initializer
       ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
@@ -732,25 +763,23 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
     return connector_sarr
   end
 
-
+  connectors = Vector()
   input_id = 0
   for (block, pairs) in by_block
     input_id += 1
-    carr = create_inner_connector(info,
-                                    connector_arr,
-                                    pairs, idx)
-    push!(connectors, carr)
-    block_sarr = sarr_for_block(info, block)
-    (block_sarr, 1) ⥅ (connector_sarr, input_id)
-    (connector_arr, input_id) ⥅ (carr, 1)
+    sarr = create_inner_connector(info, pairs, idx,
+                                    extract_variables(block),
+                                    block)
+    push!(connectors, ▹(connector_arr, input_id))
+    (sarr, 1) ⥅ (connector_sarr, input_id)
   end
 
   @assert n▸(connector_arr) > 0
   if length(connectors) > 0
-    first = ◃(connectors[1],1)
-    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
+    sport_1s = first(connectors)
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + sport_1s : sport_1s
     foreach(connectors[2:end]) do c
-      sport = sport + ◃(c, 1)
+      sport = sport + c
     end
   else
     sport = ▹(connector_arr, n▸(connector_arr))
