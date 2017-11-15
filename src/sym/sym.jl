@@ -439,7 +439,7 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   inp_set = map(as_set ∘ as_expr, info.inp)
   assigns = map(_->Dict(),info.inp)
   specials = map(_->Dict(),info.inp)
-  θs = copy(info.θs)
+  θs = info.θs
   function match_assigns(collection_src, collection_dst)
     for (k,v) in collection_src
       for (id, set) in enumerate(inp_set)
@@ -553,7 +553,8 @@ end
 function create_first_step_of_connection(info)
   for (idx, unassign) in enumerate(info.unassigns_by_portn)
     if length(unassign) > 0
-      connector_arr = CompArrow(gensym(:connector_first), [:x], [:z])
+      name_prt = name(info, idx)
+      connector_arr = CompArrow(gensym(:connector_first), [name_prt], [:z])
       if isa(info.inp[idx].var.value, Symbol)
         sarr = Arrows.add_sub_arr!(connector_arr, IdentityArrow())
       else
@@ -692,8 +693,6 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
   connectors = Vector()
   last_sport = ▹(connector_arr, 1)
   for (input_id, (block, pairs)) in enumerate(by_block)
-    @show block
-    @show pairs
     carr = create_inner_special_connector(info,
                                     connector_arr,
                                     pairs, idx)
