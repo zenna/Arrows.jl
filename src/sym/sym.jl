@@ -602,9 +602,8 @@ function create_inner_special_connector(info::ConstraintInfo,
   expr = factor_indices(full_expr, Set())
   function compute_arrow_special(carr, gather)
     c = CompArrow(gensym(:special), 1, 1)
-    M = Module()
-    eval(M, :($(name_) = $(▹(c, 1))))
-    sport = eval(M, expr)
+    sport = generate_function(Dict([name_ => ▹(c, 1)]),
+                      expr)
     sport ⥅ (c, 1)
     inv_c = Arrows.invert(c)
     sarr = add_sub_arr!(carr, inv_c)
