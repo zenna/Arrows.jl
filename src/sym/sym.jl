@@ -1,5 +1,6 @@
 ## PureSymbolic = Union{Expr, Symbol}
 ##SymUnion = Union{PureSymbolic, Array, Tuple, Number}
+using NamedTuples
 mutable struct SymUnion
   value
   hsh::UInt
@@ -29,8 +30,10 @@ mutable struct ConstraintInfo
   mapping::Dict
   unsat::Set{SymUnion}
   assignments::Dict
+  specials::Dict
   assigns_by_portn::Vector
   unassigns_by_portn::Vector
+  specials_by_portn::Vector
   inp::Vector{RefnSym}
   port_to_index::Dict{SymUnion, Number}
   master_carr::CompArrow
@@ -40,6 +43,7 @@ mutable struct ConstraintInfo
     c.mapping = Dict()
     c.unsat = Set{SymUnion}()
     c.assignments = Dict()
+    c.specials = Dict()
     c.names_to_inital_sarr = Dict()
     c
   end
@@ -328,6 +332,42 @@ function symbolic_includes(left, right::Expr)
   false
 end
 
+
+collect_symbols_solver(info, v, seen) = seen
+collect_symbols_solver(info, v::Symbol, seen) = (v ∈ info.θs) && push!(seen, v)
+function collect_symbols_solver(info, v::Expr, seen)
+  if v.head == :ref && (v ∈ info.θs)
+      push!(seen, v)
+  else
+    foreach(v.args) do arg
+      collect_symbols_solver(info, arg, seen)
+    end
+  end
+  seen
+end
+
+assign_special_if_possible(info, left, right) = false
+function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
+  seen_l = collect_symbols_solver(info, left, Set())
+  if length(seen_l) != 1
+    return false
+  end
+  left_name = pop!(seen_l)
+  if symbolic_includes(left_name, right)
+    warn("""parameters that appear in both sides of equalities
+            cannot be solved: $(left_name) == $(right)""")
+    false
+  else
+    info.specials[left_name] = @NT(dst = left, src = right)
+    if haskey(info.mapping, left_name)
+      foreach(info.mapping[left_name]) do expr
+        @assert symbolic_includes(expr, left)
+      end
+    end
+    true
+  end
+end
+
 assign_if_possible(info, left, right) = false
 function assign_if_possible(info, left::Union{Symbol, Expr}, right)
   if left ∉ info.θs
@@ -381,7 +421,12 @@ function find_assignments(info)
     @assert expr.args[1] == :(==)
     left, right = expr.args[2:end]
     f = (l, r) -> assign_if_possible(info, l, r)
-    !f(left, right) && !f(right, left) && push!(info.unsat, SymUnion(expr))
+    special = (l, r) -> assign_special_if_possible(info, l, r)
+    if !(f(left, right) || f(right, left))
+      if !(special(left, right) || special(right, left))
+        push!(info.unsat, SymUnion(expr))
+      end
+    end
   end
   info
 end
@@ -393,15 +438,20 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   as_set(x) = Set([x,])
   inp_set = map(as_set ∘ as_expr, info.inp)
   assigns = map(_->Dict(),info.inp)
+  specials = map(_->Dict(),info.inp)
   θs = copy(info.θs)
-  for (k,v) in info.assignments
-    for (id, set) in enumerate(inp_set)
-      if k ∈ set
-        assigns[id][k] = v
-        pop!(θs, k)
+  function match_assigns(collection_src, collection_dst)
+    for (k,v) in collection_src
+      for (id, set) in enumerate(inp_set)
+        if k ∈ set
+          collection_dst[id][k] = v
+          pop!(θs, k)
+        end
       end
     end
   end
+  match_assigns(info.assignments, assigns)
+  match_assigns(info.specials, specials)
   unassigns = map(_->Set(),info.inp)
   for θ in θs
     for (id, set) in enumerate(inp_set)
@@ -412,6 +462,7 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   end
   info.unassigns_by_portn = unassigns
   info.assigns_by_portn = assigns
+  info.specials_by_portn = specials
 end
 
 length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
@@ -468,21 +519,27 @@ function factor_indices(v::Expr, indices::Set)
 end
 
 function extract_computation_blocks(assigns)
-  by_block = Dict()
-  for (k,v) in assigns
+  function process_expr(v)
     indices = Set()
     expr = factor_indices(v, indices)
     @assert length(indices) < 2
-    if !haskey(by_block, expr)
-      by_block[expr] = Vector()
-    end
     if length(indices) > 0
       v = Expr(:ref, expr, pop!(indices))
     end
-    push!(by_block[expr], (k, v))
+    v, expr
+  end
+  by_block = Dict()
+  for (dst,src) in assigns
+    (dst, _) = process_expr(dst)
+    (src, expr_src) = process_expr(src)
+    if !haskey(by_block, expr_src)
+      by_block[expr_src] = Vector()
+    end
+    push!(by_block[expr_src], (dst, src))
   end
   by_block
 end
+
 
 function name(info::ConstraintInfo, idx)
   value = info.inp[idx].var.value
@@ -520,8 +577,47 @@ function create_first_step_of_connection(info)
   end
 end
 
+
+function create_inner_special_connector(info::ConstraintInfo,
+                                connector_arr::CompArrow,
+                                pairs, idx)
+  inputs = map(x->x[2], pairs)
+  outputs = map(x->x[1], pairs)
+  full_expr = first(outputs)
+  name_ = name(info, idx)
+  expr = factor_indices(full_expr, Set())
+  function compute_arrow_special(carr, gather)
+    c = CompArrow(gensym(:special), 1, 1)
+    M = Module()
+    eval(M, :($(name_) = $(▹(c, 1))))
+    sport = eval(M, expr)
+    sport ⥅ (c, 1)
+    inv_c = Arrows.invert(c)
+    sarr = add_sub_arr!(carr, inv_c)
+    (gather, 1) ⥅ (sarr, 1)
+    sarr
+  end
+  actual_name = name(info, idx)
+  pairs = zip(outputs, inputs)
+  create_inner_connector_private(info,
+          connector_arr,
+          compute_arrow_special,
+          pairs, idx)
+end
+
 function create_inner_connector(info::ConstraintInfo,
                                 connector_arr::CompArrow,
+                                pairs, idx)
+  f = (carr, g) -> g
+  create_inner_connector_private(info,
+                                  connector_arr,
+                                  f,
+                                  pairs, idx)
+end
+
+function create_inner_connector_private(info::ConstraintInfo,
+                                connector_arr::CompArrow,
+                                middle_arr_creator,
                                 pairs, idx)
   carr = CompArrow(gensym(:inner_connector), [:x], [:z])
   sarr = add_sub_arr!(connector_arr, carr)
@@ -529,7 +625,8 @@ function create_inner_connector(info::ConstraintInfo,
   outputs = map(x->x[1], pairs)
   g = generate_gather(carr, inputs, size(inputs))
   s = generate_scatter(carr, outputs, length_of(info, idx))
-  (g,1) ⥅ (s,1)
+  middle = middle_arr_creator(carr, g)
+  (middle,1) ⥅ (s,1)
   sarr
 end
 
@@ -571,6 +668,46 @@ function sarr_for_block(info::ConstraintInfo, moniker::Expr)
     sport = eval(M, moniker)
     info.names_to_inital_sarr[moniker] = sub_arrow(sport)
   end
+end
+
+function create_special_assignment_graph_for(info::ConstraintInfo,
+                                              sarr::SubArrow,
+                                              idx)
+  assigns = info.specials_by_portn[idx]
+
+  if length(assigns) == 0
+    return sarr
+  end
+  input_outputs = map(values(assigns)) do assignment
+    (assignment.dst, assignment.src)
+  end
+  by_block = extract_computation_blocks(input_outputs)
+  moniker = name(info, idx)
+  connector_arr = CompArrow(gensym(:connector),
+                    (length ∘ keys)(by_block) + 1,
+                    1)
+  connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+  (sarr, 1) ⥅ (connector_sarr, 1)
+
+  connectors = Vector()
+  for (input_id, (block, pairs)) in enumerate(by_block)
+    @show block
+    @show pairs
+    carr = create_inner_special_connector(info,
+                                    connector_arr,
+                                    pairs, idx)
+    push!(connectors, carr)
+    block_sarr = sarr_for_block(info, block)
+    (block_sarr, 1) ⥅ (connector_sarr, input_id + 1)
+    (connector_arr, input_id) ⥅ (carr, 1)
+  end
+
+  sport = ▹(connector_arr, 1) + first(◃(connectors[1]))
+  foreach(connectors[2:end]) do c
+    sport = sport + ◃(c, 1)
+  end
+  sport ⥅ (connector_arr, 1)
+  connector_sarr
 end
 
 function create_assignment_graph_for(info::ConstraintInfo, idx)
@@ -651,7 +788,8 @@ function solve(carr::CompArrow)
   create_first_step_of_connection(info)
   n = length(info.inp)
   sarrs = map(1:n) do idx
-    create_assignment_graph_for(info, idx)
+    sarr = create_assignment_graph_for(info, idx)
+    create_special_assignment_graph_for(info, sarr, idx)
   end
   connect_target(info, carr, sarrs)
   info.master_carr, info
