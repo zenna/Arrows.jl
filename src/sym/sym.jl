@@ -690,6 +690,7 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
   (sarr, 1) ⥅ (connector_sarr, 1)
 
   connectors = Vector()
+  last_sport = ▹(connector_arr, 1)
   for (input_id, (block, pairs)) in enumerate(by_block)
     @show block
     @show pairs
@@ -699,14 +700,11 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
     push!(connectors, carr)
     block_sarr = sarr_for_block(info, block)
     (block_sarr, 1) ⥅ (connector_sarr, input_id + 1)
-    (connector_arr, input_id) ⥅ (carr, 1)
+    (connector_arr, input_id + 1) ⥅ (carr, 1)
+    last_sport = last_sport + ◃(carr, 1)
   end
 
-  sport = ▹(connector_arr, 1) + first(◃(connectors[1]))
-  foreach(connectors[2:end]) do c
-    sport = sport + ◃(c, 1)
-  end
-  sport ⥅ (connector_arr, 1)
+  last_sport ⥅ (connector_arr, 1)
   connector_sarr
 end
 
