@@ -198,6 +198,7 @@ export
   PowArrow,
   LogArrow,
   LogBaseArrow,
+  ReduceMean,
 
   # Compound
   addn,
@@ -253,7 +254,9 @@ export
   XAbValues,
   in_trace_values,
   out_trace_values,
-  Sampler
+  Sampler,
+  @grab,
+  δarr
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities

@@ -65,6 +65,22 @@ function ifelseconst()
   carr
 end
 
+function ifelseconstbcast()
+  carr = CompArrow(:ifelse1, [:a, :b, :c], [:z])
+  a, b, c, z = ⬨(carr)
+  threearr = add_sub_arr!(carr, source(3.0))
+  thr = ◃(threearr, 1)
+  fourarr = add_sub_arr!(carr, source(4.0))
+  four = ◃(fourarr, 1)
+  d = ifelse((a + b + c) > bcast(thr),
+             bcast(four),
+             bcast(four))
+  d ⥅ z
+  @assert is_wired_ok(carr)
+  carr
+end
+
+
 function ifelsesimple()
   carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
   a, b, c, d, e = ⬨(carr)
@@ -260,7 +276,7 @@ function all_test_arrows()
   [xy_plus_x_arr(),
    fibonnaci_arr(),
   #  dupl_id_arr(), #FIXME: readdme, disabled to make traiining work
-   det_policy_inner_arr(),
+  #  det_policy_inner_arr(),
    triple_add(),
   #  weird_arr(),
    nested_core(),

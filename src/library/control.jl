@@ -41,7 +41,9 @@ end
 function invifelse_teconst_diff()
   carr = CompArrow(:invifelse_teconst_diff, [:y, :t], [:i])
   y, t, i = ⬨(carr)
-  ii = ifelse(EqualArrow()(y, t), true, false)
+  flsarr = add_sub_arr!(carr, source(false)); fls = ◃(flsarr, 1)
+  truarr = add_sub_arr!(carr, source(true)); tru = ◃(truarr, 1)
+  ii = ifelse(EqualArrow()(y, t), bcast(tru), bcast(fls))
   ii ⥅ i
   @assert is_wired_ok(carr)
   carr
@@ -51,13 +53,16 @@ end
 function invifelse_teconst()
   carr = CompArrow(:invifelse_teconst, [:y, :t, :e, :θi], [:i])
   y, t, e, θi, i = ⬨(carr)
+  add!(θp)(θi)
+  flsarr = add_sub_arr!(carr, source(false)); fls = ◃(flsarr, 1)
+  truarr = add_sub_arr!(carr, source(true)); tru = ◃(truarr, 1)
   ii = ifelse(EqualArrow()(y, t),
               ifelse(EqualArrow()(y, e),
                      θi,
-                     true),
+                     bcast(tru)),
               ifelse(EqualArrow()(y, e),
-                      false,
-                      false))   # domain error
+                     bcast(fls),
+                     bcast(fls)))   # domain error
 
   ii ⥅ i
   @assert is_wired_ok(carr)
@@ -67,7 +72,10 @@ end
 function invifelse_tconst()
   carr = CompArrow(:invifelse_tconst, [:y, :t, :θi, :θmissing], [:i, :e])
   y, t, θi, θmissing, i, e = ⬨(carr)
-  ii = ifelse(EqualArrow()(y, t), θi, false)
+  foreach(add!(θp), (θi, θmissing))
+  flsarr = add_sub_arr!(carr, source(false))
+  fls = ◃(flsarr, 1)
+  ii = ifelse(EqualArrow()(y, t), θi, bcast(fls))
   ii ⥅ i
   ifelse(ii, θmissing, y) ⥅ e
   @assert is_wired_ok(carr)
@@ -77,7 +85,10 @@ end
 function invifelse_econst()
   carr = CompArrow(:invifelse_econst, [:y, :e, :θi, :θmissing], [:i, :t])
   y, e, θi, θmissing, i = ⬨(carr)
-  ii = ifelse(EqualArrow()(y, e), θi, true)
+  foreach(add!(θp), (θi, θmissing))
+  truarr = add_sub_arr!(carr, source(true))
+  tru = ◃(truarr, 1)
+  ii = ifelse(EqualArrow()(y, e), θi, bcast(tru))
   ii ⥅ i
   ifelse(ii, y, θmissing) ⥅ e
   @assert is_wired_ok(carr)
@@ -88,6 +99,7 @@ function invifelse_fullpi()
   carr = CompArrow(:invifelse_fullpi, [:y, :θi, :θmissing], [:i, :t, :e])
   y, θi, θmissing, i, t, e = ⬨(carr)
   θi ⥅ i
+  foreach(add!(θp), (θi, θmissing))
   ifelse(θi, y, θmissing) ⥅ t
   ifelse(θi, θmissing, y) ⥅ e
   @assert is_wired_ok(carr)

@@ -1,7 +1,11 @@
 "Compose a parameter selecting `UnknownArrow` into `arr`"
 function psl(arr::Arrow)
   θ▸, normal▸ = partition(is(θp), ▸(arr))
-  farr = UnknownArrow(Symbol(:psl_, name(arr)), length(normal▸), length(θ▸))
+  farr = UnknownArrow(Symbol(:psl_, name(arr)),
+                             [nm.name for nm in name.(normal▸)],
+                             [nm.name for nm in name.(θ▸)])
+  @grab farr
+  @grab arr
   carr = CompArrow(Symbol(:ri_, name(arr)))
   sarr = add_sub_arr!(carr, arr)
   pslsarr = add_sub_arr!(carr, farr)  # parameter selecting function

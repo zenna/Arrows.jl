@@ -25,6 +25,23 @@ function sizeprop(::ReshapeArrow, idabv::IdAbValues)
   end
 end
 
+"Cat arrows along `axis`"
+struct CatArrow{I} <: PrimArrow
+  axis::Int
+end
+name(::CatArrow) = :cat
+props{I}(::CatArrow{I}) =
+  [[Props(true, Symbol(:x, i), Any) for i=1:I]...,
+    Props(false, :y, Any)]
+CatArrow(n::Integer, axis::Integer) = CatArrow{n}(axis)
+function sizeprop(arr::CatArrow, idabv::IdAbValues)
+  @show idabv
+  @show arr
+  # @assert false
+  IdAbValues()
+end
+abinterprets(::CatArrow) = [sizeprop]
+
 function Base.reshape(array::Array, newshape::Array)
   reshape(array, (newshape...))
 end

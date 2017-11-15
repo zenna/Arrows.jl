@@ -138,3 +138,10 @@ function accumapply{T}(f::Function, x::T)
   allmethods = methodswith.(T, f, true)
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end
+
+"Global capture"
+macro grab(var)
+  @show var
+  grabname = Symbol(var, :_grab)
+  :(global $grabname = $(esc(var)))
+end

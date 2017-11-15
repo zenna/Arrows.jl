@@ -53,6 +53,7 @@ function meet(size1::Size, size2::Size)
       else
         # @show size1
         # @show size2
+        get(size1[i]) == get(size2[i]) || @show size1, size2
         get(size1[i]) == get(size2[i]) || throw(MeetError([size1[i], size2[i]]))
         dims[i] = size1[i]
       end

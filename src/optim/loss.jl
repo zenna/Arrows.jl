@@ -6,6 +6,15 @@ function diff_arrow()
   carr
 end
 
+"f(x, y) = (x - y)^2 sqrt"
+function δarr()
+  carr = CompArrow(:δ, [:x1, :x2], [:diff])
+  x1, x2, diff = ⬨(carr)
+  sqrt(sqr(x1 - x2)) ⥅ diff
+  @assert is_wired_ok(carr)
+  carr
+end
+
 "Arrow which computes distance a distance between two elements of type `T`"
 δ(T::DataType) = diff_arrow()
 δ!(a::SubPort, b::SubPort) = sqrt(sqr(a - b))
