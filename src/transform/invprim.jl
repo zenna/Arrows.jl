@@ -125,6 +125,20 @@ function inv(arr::MulArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
+function inv(arr::DivArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  binary_inv(arr,
+             const_in,
+             inv_div,
+             MulArrow,
+             Dict(1 => 1, 2 => 3, 3 => 2),
+             MulArrow,
+             Dict(1 => 3, 2 => 2, 3 => 1))
+end
+
 function inv_np(arr::CosArrow,
                 sarr::SubArrow,
                 const_in::Vector{Bool},
@@ -239,6 +253,14 @@ function inv(arr::ExpArrow,
              tparent::TraceParent,
              abtvals::AbTraceValues)
   unary_inv(arr, const_in, LogArrow)
+end
+
+function inv(arr::LogArrow,
+             sarr::SubArrow,
+             const_in::Vector{Bool},
+             tparent::TraceParent,
+             abtvals::AbTraceValues)
+  unary_inv(arr, const_in, ExpArrow)
 end
 
 function inv(arr::SourceArrow,
