@@ -448,14 +448,15 @@ function generate_scatter(carr::CompArrow, indexed_elements, shape)
   sarr_scatter
 end
 
-# this is not ok. There are many examples that may breake this
-extract_expr_modulo_index(v) = v
-extract_expr_modulo_index(v::Symbol) = v
-function extract_expr_modulo_index(v::Expr)
+factor_indices(v, indices::Set) = v
+function factor_indices(v::Expr, indices::Set)
   if v.head == :ref
-    extract_expr_modulo_index(v.args[1])
+    push!(indices, v.args[2])
+    factor_indices(v.args[1], indices)
   else
-    args = map(extract_expr_modulo_index, v.args)
+    args = map(v.args) do arg
+            factor_indices(arg, indices)
+          end
     Expr(v.head, args...)
   end
 end
@@ -463,11 +464,16 @@ end
 function extract_computation_blocks(assigns)
   by_block = Dict()
   for (k,v) in assigns
-    index = extract_expr_modulo_index(v)
-    if !haskey(by_block, index)
-      by_block[index] = Vector()
+    indices = Set()
+    expr = factor_indices(v, indices)
+    @assert length(indices) < 2
+    if !haskey(by_block, expr)
+      by_block[expr] = Vector()
     end
-    push!(by_block[index], (k, v))
+    if length(indices) > 0
+      v = Expr(:ref, expr, pop!(indices))
+    end
+    push!(by_block[expr], (k, v))
   end
   by_block
 end
@@ -479,7 +485,7 @@ function name(info::ConstraintInfo, idx)
   else
     expr = value[1]
   end
-  extract_expr_modulo_index(expr)
+  factor_indices(expr, Set())
 end
 function create_first_step_of_connection(info)
   for (idx, unassign) in enumerate(info.unassigns_by_portn)
