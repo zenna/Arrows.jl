@@ -563,29 +563,30 @@ function name(info::ConstraintInfo, idx)
   factor_indices(expr, Set())
 end
 function create_first_step_of_connection(info)
+  function add_sport(arr, idx)
+    sarr = add_sub_arr!(info.master_carr, arr)
+    info.names_to_inital_sarr[name(info, idx)] = sarr
+    link_to_parent!(▹(sarr, 1))
+  end
   for (idx, unassign) in enumerate(info.unassigns_by_portn)
     if length(unassign) > 0
       name_prt = name(info, idx)
-      connector_arr = CompArrow(gensym(:connector_first), [name_prt], [:z])
+      arr = CompArrow(gensym(:connector_first), [:x], [:z])
       if isa(info.inp[idx].var.value, Symbol)
-        sarr = Arrows.add_sub_arr!(connector_arr, IdentityArrow())
+        sarr = add_sub_arr!(arr, IdentityArrow())
       else
         pairs = Vector()
         values = collect(unassign)
-        for (id_, dst) in enumerate(sort(values, by=Arrows.extract_index))
+        for (id_, dst) in enumerate(sort(values, by=extract_index))
           push!(pairs, (dst, id_))
         end
-        sarr = create_inner_connector(info, connector_arr, pairs,  idx)
+        sarr = create_inner_connector(info, arr, pairs,  idx)
       end
-      (connector_arr, 1) ⥅ (sarr, 1)
-      (sarr, 1) ⥅ (connector_arr, 1)
-      connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
-      info.names_to_inital_sarr[name(info, idx)] = connector_sarr
-      link_to_parent!(▹(connector_sarr, 1))
+      (arr, 1) ⥅ (sarr, 1)
+      (sarr, 1) ⥅ (arr, 1)
+      add_sport(arr, idx)
     elseif !info.is_θ_by_portn[idx]
-      sarr = add_sub_arr!(info.master_carr, IdentityArrow())
-      info.names_to_inital_sarr[name(info, idx)] = sarr
-      link_to_parent!(▹(sarr, 1))
+      add_sport(IdentityArrow(), idx)
     end
   end
 end
@@ -776,6 +777,24 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
   connector_sarr
 end
 
+function finish_parameter_wiring(info, sarr, idx)
+  vals = info.inp[idx].var.value
+  if isa(vals, Array)
+    shape = SourceArrow(size(vals))
+    sarr_shape = add_sub_arr!(info.master_carr, shape)
+    sarr_reshape = add_sub_arr!(info.master_carr, ReshapeArrow())
+    (sarr, 1) ⥅ (sarr_reshape, 1)
+    (sarr_shape, 1) ⥅ (sarr_reshape, 2)
+    outp = ◃(sarr_reshape, 1)
+  else
+    outp = ◃(sarr, 1)
+  end
+  prps = deepcopy(props(outp))
+  setprop!(Name(name(info, idx)), prps)
+  outp ⥅ add_port!(info.master_carr, prps)
+end
+
+
 function connect_target(info::ConstraintInfo, carr::CompArrow, sarrs)
   sarr_target = add_sub_arr!(info.master_carr, carr)
   foreach(link_to_parent!, ◃(sarr_target))
@@ -801,10 +820,11 @@ function solve(carr::CompArrow)
   info.master_carr = CompArrow(gensym(:solver_θ))
   create_first_step_of_connection(info)
   n = length(info.inp)
-  sarrs = map(1:n) do idx
+  foreach(1:n) do idx
     sarr = create_assignment_graph_for(info, idx)
-    create_special_assignment_graph_for(info, sarr, idx)
+    sarr = create_special_assignment_graph_for(info, sarr, idx)
+    finish_parameter_wiring(info, sarr, idx)
   end
-  connect_target(info, carr, sarrs)
+  #connect_target(info, carr, sarrs)
   info.master_carr, info
 end
