@@ -508,10 +508,11 @@ function generate_scatter(indexed_elements, shape)
   indices = SourceArrow(indices)
   shape = SourceArrow(shape)
   sarr_shape =  add_sub_arr!(carr, shape)
-  sarr_indics = add_sub_arr!(carr, indices)
+  sarr_indices = add_sub_arr!(carr, indices)
   sarr_scatter =  add_sub_arr!(carr, ScatterNdArrow())
-  (sarr_indics, 1) ⥅ (sarr_scatter, 2)
+  (sarr_indices, 1) ⥅ (sarr_scatter, 2)
   (sarr_shape, 1) ⥅ (sarr_scatter, 3)
+  (carr, 1) ⥅ (sarr_scatter, 1)
   (sarr_scatter, 1) ⥅ (carr, 1)
   carr
 end
@@ -642,7 +643,9 @@ function create_inner_connector(info::ConstraintInfo,
   s = generate_scatter(outputs, length_of(info, idx))
   g_sarr = add_sub_arr!(carr, g)
   scatter_sarr = add_sub_arr!(carr, s)
+  (carr, 1) ⥅ (g_sarr, 1)
   (g_sarr, 1) ⥅ (scatter_sarr, 1)
+  (scatter_sarr, 1) ⥅ (carr, 1)
   sarr
 end
 
@@ -669,6 +672,7 @@ function create_inner_connector_private(info::ConstraintInfo,
   sport = generate_function(context, moniker)
   middle = middle_arr_creator(carr, sport)
   middle ⥅ (scatter_sarr,1)
+  (scatter_sarr,1) ⥅ (carr, 1)
   sarr
 end
 
