@@ -2,8 +2,6 @@
 an additional port equal to the sum (or other combination) of all the domain losses."
 function domain_ovrl(arr::CompArrow, newinv=inv)
   domainϵ = aprx_invert(arr, newinv)
-
-
   dmloss = CompArrow(:dmloss)
   domain_sarr = add_sub_arr!(dmloss, domainϵ)
   foreach(link_to_parent!, ▹(domain_sarr))
@@ -26,8 +24,8 @@ function domain_ovrl(arr::CompArrow, newinv=inv)
 end
 
 "x: -> δ(arr(x), outs)"
-function naive_loss(arr::CompArrow, outs)
-  length(outs) == length(◃(arr)) || throw(ArgumentError("Invalid length for given outs."))
+function naive_loss(arr::CompArrow, yvals)
+  length(yvals) == length(◃(arr)) || throw(ArgumentError("Invalid length for given outs."))
   naive = CompArrow(Symbol(:naive_loss_, name(arr)))
   sarr = add_sub_arr!(naive, arr)
   foreach(link_to_parent!, ▹(sarr))
@@ -35,8 +33,8 @@ function naive_loss(arr::CompArrow, outs)
   loss = add_port_like!(naive, ◂(naive, 1))
   addprop!(ϵ, loss)
   out_vals = []
-  for i = 1:length(outs)
-    src = add_sub_arr!(naive, SourceArrow(outs[i]))
+  for i = 1:length(yvals)
+    src = add_sub_arr!(naive, SourceArrow(yvals[i]))
     push!(out_vals, ◃(src, 1))
   end
   out_vals = Array{Arrows.SubPort}(out_vals)
