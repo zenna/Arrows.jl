@@ -25,6 +25,7 @@ end
 mutable struct ConstraintInfo
   exprs::Vector{Expr}
   θs::Set{Union{Symbol, Expr}}
+  is_θ_by_portn::Vector{Bool}
   mapping::Dict
   unsat::Set{SymUnion}
   assignments::Dict
@@ -213,6 +214,9 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
   for (name, idx) in info.port_to_index
+    if !info.is_θ_by_portn[idx]
+      continue
+    end
     exprs = info.inp[idx].var.value
     if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
@@ -246,8 +250,10 @@ end
 function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
   trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
   info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
+  info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   info.port_to_index = Dict{SymUnion, Number}()
   for (idx, sport) in enumerate(▹(arr))
+    info.is_θ_by_portn[idx] = is(θp)(sport)
     sym = (Sym ∘ deref)(sport)
     info.port_to_index[sym] = idx
     tv = trace_value(sport)
@@ -506,6 +512,10 @@ function create_first_step_of_connection(info)
       connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
       info.names_to_inital_sarr[name(info, idx)] = connector_sarr
       link_to_parent!(▹(connector_sarr, 1))
+    elseif !info.is_θ_by_portn[idx]
+      sarr = add_sub_arr!(info.master_carr, IdentityArrow())
+      info.names_to_inital_sarr[name(info, idx)] = sarr
+      link_to_parent!(▹(sarr, 1))
     end
   end
 end
@@ -534,7 +544,16 @@ function extract_variables(v::Expr)
   union(map(extract_variables, args)...)
 end
 
-function sarr_for_block(info::ConstraintInfo, moniker::Union{Expr, Symbol})
+function sarr_for_block(info::ConstraintInfo, moniker::Symbol)
+  if haskey(info.names_to_inital_sarr, moniker)
+    info.names_to_inital_sarr[moniker]
+  else
+    warn("Variable $(moniker) was used but it's not wired")
+    throw(DomainError)
+  end
+end
+
+function sarr_for_block(info::ConstraintInfo, moniker::Expr)
 
   if haskey(info.names_to_inital_sarr, moniker)
     info.names_to_inital_sarr[moniker]
