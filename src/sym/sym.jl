@@ -573,55 +573,56 @@ function sarr_for_block(info::ConstraintInfo, moniker::Expr)
   end
 end
 
-function create_assignment_graph_for(info::ConstraintInfo, idx, assigns)
-    by_block = extract_computation_blocks(assigns)
-    moniker = name(info, idx)
-    has_initializer = haskey(info.names_to_inital_sarr, moniker)
-    connector_arr = CompArrow(gensym(:connector),
-                      (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
-                      1)
-    connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
+function create_assignment_graph_for(info::ConstraintInfo, idx)
+  assigns = info.assigns_by_portn[idx]
+  by_block = extract_computation_blocks(assigns)
+  moniker = name(info, idx)
+  has_initializer = haskey(info.names_to_inital_sarr, moniker)
+  connector_arr = CompArrow(gensym(:connector),
+                    (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
+                    1)
+  connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
+  if has_initializer
+    initial_sarr = sarr_for_block(info, moniker)
+    ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
+  end
+
+  connectors = Vector()
+  if isa(info.inp[idx].var.value, Symbol)
     if has_initializer
-      initial_sarr = sarr_for_block(info, moniker)
-      ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
+      ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
     end
-
-    connectors = Vector()
-    if isa(info.inp[idx].var.value, Symbol)
-      if has_initializer
-        ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
-      end
-      #TODO handle equations with scalars
-      warn("equations with scalars are not handled")
-      return connector_sarr
-    end
+    #TODO handle equations with scalars
+    warn("equations with scalars are not handled")
+    return connector_sarr
+  end
 
 
-    input_id = 0
-    for (block, pairs) in by_block
-      input_id += 1
-      carr = create_inner_connector(info,
-                                      connector_arr,
-                                      pairs, idx)
-      push!(connectors, carr)
-      block_sarr = sarr_for_block(info, block)
-      (block_sarr, 1) ⥅ (connector_sarr, input_id)
-      (connector_arr, input_id) ⥅ (carr, 1)
-    end
+  input_id = 0
+  for (block, pairs) in by_block
+    input_id += 1
+    carr = create_inner_connector(info,
+                                    connector_arr,
+                                    pairs, idx)
+    push!(connectors, carr)
+    block_sarr = sarr_for_block(info, block)
+    (block_sarr, 1) ⥅ (connector_sarr, input_id)
+    (connector_arr, input_id) ⥅ (carr, 1)
+  end
 
-    @assert n▸(connector_arr) > 0
-    if length(connectors) > 0
-      first = ◃(connectors[1],1)
-      sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
-      foreach(connectors[2:end]) do c
-        sport = sport + ◃(c, 1)
-      end
-    else
-      sport = ▹(connector_arr, n▸(connector_arr))
+  @assert n▸(connector_arr) > 0
+  if length(connectors) > 0
+    first = ◃(connectors[1],1)
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + first : first
+    foreach(connectors[2:end]) do c
+      sport = sport + ◃(c, 1)
     end
-    sport ⥅ (connector_arr, 1)
-    connector_sarr
+  else
+    sport = ▹(connector_arr, n▸(connector_arr))
+  end
+  sport ⥅ (connector_arr, 1)
+  connector_sarr
 end
 
 function connect_target(info::ConstraintInfo, carr::CompArrow, sarrs)
@@ -645,11 +646,12 @@ end
 "solve constraints on inputs to `carr`"
 function solve(carr::CompArrow)
   info = constraints(carr)
-  assigns_by_port = (compute_assigns_by_portn ∘ find_assignments)(info)
+  (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))
   create_first_step_of_connection(info)
-  sarrs = map(enumerate(assigns_by_port)) do args
-    create_assignment_graph_for(info, args...)
+  n = length(info.inp)
+  sarrs = map(1:n) do idx
+    create_assignment_graph_for(info, idx)
   end
   connect_target(info, carr, sarrs)
   info.master_carr, info
