@@ -795,25 +795,31 @@ function finish_parameter_wiring(info, sarr, idx)
 end
 
 
-function connect_target(info::ConstraintInfo, carr::CompArrow, sarrs)
-  sarr_target = add_sub_arr!(info.master_carr, carr)
-  foreach(link_to_parent!, ◃(sarr_target))
-  for (idx, sarr) in enumerate(sarrs)
-    vals = info.inp[idx].var.value
-    if isa(vals, Array)
-      sarr_shape = add_sub_arr!(info.master_carr, SourceArrow(size(vals)))
-      sarr_reshape = add_sub_arr!(info.master_carr, ReshapeArrow())
-      (sarr, 1) ⥅ (sarr_reshape, 1)
-      (sarr_shape, 1) ⥅ (sarr_reshape, 2)
-      outp = ◃(sarr_reshape, 1)
-    else
-      outp = ◃(sarr, 1)
-    end
-    outp ⥅ (sarr_target, idx)
+"function that connects a wirer (produce by `solve`) with the actual inverse"
+function connect_target(wirer, target)
+  carr = CompArrow(gensym(:reduced_params),0, 0)
+  wirer_sarr = add_sub_arr!(carr, wirer)
+  target_sarr = add_sub_arr!(carr, target)
+
+  for sport in ▹(wirer_sarr)
+    link_to_parent!(sport)
   end
+
+  wirer_out_sports = Dict([name(deref(p)) => p for p in ◃(wirer_sarr)])
+  for sport in ▹(target_sarr)
+    wirer_out_sports[name(deref(sport))] ⥅ sport
+  end
+
+  for sport in ◃(target_sarr)
+    link_to_parent!(sport)
+  end
+  carr
 end
 
-"solve constraints on inputs to `carr`"
+"""solve constraints on inputs to `carr`
+It will return a tuple with a `CompArrow` (the wirer), and information regarding
+the solving process.
+Use `connect_target` to connect the wirer to the actual inverse `Arrow`"""
 function solve(carr::CompArrow)
   info = constraints(carr)
   (compute_assigns_by_portn ∘ find_assignments)(info)
@@ -825,6 +831,5 @@ function solve(carr::CompArrow)
     sarr = create_special_assignment_graph_for(info, sarr, idx)
     finish_parameter_wiring(info, sarr, idx)
   end
-  #connect_target(info, carr, sarrs)
   info.master_carr, info
 end
