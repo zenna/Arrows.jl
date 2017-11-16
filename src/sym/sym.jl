@@ -358,12 +358,14 @@ function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
             cannot be solved: $(left_name) == $(right)""")
     false
   else
-    info.specials[left_name] = @NT(dst = left, src = right)
     if haskey(info.mapping, left_name)
       foreach(info.mapping[left_name]) do expr
-        @assert symbolic_includes(expr, left)
+        if !symbolic_includes(expr, left)
+          return false
+        end
       end
     end
+    info.specials[left_name] = @NT(dst = left, src = right)
     true
   end
 end
@@ -644,7 +646,7 @@ function create_inner_connector(info::ConstraintInfo,
   carr = CompArrow(gensym(:inner_connector), 1, 1)
   sarr = add_sub_arr!(connector_arr, carr)
   g = generate_gather(inputs, size(inputs))
-  s = generate_scatter(outputs, length_of(info, idx))
+  s = generate_scatter(outputs, [length_of(info, idx),])
   g_sarr = add_sub_arr!(carr, g)
   scatter_sarr = add_sub_arr!(carr, s)
   (carr, 1) ⥅ (g_sarr, 1)
@@ -664,7 +666,7 @@ function create_inner_connector_private(info::ConstraintInfo,
   carr = CompArrow(gensym(:inner_connector), n, 1)
   sarr = add_sub_arr!(info.master_carr, carr)
   g = generate_gather(inputs, size(inputs))
-  s = generate_scatter(outputs, length_of(info, idx))
+  s = generate_scatter(outputs, [length_of(info, idx),])
   scatter_sarr = add_sub_arr!(carr, s)
   context = Dict()
   for (idx, v) in enumerate(variables)
@@ -769,11 +771,11 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
 
   @assert n▸(connector_arr) > 0
   if length(connectors) > 0
-    sport_1s = first(connectors)
-    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + sport_1s : sport_1s
+    sport = first(connectors)
     foreach(connectors[2:end]) do c
       sport = sport + c
     end
+    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + sport : sport
   else
     sport = ▹(connector_arr, n▸(connector_arr))
   end
