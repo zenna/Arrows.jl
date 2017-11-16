@@ -566,12 +566,16 @@ function create_first_step_of_connection(info)
   function add_sport(arr, idx)
     sarr = add_sub_arr!(info.master_carr, arr)
     info.names_to_inital_sarr[name(info, idx)] = sarr
-    link_to_parent!(▹(sarr, 1))
+    newport = link_to_parent!(▹(sarr, 1))
+    info.is_θ_by_portn[idx] && addprop!(θp, newport)
+    base_nm = Symbol(name(info, idx), :_in)
+    nm = uniquename(base_nm, name.(⬧(info.master_carr)))
+    setprop!(Name(nm), props(newport))
   end
   for (idx, unassign) in enumerate(info.unassigns_by_portn)
     if length(unassign) > 0
       name_prt = name(info, idx)
-      arr = CompArrow(gensym(:connector_first), [:x], [:z])
+      arr = CompArrow(gensym(:connector_first), 1, 1)
       if isa(info.inp[idx].var.value, Symbol)
         sarr = add_sub_arr!(arr, IdentityArrow())
       else
@@ -789,8 +793,9 @@ function finish_parameter_wiring(info, sarr, idx)
   else
     outp = ◃(sarr, 1)
   end
+  nm = name(info, idx)
   prps = deepcopy(props(outp))
-  setprop!(Name(name(info, idx)), prps)
+  setprop!(Name(nm), prps)
   outp ⥅ add_port!(info.master_carr, prps)
 end
 
