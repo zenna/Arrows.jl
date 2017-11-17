@@ -7,6 +7,11 @@ function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
   inner_compose!(sarr, meanarr)
 end
 
+function sub_aprx_totalize2{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
+  meanarr = FirstArrow(I) >> DuplArrow(I)
+  inner_compose!(sarr, meanarr)
+end
+
 function bounded_totalize!(sarr::SubArrow)
   # TODO: Generalize this
   clipcarr = CompArrow(:clip, [:x], [:y])

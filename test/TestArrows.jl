@@ -29,7 +29,7 @@ end
 
 "x * y + x"
 function twoxy_plus_x_arr()
-  c = CompArrow(:xyx, [:x, :y], [:z1, :z2])
+  c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
   x, y, z1, z2 = ⬨(c)
   (x*y)>2*x ⥅ z1
   sqrt(y+x*3)<(3*y+2) ⥅ z2
@@ -37,14 +37,14 @@ function twoxy_plus_x_arr()
 end
 
 function sqrt_check()
-  c = CompArrow(:xyx, [:x], [:y])
+  c = CompArrow(:sqrtcheck, [:x], [:y])
   x, y = ⬨(c)
   sqrt(x) ⥅ y
   c
 end
 
 function abc_arr()
-  carr = CompArrow(:xyx, [:a, :b, :c], Symbol[])
+  carr = CompArrow(:abc_arr, [:a, :b, :c], Symbol[])
   a, b, c = ⬨(carr)
   d = a + b * c + a
   e = a + b - c
@@ -55,7 +55,7 @@ function abc_arr()
 end
 
 function ifelseconst()
-  carr = CompArrow(:ifelse1, [:a, :b, :c], [:z])
+  carr = CompArrow(:ifelseconst, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
   d = ifelse(c > 3,
              a + b,
@@ -66,7 +66,7 @@ function ifelseconst()
 end
 
 function ifelseconstbcast()
-  carr = CompArrow(:ifelse1, [:a, :b, :c], [:z])
+  carr = CompArrow(:ifelseconstbcast, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
   threearr = add_sub_arr!(carr, source(3.0))
   thr = ◃(threearr, 1)
@@ -82,7 +82,7 @@ end
 
 
 function ifelsesimple()
-  carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
+  carr = CompArrow(:ifelsesimple, [:a, :b, :c, :d], [:e])
   a, b, c, d, e = ⬨(carr)
   ee = ifelse(a > b, c, d)
   ee ⥅ e
@@ -91,7 +91,7 @@ function ifelsesimple()
 end
 
 function ifelsesimple2()
-  carr = CompArrow(:ifelse1, [:a, :b, :c, :d], [:e])
+  carr = CompArrow(:ifelsesimple2, [:a, :b, :c, :d], [:e])
   a, b, c, d, e = ⬨(carr)
   ee = ifelse(a > b, c, d)
   ee ⥅ e
@@ -100,7 +100,7 @@ function ifelsesimple2()
 end
 
 function inv_xy_plus_x_arr()
-  carr = CompArrow(:inv_xy_plus_x, [:z, :θ], [:x, :y])
+  carr = CompArrow(:inv_xy_plus_x_arr, [:z, :θ], [:x, :y])
   z, θ, x, y = ⬨(carr)
   addprop!(θp, deref(θ))
   invadd = add_sub_arr!(carr, inv_add())
@@ -122,7 +122,7 @@ end
 
 "arrow that computes nth value of fibonnaci sequence"
 function fibonnaci_arr()
-  c = CompArrow(:fib, 1, 1)
+  c = CompArrow(:fibonnaci_arr, 1, 1)
   c_wrap = add_sub_arr!(c, c)
   x, y = ⬧(c)
   one = add_sub_arr!(c, SourceArrow(1))
@@ -169,7 +169,7 @@ fibonnaci_jl(x::Integer) = x == 1 ? 1 : x + fib(x - 1)
 
 "f(x) = if p(x) then p(x), f(x)[1] else p(x), g(f(x)[2])"
 function det_policy_inner_arr()
-  c = CompArrow(:f, 1, 2)
+  c = CompArrow(:det_policy_inner_arr, 1, 2)
   f = add_sub_arr!(c, dupl_id_arr())
   p = add_sub_arr!(c, IdentityArrow())
   g = add_sub_arr!(c, IdentityArrow())
@@ -188,7 +188,7 @@ end
 
 "f(x,y) = (x+y) + (x+y)"
 function triple_add()
-  c = CompArrow(:xyxy, 2, 1)
+  c = CompArrow(:triple_add, 2, 1)
   x, y, z = ⬧(c)
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
@@ -204,7 +204,7 @@ function triple_add()
 end
 
 function test_two_op()
-  carr = CompArrow(:xyab, [:x, :y], [:a, :b])
+  carr = CompArrow(:test_two_op, [:x, :y], [:a, :b])
   x, y, a, b = ⬨(carr)
   z = x + y
   c = y * z
@@ -216,9 +216,9 @@ end
 function weird_arr()
   carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
   x, y, z, a, b = ⬨(carr)
-  e = z * x + y * (broadcast(2) * z + y)
+  e = z * x + y * 2.0 * z + y
   f = e * x + y
-  g = 6*x+x
+  g = 6.0*x+x
   h = f * g
   h ⥅ a
   g ⥅ b
@@ -227,7 +227,7 @@ function weird_arr()
 end
 
 function cond_arr_eq()
-  c = CompArrow(:xyx, [:x, :y], [:z])
+  c = CompArrow(:cond_arr_eq, [:x, :y], [:z])
   x, y, z = ⬧(c)
   eq = add_sub_arr!(c, EqualArrow())
   ite = add_sub_arr!(c, CondArrow())
@@ -243,7 +243,7 @@ end
 
 "Make a nested function with `core_arrow` at core, `nlevels` levels deep"
 function nested_core(nlevels=3, core_arrow=SinArrow())
-  carr1 = CompArrow(Symbol(:l, 1), [:x], [:y])
+  carr1 = CompArrow(:nested_core, [:x], [:y])
   parr = carr1
   sarrs = []
   local carr

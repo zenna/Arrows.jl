@@ -97,10 +97,10 @@ end
 #   end
 # end
 
-function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbValues)
-  @show idabv
-  InvReduceSumArrow(idabv[1][:size], arr.axis), Dict(:x=>:x, :y=>:y)
-end
+# function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbValues)
+#   @show idabv
+#   InvReduceSumArrow(idabv[1][:size], arr.axis), Dict(:x=>:x, :y=>:y)
+# end
 
 "Inverse reduce sum does multiple inverse adds"
 function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbValues)

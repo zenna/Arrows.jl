@@ -72,6 +72,8 @@ function pgf(arr::CosArrow)
   carr
 end
 
+pgf(arr::NegArrow) = deepcopy(arr)
+
 function pgf(arr::SourceArrow)
   "The parametric inverse of SourceArrow has no parameters, so return the same arrow renamed."
   newarr = deepcopy(arr)

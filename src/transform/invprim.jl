@@ -77,11 +77,12 @@ function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbValues)
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv_np(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv_p(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
    unary_inv(arr, const_in(arr, abvals), ACosArrow)
 end
 
-function inv_np(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
+function inv_p(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
+  #  @assert false
    unary_inv(arr, const_in(arr, abvals), ASinArrow)
  end
 

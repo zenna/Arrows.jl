@@ -105,3 +105,15 @@ function invifelse_fullpi()
   @assert is_wired_ok(carr)
   carr
 end
+
+# First
+"Duplicates input `I` times dupl_n_(x) = (x,...x)"
+struct FirstArrow{I} <: PrimArrow end
+
+props{I}(::FirstArrow{I}) =
+  [[Props(true, Symbol(:x, i), Array{Any}) for i=1:I]...,
+   Props(false, :y, Array{Any})]
+
+name{I}(::FirstArrow{I}) = Symbol(:first, I)
+FirstArrow(n::Integer) = FirstArrow{n}()
+abinterprets(::FirstArrow) = [sizeprop]
