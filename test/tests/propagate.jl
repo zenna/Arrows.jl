@@ -32,6 +32,7 @@ function test_value_prop()
   x, y, z = ⬨(carr)
   res = traceprop!(carr, Dict(x => Arrows.AbValues(:value => ConcreteValue(3.2)),
                               y => Arrows.AbValues(:value => ConcreteValue(2.3))))
+  # @show res
   @test get(res, z)[:value].value == 3.2 * 2.3 + 3.2
 end
 

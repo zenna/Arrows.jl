@@ -6,6 +6,20 @@ sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 "Fallback to do nothing if `parr` is total"
 sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 
+function non_zero!(sarr::SubArrow)
+  clip_ε = CompArrow(:clip_ε, [:den, :num], [:denout, :numout])
+  den, num, denout, numout = ⬨(clip_ε)
+  ε = 0.001
+  num + 4.0 ⥅ numout
+  den + 4.0 ⥅ denout
+  @assert is_wired_ok(clip_ε)
+  # eq_zero = (x == 0)
+  # (x * (1-eq_zero) + ε * eq_zero) ⥅ y
+  inner_compose!(sarr, clip_ε)
+end
+
+sub_aprx_totalize(carr::DivArrow, sarr::SubArrow) = non_zero!(sarr)
+
 """
 Convert `arr` into `Arrow` which is a total function of inputs.
 

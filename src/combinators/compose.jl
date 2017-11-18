@@ -98,13 +98,13 @@ function replace_link!(src::SubPort, dst::SubPort, a::SubPort, b::SubPort)
   nothing
 end
 
-"∀ src -> dst ∈ orig"
+"Places `sarr` before orig: ∀ src -> dst ∈ orig"
 function inner_compose!(orig::SubArrow, sarr::SubArrow)
   dsts = ▹(orig)
   srcs = src.(dsts)
   as = ▹(sarr)
   bs = ◃(sarr)
-  same(map(length, [srcs, dsts, as, bs])) || throw(DomainError())
+  same(map(length, [srcs, dsts, as, bs])) || throw(ArgumentError("Wrong number of ports"))
   foreach(replace_link!, srcs, dsts, as, bs)
   bs
 end

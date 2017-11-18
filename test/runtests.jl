@@ -4,7 +4,8 @@ include("common.jl")
 
 exclude = ["policy.jl",
            "optimize.jl",
-           "value.jl"]
+           "value.jl",
+           "sym.jl"]
 test_dir = joinpath(Pkg.dir("Arrows"), "test", "tests")
 tests = setdiff(readdir(test_dir), exclude)
 

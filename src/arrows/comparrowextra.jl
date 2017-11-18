@@ -316,7 +316,7 @@ function is_wired_ok(arr::CompArrow)::Bool
     end
   end
   n = LG.nv(arr.edges)
-  if !((length(seen) == n) && (max(seen...) == n))
+  if (length(seen) != n) || ((n > 0) && (max(seen...) != n))
     errmsg = """The number of subports is $(length(seen)) but should
     be $(n) or some port has a bigger vertex id $(max(seen...))"""
     warn(errmsg)

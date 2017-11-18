@@ -4,22 +4,33 @@
 # at least want to just add the parameter part to the arrow and
 # not have to construct the arrow along with the parameter.
 
-function pgf(arr::MulArrow)
+pgf(arr, const_in) = pgf(arr)
+
+function pgf(arr::MulArrow, const_in)
   "As f^(-1)(z; θ) = (z/θ, θ), then the pgf becomes r(x, y) = (x*y, y)."
-  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θ])
-  x, y, z, θ = ⬨(carr)
-  x * y ⥅ z
-  y ⥅ θ
-  carr
+  ## HAck
+  if const_in[1] || const_in[2]
+    deepcopy(arr)
+  else
+    carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θmul])
+    x, y, z, θ = ⬨(carr)
+    x * y ⥅ z
+    y ⥅ θ
+    carr
+  end
 end
 
-function pgf(arr::AddArrow)
+function pgf(arr::AddArrow, const_in)
   "As f^(-1)(z; θ) = (z-θ, θ), then the pgf becomes r(x, y) = (x+y, y)."
-  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θ])
-  x, y, z, θ = ⬨(carr)
-  x + y ⥅ z
-  y ⥅ θ
-  carr
+  if const_in[1] || const_in[2]
+    deepcopy(arr)
+  else
+    carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θadd])
+    x, y, z, θ = ⬨(carr)
+    x + y ⥅ z
+    y ⥅ θ
+    carr
+  end
 end
 
 function pgf(arr::SubtractArrow)
@@ -31,8 +42,34 @@ function pgf(arr::SubtractArrow)
   carr
 end
 
+
+function pgf(arr::GatherNdArrow)
+  carr = CompArrow(Symbol(:pgf_, :sub),
+                      [:param, :indices, :shape],
+                      [:z, :θgather])
+  param, indices, shape, z, θ = ⬨(carr)
+  sarr = add_sub_arr!(carr, GatherNdArrow())
+  param ⥅ (sarr, 1)
+  indices ⥅ (sarr, 2)
+  shape ⥅ (sarr, 3)
+  (sarr, 1) ⥅ z
+  scatter = add_sub_arr!(carr, ScatterNdArrow())
+  (sarr, 1) ⥅ (scatter, 1)
+  indices ⥅ (scatter, 2)
+  shape ⥅ (scatter, 3)
+  (param - ◃(scatter, 1)) ⥅ θ
+  carr
+end
+
 pgf_np(arr::SinArrow) = deepcopy(arr)
 pgf_np(arr::CosArrow) = deepcopy(arr)
+pgf(arr::SourceArrow) = deepcopy(arr)
+pgf(arr::IdentityArrow) = deepcopy(arr)
+pgf(arr::ReshapeArrow) = deepcopy(arr)
+pgf(arr::ScatterNdArrow) = deepcopy(arr)
+pgf(arr::NegArrow) = deepcopy(arr)
+pgf(arr::LogArrow) = deepcopy(arr)
+pgf(arr::ExpArrow) = deepcopy(arr)
 
 function pgf(arr::SinArrow)
   "As f^(-1)(y; θ) = πθ + (-1)^θ * asin(y), then the pgf becomes θ = floor((x+π/2)/π)."
@@ -72,20 +109,17 @@ function pgf(arr::CosArrow)
   carr
 end
 
-pgf(arr::NegArrow) = deepcopy(arr)
-
-function pgf(arr::SourceArrow)
-  "The parametric inverse of SourceArrow has no parameters, so return the same arrow renamed."
-  newarr = deepcopy(arr)
-  #rename!(newarr, Symbol(:pgf_, :source))
-  newarr
-end
-
-function pgf(arr::IdentityArrow)
-  "The parametric inverse of IdentityArrow has no parameters, so return the same arrow renamed."
-  newarr = deepcopy(arr)
-  #rename!(newarr, Symbol(:pgf_, :identity))
-  newarr
+function pgf(arr::DivArrow)
+  ## Hack
+  if false
+    carr = CompArrow(Symbol(:pgf_, :div), [:x, :y], [:z, :θ])
+    x, y, z, θ = ⬨(carr)
+    x / y ⥅ z
+    y ⥅ θ
+    carr
+  else
+    deepcopy(arr)
+  end
 end
 
 function pgf(arr::LessThanArrow)

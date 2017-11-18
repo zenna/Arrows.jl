@@ -18,43 +18,52 @@ XAbValues = Union{SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
 
 # FIXME: This is quite a few layers of misdirection
-"Get `sprt` in `val_abval` assuming `sprt` is on root"
-Base.get(val_abval::Dict{TraceValue, AbValues}, sprt::SubPort) =
-  val_abval[trace_value(sprt)]
+"Get `sprt` in `tabv` assuming `sprt` is on root"
+Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
+  tabv[trace_value(sprt)]
 
 has(sm::Symbol) = prop -> haskey(prop, sm)
+
+"All ports in `idabv` have values for "
+function allhave(idabv::IdAbValues, abvkey::Symbol, prts::Port...)
+  allthere = all((prt.port_id ∈ keys(idabv) for prt in prts))
+  allthere && all(has(abvkey), (idabv[pid] for pid in port_id.(prts)))
+end
 
 "All abstract evaluators of `arr`"
 all_abinterprets(arr::Arrow)::Set{Function} = Set(vcat(accumapply(abinterprets, arr)...))
 
 "Cycle abstract evaluator of `arr` until a fixed point is reached"
-function cycle_abinterprets(arr::PrimArrow, abvals::IdAbValues)
+function cycle_abinterprets(arr::PrimArrow, idabv::IdAbValues)
   abinterprets = all_abinterprets(arr)
   atfixedpoint = false
   while !atfixedpoint
     atfixedpoint = true
     for abinterpret in abinterprets
-      subabvals::IdAbValues = abinterpret(arr, abvals)
+      subabv::IdAbValues = abinterpret(arr, idabv)
+      # @show subabv
       # Do resolution on each Value
-      for i in keys(subabvals)
-        if i in keys(abvals)
-          resabval = meetall(abvals[i], subabvals[i])
-          if resabval != abvals[i]
-            abvals[i] = resabval
+      for i in keys(subabv)
+        if i in keys(idabv)
+          resabval = meetall(idabv[i], subabv[i])
+          if resabval != idabv[i]
+            # println("Value refined from $resabval to $idabv")
+            idabv[i] = resabval
             atfixedpoint = false
           end
         else
+          # println("New data on $(⬧(arr, i)):\n $(subabv[i])")
           atfixedpoint = false
-          abvals[i] = subabvals[i]
+          idabv[i] = subabv[i]
         end
       end
     end
   end
-  abvals
+  idabv
 end
 
 "Mapping from `port_id` of `tarr` to abstract values within `abtvals`"
-function tarr_idabvals(tarr::TraceSubArrow, abtvals::TraceAbValues)::IdAbValues
+function tarr_idabv(tarr::TraceSubArrow, abtvals::TraceAbValues)::IdAbValues
   # Get IdAbValues from tarr
   tvals = trace_values(tarr)
   validids = [prt.port_id for prt in ⬧(deref(tarr)) if tvals[prt.port_id] in keys(abtvals)]
@@ -65,13 +74,13 @@ end
 Propagation
 # Arguments
 - `carr` - the composite arrow to propagate through
-- `val_abval` - any initial values that propagation should be initialized with
+- `tabv` - any initial values that propagation should be initialized with
 - `tparent` - root of trace (this typicaally set automatically)
 # Returns
-- `val_abval` - mutates and returns val_abval with propagated values
+- `tabv` - mutates and returns tabv with propagated values
 """
 function traceprop!(carr::CompArrow,
-                    val_abval::TraceAbValues=TraceAbValues(),
+                    tabv::TraceAbValues=TraceAbValues(),
                     tparent::TraceParent=TraceParent(carr))
   Time = Int
   tarrs = inner_trace_arrows(carr)
@@ -99,32 +108,33 @@ function traceprop!(carr::CompArrow,
 
     # Get IdAbValues from tarr
     tvals = trace_values(tarr)
-    validids = [prt.port_id for prt in ⬧(deref(tarr)) if tvals[prt.port_id] in keys(val_abval)]
-    idabvals = IdAbValues(port_id => val_abval[tvals[port_id]] for port_id in validids)
+    validids = [prt.port_id for prt in ⬧(deref(tarr)) if tvals[prt.port_id] in keys(tabv)]
+    idabv = IdAbValues(port_id => tabv[tvals[port_id]] for port_id in validids)
 
     # Do the actual abstract interpretation
-    idabvals = cycle_abinterprets(parr, idabvals)
+    @show parr
+    idabv = cycle_abinterprets(parr, idabv)
 
-    # Update `val_abval` with abstract values from idabvals
+    # Update `tabv` with abstract values from idabv
     # and update times
-    for (port_id, idabval) in idabvals
+    for (port_id, idabval) in idabv
       tval = tvals[port_id]
-      if tval ∉ keys(val_abval) || val_abval[tval] != idabval
-        val_abval[tval] = idabval
+      if tval ∉ keys(tabv) || tabv[tval] != idabval
+        tabv[tval] = idabval
         lastmeet[tval] = t + 1
       end
     end
     t = t + 1
   end
-  val_abval
+  tabv
 end
 
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow,
                     sprtprp::Dict{SubPort, AbValues})
   tparent = TraceParent(carr)
-  val_abval = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
-  traceprop!(carr, val_abval)
+  tabv = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
+  traceprop!(carr, tabv)
 end
 
 "Convenience for specifying abstraact values for subports on root"

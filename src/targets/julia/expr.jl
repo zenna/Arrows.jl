@@ -8,12 +8,8 @@ broadcast(x::Symbol) = Symbol(:., x)
 # By default use the `name` of `carr` as its julia equivalent
 function call_expr(arr::PrimArrow, args...)
   if Arrows.  isscalar(arr)
-    # sizes = map(arg->Expr(:call, :size, arg), args)
-    # # @show sizes
-    # expr1 = Expr(:call, :println, "SIZES!!!", typeof(arr), sizes...)
-    expr2 = Expr(:., name(arr), Expr(:tuple, args...))
-    # Expr(:block, expr1, expr2)
-    expr2
+    sizes = map(arg->Expr(:call, :size, arg), args)
+    expr = Expr(:., name(arr), Expr(:tuple, args...))
   else
     Expr(:call, name(arr), args...)
   end
@@ -47,7 +43,6 @@ end
 
 "Assign expression"
 function assign_expr(sarr::SubArrow, outnames::Vector, args...)
-  outnames = map(name, tuple(Arrows.out_values(sarr)...))
   lhs = if length(outnames) == 1
     outnames[1]
   else

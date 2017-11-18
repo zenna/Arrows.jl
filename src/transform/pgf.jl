@@ -2,7 +2,7 @@
 pgf_rename!(carr::CompArrow) = (rename!(carr, Symbol(:pgf_, carr.name)); carr)
 
 "Inner method that will replace all the subarrows with their respective pgfs."
-pgf_in(sarr::SubArrow) = pgf(deref(sarr))
+pgf_in(sarr::SubArrow, const_in) = pgf(deref(sarr), const_in)
 "Outer method that connects the loose ports and renames the arrow."
 pgf_out = pgf_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_src))
 
@@ -14,7 +14,8 @@ pgf_out = pgf_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_src))
     the corresponding value y as well as θ such that f^(-1)(y;θ) = x."""
 function pgf_change!(carr::CompArrow, inner_pgf)
   for sarr in sub_arrows(carr)
-    replarr, port_map = inner_pgf(sarr), id_portid_map(deref(sarr))
+    const_in = map(is_src_source, ▹(sarr))
+    replarr, port_map = inner_pgf(sarr, const_in), id_portid_map(deref(sarr))
     replace_sub_arr!(sarr, replarr, port_map)
   end
   pgf_out(carr)
