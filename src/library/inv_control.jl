@@ -7,6 +7,7 @@ props{I}(::InvDuplArrow{I}) =
 
 name{I}(::InvDuplArrow{I}) = Symbol(:inv_dupl_, I)
 InvDuplArrow(n::Integer) = InvDuplArrow{n}()
+abinterprets(::InvDuplArrow) = [sizeprop]
 
 "f(x, x) = (x,)"
 function inv_dupl(xs...)

@@ -1,38 +1,14 @@
 "f(x, y) = (x - y)^2 sqrt"
-function diff_arrow()
-  carr = SubtractArrow() >> SqrArrow() >> SqrtArrow()
-  rename!(carr, :diff)
-  set_error_port!(◂(carr, 1))
+function δarr()
+  carr = CompArrow(:δ, [:x1, :x2], [:diff])
+  x1, x2, diff = ⬨(carr)
+  sqrt(sqr(x1 - x2)) ⥅ diff
+  @assert is_wired_ok(carr)
   carr
 end
 
 "Arrow which computes distance a distance between two elements of type `T`"
-δ(T::DataType) = diff_arrow()
 δ!(a::SubPort, b::SubPort) = sqrt(sqr(a - b))
-
-"accumulate errors"
-function meanerror(invarr::CompArrow)
-  thebest = CompArrow(:thebest)
-  sarr = add_sub_arr!(thebest, invarr)
-  ϵprts = ◂(invarr, is(ϵ))
-  meanarr = add_sub_arr!(thebest, MeanArrow(length(ϵprts)))
-  i = 1
-  foreach(Arrows.link_to_parent!, ▹(sarr))
-  for sprt in ◃(sarr)
-    if is(ϵ)(deref(sprt))
-      sprt ⥅ ▹(meanarr, i)
-      i += 1
-    else
-      Arrows.link_to_parent!(sprt)
-    end
-  end
-  Arrows.link_to_parent!(◃(meanarr, 1))
-  # FIXME This sint idϵ its the mean of potentially different errors
-  # I would want the most specific type
-  addprop!(idϵ, deref((Arrows.dst(◃(meanarr, 1)))))
-  @assert is_valid(thebest)
-  thebest
-end
 
 "∑δ(a,b)"
 function sumδ(as::Vector{SubPort}, bs::Vector{SubPort})
@@ -87,6 +63,70 @@ end
 
 id_loss(fwd::Arrow, inv::Arrow) = id_loss!(deepcopy(fwd), deepcopy(inv))
 
+
+"From `f:y -> x`, `f: y -> error::Error oflosstype`"
+function floss(arr::Arrow, lossf::Function, custϵ::Type{Err}=ϵ)
+  carr = CompArrow(Symbol(:lx_, name(arr)))
+  sarr = add_sub_arr!(carr, arr)
+  foreach(link_to_parent!, ▹(sarr))
+  foreach(link_to_parent!, ◃(sarr, is(ϵ)))
+  xs = map(src, ▹(sarr, !is(θp)))
+  total = lossf(xs, ◃(sarr, !is(ϵ)))
+  loss = add_port_like!(carr, deref(total))
+  total ⥅ loss
+  addprop!(custϵ, loss)
+  @assert is_wired_ok(carr)
+  carr
+end
+
+"Returns a domain_error arrow of the inverse of the given arrow with the index of
+an additional port equal to the sum (or other combination) of all the domain losses."
+function domain_ovrl(arr::CompArrow, newinv=inv)
+  domainϵ = aprx_invert(arr, newinv)
+  dmloss = CompArrow(:dmloss)
+  domain_sarr = add_sub_arr!(dmloss, domainϵ)
+  foreach(link_to_parent!, ▹(domain_sarr))
+  foreach(link_to_parent!, ◃(domain_sarr))
+  ϵports = ◃(domain_sarr, is(ϵ))
+  index = length(◂(domainϵ)) + 1
+  ovrl_loss = add_port_like!(dmloss, ◂(dmloss, is(ϵ), 1))
+
+  # FIXME: use an array addition arrow if/when made.
+  port_to_add = ϵports[1]
+  for i = 2:length(ϵports)
+    add = add_sub_arr!(dmloss, AddArrow())
+    link_ports!(port_to_add, (add, 1))
+    link_ports!(ϵports[i], (add, 2))
+    port_to_add = ◃(add, 1)
+  end
+  port_to_add ⥅ ovrl_loss
+  #aprx_totalize!(dmloss)
+  dmloss, index
+end
+
+
+# FIXME: FWD loss and Naive Loss are the same thing
+"x: -> δ(arr(x), outs)"
+function naive_loss(arr::CompArrow, yvals)
+  length(yvals) == length(◃(arr)) || throw(ArgumentError("Invalid length for given outs."))
+  naive = CompArrow(Symbol(:naive_loss_, name(arr)))
+  sarr = add_sub_arr!(naive, arr)
+  foreach(link_to_parent!, ▹(sarr))
+  foreach(link_to_parent!, ◃(sarr))
+  loss = add_port_like!(naive, ◂(naive, 1))
+  addprop!(ϵ, loss)
+  out_vals = []
+  for i = 1:length(yvals)
+    src = add_sub_arr!(naive, SourceArrow(yvals[i]))
+    push!(out_vals, ◃(src, 1))
+  end
+  out_vals = Array{Arrows.SubPort}(out_vals)
+  out = sumδ(◃(sarr), out_vals)
+  out ⥅ loss
+  index = length(◂(naive))
+  naive, index
+end
+
 "x -> y => x × y -> real"
 function fwd_loss(arr::Arrow)
   carr = CompArrow(:fwd_loss)
@@ -100,4 +140,50 @@ function fwd_loss(arr::Arrow)
   total ⥅ loss
   addprop!(idϵ, loss)
   carr
+end
+
+plus(x::SubPort) = x
+plus(xs::SubPort...) = +(xs...)
+
+"All losses"
+function superloss(fwd::Arrow)
+  invarr = aprx_invert(fwd)
+  carr = CompArrow(Symbol(:net_loss, name(fwd)))
+  finv = add_sub_arr!(carr, invarr)
+  foreach(link_to_parent!, ▹(finv))
+  finv◃ = ◃(finv, !is(ϵ))
+  finv▹ = ▹(finv, !is(θp))
+  fwd◃ = fwd(finv◃...)
+  # There MUST be a better way
+  if fwd◃ isa SubPort
+    fwd◃ = [fwd◃]
+  end
+
+  # root mean square error, per port
+  # δ◃s = [mean(δarr()(fwd◃[i], finv▹[i])) for i = 1:length(fwd◃)]
+  # @assert false
+  δ◃s = [δ!(fwd◃[i], finv▹[i]) for i = 1:length(fwd◃)]
+  foreach(add!(idϵ) ∘ link_to_parent!, δ◃s)
+
+  # sum rms over ports
+  δidtot◃ = plus(δ◃s...)
+  idtotal = link_to_parent!(δidtot◃)
+  add!(idϵ)(idtotal)
+
+  # Domain errors
+  alldomϵ = ◃(finv, is(domϵ))
+  sprt = plus(alldomϵ...)
+  totdomϵ = link_to_parent!(sprt)
+  add!(domϵ)(totdomϵ)
+
+  # Both!
+  both = sprt + δidtot◃
+  bothe = link_to_parent!(both)
+
+  foreach(link_to_parent!, ◃(finv))
+  @assert is_wired_ok(carr)
+  Dict(:idtotal => idtotal,
+       :totdomϵ => totdomϵ,
+       :invcarr => carr,
+       :both => bothe)
 end

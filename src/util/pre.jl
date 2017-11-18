@@ -7,6 +7,11 @@ newestmethod(func::Function) = sort(methods(func).ms, by=m->m.min_world)[end]
 #
 # @testing x + 1 ArgumentError("msg") x / 3
 
-"Defien invariant - currently a dummy for documenation"
+"Define invariant - currently a dummy for documenation"
+macro pre(args...)
+end
+
+
+"Define invariant - currently a dummy for documenation"
 macro invariant(args...)
 end

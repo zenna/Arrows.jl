@@ -10,17 +10,12 @@ struct Port{A <: Arrow} <: AbstractPort
   port_id::Int
 end
 
+port_id(prt::Port) = prt.port_id
 
-function Props(is_in_port::Bool, name::Symbol, typ::Type)
-  dir = is_in_port ? In() : Out()
-  Props(@NT(direction = dir,
-            name = Name(name),
-            typ = Typ(typ)))
-end
 "Port properties of `port`"
 props(prt::AbstractPort) = props(prt.arrow)[prt.port_id]
 labels(prt::AbstractPort) = labels(props(prt))
-addprop!(T::Type{<:Prop}, prt::AbstractPort) = addprop!(T, props(prt))
+addprop!(T::Type{<:Prop}, prt::AbstractPort) = (addprop!(T, props(prt)); prt)
 in(P::Type{<:Prop}, prt::AbstractPort) = in(P, props(prt))
 
 "Is `port` an `out_port`"
@@ -40,6 +35,7 @@ function port(arr::Arrow, i::Integer)::Port
     throw(DomainError())
   end
 end
+
 
 "all ports of arrow"
 ports(arr::Arrow)::Vector{Port} = [Port(arr, i) for i = 1:num_ports(arr)]
@@ -98,9 +94,9 @@ function mann(prt::Port; show_name=true,
       end
     end
   end
-  if show_port_id res *= "[$(prt.port_id)]" end
   if show_typ res *= string("::", string(typ(prt)); kwargs...) end
   if show_arrow res *= " on $(name(prt.arrow))" end
+  if show_port_id res *= "[$(prt.port_id)]" end
   res
 end
 

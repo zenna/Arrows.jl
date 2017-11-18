@@ -1,8 +1,10 @@
 """
 A property that an entity (e.g. a `Port` or `Arrow` possess).
 
+desiderata:
 - A property may be existential, e.g. this port is an error port
 - Or a property may take on values e.g. the name of this port is `x`
+- Use hierarchies
 """
 abstract type Prop end
 
@@ -13,13 +15,20 @@ mutable struct Props
 end
 
 "Empty properties"
-Props() = Props(@NT(), Set{DataType}())
+Props() = Props(@NT()(), Set{DataType}())
+
+function Props(is_in_port::Bool, name::Symbol, typ::Type)
+  dir = is_in_port ? In() : Out()
+  Props(@NT(direction = dir,
+            name = Name(name),
+            typ = Typ(typ)))
+end
 
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
 
 "Add property `P` to `prps`"
-addprop!(P::Type{<:Prop}, prps::Props) = push!(prps.labels, P)
+addprop!(P::Type{<:Prop}, prps::Props)::Props = (push!(prps.labels, P); prps)
 
 function addprop(P::Type{<:Prop}, prps::Props)
   prps = deepcopy(prps)
@@ -63,6 +72,9 @@ isout(dir::Direction) = !(isin(dir))
 isin(prps::Props) = isin(prps.namedprops.direction)
 isout(prps::Props) = isout(prps.namedprops.direction)
 
+"Lambda which adds `P` to its argument"
+add!(P::Type{<:Prop}) = prps -> addprop!(P, prps)
+
 "Error"
 abstract type Err <: Prop end
 superscript(::Type{Err}) = :ᵋ
@@ -80,6 +92,11 @@ superscript(::Type{IdErr}) = :ⁱᵈᵋ
 struct DomainErr <: Err end
 domϵ = DomainErr
 superscript(::Type{DomainErr}) = :ᵈᵒᵐᵋ
+
+"Supervised Loss"
+struct SupervisedErr <: Err end
+supϵ = SupervisedErr
+superscript(::Type{SupervisedErr}) = :ˢᵘᵖᵋ
 
 "Parameter Property"
 type Param <: Prop end

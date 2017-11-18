@@ -17,12 +17,13 @@ function TraceParent(carr::CompArrow)
   TraceParent([sub_arrow(carr)])
 end
 
-"Number of levels in trace"
-length(tparent::TraceParent) = length(tparent.sarrs)
 @invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
 
+"Root `sarr`"
+root(tparent::TraceParent) = tparent.sarrs[1]
+
 "Is `tparent` the root: i.e. parentless"
-isroot(tparent::TraceParent) = length(tparent) == 1
+isroot(tparent::TraceParent) = length(tparent.sarrs) == 1 #length(tparent) == 1
 
 "Get lower most context"
 bottom(tparent::TraceParent)::SubArrow = tparent.sarrs[end]
@@ -41,7 +42,7 @@ end
 
 isequal(tparent1::TraceParent, tparent2::TraceParent)::Bool =
   isequal(tparent1.sarrs, tparent2.sarrs)
-hash(tparent::TraceParent, h::UInt) = hash((tparent.sarrs, tparent.leaf), h)
+hash(tparent::TraceParent, h::UInt) = hash(tparent.sarrs, h)
 (==)(tparent1::TraceParent, tparent2::TraceParent) = isequal(tparent1, tparent2)
 
 "A trace within an arrow uniquely defines a trace `sub_arrow`"
@@ -56,7 +57,7 @@ hash(tarr::TraceSubArrow, h::UInt) = hash((tarr.parent, tarr.leaf), h)
 (==)(tarr1::TraceSubArrow, tarr2::TraceSubArrow) = isequal(tarr1, tarr2)
 
 "`TraceSubArrow` where `sarr` is the root"
-function TraceSubArrow(sarr::SubArrow)
+function TraceSubArrow(sarr::SubArrow)::TraceSubArrow
   deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
   TraceSubArrow(TraceParent([sarr]), sarr)
 end
@@ -76,17 +77,25 @@ end
 "TraceSubArrow where subarrow of `carr` is the root"
 TraceSubArrow(carr::CompArrow) = TraceSubArrow(sub_arrow(carr))
 
-"`TraceSubArrow` from appending `sarr` to trace `tarr`"
-function append(tarr::TraceSubArrow, sarr::SubArrow)
-  sarr ∈ sub_arrows(tarr) || throw(ArgumentError("`sarr` not child of `tarr`"))
-  TraceSubArrow(vcat(tarr.sarrs, sarr))
-end
-
 "Which `SubArrow` does `tracearrow` trace to"
 sub_arrow(tarr::TraceSubArrow)::SubArrow = tarr.leaf
 
 "Arrow that `trace` references"
 deref(tarr::TraceSubArrow)::Arrow = deref(tarr.leaf)
+
+"Get all trace arrows within `carr`"
+function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  tarrs::Vector{TraceSubArrow} = TraceSubArrow[]
+  sarrs = sub_arrows(carr)
+  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  tarrs = vcat(tarrs, [TraceSubArrow(tparent, ptarr) for ptarr in ptarrs])
+  for csarr in csarrs
+    tarrs = vcat(tarrs, inner_trace_arrows(deref(csarr), down(tparent, csarr)))
+  end
+  tarrs
+end
+
+@pre inner_trace_arrows !isrecursive(carr)
 
 "Port of a `TraceSubArrow`"
 struct TraceSubPort <: AbstractPort
@@ -110,24 +119,21 @@ hash(tprt::TraceSubPort, h::UInt) = hash((tprt.trace_arrow, tprt.port_id), h)
 trace_ports(tarr::TraceSubArrow) =
   [TraceSubPort(tarr, i) for i = 1:length(⬧(deref(tarr)))]
 
+in_trace_ports(tarr::TraceSubArrow) =
+  [TraceSubPort(tarr, prt.port_id) for prt in ▸(deref(tarr))]
+
+out_trace_ports(tarr::TraceSubArrow) =
+  [TraceSubPort(tarr, prt.port_id) for prt in ◂(deref(tarr))]
+
+
 "Which `SubPort` does this `traceport` trace to"
 function sub_port(tprt::TraceSubPort)::SubPort
   SubPort(sub_arrow(tprt.trace_arrow), tprt.port_id)
 end
 
-"A `Value` of a `TraceSubArrow`"
-struct TraceValue <: Value
-  srctprt::TraceSubPort    # Composite TraceArrow that Value is within
-  TraceValue(tprt::TraceSubPort) = new(rootsrc(tprt))
-end
-
-
-"Parent `TraceArrow`"
-trace_parent(tprt::TraceSubPort)::TraceParent = trace_parent(tprt.trace_arrow)
-trace_parent(tarr::TraceSubArrow)::TraceParent = tarr.parent
 
 """
-The root source of a a `TraveValue`.  `src(sprt::SubPort)` is the `SubPort`
+The root source of a a `TraceValue`.  `src(sprt::SubPort)` is the `SubPort`
 that projects to `sprt` within `parent(sprt)`.  In constrast, `rootsrc(tprt)`
 projects back through the trace to find the original source.
 All `trcsprt` wtihin a `TraceValue` share the same `rootsrc`
@@ -154,13 +160,47 @@ function rootsrc(tprt::TraceSubPort)::TraceSubPort
   end
 end
 
+
+"A `Value` of a `TraceSubArrow`"
+struct TraceValue <: Value
+  srctprt::TraceSubPort    # Composite TraceArrow that Value is within
+  TraceValue(tprt::TraceSubPort) = new(rootsrc(tprt))
+end
+
+
+"Parent `TraceArrow`"
+trace_parent(tprt::TraceSubPort)::TraceParent = trace_parent(tprt.trace_arrow)
+trace_parent(tarr::TraceSubArrow)::TraceParent = tarr.parent
+
 "Two trace values are equal if they share the same `rootsrc`"
 isequal(v1::TraceValue, v2::TraceValue)::Bool = isequal(v1.srctprt, v2.srctprt)
-hash(tval::TraceValue, h::UInt) = hash(rootsrc(tval), h)
+hash(tval::TraceValue, h::UInt) = hash(tval.srctprt, h)
 (==)(v1::TraceValue, v2::TraceValue) = isequal(v1, v2)
 
-"Trace values of `tarr"
-trace_values(tarr::TraceSubArrow) = [TraceValue(tarr, i) for i = 1:length(get_ports(sub_arrow(tarr)))]
+"`TraceSubPort` referencing `sprt` where trace is `parent`"
+TraceValue(tparent::TraceParent, sprt::SubPort) =
+  TraceValue(TraceSubPort(tparent, sprt))
+
+"Trace ports of `tarr`"
+trace_values(tarr::TraceSubArrow) = map(TraceValue, trace_ports(tarr))
+
+in_trace_values(tarr::TraceSubArrow) = map(TraceValue, in_trace_ports(tarr))
+
+out_trace_values(tarr::TraceSubArrow) = map(TraceValue, out_trace_ports(tarr))
+
+"All the trace values inside `carr`"
+inner_trace_values(carr::CompArrow)::Vector{TraceValue} =
+  unique(vcat(trace_values.(inner_trace_arrows(carr))...))
+
+# FIXME: Maybe rename this, a sprt could be in many trace values, so name
+# should reflect its teh root
+"`TraceValue` where parent `sprt` is root `TraceParent`"
+trace_value(sprt::SubPort) = TraceValue(TraceParent(deref(sprt.sub_arrow)), sprt)
+
+"SubPorts ∈ Value"
+function SrcValue(tval::TraceValue)::SrcValue
+  SrcValue(sub_port(tval.srctprt))
+end
 
 # Printing #
 function string(tparent::TraceParent)
@@ -178,3 +218,11 @@ function string(tarr::TraceSubArrow)
   """
 end
 show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
+
+function string(tval::TraceValue)
+  """TraceValue
+  $(tval.srctprt)
+  """
+end
+
+show(io::IO, tval::TraceValue) = print(io, string(tval))

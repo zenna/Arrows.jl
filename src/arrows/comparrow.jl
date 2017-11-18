@@ -340,6 +340,9 @@ end
 
 "Add an edge in CompArrow from port `l` to port `r`"
 function link_ports!(l::SubPort, r::SubPort)
+  # FIXME: should_src is slow
+  # pre Disabled because invert does wrong way #90
+  # should_src(l) && should_dst(r) || throw(ArgumentError("only link src to dist but l = $l r = $r"))
   c = anyparent(l, r)
   l_idx = vertex_id(l)
   r_idx = vertex_id(r)
@@ -350,8 +353,8 @@ end
 ⥅(l, r) = link_ports!(l, r)
 ⥆(l, r) = link_ports!(r, l)
 
-"Remove an edge in CompArrow from port `l` to port `r`"
-function unlink_ports!(l::SubPort, r::SubPort)
+"Remove an edge in CompArrow from port `l` to port `r`, `true` iff success"
+function unlink_ports!(l::SubPort, r::SubPort)::Bool
   c = anyparent(l, r)
   l_idx = vertex_id(l)
   r_idx = vertex_id(r)
@@ -423,7 +426,7 @@ function v_to_p(f::Function, port::SubPort)::Vector{SubPort}
 end
 
 "`sport` is number `port_id(sport)` `SubPort` on `sub_arrow(sport)`"
-port_id(sport::SubPort)::Integer = sport.port_id
+port_id(sprt::SubPort)::Integer = sprt.port_id
 
 # Not in minimal integeral #########################################
 vertex_id(sport::SubPort)::VertexId =

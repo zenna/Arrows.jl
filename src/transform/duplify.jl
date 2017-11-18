@@ -26,4 +26,4 @@ function duplify!(arr::CompArrow)
 end
 
 "Use `Dupl` (i.e. `dupl(x) = (x, x)` to remove ports with more than 1 dest"
-duplify(arr::CompArrow) = duplify!(copy(arr))
+duplify(arr::CompArrow) = duplify!(deepcopy(arr))

@@ -1,5 +1,7 @@
 symb_id_portid_map(arr::Arrow) = Dict{Symbol, Symbol}(zip(names.(ports(arr))))
 id_portid_map(arr::Arrow) = Dict{Int, Int}(i => i for i = 1:num_ports(arr))
+
+# Conversion between different port map types
 portmapize(arr::Arrow, portmap::PortIdMap) = (arr, portmap)
 portmapize(arr::Arrow) = (arr, id_portid_map(arr))
 
@@ -64,4 +66,27 @@ walk(inner, outer, carr::CompArrow) = walk!(inner, outer, deepcopy(carr))
 function lightwalk(inner, outer, carr::CompArrow)::CompArrow
   foreach(inner, sub_arrows(carr))
   outer(carr)
+end
+
+"Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
+function simplewalk(f::Function, carr::CompArrow)
+  sarrs = sub_arrows(carr)
+  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  res = f.(ptarrs)
+  for csarr in csarrs
+    res = vcat(res, simplewalk(f, deref(csarr)))
+  end
+  res
+end
+
+"Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
+function simpletracewalk(f::Function, carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  sarrs = sub_arrows(carr)
+  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  tarrs = TraceSubArrow[TraceSubArrow(tparent, ptarr) for ptarr in ptarrs]
+  res = map(f, tarrs)
+  for csarr in csarrs
+    res = vcat(res, simpletracewalk(f, deref(csarr), down(tparent, csarr)))
+  end
+  res
 end

@@ -28,9 +28,9 @@ module Arrows
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!
 import NamedTuples: @NT, NamedTuple
+import AutoHashEquals: @auto_hash_equals
 using MacroTools
-# import Base: gradient
-
+import Base: gradient
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -100,6 +100,7 @@ export
   link_ports!,
   ⥅,
   ⥆,
+  port_id,
   add_sub_arr!,
   rem_sub_arr,
   replace_sub_arr!,
@@ -162,10 +163,13 @@ export
   ▹,
   θp,
   ϵ,
+  idϵ,
+  domϵ,
   addprop!,
 
   SourceArrow,
   AssertArrow,
+  UnknownArrow,
 
   MeanArrow,
   VarArrow,
@@ -194,6 +198,7 @@ export
   PowArrow,
   LogArrow,
   LogBaseArrow,
+  ReduceMean,
 
   # Compound
   addn,
@@ -222,61 +227,95 @@ export
   compile,
   order_sports,
 
-  TestArrows
-# Code structures
+  TestArrows,
+  Size,
+  meetall,
+  meet,
+
+  accumapply,
+  trace_value,
+  psl,
+  supervised,
+  traceprop!,
+  UnknownArrow,
+  simpletracewalk,
+  trace_values,
+  is,
+  add!,
+  link_to_parent!,
+  AbValues,
+  gradient,
+  source,
+  bcast,
+  IdAbValues,
+  NmAbValues,
+  SprtAbValues,
+  PrtAbValues,
+  XAbValues,
+  in_trace_values,
+  out_trace_values,
+  Sampler,
+  @grab,
+  δarr
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/pre.jl")      # methods that should be in LightGraphs
-
+include("util/pre.jl")              # methods that should be in LightGraphs
+include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
-include("arrows/property.jl")           # Ports and Port Attirbutes
-include("arrows/port.jl")           # Ports and Port Attirbutes
+include("arrows/property.jl")       # Properties
+include("arrows/port.jl")           # Ports
 include("arrows/primarrow.jl")      # Pimritive Arrows
 include("arrows/comparrow.jl")      # Composite Arrows
 include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
+include("arrows/unknown.jl")        # Unknown (uninterpreted) Arrows
 
 include("value/value.jl")           # ValueSet
 include("value/source.jl")          # SrcValue
-include("value/const.jl")           # Const type
+include("arrows/trace.jl")          # Arrow Traces
 
-include("arrows/trace.jl")          #
+# Abstract interpretation based propagation
+include("propagate/meet.jl")        # Meeting (intersection) of domains
+include("propagate/propagate.jl")
+include("propagate/size.jl")
+include("propagate/concrete.jl")
+include("propagate/const.jl")           # Const type
 
 # Library #
-include("library/common.jl")        # Methods common to library functions
-include("library/distances.jl")     # Methods common to library functions
-include("library/sigmoid.jl")       # Methods common to library functions
+include("library/common.jl")
+include("library/distances.jl")
+include("library/sigmoid.jl")
 
 include("library/assert.jl")
 include("library/source.jl")
+include("library/broadcast.jl")
 
 include("library/arithmetic.jl")
 include("library/inequalities.jl")
+include("library/dupl.jl")
 include("library/control.jl")
 include("library/array.jl")
 include("library/compound.jl")
-
-include("library/pgfprim.jl")
-
-include("library/inv_control.jl")
-include("library/inv_array.jl")
-include("library/inv_arith.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
 
+# Inv Arrows
+include("library/inv_control.jl")
+include("library/inv_array.jl")
+include("library/inv_arith.jl")
+
+# PGF Primitives
+include("library/pgfprim.jl")
+
 # Arrow combinators: compose Arrows into composite arrows #
 include("combinators/compose.jl")
+include("combinators/portapply.jl")
+
 
 # Compilation and application of an arrow #
-include("propagate/propagate.jl")
-include("propagate/shape.jl")
-include("propagate/const.jl")
-include("propagate/newpropagate.jl")
-
-
 include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
@@ -285,6 +324,8 @@ include("apply/interpret.jl")
 
 # Graph Transformations #
 include("transform/walk.jl")
+include("transform/tracewalk.jl")
+include("transform/newtracewalk.jl")
 include("transform/duplify.jl")
 include("transform/invert.jl")
 include("transform/pgf.jl")
@@ -294,12 +335,13 @@ include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
+include("transform/supervised.jl")
 
 # Macros
 include("macros/arr_macro.jl")
 
 # Solving constraints
-include("sym/sym.jl")
+# include("sym/sym.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
@@ -310,8 +352,7 @@ include("map.jl")
 include("optim/loss.jl")
 include("optim/util.jl")
 include("gradient/gradient.jl")
-# include("optim/optimize.jl")
-# include("gradient/gradient.jl")
+include("optim/optimize.jl")
 
 # # Targets #
 include("targets/targets.jl")
@@ -319,10 +360,11 @@ include("targets/julia/ordered_sports.jl")
 
 # # Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
-interpret(arr::Arrow, args) = interpret(aarr, args, JuliaTarget.JLTarget)
+interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
 include("../test/TestArrows.jl")
 
+include("homeless.jl")    # Unosrted
 end

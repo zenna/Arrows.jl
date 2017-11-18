@@ -26,3 +26,6 @@ out_values(aarr::AbstractArrow)::Vector{SrcValue} = SrcValue.(◃(aarr))
 
 "Get Vector of ValueSet"
 all_values(sarr::SubArrow)::Vector{SrcValue} = SrcValue.(⬨(sarr))
+
+"Is `sprt` in `sub_ports(val)`?"
+in(sprt::SubPort, val::SrcValue) = SrcValue(sprt) == val
