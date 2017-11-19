@@ -321,6 +321,8 @@ include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
 include("apply/interpret.jl")
+include("apply/traceinterpret.jl")
+
 
 # Graph Transformations #
 include("transform/walk.jl")
@@ -336,6 +338,9 @@ include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
 include("transform/supervised.jl")
+
+# Random generation
+include("rand.jl")
 
 # Macros
 include("macros/arr_macro.jl")

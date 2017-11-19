@@ -17,6 +17,11 @@ SprtAbValues = Dict{SubPort, AbValues}
 XAbValues = Union{SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
 
+# Conversions
+sprtabv(arr::Arrow, nmabv::NmAbValues) =
+  SprtAbValues(⬨(arr, nm) => abv for (nm, abv) in nmabv)
+
+
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
 Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
