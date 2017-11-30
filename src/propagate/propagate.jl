@@ -1,4 +1,4 @@
-"Name (e.g. :value, :size, ...) to abstract value (ConcreteValue, Size, ...)"
+"Name (e.g. :value, :size, ...) to abstract value (Singleton, Size, ...)"
 AbValues = Dict{Symbol, Any}
 
 "Mapping from `port_id` to abstract values"

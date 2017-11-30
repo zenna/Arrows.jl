@@ -49,8 +49,6 @@ function sizeprop(arr::InvBroadcastArrow, idabv::IdAbValues)::IdAbValues
 end
 abinterprets(::InvBroadcastArrow) = [sizeprop]
 
-
-
 function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     BroadcastArrow(), Dict(:x => :x, :y => :y)

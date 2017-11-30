@@ -18,7 +18,7 @@ end
 
 abinterprets(::SourceArrow{<:Union{Array, Number}}) = [sizeprop]
 valueprop(arr::SourceArrow, props::IdAbValues) =
-  IdAbValues(1 => AbValues(:value => ConcreteValue(arr.value)))
+  IdAbValues(1 => AbValues(:value => Singleton(arr.value)))
 constprop(arr::SourceArrow, props::IdAbValues)::IdAbValues =
   IdAbValues(1 => AbValues(:isconst => true))
 

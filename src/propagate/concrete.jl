@@ -1,5 +1,5 @@
 "Wrapper for data passed between nodes"
-struct ConcreteValue{T}
+struct Singleton{T}
   value::T
 end
 
@@ -10,7 +10,7 @@ function meet(x::Bool, y::Bool)
   x == y || throw(MeetError, [x, y])
 end
 
-function meet(x::ConcreteValue, y::ConcreteValue)
+function meet(x::Singleton, y::Singleton)
   x == y || throw(MeetError, [x, y])
   x
 end
@@ -21,7 +21,7 @@ function valueprop(arr::Arrow, idabv::IdAbValues)::IdAbValues
     # args = [prop[:value] for prop in values(idabv)]
     args = [idabv[prt.port_id][:value].value for (i, prt) in enumerate(▸(arr))]
     res = interpret(arr, args...)
-    cres = ConcreteValue.(res)
+    cres = Singleton.(res)
     IdAbValues(prt.port_id => AbValues(:value => cres[i]) for (i, prt) in enumerate(◂(arr)))
   else
     IdAbValues()
