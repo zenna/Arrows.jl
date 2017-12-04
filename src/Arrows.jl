@@ -102,7 +102,6 @@ export
   ⥆,
   port_id,
   add_sub_arr!,
-  rem_sub_arr,
   replace_sub_arr!,
   out_sub_port,
   out_sub_ports,
@@ -115,7 +114,6 @@ export
   in_sub_ports,
   in_ports,
   in_port,
-  in_ports,
   out_port,
   out_ports,
   num_in_ports,
@@ -123,24 +121,14 @@ export
   num_ports,
   port,
   ports,
-  propagate!,
-  Shape,
-  #const
-  Const,
-  known_const,
-  known_not_const,
-  const_propagator!,
-  compile,
 
   is_wired_ok,
   is_valid,
   interpret,
-  invert!,
   invert,
   pgf,
   out_values,
   aprx_invert,
-  aprx_totalize!,
   aprx_totalize!,
   domain_error,
   domain_error!,
@@ -237,7 +225,6 @@ export
   psl,
   supervised,
   traceprop!,
-  UnknownArrow,
   simpletracewalk,
   trace_values,
   is,
@@ -256,7 +243,14 @@ export
   out_trace_values,
   Sampler,
   @grab,
-  δarr
+  δarr,
+  ▸,
+  ◂,
+  ▹,
+  ◃,
+  ⬧,
+  ⬨
+
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities

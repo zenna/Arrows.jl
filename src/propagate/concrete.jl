@@ -1,7 +1,9 @@
-"Wrapper for data passed between nodes"
+"The set of a single element {value}"
 struct Singleton{T}
   value::T
 end
+
+issingleton(::Singleton) = true
 
 "All arrows can do constant propagation and value propagation"
 abinterprets(::Arrow) = [valueprop, constprop]

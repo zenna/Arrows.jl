@@ -13,26 +13,34 @@ NmAbValues = Dict{Symbol, AbValues}
 "You get the picture"
 SprtAbValues = Dict{SubPort, AbValues}
 
-"All kinds of AbValues"
-XAbValues = Union{SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
+"You get the picture"
+PrtAbValues = Dict{Port, AbValues}
 
+
+"All kinds of AbValues"
+XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
 # Conversions
 sprtabv(arr::Arrow, nmabv::NmAbValues) =
   SprtAbValues(⬨(arr, nm) => abv for (nm, abv) in nmabv)
-
 
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
 Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
   tabv[trace_value(sprt)]
 
+# Convenience functions for extracting info from XAbValues
 has(sm::Symbol) = prop -> haskey(prop, sm)
 
 "All ports in `idabv` have values for "
 function allhave(idabv::IdAbValues, abvkey::Symbol, prts::Port...)
   allthere = all((prt.port_id ∈ keys(idabv) for prt in prts))
   allthere && all(has(abvkey), (idabv[pid] for pid in port_id.(prts)))
+end
+
+"does `xabv[i][typ]` exist"
+function Base.in(xabv::XAbValues, i, typ::Symbol)
+  i ∈ keys(xabv) && typ in xabv[i]
 end
 
 "All abstract evaluators of `arr`"
