@@ -22,6 +22,16 @@ function test_gather_nd()
   @test sum(inverted) == (sum(θ) + sum(z))
 end
 
+function test_inv_dupl_arr()
+  c = CompArrow(:c, [:x, :y], [:z])
+  s = add_sub_arr!(c, InvDuplArrow{2}())
+  (c, 1) ⥅ (s, 1)
+  (c, 2) ⥅ (s, 2)
+  (s, 1) ⥅ (c, 1)
+  @test c(1:2, 1:2) == collect(1:2)
+end
+
 
 
 test_gather_nd()
+test_inv_dupl_arr()
