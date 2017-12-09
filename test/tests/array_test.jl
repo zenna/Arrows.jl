@@ -1,7 +1,6 @@
 using Arrows
 using Base.Test
 using Arrows.TestArrows
-using Base.Test
 
 
 function test_gather_nd()

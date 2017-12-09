@@ -15,8 +15,6 @@ function non_zero!(sarr::SubArrow)
   num + ε ⥅ numout
   den  ⥅ denout
   @assert is_wired_ok(clip_ε)
-  # eq_zero = (x == 0)
-  # (x * (1-eq_zero) + ε * eq_zero) ⥅ y
   inner_compose!(sarr, clip_ε)
 end
 
