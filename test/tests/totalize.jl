@@ -27,3 +27,15 @@ function test_has_error_ports()
 end
 
 test_has_error_ports()
+
+function test_apprx_div()
+  c = CompArrow(:c, [:x, :y], [:z])
+  x, y, z = ⬨(c)
+  (x/y) ⥅ z
+  apprx = aprx_totalize!(c)
+  @test abs(apprx(-2, -4)) != Inf
+  @test abs(apprx(132, 0)) != Inf
+  @test abs(apprx(0, 0)) == 0
+end
+
+test_apprx_div()
