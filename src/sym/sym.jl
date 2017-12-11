@@ -296,9 +296,9 @@ remove_unused_θs!(expr, θs) = expr
 function remove_unused_θs!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+
-      if (expr.args[2] ∈ θs) || (expr.args[3] ∈ θs)
-        id = expr.args[2] ∈ θs ? 3 : 2
-        return expr.args[id]
+      left, right = expr.args[2:end]
+      if left ∈ θs || right ∈ θs
+        return left ∈ θs ? right : left
       end
     end
   end
