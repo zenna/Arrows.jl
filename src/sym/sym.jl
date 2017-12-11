@@ -205,15 +205,21 @@ function constraints(carr::CompArrow)
   info = ConstraintInfo()
   symbol_in_ports(carr, info)
   outs = interpret(sym_interpret, carr, info.inp)
-  allpreds = Set{SymUnion}()
-  foreach(out -> union!(allpreds, out.preds), outs)
-  filter_gather_θ!(carr, info, allpreds)
+  allpreds = reduce(union, (out->out.preds).(outs))
+  preds_with_outs = union(allpreds, map(out->out.var, outs))
+  filter_gather_θ!(carr, info, preds_with_outs)
   add_preds(info, allpreds)
   info
   #filter(pred -> pred ∉ remove, allpreds)
 end
 
-
+## This is a complex function and it's because of inv_gather
+## When computing the inverse of gather, we create a CompArrow
+## This CompArrow includes a ScatterNdArrow And a AddArrow that
+## fills the result with the θ.
+## To know which are the actual θ used, we cannot solve it in sym_interpret
+## because of the composite. So, in sym_interpret we add a placeholder
+## and then we collect everything named θgather that is not with the placeholder
 function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()

@@ -4,8 +4,8 @@ using Base.Test
 
 
 function test_sym_gather_inv()
-  indices = [[1, 4] [2, 2]]
-  params = reshape(collect(1:100), (10,10));
+  indices = [[0, 1] [2, 2]]
+  params = reshape(collect(1:9), (3,3));
   shape = size(params)
   function f(params)
     return gather_nd(params, indices, shape)
@@ -18,6 +18,10 @@ function test_sym_gather_inv()
   wirer, info = Arrows.solve(inv_c);
   wired = Arrows.connect_target(wirer, inv_c);
   apprx = Arrows.aprx_totalize(wired);
+  parts = vcat(1:6, [9,]);
+  z = f(params)
+  inverted_params = apprx(z, parts)
+  @test sum(abs.(inverted_params - params)) == 0
 end
 
 function test_sym_gather_inv_mult()
@@ -52,3 +56,4 @@ end
 ## preds = Arrows.constraints(invert(TestArrows.weird_arr()))
 
 test_sym_gather_inv_mult()
+test_sym_gather_inv()
