@@ -218,9 +218,7 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
   for (name, idx) in info.port_to_index
-    if !info.is_θ_by_portn[idx]
-      continue
-    end
+    info.is_θ_by_portn[idx] || continue
     exprs = info.inp[idx].var.value
     if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
@@ -280,11 +278,13 @@ find_gather_params!(expr, θs) = expr
 find_gather_params!(expr::Array, θs) = map(e->find_gather_params!(e, θs), expr)
 function find_gather_params!(expr::Expr, θs)
   if expr.head == :call
-    if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
-      id = expr.args[2] == Arrows.token_name ? 3 : 2
-      ref = expr.args[id]
-      push!(θs, ref)
-      return ref
+    if expr.args[1] == :+
+      left, right = expr.args[2:end]
+      if Arrows.token_name ∈ (left, right)
+        ref = left == Arrows.token_name ? right : left
+        push!(θs, ref)
+        return ref
+      end
     end
   end
   expr.args = map(x->find_gather_params!(x, θs), expr.args)
