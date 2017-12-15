@@ -8,7 +8,6 @@ end
 token_name = :τᵗᵒᵏᵉⁿ
 SymUnion(value) = SymUnion(value, 0)
 SymPlaceHolder() = SymUnion(token_name)
-#hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
 unsym(sym::SymUnion) = sym.value
 sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
 sym_unsym(sym::SymUnion)  = sym
@@ -22,6 +21,9 @@ end
 struct SymbolPrx
   var::SymUnion
 end
+
+as_expr(sym::SymUnion) = sym.value
+as_expr(ref::RefnSym) = as_expr(ref.var)
 
 mutable struct ConstraintInfo
   exprs::Vector{Expr}
@@ -439,38 +441,35 @@ function find_assignments(info)
   info
 end
 
-
+"Function that separate [assgins,specials] by port number"
 function compute_assigns_by_portn(info::ConstraintInfo)
-  as_expr = x->x.var.value
   as_set(x::AbstractArray) = Set(x)
   as_set(x) = Set([x,])
   inp_set = map(as_set ∘ as_expr, info.inp)
-  assigns = map(_->Dict(),info.inp)
-  specials = map(_->Dict(),info.inp)
+  create_with_shape = obj->map(_->obj(), info.inp)
+
   θs = info.θs
-  function match_assigns(collection_src, collection_dst)
-    for (k,v) in collection_src
-      for (id, set) in enumerate(inp_set)
-        if k ∈ set
-          collection_dst[id][k] = v
-          pop!(θs, k)
-        end
+  function map_if_in(f, keys, collection_dst)
+    for k in keys
+      for (set, dst) in zip(inp_set, collection_dst)
+        k ∈ set && f(k, dst)
       end
     end
+    collection_dst
   end
-  match_assigns(info.assignments, assigns)
-  match_assigns(info.specials, specials)
-  unassigns = map(_->Set(),info.inp)
-  for θ in θs
-    for (id, set) in enumerate(inp_set)
-      if θ ∈ set
-        push!(unassigns[id], θ)
-      end
+  function match_assigns(collection_src)
+    collection_dst = create_with_shape(Dict)
+    map_if_in(keys(collection_src), collection_dst) do k, dst
+      dst[k] = collection_src[k]
+      pop!(θs, k)
     end
   end
-  info.unassigns_by_portn = unassigns
-  info.assigns_by_portn = assigns
-  info.specials_by_portn = specials
+  info.assigns_by_portn = match_assigns(info.assignments)
+  info.specials_by_portn = match_assigns(info.specials)
+  info.unassigns_by_portn = create_with_shape(Set)
+  map_if_in(θs, info.unassigns_by_portn) do θ, dst
+    push!(dst, θ)
+  end
 end
 
 length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
