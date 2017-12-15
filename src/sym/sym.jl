@@ -405,13 +405,12 @@ end
 
 function build_symbol_to_constraint(info::ConstraintInfo)
   foreach(info.exprs) do expr
-    f = x -> build_symbol_to_constraint(info, x)
-    foreach(f, expr.args[2:end])
+    build_symbol_to_constraint(info, expr)
   end
 end
 
+"creates a mapping from symbols to the expressions that used them"
 build_symbol_to_constraint(info::ConstraintInfo, expr) = false
-
 function build_symbol_to_constraint(info::ConstraintInfo, expr::Expr)
   for arg in expr.args
     if arg ∈ info.θs
@@ -424,16 +423,20 @@ function build_symbol_to_constraint(info::ConstraintInfo, expr::Expr)
     end
   end
 end
+
+"""Try to find an assigment like a == b or b == a.
+Additionally, it try to find an assigment of the form
+f(a) = b, when f is a total function and f⁻¹ exists."""
 function find_assignments(info)
   build_symbol_to_constraint(info)
   for expr in info.exprs
     @assert expr.head == :call
     @assert expr.args[1] == :(==)
     left, right = expr.args[2:end]
-    f = (l, r) -> assign_if_possible(info, l, r)
+    assign = (l, r) -> assign_if_possible(info, l, r)
     special = (l, r) -> assign_special_if_possible(info, l, r)
-    if !(f(left, right) || f(right, left))
-      if !(special(left, right) || special(right, left))
+    if !assign(left, right) && !assign(right, left)
+      if !special(left, right) && !special(right, left)
         push!(info.unsat, SymUnion(expr))
       end
     end
