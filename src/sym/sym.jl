@@ -8,7 +8,6 @@ end
 token_name = :τᵗᵒᵏᵉⁿ
 SymUnion(value) = SymUnion(value, 0)
 SymPlaceHolder() = SymUnion(token_name)
-#hash(x::SymUnion, h::UInt64) = hash(x.hsh, h)
 unsym(sym::SymUnion) = sym.value
 sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
 sym_unsym(sym::SymUnion)  = sym
@@ -22,6 +21,9 @@ end
 struct SymbolPrx
   var::SymUnion
 end
+
+as_expr(sym::SymUnion) = sym.value
+as_expr(ref::RefnSym) = as_expr(ref.var)
 
 mutable struct ConstraintInfo
   exprs::Vector{Expr}
@@ -205,22 +207,26 @@ function constraints(carr::CompArrow)
   info = ConstraintInfo()
   symbol_in_ports(carr, info)
   outs = interpret(sym_interpret, carr, info.inp)
-  allpreds = Set{SymUnion}()
-  foreach(out -> union!(allpreds, out.preds), outs)
-  filter_gather_θ!(carr, info, allpreds)
+  allpreds = reduce(union, (out->out.preds).(outs))
+  preds_with_outs = union(allpreds, map(out->out.var, outs))
+  filter_gather_θ!(carr, info, preds_with_outs)
   add_preds(info, allpreds)
   info
   #filter(pred -> pred ∉ remove, allpreds)
 end
 
-
+## This is a complex function and it's because of inv_gather
+## When computing the inverse of gather, we create a CompArrow
+## This CompArrow includes a ScatterNdArrow And a AddArrow that
+## fills the result with the θ.
+## To know which are the actual θ used, we cannot solve it in sym_interpret
+## because of the composite. So, in sym_interpret we add a placeholder
+## and then we collect everything named θgather that is not with the placeholder
 function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   all_gather_θ = Set{Expr}()
   non_gather_θ = Set{Union{Symbol, Expr}}()
   for (name, idx) in info.port_to_index
-    if !info.is_θ_by_portn[idx]
-      continue
-    end
+    info.is_θ_by_portn[idx] || continue
     exprs = info.inp[idx].var.value
     if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
@@ -280,11 +286,13 @@ find_gather_params!(expr, θs) = expr
 find_gather_params!(expr::Array, θs) = map(e->find_gather_params!(e, θs), expr)
 function find_gather_params!(expr::Expr, θs)
   if expr.head == :call
-    if expr.args[1] == :+ && Arrows.token_name ∈ expr.args
-      id = expr.args[2] == Arrows.token_name ? 3 : 2
-      ref = expr.args[id]
-      push!(θs, ref)
-      return ref
+    if expr.args[1] == :+
+      left, right = expr.args[2:end]
+      if Arrows.token_name ∈ (left, right)
+        ref = left == Arrows.token_name ? right : left
+        push!(θs, ref)
+        return ref
+      end
     end
   end
   expr.args = map(x->find_gather_params!(x, θs), expr.args)
@@ -296,9 +304,9 @@ remove_unused_θs!(expr, θs) = expr
 function remove_unused_θs!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+
-      if (expr.args[2] ∈ θs) || (expr.args[3] ∈ θs)
-        id = expr.args[2] ∈ θs ? 3 : 2
-        return expr.args[id]
+      left, right = expr.args[2:end]
+      if left ∈ θs || right ∈ θs
+        return left ∈ θs ? right : left
       end
     end
   end
@@ -433,38 +441,35 @@ function find_assignments(info)
   info
 end
 
-
+"Function that separate [assgins,specials] by port number"
 function compute_assigns_by_portn(info::ConstraintInfo)
-  as_expr = x->x.var.value
   as_set(x::AbstractArray) = Set(x)
   as_set(x) = Set([x,])
   inp_set = map(as_set ∘ as_expr, info.inp)
-  assigns = map(_->Dict(),info.inp)
-  specials = map(_->Dict(),info.inp)
+  create_with_shape = obj->map(_->obj(), info.inp)
+
   θs = info.θs
-  function match_assigns(collection_src, collection_dst)
-    for (k,v) in collection_src
-      for (id, set) in enumerate(inp_set)
-        if k ∈ set
-          collection_dst[id][k] = v
-          pop!(θs, k)
-        end
+  function map_if_in(f, keys, collection_dst)
+    for k in keys
+      for (set, dst) in zip(inp_set, collection_dst)
+        k ∈ set && f(k, dst)
       end
     end
+    collection_dst
   end
-  match_assigns(info.assignments, assigns)
-  match_assigns(info.specials, specials)
-  unassigns = map(_->Set(),info.inp)
-  for θ in θs
-    for (id, set) in enumerate(inp_set)
-      if θ ∈ set
-        push!(unassigns[id], θ)
-      end
+  function match_assigns(collection_src)
+    collection_dst = create_with_shape(Dict)
+    map_if_in(keys(collection_src), collection_dst) do k, dst
+      dst[k] = collection_src[k]
+      pop!(θs, k)
     end
   end
-  info.unassigns_by_portn = unassigns
-  info.assigns_by_portn = assigns
-  info.specials_by_portn = specials
+  info.assigns_by_portn = match_assigns(info.assignments)
+  info.specials_by_portn = match_assigns(info.specials)
+  info.unassigns_by_portn = create_with_shape(Set)
+  map_if_in(θs, info.unassigns_by_portn) do θ, dst
+    push!(dst, θ)
+  end
 end
 
 length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
@@ -646,7 +651,8 @@ function create_inner_connector(info::ConstraintInfo,
   carr = CompArrow(gensym(:inner_connector), 1, 1)
   sarr = add_sub_arr!(connector_arr, carr)
   g = generate_gather(inputs, size(inputs))
-  s = generate_scatter(outputs, [length_of(info, idx),])
+  shape = tuple(length_of(info, idx))
+  s = generate_scatter(outputs, shape)
   g_sarr = add_sub_arr!(carr, g)
   scatter_sarr = add_sub_arr!(carr, s)
   (carr, 1) ⥅ (g_sarr, 1)
@@ -666,7 +672,8 @@ function create_inner_connector_private(info::ConstraintInfo,
   carr = CompArrow(gensym(:inner_connector), n, 1)
   sarr = add_sub_arr!(info.master_carr, carr)
   g = generate_gather(inputs, size(inputs))
-  s = generate_scatter(outputs, [length_of(info, idx),])
+  shape = tuple(length_of(info, idx))
+  s = generate_scatter(outputs, shape)
   scatter_sarr = add_sub_arr!(carr, s)
   context = Dict()
   for (idx, v) in enumerate(variables)

@@ -341,7 +341,7 @@ include("transform/supervised.jl")
 include("macros/arr_macro.jl")
 
 # Solving constraints
-# include("sym/sym.jl")
+include("sym/sym.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")

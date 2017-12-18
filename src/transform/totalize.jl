@@ -9,12 +9,12 @@ sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 function non_zero!(sarr::SubArrow)
   clip_ε = CompArrow(:clip_ε, [:den, :num], [:denout, :numout])
   den, num, denout, numout = ⬨(clip_ε)
-  ε = 0.001
-  num + 4.0 ⥅ numout
-  den + 4.0 ⥅ denout
+  zero = ◃(add_sub_arr!(clip_ε, SourceArrow(0)), 1)
+  comparison = EqualArrow()(num, zero)
+  ε = ifelse(comparison, 0.001, zero)
+  num + ε ⥅ numout
+  den  ⥅ denout
   @assert is_wired_ok(clip_ε)
-  # eq_zero = (x == 0)
-  # (x * (1-eq_zero) + ε * eq_zero) ⥅ y
   inner_compose!(sarr, clip_ε)
 end
 
