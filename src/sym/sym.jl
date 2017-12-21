@@ -51,10 +51,6 @@ mutable struct ConstraintInfo
   end
 end
 
-# TODO: generate this list dynamically
-scalar_names = Set{Symbol}([:+, :-, :*, :/, :exp, :log, :logbase, :asin, :sin,
-                            :cos, :acos, :sqrt, :sqr, :abs, :^, :min, :max,
-                            :%, :ceil, :floor])
 function getindex(s::SymbolPrx, i::Int)
   ref_expr = v-> Expr(:ref, v, i)
   inner_getindex(v) = v
@@ -106,6 +102,7 @@ end
 *(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
 log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
 neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
+exp(x::SymUnion)::SymUnion = SymUnion(:(exp($(x.value))))
 var(xs::Array{SymUnion}) = SymUnion(:())
 
 function s_arrayed(xs::Array{SymUnion}, name)
@@ -126,6 +123,7 @@ prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
 prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]
 prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
+prim_sym_interpret(::ExpArrow, x) = [exp.(x),]
 prim_sym_interpret(::NegArrow, x) = [neg.(x),]
 prim_sym_interpret{N}(::DuplArrow{N}, x) = [x  for _ in 1:N]
 function prim_sym_interpret{N}(::InvDuplArrow{N},
@@ -353,7 +351,8 @@ function collect_symbols_solver(info, v::Expr, seen)
   end
   seen
 end
-
+"""A special assigment appears when having constraint of the
+form `f(x) = g(y)` and `g⁻¹` exists"""
 assign_special_if_possible(info, left, right) = false
 function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
   seen_l = collect_symbols_solver(info, left, Set())
@@ -363,10 +362,10 @@ function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
   left_name = pop!(seen_l)
   if symbolic_includes(left_name, right)
     warn("""parameters that appear in both sides of equalities
-            cannot be solved: $(left_name) == $(right)""")
+            cannot be solved: $(left) == $(right)""")
     false
   else
-    if haskey(info.mapping, left_name)
+    if left_name ∈ keys(info.mapping)
       foreach(info.mapping[left_name]) do expr
         if !symbolic_includes(expr, left)
           return false
@@ -389,7 +388,7 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
     false
   elseif left != right
     info.assignments[left] = right
-    if haskey(info.mapping, left)
+    if left ∈ keys(info.mapping)
       foreach(info.mapping[left]) do expr
         replace!(left, right, expr)
       end

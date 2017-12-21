@@ -50,6 +50,56 @@ function test_sym_gather_inv_mult()
   @test sum(abs.(inverted_params - params)) == 0
 end
 
+function test_sym_gather_inv_log()
+  indices = [[1, 4] [2, 2]]
+  indices2 = [[5, 3] [4, 1]]
+  params = reshape(collect(1:100), (10,10));
+  shape = size(params)
+  function f(params)
+    a = gather_nd(params, indices, shape)
+    b = gather_nd(params, indices2, shape)
+    b .* log(a)
+  end
+  c = CompArrow(:c, [:x], [:z])
+  x, = ▹(c)
+  f(x) ⥅ ◃(c,1)
+  c = Arrows.duplify!(c)
+  inv_c = Arrows.invert(c)
+  wirer, info = Arrows.solve(inv_c);
+  wired = Arrows.connect_target(wirer, inv_c);
+  apprx = Arrows.aprx_totalize(wired);
+  parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
+  z = f(params)
+  θm = log.([22, 25])
+  inverted_params = apprx(z, parts, θm)
+  @test sum(abs.(inverted_params - params)) < 0.000001
+end
+
+function test_sym_gather_inv_log_special()
+  indices = [[1, 4] [2, 2]]
+  indices2 = [[5, 3] [4, 1]]
+  params = reshape(collect(1:100), (10,10));
+  shape = size(params)
+  function f(params)
+    a = gather_nd(params, indices, shape)
+    log(a) .* 2 .+ log(a)
+  end
+  c = CompArrow(:c, [:x], [:z])
+  x,  = ▹(c)
+  f(x) ⥅ ◃(c,1)
+  c = Arrows.duplify!(c)
+  inv_c = Arrows.invert(c)
+  wirer, info = Arrows.solve(inv_c);
+  wired = Arrows.connect_target(wirer, inv_c);
+  apprx = Arrows.aprx_totalize(wired);
+  parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
+  z = f(params)
+  θm = log.([22, 25])
+  inverted_params = apprx(z, parts, θm, θa)
+  @show inverted_params
+  @test sum(abs.(inverted_params - params)) == 0
+end
+
 
 ## foreach(test_sym, TestArrows.plain_arrows())
 
@@ -57,3 +107,5 @@ end
 
 test_sym_gather_inv_mult()
 test_sym_gather_inv()
+test_sym_gather_inv_log()
+test_sym_gather_inv_log_special()
