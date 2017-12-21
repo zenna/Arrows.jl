@@ -3,10 +3,8 @@
 using NamedTuples
 mutable struct SymUnion
   value
-  hsh::UInt
 end
 token_name = :τᵗᵒᵏᵉⁿ
-SymUnion(value) = SymUnion(value, 0)
 SymPlaceHolder() = SymUnion(token_name)
 unsym(sym::SymUnion) = sym.value
 sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
@@ -58,7 +56,7 @@ function getindex(s::SymbolPrx, i::Int)
   inner_getindex(v::Union{Symbol, Expr}) = ref_expr(v)
   sym = s.var
   v = sym.value
-  SymUnion(inner_getindex(v), 0)
+  SymUnion(inner_getindex(v))
 end
 
 "Unconstrained Symbol"
