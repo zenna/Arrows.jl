@@ -125,6 +125,7 @@ prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
 prim_sym_interpret(::ExpArrow, x) = [exp.(x),]
 prim_sym_interpret(::NegArrow, x) = [neg.(x),]
+prim_sym_interpret(::Arrows.BroadcastArrow, x) = [x,]
 prim_sym_interpret{N}(::DuplArrow{N}, x) = [x  for _ in 1:N]
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
@@ -200,10 +201,12 @@ sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
 
 
+
+
 "Constraints on inputs to `carr`"
-function constraints(carr::CompArrow)
+function constraints(carr::CompArrow, initprops)
   info = ConstraintInfo()
-  symbol_in_ports(carr, info)
+  symbol_in_ports(carr, info, initprops)
   outs = interpret(sym_interpret, carr, info.inp)
   allpreds = reduce(union, (out->out.preds).(outs))
   preds_with_outs = union(allpreds, map(out->out.var, outs))
@@ -255,8 +258,8 @@ function expand_θ(θ, sz::Size)
   symbols
 end
 
-function symbol_in_ports(arr::CompArrow, info::ConstraintInfo)
-  trcp = traceprop!(arr, Dict{SubPort, Arrows.AbValues}())
+function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
+  trcp = traceprop!(arr, initprops)
   info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   info.port_to_index = Dict{SymUnion, Number}()
@@ -832,12 +835,16 @@ function connect_target(wirer, target)
   carr
 end
 
+function solve(carr::CompArrow)
+  solve(carr, Dict{SubPort, Arrows.AbValues}())
+end
+
 """solve constraints on inputs to `carr`
 It will return a tuple with a `CompArrow` (the wirer), and information regarding
 the solving process.
 Use `connect_target` to connect the wirer to the actual inverse `Arrow`"""
-function solve(carr::CompArrow)
-  info = constraints(carr)
+function solve(carr::CompArrow, initprops)
+  info = constraints(carr, initprops)
   (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))
   create_first_step_of_connection(info)

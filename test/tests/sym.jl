@@ -80,24 +80,27 @@ function test_sym_gather_inv_log_special()
   indices2 = [[5, 3] [4, 1]]
   params = reshape(collect(1:100), (10,10));
   shape = size(params)
-  function f(params)
-    a = gather_nd(params, indices, shape)
-    log(a) .* 2 .+ log(a)
-  end
   c = CompArrow(:c, [:x], [:z])
+  two, = ◃(add_sub_arr!(c, SourceArrow(2)))
+  function f(params, two)
+    a = gather_nd(params, indices, shape)
+    log(a) * two .+ log(a)
+  end
   x,  = ▹(c)
-  f(x) ⥅ ◃(c,1)
+  f(x, bcast(two)) ⥅ ◃(c,1)
   c = Arrows.duplify!(c)
   inv_c = Arrows.invert(c)
-  wirer, info = Arrows.solve(inv_c);
+  z = f(params, 2)
+  ▹z = ▹(inv_c, 1)
+  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size(size(z)))
+  wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
   wired = Arrows.connect_target(wirer, inv_c);
   apprx = Arrows.aprx_totalize(wired);
-  parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
-  z = f(params)
-  θm = log.([22, 25])
-  inverted_params = apprx(z, parts, θm, θa)
-  @show inverted_params
-  @test sum(abs.(inverted_params - params)) == 0
+  parts = vcat(1:21, 23:24, 26:100);
+
+  θm = log.([22, 25]);
+  inverted_params = apprx(z, parts, θm);
+  @test sum(abs.(inverted_params - params)) < 0.000001
 end
 
 
