@@ -6,9 +6,6 @@ mutable struct SymUnion
 end
 token_name = :τᵗᵒᵏᵉⁿ
 SymPlaceHolder() = SymUnion(token_name)
-unsym(sym::SymUnion) = sym.value
-sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(unsym.(sym))
-sym_unsym(sym::SymUnion)  = sym
 
 "Refined Symbol {x | pred}"
 struct RefnSym
@@ -20,8 +17,13 @@ struct SymbolPrx
   var::SymUnion
 end
 
+as_expr{N}(values::Union{NTuple{N, SymUnion}, AbstractArray{SymUnion, N}}) =
+  map(as_expr, values)
 as_expr(sym::SymUnion) = sym.value
 as_expr(ref::RefnSym) = as_expr(ref.var)
+sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(as_expr.(sym))
+sym_unsym(sym::SymUnion)  = sym
+
 
 mutable struct ConstraintInfo
   exprs::Vector{Expr}
@@ -68,7 +70,8 @@ function Sym(prps::Props)
   ustring = string(name(prps))
   SymUnion(Symbol(ustring))
 end
-Sym(prt::Port) = Sym(props(prt))
+Sym(sprt::SubPort) = sprt |> deref |> Sym
+Sym(prt::Port) = prt |> props |> Sym
 RefnSym(prt::Port) = RefnSym(Sym(prt))
 
 
@@ -132,26 +135,25 @@ end
 
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg)::Vector{SymUnion}
-  [SymUnion(map(unsym, first(xs)))]
+  [xs |> first |> sym_unsym,]
 end
 
 function  prim_sym_interpret(::Arrows.ReshapeArrow,
                               data::Array{Arrows.SymUnion,2},
                               shape::Array{Arrows.SymUnion,1})
-  data = map(unsym, data)
-  shape = map(unsym, shape)
+  data = as_expr(data)
+  shape = as_expr(shape)
   [SymUnion(reshape(data, shape)),]
 
 end
 
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
-  indices = map(unsym, indices)
-  shape = map(unsym, shape)
+  indices = as_expr(indices)
+  shape = as_expr(shape)
   z = sym_unsym(z)
   arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
                           SymPlaceHolder())
-  expr = map(sym->sym.value, arrayed_sym)
-  [SymUnion(expr),]
+  [sym_unsym(arrayed_sym),]
 end
 
 function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg)
@@ -184,8 +186,7 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
   if length(outputs) > 0 && isa(outputs[1], Array)
     sym_unions = Array{SymUnion, ndims(outputs)}(size(outputs)...)
     for iter in eachindex(outputs)
-      sym_output = SymUnion(map(unsym, outputs[iter]))
-      sym_unions[iter] =  sym_output
+      sym_unions[iter] = sym_unsym(outputs[iter])
     end
   else
     sym_unions = outputs
@@ -238,8 +239,9 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
     end
   end
   θs = Set{Expr}()
-  g = (x->find_gather_params!(x, θs)) ∘ Arrows.unsym
-  foreach(g, constraints)
+  foreach(constraints) do cons
+    find_gather_params!(as_expr(cons), θs)
+  end
   unused_θ = setdiff(all_gather_θ, θs)
   foreach(constraints) do cons
     remove_unused_θs!(cons.value, unused_θ)
@@ -247,13 +249,13 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   info.θs = union(θs, non_gather_θ)
 end
 
-function expand_θ(θ, sz::Size)
+function expand_θ(θ, sz::Size)::RefnSym
   shape = get(sz)
   symbols = Array{Arrows.SymUnion, ndims(sz)}(shape...)
   for iter in eachindex(symbols)
     symbols[iter] = θ[iter]
   end
-  symbols
+  symbols |> sym_unsym |> RefnSym
 end
 
 function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
@@ -263,16 +265,15 @@ function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
   info.port_to_index = Dict{SymUnion, Number}()
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
-    sym = (Sym ∘ deref)(sport)
+    sym = Sym(sport)
     info.port_to_index[sym] = idx
     tv = trace_value(sport)
-    if haskey(trcp, tv)
+    if tv ∈ keys(trcp)
       inferred = trcp[tv]
-      if haskey(inferred, :size)
+      if :size ∈ keys(inferred)
+        prx = SymbolPrx(sym)
         sz = inferred[:size]
-        expand = x->expand_θ(x, sz)
-        sym_arr = (expand ∘ SymbolPrx)(sym)
-        inp[idx] = (RefnSym ∘ SymUnion)(unsym.(sym_arr))
+        inp[idx] = expand_θ(prx, sz)
         continue
       end
     end
@@ -400,7 +401,7 @@ end
 
 
 function add_preds(info::ConstraintInfo, allpreds::Set)
-  info.exprs = unsym.(collect(allpreds))
+  info.exprs = allpreds |> collect |> as_expr
 end
 
 function build_symbol_to_constraint(info::ConstraintInfo)
