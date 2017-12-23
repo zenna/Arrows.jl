@@ -809,31 +809,10 @@ function finish_parameter_wiring(info, sarr, idx)
 end
 
 
-"function that connects a wirer (produce by `solve`) with the actual inverse"
-function connect_target(wirer, target)
-  carr = CompArrow(gensym(:reduced_params),0, 0)
-  wirer_sarr = add_sub_arr!(carr, wirer)
-  target_sarr = add_sub_arr!(carr, target)
-
-  for sport in ▹(wirer_sarr)
-    link_to_parent!(sport)
-  end
-
-  wirer_out_sports = Dict([name(deref(p)) => p for p in ◃(wirer_sarr)])
-  for sport in ▹(target_sarr)
-    wirer_out_sports[name(deref(sport))] ⥅ sport
-  end
-
-  for sport in ◃(target_sarr)
-    link_to_parent!(sport)
-  end
-  carr
-end
-
 """solve constraints on inputs to `carr`
 It will return a tuple with a `CompArrow` (the wirer), and information regarding
 the solving process.
-Use `connect_target` to connect the wirer to the actual inverse `Arrow`"""
+Use `inv_c << wirer` to connect the wirer to the actual inverse `Arrow`"""
 function solve(carr::CompArrow, initprops = SprtAbValues())
   info = constraints(carr, initprops)
   (compute_assigns_by_portn ∘ find_assignments)(info)

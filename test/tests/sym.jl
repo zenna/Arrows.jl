@@ -16,8 +16,7 @@ function test_sym_gather_inv()
   c = Arrows.duplify!(c)
   inv_c = Arrows.invert(c)
   wirer, info = Arrows.solve(inv_c);
-  wired = Arrows.connect_target(wirer, inv_c);
-  apprx = Arrows.aprx_totalize(wired);
+  apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = vcat(1:6, [9,]);
   z = f(params)
   inverted_params = apprx(z, parts)
@@ -40,8 +39,7 @@ function test_sym_gather_inv_mult()
   c = Arrows.duplify!(c)
   inv_c = Arrows.invert(c)
   wirer, info = Arrows.solve(inv_c);
-  wired = Arrows.connect_target(wirer, inv_c);
-  apprx = Arrows.aprx_totalize(wired);
+  apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
   z = f(params)
   θm = [46, 14]
@@ -66,8 +64,7 @@ function test_sym_gather_inv_log()
   c = Arrows.duplify!(c)
   inv_c = Arrows.invert(c)
   wirer, info = Arrows.solve(inv_c);
-  wired = Arrows.connect_target(wirer, inv_c);
-  apprx = Arrows.aprx_totalize(wired);
+  apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
   z = f(params)
   θm = log.([22, 25])
@@ -94,8 +91,7 @@ function test_sym_gather_inv_log_special()
   ▹z = ▹(inv_c, 1)
   init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size(size(z)))
   wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
-  wired = Arrows.connect_target(wirer, inv_c);
-  apprx = Arrows.aprx_totalize(wired);
+  apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = vcat(1:21, 23:24, 26:100);
 
   θm = log.([22, 25]);
