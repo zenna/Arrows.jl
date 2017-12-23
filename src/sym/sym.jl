@@ -494,37 +494,33 @@ function generate_function(context::Dict, moniker)
 end
 
 function generate_gather(indexed_elements, shape)
-  carr = CompArrow(gensym(:gather_wire), 1, 1)
-  indices = extract_indices(indexed_elements)
-  indices = SourceArrow(indices)
-  shape = SourceArrow(shape)
-  sarr_shape =  add_sub_arr!(carr, shape)
-  sarr_indices = add_sub_arr!(carr, indices)
-  sarr_gather =  add_sub_arr!(carr, GatherNdArrow())
-  (carr, 1) ⥅ (sarr_gather, 1)
-  (sarr_indices, 1) ⥅ (sarr_gather, 2)
-  (sarr_shape, 1) ⥅ (sarr_gather, 3)
-  (sarr_gather, 1) ⥅ (carr, 1)
-  carr
+  generate_arrangement_arrow(indexed_elements, shape,
+                              GatherNdArrow(),
+                              :gather_wire)
 end
 
 function generate_scatter(indexed_elements, shape)
-  carr = CompArrow(gensym(:scatter_wire), 1, 1)
+  generate_arrangement_arrow(indexed_elements, shape,
+                              ScatterNdArrow(),
+                              :scatter_wire)
+end
+
+function generate_arrangement_arrow(indexed_elements, shape, arr, name)
+  carr = CompArrow(gensym(name), 1, 1)
+  add = (arr)-> add_sub_arr!(carr, arr)
   indices = extract_indices(indexed_elements)
-  indices = SourceArrow(indices)
-  shape = SourceArrow(shape)
-  sarr_shape =  add_sub_arr!(carr, shape)
-  sarr_indices = add_sub_arr!(carr, indices)
-  sarr_scatter =  add_sub_arr!(carr, ScatterNdArrow())
-  (sarr_indices, 1) ⥅ (sarr_scatter, 2)
-  (sarr_shape, 1) ⥅ (sarr_scatter, 3)
-  (carr, 1) ⥅ (sarr_scatter, 1)
-  (sarr_scatter, 1) ⥅ (carr, 1)
+  sarr_indices = indices |> SourceArrow |> add
+  sarr_shape = shape |> SourceArrow |> add
+  sarr = arr |> add
+  (sarr_indices, 1) ⥅ (sarr, 2)
+  (sarr_shape, 1) ⥅ (sarr, 3)
+  (carr, 1) ⥅ (sarr, 1)
+  (sarr, 1) ⥅ (carr, 1)
   carr
 end
 
-factor_indices(v, indices::Set) = v
-function factor_indices(v::Expr, indices::Set)
+factor_indices(v, indices::Set = Set()) = v
+function factor_indices(v::Expr, indices::Set = Set())
   if v.head == :ref
     sub_expr, index = v.args
     push!(indices, index)
@@ -564,7 +560,7 @@ function name(info::ConstraintInfo, idx)
   else
     expr = value[1]
   end
-  factor_indices(expr, Set())
+  factor_indices(expr)
 end
 
 ## TODO: what happens with the `else` statement?
@@ -611,7 +607,7 @@ function create_inner_special_connector(info::ConstraintInfo,
   outputs = map(x->x[1], pairs)
   full_expr = first(outputs)
   name_ = name(info, idx)
-  expr = factor_indices(full_expr, Set())
+  expr = factor_indices(full_expr)
   function compute_arrow_special(carr, gather)
     c = CompArrow(gensym(:special), 1, 1)
     sport = generate_function(Dict([name_ => ▹(c, 1)]),
