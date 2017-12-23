@@ -1,6 +1,8 @@
 ## PureSymbolic = Union{Expr, Symbol}
 ##SymUnion = Union{PureSymbolic, Array, Tuple, Number}
 using NamedTuples
+import DataStructures: DefaultDict
+
 mutable struct SymUnion
   value
 end
@@ -29,7 +31,7 @@ mutable struct ConstraintInfo
   exprs::Vector{Expr}
   θs::Set{Union{Symbol, Expr}}
   is_θ_by_portn::Vector{Bool}
-  mapping::Dict
+  mapping::DefaultDict
   unsat::Set{SymUnion}
   assignments::Dict
   specials::Dict
@@ -42,11 +44,12 @@ mutable struct ConstraintInfo
   names_to_inital_sarr::Dict{Union{Symbol, Expr}, SubArrow}
   function ConstraintInfo()
     c = new()
-    c.mapping = Dict()
+    c.mapping = DefaultDict(Set{Expr})
     c.unsat = Set{SymUnion}()
     c.assignments = Dict()
     c.specials = Dict()
     c.names_to_inital_sarr = Dict()
+    c.port_to_index = Dict{SymUnion, Number}()
     c
   end
 end
@@ -262,7 +265,6 @@ function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
   trcp = traceprop!(arr, initprops)
   info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
-  info.port_to_index = Dict{SymUnion, Number}()
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
     sym = Sym(sport)
@@ -411,9 +413,6 @@ build_symbol_to_constraint(info::ConstraintInfo, expr) = false
 function build_symbol_to_constraint(info::ConstraintInfo, expr::Expr)
   for arg in expr.args
     if arg ∈ info.θs
-      if !haskey(info.mapping, arg)
-        info.mapping[arg] = Set{Expr}()
-      end
       push!(info.mapping[arg], expr)
     else
       build_symbol_to_constraint(info, arg)
@@ -527,8 +526,9 @@ end
 factor_indices(v, indices::Set) = v
 function factor_indices(v::Expr, indices::Set)
   if v.head == :ref
-    push!(indices, v.args[2])
-    factor_indices(v.args[1], indices)
+    sub_expr, index = v.args
+    push!(indices, index)
+    factor_indices(sub_expr, indices)
   else
     args = map(v.args) do arg
             factor_indices(arg, indices)
@@ -547,13 +547,10 @@ function extract_computation_blocks(assigns)
     end
     v, expr
   end
-  by_block = Dict()
+  by_block = DefaultDict(Vector)
   for (dst,src) in assigns
     (dst, _) = process_expr(dst)
     (src, expr_src) = process_expr(src)
-    if !haskey(by_block, expr_src)
-      by_block[expr_src] = Vector()
-    end
     push!(by_block[expr_src], (dst, src))
   end
   by_block
@@ -569,13 +566,16 @@ function name(info::ConstraintInfo, idx)
   end
   factor_indices(expr, Set())
 end
+
+## TODO: what happens with the `else` statement?
 function create_first_step_of_connection(info)
   function add_sport(arr, idx)
     sarr = add_sub_arr!(info.master_carr, arr)
-    info.names_to_inital_sarr[name(info, idx)] = sarr
+    key = name(info, idx)
+    info.names_to_inital_sarr[key] = sarr
     newport = link_to_parent!(▹(sarr, 1))
     info.is_θ_by_portn[idx] && addprop!(θp, newport)
-    base_nm = Symbol(name(info, idx), :_in)
+    base_nm = Symbol(key, :_in)
     nm = uniquename(base_nm, name.(⬧(info.master_carr)))
     setprop!(Name(nm), props(newport))
   end
@@ -701,7 +701,7 @@ function extract_variables(v::Expr)
 end
 
 function sarr_for_variable(info::ConstraintInfo, moniker::Symbol)
-  if haskey(info.names_to_inital_sarr, moniker)
+  if moniker ∈ keys(info.names_to_inital_sarr)
     info.names_to_inital_sarr[moniker]
   else
     warn("Variable $(moniker) was used but it's not wired")
@@ -830,15 +830,11 @@ function connect_target(wirer, target)
   carr
 end
 
-function solve(carr::CompArrow)
-  solve(carr, Dict{SubPort, Arrows.AbValues}())
-end
-
 """solve constraints on inputs to `carr`
 It will return a tuple with a `CompArrow` (the wirer), and information regarding
 the solving process.
 Use `connect_target` to connect the wirer to the actual inverse `Arrow`"""
-function solve(carr::CompArrow, initprops)
+function solve(carr::CompArrow, initprops = SprtAbValues())
   info = constraints(carr, initprops)
   (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))
