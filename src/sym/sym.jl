@@ -22,7 +22,7 @@ end
 as_expr{N}(values::Union{NTuple{N, SymUnion}, AbstractArray{SymUnion, N}}) =
   map(as_expr, values)
 as_expr(sym::SymUnion) = sym.value
-as_expr(ref::RefnSym) = as_expr(ref.var)
+as_expr(ref::Union{RefnSym, SymbolPrx}) = as_expr(ref.var)
 sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(as_expr.(sym))
 sym_unsym(sym::SymUnion)  = sym
 
@@ -55,13 +55,10 @@ mutable struct ConstraintInfo
 end
 
 function getindex(s::SymbolPrx, i::Int)
-  ref_expr = v-> Expr(:ref, v, i)
   inner_getindex(v) = v
   inner_getindex(v::Array) = getindex(v,i)
-  inner_getindex(v::Union{Symbol, Expr}) = ref_expr(v)
-  sym = s.var
-  v = sym.value
-  SymUnion(inner_getindex(v))
+  inner_getindex(v::Union{Symbol, Expr}) = Expr(:ref, v, i)
+  s |> as_expr |> inner_getindex |> SymUnion
 end
 
 "Unconstrained Symbol"
