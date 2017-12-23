@@ -177,7 +177,7 @@ end
 
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
-  vars = [SymUnion.(arg.var.value) for arg in args]
+  vars = [SymUnion.(as_expr(arg)) for arg in args]
   preds = Set[arg.preds for arg in args]
   outputs = prim_sym_interpret(parr, vars...)
   dompreds = domainpreds(parr, vars...)
@@ -227,7 +227,7 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   non_gather_θ = Set{Union{Symbol, Expr}}()
   for (name, idx) in info.port_to_index
     info.is_θ_by_portn[idx] || continue
-    exprs = info.inp[idx].var.value
+    exprs = info.inp[idx] |> as_expr
     if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
     else
@@ -468,7 +468,7 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   end
 end
 
-length_of(info::Arrows.ConstraintInfo, idx) = length(info.inp[idx].var.value)
+length_of(info::Arrows.ConstraintInfo, idx) = info.inp[idx] |> as_expr |> length
 
 extract_index(v::Int) = v - 1
 function extract_index(v::Expr)
@@ -551,7 +551,7 @@ end
 
 
 function name(info::ConstraintInfo, idx)
-  value = info.inp[idx].var.value
+  value = info.inp[idx] |> as_expr
   if isa(value, Symbol)
     expr = value
   else
@@ -576,7 +576,7 @@ function create_first_step_of_connection(info)
     if length(unassign) > 0
       name_prt = name(info, idx)
       arr = CompArrow(gensym(:connector_first), 1, 1)
-      if isa(info.inp[idx].var.value, Symbol)
+      if isa(as_expr(info.inp[idx]), Symbol)
         sarr = add_sub_arr!(arr, IdentityArrow())
       else
         pairs = Vector()
@@ -749,7 +749,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
     ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
   end
 
-  if isa(info.inp[idx].var.value, Symbol)
+  if isa(as_expr(info.inp[idx]), Symbol)
     if has_initializer
       ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
     end
@@ -784,7 +784,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
 end
 
 function finish_parameter_wiring(info, sarr, idx)
-  vals = info.inp[idx].var.value
+  vals = info.inp[idx] |> as_expr
   if isa(vals, Array)
     shape = SourceArrow(size(vals))
     sarr_shape = add_sub_arr!(info.master_carr, shape)
