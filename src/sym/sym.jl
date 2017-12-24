@@ -549,10 +549,13 @@ function extract_computation_blocks(assigns)
   by_block
 end
 
+function is_arrayed_port(info::ConstraintInfo, idx)
+  ! isa(info.inp[idx] |> as_expr, Symbol)
+end
 
 function name(info::ConstraintInfo, idx)
   value = info.inp[idx] |> as_expr
-  expr =  isa(value, Symbol) ? value : first(value)
+  expr =  is_arrayed_port(info, idx) ? first(value) : value
   factor_indices(expr)
 end
 
@@ -570,21 +573,17 @@ function create_first_step_of_connection(info)
   end
   for (idx, unassign) in enumerate(info.unassigns_by_portn)
     if length(unassign) > 0
-      name_prt = name(info, idx)
-      arr = CompArrow(gensym(:connector_first), 1, 1)
-      if isa(as_expr(info.inp[idx]), Symbol)
-        sarr = add_sub_arr!(arr, IdentityArrow())
-      else
+      inner_connector = if is_arrayed_port(info, idx)
         pairs = Vector()
         values = collect(unassign)
         for (id_, dst) in enumerate(sort(values, by=extract_index))
           push!(pairs, (dst, id_))
         end
-        sarr = create_inner_connector(info, arr, pairs,  idx)
+        create_inner_connector(info, pairs,  idx)
+      else
+        IdentityArrow()
       end
-      (arr, 1) ⥅ (sarr, 1)
-      (sarr, 1) ⥅ (arr, 1)
-      add_sport(arr, idx)
+      add_sport(inner_connector, idx)
     elseif !info.is_θ_by_portn[idx]
       add_sport(IdentityArrow(), idx)
     end
@@ -632,15 +631,13 @@ function create_inner_connector(info::ConstraintInfo,
                                   moniker)
 end
 
-function create_inner_connector(info::ConstraintInfo,
-                                  connector_arr::CompArrow,
-                                  pairs, idx)
+function create_inner_connector(info::ConstraintInfo, pairs, idx)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
   shape = tuple(length_of(info, idx))
   gather = generate_gather(inputs, size(inputs))
   scatter = generate_scatter(outputs, shape)
-  add_sub_arr!(connector_arr, gather >> scatter)
+  gather >> scatter
 end
 
 function create_inner_connector_private(info::ConstraintInfo,
@@ -738,7 +735,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
     ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
   end
 
-  if isa(as_expr(info.inp[idx]), Symbol)
+  if !is_arrayed_port(info, idx)
     if has_initializer
       ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
     end
