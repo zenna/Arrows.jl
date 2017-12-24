@@ -552,11 +552,7 @@ end
 
 function name(info::ConstraintInfo, idx)
   value = info.inp[idx] |> as_expr
-  if isa(value, Symbol)
-    expr = value
-  else
-    expr = value[1]
-  end
+  expr =  isa(value, Symbol) ? value : first(value)
   factor_indices(expr)
 end
 
@@ -641,17 +637,10 @@ function create_inner_connector(info::ConstraintInfo,
                                   pairs, idx)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
-  carr = CompArrow(gensym(:inner_connector), 1, 1)
-  sarr = add_sub_arr!(connector_arr, carr)
-  g = generate_gather(inputs, size(inputs))
   shape = tuple(length_of(info, idx))
-  s = generate_scatter(outputs, shape)
-  g_sarr = add_sub_arr!(carr, g)
-  scatter_sarr = add_sub_arr!(carr, s)
-  (carr, 1) ⥅ (g_sarr, 1)
-  (g_sarr, 1) ⥅ (scatter_sarr, 1)
-  (scatter_sarr, 1) ⥅ (carr, 1)
-  sarr
+  gather = generate_gather(inputs, size(inputs))
+  scatter = generate_scatter(outputs, shape)
+  add_sub_arr!(connector_arr, gather >> scatter)
 end
 
 function create_inner_connector_private(info::ConstraintInfo,
