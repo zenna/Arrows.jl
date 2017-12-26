@@ -115,13 +115,14 @@ function test_sym_special()
   f(x) ⥅ ◃(c,1)
   inv_c = c |> Arrows.duplify |> Arrows.invert
   ▹z = ▹(inv_c, 1)
-  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size((3,2)))
+  z = f(params)
+  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size(z |> size))
   wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
   apprx = Arrows.aprx_totalize(inv_c << wirer);
-  parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
-  z = f(params)
-  θm = log.([22, 25])
+  parts = exp.(vcat(1:13, 15:21, 23:24, 26:45, 47:100));
+   θm = [22, 25]
   inverted_params = apprx(z, parts, θm)
+  @test sum(abs.(inverted_params - params)) < 0.000001
 end
 
 

@@ -379,9 +379,8 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
     false
   elseif left != right
     info.assignments[left] = right
-    foreach(info.mapping[left]) do expr
-      replace!(left, right, expr)
-    end
+    f = (expr) -> replace!(left, right, expr)
+    map(f, info.mapping[left])
     true
   end
 end
@@ -429,7 +428,7 @@ function find_assignments(info)
   info
 end
 
-"Function that separate [assgins,specials] by port number"
+"Function that separate [assigns,specials] by port number"
 function compute_assigns_by_portn(info::ConstraintInfo)
   as_set(x::AbstractArray) = Set(x)
   as_set(x) = Set([x,])
