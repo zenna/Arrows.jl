@@ -100,6 +100,31 @@ function test_sym_gather_inv_log_special()
 end
 
 
+function test_sym_special()
+  indices = [[1, 4] [2, 2]]
+  indices2 = [[5, 3] [4, 1]]
+  params = reshape(collect(1:100), (10,10));
+  shape = size(params)
+  function f(params)
+    a = gather_nd(exp(params), indices, shape)
+    b = gather_nd(params, indices2, shape)
+    b .* log(a)
+  end
+  c = CompArrow(:c, [:x], [:z])
+  x, = ▹(c)
+  f(x) ⥅ ◃(c,1)
+  inv_c = c |> Arrows.duplify |> Arrows.invert
+  ▹z = ▹(inv_c, 1)
+  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size((3,2)))
+  wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
+  apprx = Arrows.aprx_totalize(inv_c << wirer);
+  parts = vcat(1:13, 15:21, 23:24, 26:45, 47:100);
+  z = f(params)
+  θm = log.([22, 25])
+  inverted_params = apprx(z, parts, θm)
+end
+
+
 ## foreach(test_sym, TestArrows.plain_arrows())
 
 ## preds = Arrows.constraints(invert(TestArrows.weird_arr()))
@@ -108,3 +133,4 @@ test_sym_gather_inv_mult()
 test_sym_gather_inv()
 test_sym_gather_inv_log()
 test_sym_gather_inv_log_special()
+test_sym_special()
