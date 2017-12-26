@@ -770,11 +770,11 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
 end
 
 function finish_parameter_wiring(info, sarr, idx)
-  vals = info.inp[idx] |> as_expr
-  if isa(vals, Array)
-    shape = SourceArrow(size(vals))
-    sarr_shape = add_sub_arr!(info.master_carr, shape)
-    sarr_reshape = add_sub_arr!(info.master_carr, ReshapeArrow())
+  if is_arrayed_port(info, idx)
+    shape = info.inp[idx] |> as_expr |> size
+    add = arr -> add_sub_arr!(info.master_carr, arr)
+    sarr_shape = shape |> SourceArrow |> add
+    sarr_reshape = ReshapeArrow() |> add
     (sarr, 1) ⥅ (sarr_reshape, 1)
     (sarr_shape, 1) ⥅ (sarr_reshape, 2)
     outp = ◃(sarr_reshape, 1)
