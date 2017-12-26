@@ -358,11 +358,9 @@ function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
             cannot be solved: $(left) == $(right)""")
     false
   else
-    if left_name ∈ keys(info.mapping)
-      foreach(info.mapping[left_name]) do expr
-        if !symbolic_includes(expr, left)
-          return false
-        end
+    foreach(info.mapping[left_name]) do expr
+      if !symbolic_includes(expr, left)
+        return false
       end
     end
     info.specials[left_name] = @NT(dst = left, src = right)
@@ -381,10 +379,8 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
     false
   elseif left != right
     info.assignments[left] = right
-    if left ∈ keys(info.mapping)
-      foreach(info.mapping[left]) do expr
-        replace!(left, right, expr)
-      end
+    foreach(info.mapping[left]) do expr
+      replace!(left, right, expr)
     end
     true
   end
