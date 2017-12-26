@@ -112,10 +112,9 @@ function s_arrayed(xs::Array{SymUnion}, name)
 end
 s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
 function s_var(xs::Vararg{<:Array})
-  x1 = xs[1]
-  answer = Array()
-  f = iter-> s_arrayed([x[iter] for x in xs], :var)
-  [f(iter) for iter in eachindex(x1)]
+  map(xs |> first |> eachindex) do iter
+    s_arrayed([x[iter] for x in xs], :var)
+  end
 end
 
 
@@ -231,11 +230,8 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
     if startswith(String(name.value), String(:θgather))
       union!(all_gather_θ, exprs)
     else
-      if isa(exprs, AbstractArray)
-        union!(non_gather_θ, exprs)
-      else
-        push!(non_gather_θ, exprs)
-      end
+      f = is_arrayed_port(info, idx) ? union! : push!
+      f(non_gather_θ, exprs)
     end
   end
   θs = Set{Expr}()
