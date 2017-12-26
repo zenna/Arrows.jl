@@ -14,7 +14,7 @@ end
 
 function bounded_totalize!(sarr::SubArrow)
   # TODO: Generalize this
-  clipcarr = CompArrow(:clip, [:x], [:y])
+  clipcarr = CompArrow(:clip |> gensym, [:x], [:y])
   x, y = ⬨(clipcarr)
   bounds = domain_bounds(deref(sarr))
   clip(x, bounds...) ⥅ y
@@ -22,14 +22,14 @@ function bounded_totalize!(sarr::SubArrow)
 end
 
 function nonneg_totalize!(sarr::SubArrow)
-  clip_zero = CompArrow(:clip_zero, [:x], [:y])
+  clip_zero = CompArrow(:clip_zero |> gensym, [:x], [:y])
   x, y = ⬨(clip_zero)
   max(x, 0) ⥅ y
   inner_compose!(sarr, clip_zero)
 end
 
 function ε_totalize!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε, [:x], [:y])
+  clip_ε = CompArrow(:clip_ε |> gensym, [:x], [:y])
   x, y = ⬨(clip_ε)
   ε = exp(-10)
   greater_than = (x > 0)
