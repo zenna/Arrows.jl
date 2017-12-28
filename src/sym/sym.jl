@@ -690,39 +690,21 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
   input_outputs = map(values(assigns)) do assignment
     (assignment.dst, assignment.src)
   end
-  by_block = extract_computation_blocks(input_outputs)
-  moniker = name(info, idx)
-  connector_arr = CompArrow(gensym(:connector),
-                    (length ∘ keys)(by_block) + 1,
-                    1)
-  connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
-  (sarr, 1) ⥅ (connector_sarr, 1)
-
-  last_sport = ▹(connector_arr, 1)
-  for (input_id, (block, pairs)) in enumerate(by_block)
-    sarr = create_inner_special_connector(info, pairs, idx,
-                                          extract_variables(block),
-                                          block)
-    (sarr, 1) ⥅ (connector_sarr, input_id + 1)
-    last_sport = last_sport +  ▹(connector_arr, input_id + 1)
-  end
-
-  last_sport ⥅ (connector_arr, 1)
-  connector_sarr
+  create_assignment_graph_for(info, idx, input_outputs, sarr,
+                              create_inner_special_connector)
 end
 
-function create_assignment_graph_for(info::ConstraintInfo, idx)
-  assigns = info.assigns_by_portn[idx]
+function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
+                                      initial_sarr, builder)
   by_block = extract_computation_blocks(assigns)
   moniker = name(info, idx)
-  has_initializer = haskey(info.names_to_inital_sarr, moniker)
+  has_initializer = !isa(initial_sarr, Void)
   connector_arr = CompArrow(gensym(:connector),
                     (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
                     1)
   connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
   if has_initializer
-    initial_sarr = sarr_for_variable(info, moniker)
     ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
   end
 
@@ -739,7 +721,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
   input_id = 0
   for (block, pairs) in by_block
     input_id += 1
-    sarr = create_inner_connector(info, pairs, idx,
+    sarr = builder(info, pairs, idx,
                                     extract_variables(block),
                                     block)
     push!(connectors, ▹(connector_arr, input_id))
@@ -758,6 +740,19 @@ function create_assignment_graph_for(info::ConstraintInfo, idx)
   end
   sport ⥅ (connector_arr, 1)
   connector_sarr
+end
+
+function create_assignment_graph_for(info::ConstraintInfo, idx)
+  assigns = info.assigns_by_portn[idx]
+  moniker = name(info, idx)
+  if moniker ∈ keys(info.names_to_inital_sarr)
+    initial_sarr = sarr_for_variable(info, moniker)
+  else
+    initial_sarr = nothing
+  end
+
+  create_assignment_graph_for(info, idx, assigns, initial_sarr,
+                              create_inner_connector)
 end
 
 function finish_parameter_wiring(info, sarr, idx)
