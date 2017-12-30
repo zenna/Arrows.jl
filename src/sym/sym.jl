@@ -473,12 +473,12 @@ function extract_indices(elements::AbstractArray)
     reshape(indices, (n, 1))
 end
 
-function generate_function(context::Dict, moniker)
+function generate_function(context, expr)
   M = Module()
   for (k,v) in context
          eval(M, :($k = $v))
   end
-  eval(M, moniker)
+  eval(M, expr)
 end
 
 function generate_gather(indexed_elements, shape)
@@ -584,8 +584,7 @@ end
 
 function create_inner_special_connector(info::ConstraintInfo,
                                 pairs, idx,
-                                variables,
-                                moniker)
+                                block)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
   full_expr = first(outputs)
@@ -593,7 +592,7 @@ function create_inner_special_connector(info::ConstraintInfo,
   expr = factor_indices(full_expr)
   function compute_arrow_special(carr, gather)
     c = CompArrow(gensym(:special), 1, 1)
-    sport = generate_function(Dict([name_ => ▹(c, 1)]),
+    sport = generate_function([name_ => ▹(c, 1)],
                       expr)
     sport ⥅ (c, 1)
     inv_c = Arrows.invert(c)
@@ -601,25 +600,21 @@ function create_inner_special_connector(info::ConstraintInfo,
     gather ⥅ (sarr, 1)
     ◃(sarr, 1)
   end
-  actual_name = name(info, idx)
   pairs = zip(outputs, inputs)
   create_inner_connector_private(info,
           compute_arrow_special,
           pairs, idx,
-          variables,
-          moniker)
+          block)
 end
 
 function create_inner_connector(info::ConstraintInfo,
                                 pairs, idx,
-                                variables,
-                                moniker)
+                                block)
   f = (carr, g) -> g
   create_inner_connector_private(info,
                                   f,
                                   pairs, idx,
-                                  variables,
-                                  moniker)
+                                  block)
 end
 
 function create_inner_connector(info::ConstraintInfo, pairs, idx)
@@ -634,8 +629,8 @@ end
 function create_inner_connector_private(info::ConstraintInfo,
                   middle_arr_creator,
                   pairs, idx,
-                  variables,
-                  moniker)
+                  block)
+  variables = extract_variables(block)
   n = length(variables)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
@@ -652,7 +647,7 @@ function create_inner_connector_private(info::ConstraintInfo,
     (carr, idx) ⥅ (g_sarr, 1)
     context[v] = ◃(g_sarr, 1)
   end
-  sport = generate_function(context, moniker)
+  sport = generate_function(context, block)
   middle = middle_arr_creator(carr, sport)
   middle ⥅ (scatter_sarr,1)
   (scatter_sarr,1) ⥅ (carr, 1)
@@ -683,7 +678,6 @@ function create_special_assignment_graph_for(info::ConstraintInfo,
                                               sarr::SubArrow,
                                               idx)
   assigns = info.specials_by_portn[idx]
-
   if length(assigns) == 0
     return sarr
   end
@@ -721,9 +715,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
   input_id = 0
   for (block, pairs) in by_block
     input_id += 1
-    sarr = builder(info, pairs, idx,
-                                    extract_variables(block),
-                                    block)
+    sarr = builder(info, pairs, idx, block)
     push!(connectors, ▹(connector_arr, input_id))
     (sarr, 1) ⥅ (connector_sarr, input_id)
   end
