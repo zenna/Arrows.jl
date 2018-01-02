@@ -379,8 +379,9 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
     false
   elseif left != right
     info.assignments[left] = right
-    f = (expr) -> replace!(left, right, expr)
-    map(f, info.mapping[left])
+    foreach(info.mapping[left]) do expr
+      replace!(left, right, expr)
+    end
     true
   end
 end
@@ -459,7 +460,9 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   end
 end
 
-length_of(info::Arrows.ConstraintInfo, idx) = info.inp[idx] |> as_expr |> length
+function length_of(info::Arrows.ConstraintInfo, idx)
+  info.inp[idx] |> as_expr |> length |> tuple
+end
 
 extract_index(v::Int) = v - 1
 function extract_index(v::Expr)
@@ -620,7 +623,7 @@ end
 function create_inner_connector(info::ConstraintInfo, pairs, idx)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
-  shape = tuple(length_of(info, idx))
+  shape = length_of(info, idx)
   gather = generate_gather(inputs, size(inputs))
   scatter = generate_scatter(outputs, shape)
   gather >> scatter
@@ -634,16 +637,16 @@ function create_inner_connector_private(info::ConstraintInfo,
   n = length(variables)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
+  shape = length_of(info, idx)
   carr = CompArrow(gensym(:inner_connector), n, 1)
   sarr = add_sub_arr!(info.master_carr, carr)
-  g = generate_gather(inputs, size(inputs))
-  shape = tuple(length_of(info, idx))
-  s = generate_scatter(outputs, shape)
-  scatter_sarr = add_sub_arr!(carr, s)
+  gather = generate_gather(inputs, size(inputs))
+  scatter = generate_scatter(outputs, shape)
+  scatter_sarr = add_sub_arr!(carr, scatter)
   context = Dict()
   for (idx, v) in enumerate(variables)
     (sarr_for_variable(info, v),1) ⥅ (sarr, idx)
-    g_sarr = add_sub_arr!(carr, g)
+    g_sarr = add_sub_arr!(carr, gather)
     (carr, idx) ⥅ (g_sarr, 1)
     context[v] = ◃(g_sarr, 1)
   end
