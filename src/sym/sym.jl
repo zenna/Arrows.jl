@@ -691,20 +691,19 @@ end
 function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
                                       initial_sarr, builder)
   by_block = extract_computation_blocks(assigns)
-  moniker = name(info, idx)
+  blocks = by_block |> keys
+  moniker = Symbol(:connector_, name(info, idx)) |> gensym
   has_initializer = !isa(initial_sarr, Void)
-  connector_arr = CompArrow(gensym(:connector),
-                    (length ∘ keys)(by_block) + (has_initializer ? 1 :0),
+  connector_arr = CompArrow(moniker,
+                    length(blocks) + (has_initializer ? 1 :0),
                     1)
   connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
-  if has_initializer
-    ◃(initial_sarr, 1) ⥅ (connector_sarr, n▸(connector_sarr))
-  end
 
   if !is_arrayed_port(info, idx)
     if has_initializer
-      ▹(connector_arr, n▸(connector_arr)) ⥅ (connector_arr, 1)
+      (initial_sarr, 1)  ⥅ (connector_sarr, 1)
+      (connector_arr, 1) ⥅ (connector_arr, 1)
     end
     #TODO handle equations with scalars
     warn("equations with scalars are not handled")
@@ -712,23 +711,26 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
   end
 
   connectors = Vector()
-  input_id = 0
-  for (block, pairs) in by_block
-    input_id += 1
-    sarr = builder(info, pairs, idx, block)
-    push!(connectors, ▹(connector_arr, input_id))
-    (sarr, 1) ⥅ (connector_sarr, input_id)
+  function add_transformation(id, sarr)
+    (sarr, 1) ⥅ (connector_sarr, id)
+    push!(connectors, ▹(connector_arr, id))
+  end
+  add_transformation(_, sarr::Void) = nothing
+
+  inputs = map(blocks) do block
+    pairs = by_block[block]
+    builder(info, pairs, idx, block)
+  end
+  sarrs = vcat(inputs, initial_sarr) |> enumerate
+  foreach(sarrs) do args
+    add_transformation(args...)
   end
 
   @assert n▸(connector_arr) > 0
-  if length(connectors) > 0
-    sport = first(connectors)
-    foreach(connectors[2:end]) do c
-      sport = sport + c
-    end
-    sport = has_initializer ? ▹(connector_arr, n▸(connector_arr)) + sport : sport
-  else
-    sport = ▹(connector_arr, n▸(connector_arr))
+  @assert length(connectors) > 0
+  sport = first(connectors)
+  foreach(connectors[2:end]) do c
+    sport = sport + c
   end
   sport ⥅ (connector_arr, 1)
   connector_sarr
@@ -737,10 +739,10 @@ end
 function create_assignment_graph_for(info::ConstraintInfo, idx)
   assigns = info.assigns_by_portn[idx]
   moniker = name(info, idx)
-  if moniker ∈ keys(info.names_to_inital_sarr)
-    initial_sarr = sarr_for_variable(info, moniker)
+  initial_sarr = if moniker ∈ keys(info.names_to_inital_sarr)
+    sarr_for_variable(info, moniker)
   else
-    initial_sarr = nothing
+    nothing
   end
 
   create_assignment_graph_for(info, idx, assigns, initial_sarr,
