@@ -11,9 +11,12 @@ function non_zero!(sarr::SubArrow)
                       [:den, :num],
                       [:denout, :numout])
   den, num, denout, numout = ⬨(clip_ε)
-  zero = ◃(add_sub_arr!(clip_ε, SourceArrow(0)), 1)
+  add = (x)-> add_sub_arr!(clip_ε, x)
+  to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast
+  zero = 0 |> to_bcast
+  ε_val = 0.001 |> to_bcast
   comparison = EqualArrow()(num, zero)
-  ε = ifelse(comparison, 0.001, zero)
+  ε = ifelse(comparison, ε_val, zero)
   num + ε ⥅ numout
   den  ⥅ denout
   @assert is_wired_ok(clip_ε)
