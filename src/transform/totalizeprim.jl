@@ -31,9 +31,11 @@ end
 function ε_totalize!(sarr::SubArrow)
   clip_ε = CompArrow(:clip_ε |> gensym, [:x], [:y])
   x, y = ⬨(clip_ε)
-  ε = exp(-10)
-  greater_than = (x > 0)
-  (x * greater_than + ε * (1 - greater_than)) ⥅ y
+  add = (x)-> add_sub_arr!(clip_ε, x)
+  to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast
+  ε = exp(-10) |> to_bcast
+  zero = 0 |> to_bcast
+  ifelse(x > zero, x, ε) ⥅ y
   inner_compose!(sarr, clip_ε)
 end
 

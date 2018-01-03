@@ -55,3 +55,19 @@ function test_apprx_div_propagate()
 end
 
 test_apprx_div_propagate()
+
+
+function test_apprx_log_propagate()
+  c = CompArrow(:c, [:x], [:z])
+  x, z = ⬨(c)
+  log(x) ⥅ z
+  apprx = aprx_totalize!(c)
+  @test all(exp.(apprx([0, 0.1])) .> 0)
+  sz = Size([3,2])
+  abtvals = Arrows.traceprop!(apprx, Dict(x => AbValues(:size => sz)))
+  @test Arrows.if_symbol_on_sport(abtvals, :size, z,
+                    (z)->z == sz,
+                    ()->false)
+end
+
+test_apprx_log_propagate()
