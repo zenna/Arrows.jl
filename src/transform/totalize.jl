@@ -7,7 +7,9 @@ sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 
 function non_zero!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε, [:den, :num], [:denout, :numout])
+  clip_ε = CompArrow(:clip_ε |> gensym,
+                      [:den, :num],
+                      [:denout, :numout])
   den, num, denout, numout = ⬨(clip_ε)
   zero = ◃(add_sub_arr!(clip_ε, SourceArrow(0)), 1)
   comparison = EqualArrow()(num, zero)

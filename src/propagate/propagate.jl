@@ -24,6 +24,19 @@ Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
 
 has(sm::Symbol) = prop -> haskey(prop, sm)
 
+"Executes a function `true_` if the symbol is present or `else_`"
+function if_symbol_on_sport(trcp::TraceAbValues,key::Symbol, sport::SubPort,
+                              true_, else_)
+  tv = trace_value(sport)
+  if tv ∈ keys(trcp)
+    inferred = trcp[tv]
+    if key ∈ keys(inferred)
+      return true_(inferred[key])
+    end
+  end
+  return else_()
+end
+
 "All ports in `idabv` have values for "
 function allhave(idabv::IdAbValues, abvkey::Symbol, prts::Port...)
   allthere = all((prt.port_id ∈ keys(idabv) for prt in prts))

@@ -1,6 +1,9 @@
 "Broadcast Arrow"
 struct BroadcastArrow <: PrimArrow
 end
+#TODO: think on how to implement this
+"default implementation, do nothing"
+bcast(x) = x
 name(::BroadcastArrow) = :bcast
 props(::BroadcastArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 abinterprets(::BroadcastArrow) = [sizeprop]
@@ -33,6 +36,9 @@ end
 
 struct InvBroadcastArrow <: PrimArrow
 end
+#TODO: think on how to implement this
+"default implementation, do nothing"
+inv_bcast(x) = x
 name(::InvBroadcastArrow) = :inv_bcast
 props(::InvBroadcastArrow) = [Props(true, :y, Any), Props(false, :x, Any)]
 
