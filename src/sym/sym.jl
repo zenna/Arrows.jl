@@ -484,20 +484,19 @@ function generate_function(context, expr)
   eval(M, expr)
 end
 
-function generate_gather(indexed_elements, shape)
-  generate_arrangement_arrow(indexed_elements, shape,
+function generate_gather(carr, indexed_elements, shape)
+  generate_arrangement_arrow(carr, indexed_elements, shape,
                               GatherNdArrow(),
                               :gather_wire)
 end
 
-function generate_scatter(indexed_elements, shape)
-  generate_arrangement_arrow(indexed_elements, shape,
+function generate_scatter(carr, indexed_elements, shape)
+  generate_arrangement_arrow(carr, indexed_elements, shape,
                               ScatterNdArrow(),
                               :scatter_wire)
 end
 
-function generate_arrangement_arrow(indexed_elements, shape, arr, name)
-  carr = CompArrow(gensym(name), 1, 1)
+function generate_arrangement_arrow(carr, indexed_elements, shape, arr, name)
   add = (arr)-> add_sub_arr!(carr, arr)
   indices = extract_indices(indexed_elements)
   sarr_indices = indices |> SourceArrow |> add
@@ -505,9 +504,7 @@ function generate_arrangement_arrow(indexed_elements, shape, arr, name)
   sarr = arr |> add
   (sarr_indices, 1) ⥅ (sarr, 2)
   (sarr_shape, 1) ⥅ (sarr, 3)
-  (carr, 1) ⥅ (sarr, 1)
-  (sarr, 1) ⥅ (carr, 1)
-  carr
+  sarr
 end
 
 factor_indices(v, indices::Set = Set()) = v
@@ -624,9 +621,13 @@ function create_inner_connector(info::ConstraintInfo, pairs, idx)
   inputs = map(x->x[2], pairs)
   outputs = map(x->x[1], pairs)
   shape = length_of(info, idx)
-  gather = generate_gather(inputs, size(inputs))
-  scatter = generate_scatter(outputs, shape)
-  gather >> scatter
+  carr = CompArrow(gensym(:inner), 1, 1)
+  gather = generate_gather(carr, inputs, size(inputs))
+  scatter = generate_scatter(carr, outputs, shape)
+  (carr, 1) ⥅ (gather, 1)
+  (gather, 1) ⥅ (scatter, 1)
+  (scatter, 1) ⥅ (carr, 1)
+  carr
 end
 
 function create_inner_connector_private(info::ConstraintInfo,
@@ -640,20 +641,18 @@ function create_inner_connector_private(info::ConstraintInfo,
   shape = length_of(info, idx)
   carr = CompArrow(gensym(:inner_connector), n, 1)
   sarr = add_sub_arr!(info.master_carr, carr)
-  gather = generate_gather(inputs, size(inputs))
-  scatter = generate_scatter(outputs, shape)
-  scatter_sarr = add_sub_arr!(carr, scatter)
+  scatter = generate_scatter(carr, outputs, shape)
   context = Dict()
   for (idx, v) in enumerate(variables)
     (sarr_for_variable(info, v),1) ⥅ (sarr, idx)
-    g_sarr = add_sub_arr!(carr, gather)
-    (carr, idx) ⥅ (g_sarr, 1)
-    context[v] = ◃(g_sarr, 1)
+    gather = generate_gather(carr, inputs, size(inputs))
+    (carr, idx) ⥅ (gather, 1)
+    context[v] = ◃(gather, 1)
   end
   sport = generate_function(context, block)
   middle = middle_arr_creator(carr, sport)
-  middle ⥅ (scatter_sarr,1)
-  (scatter_sarr,1) ⥅ (carr, 1)
+  middle ⥅ (scatter,1)
+  (scatter,1) ⥅ (carr, 1)
   sarr
 end
 
