@@ -29,7 +29,7 @@ function nonneg_totalize!(sarr::SubArrow)
 end
 
 function ε_totalize!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε |> gensym, [:x], [:y])
+  clip_ε = CompArrow(:clip_ε_totalize, [:x], [:y])
   x, y = ⬨(clip_ε)
   add = (x)-> add_sub_arr!(clip_ε, x)
   to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast

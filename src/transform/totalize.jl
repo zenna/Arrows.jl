@@ -7,7 +7,7 @@ sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 
 function non_zero!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε |> gensym,
+  clip_ε = CompArrow(:clip_ε_non_zero,
                       [:den, :num],
                       [:denout, :numout])
   den, num, denout, numout = ⬨(clip_ε)
@@ -19,7 +19,6 @@ function non_zero!(sarr::SubArrow)
   ε = ifelse(comparison, ε_val, zero)
   num + ε ⥅ numout
   den  ⥅ denout
-  @assert is_wired_ok(clip_ε)
   inner_compose!(sarr, clip_ε)
 end
 
