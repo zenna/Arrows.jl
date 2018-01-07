@@ -17,6 +17,7 @@ script:
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
   - julia -e 'Pkg.add("MacroTools")'
+  - julia -e 'Pkg.add("Memoize")'
   # Make this conditiona on 0.7
   - julia -e 'Pkg.checkout("LightGraphs")'
   - julia -e 'Pkg.test("Arrows", coverage=true)'

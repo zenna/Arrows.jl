@@ -1,3 +1,4 @@
+using Memoize
 # Approximate Totalization #
 
 sub_aprx_totalize(sarr::SubArrow) = sub_aprx_totalize(deref(sarr), sarr)
@@ -6,7 +7,7 @@ sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 "Fallback to do nothing if `parr` is total"
 sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 
-function non_zero!(sarr::SubArrow)
+@memoize function __non_zero_clip_ε()
   clip_ε = CompArrow(:clip_ε_non_zero,
                       [:den, :num],
                       [:denout, :numout])
@@ -19,7 +20,11 @@ function non_zero!(sarr::SubArrow)
   ε = ifelse(comparison, ε_val, zero)
   num + ε ⥅ numout
   den  ⥅ denout
-  inner_compose!(sarr, clip_ε)
+  clip_ε
+end
+
+function non_zero!(sarr::SubArrow)
+  inner_compose!(sarr, __non_zero_clip_ε())
 end
 
 sub_aprx_totalize(carr::DivArrow, sarr::SubArrow) = non_zero!(sarr)

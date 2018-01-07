@@ -14,7 +14,7 @@ end
 
 function bounded_totalize!(sarr::SubArrow)
   # TODO: Generalize this
-  clipcarr = CompArrow(:clip |> gensym, [:x], [:y])
+  clipcarr = CompArrow(:clip, [:x], [:y])
   x, y = ⬨(clipcarr)
   bounds = domain_bounds(deref(sarr))
   clip(x, bounds...) ⥅ y
@@ -22,13 +22,13 @@ function bounded_totalize!(sarr::SubArrow)
 end
 
 function nonneg_totalize!(sarr::SubArrow)
-  clip_zero = CompArrow(:clip_zero |> gensym, [:x], [:y])
+  clip_zero = CompArrow(:clip_zero, [:x], [:y])
   x, y = ⬨(clip_zero)
   max(x, 0) ⥅ y
   inner_compose!(sarr, clip_zero)
 end
 
-function ε_totalize!(sarr::SubArrow)
+@memoize function __ε_totalize_arr()
   clip_ε = CompArrow(:clip_ε_totalize, [:x], [:y])
   x, y = ⬨(clip_ε)
   add = (x)-> add_sub_arr!(clip_ε, x)
@@ -36,7 +36,11 @@ function ε_totalize!(sarr::SubArrow)
   ε = exp(-10) |> to_bcast
   zero = 0 |> to_bcast
   ifelse(x > zero, x, ε) ⥅ y
-  inner_compose!(sarr, clip_ε)
+  clip_ε
+end
+
+function ε_totalize!(sarr::SubArrow)
+  inner_compose!(sarr, __ε_totalize_arr())
 end
 
 sub_aprx_totalize(carr::ASinArrow, sarr::SubArrow) = bounded_totalize!(sarr)
