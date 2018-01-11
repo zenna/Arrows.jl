@@ -258,15 +258,6 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   sarr
 end
 
-"Remove `prt` from a `CompArrow`"
-function rem_port!(prt::Port{<:CompArrow})
-  carr = prt.arrow
-  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
-  rem_pxport(pxport, carr)
-  deleteat!(carr.props, prt.port_id)
-  carr
-end
-
 "Remove `pxport` from a `CompArrow`"
 function rem_pxport!(pxport::ProxyPort, carr::CompArrow)
   # This section replicates the logic of LG.rem_vertex!(arr.edges, vtx_id)
@@ -283,6 +274,15 @@ function rem_pxport!(pxport::ProxyPort, carr::CompArrow)
   LG.rem_vertex!(carr.edges, vtx_id) || throw("Could not remove node")
   deleteat!(carr.vtx_id_to_port, last_id)
   delete!(carr.port_to_vtx_id, pxport)
+  carr
+end
+
+"Remove `prt` from a `CompArrow`"
+function rem_port!(prt::Port{<:CompArrow})
+  carr = prt.arrow
+  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
+  rem_pxport!(pxport, carr)
+  deleteat!(carr.props, prt.port_id)
   carr
 end
 
@@ -329,7 +329,7 @@ function add_port_like!(carr::CompArrow, prt::Port, genname=true)
   if genname && name(prt) ∈ name.(⬧(carr))
     typeof(name(prt))
     nm = uniquename(name(prt), name.(⬧(carr)))
-    setprop!(nm, prps)
+    setprop!(Name(nm), prps)
   end
   add_port!(carr, prps)
 end

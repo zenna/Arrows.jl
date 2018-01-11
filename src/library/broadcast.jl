@@ -9,13 +9,13 @@ function sizeprop(arr::BroadcastArrow, props::IdAbValues)::IdAbValues
   IdAbValues()
 end
 
-function valueprop(arr::BroadcastArrow, abvals::IdAbValues)::IdAbValues
-  # @show abvals
-  if 1 ∈ keys(abvals) && 2 ∈ keys(abvals)
-    # @show abvals[1]
-    # @show abvals[2]
+function valueprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
+  # @show idabv
+  if 1 ∈ keys(idabv) && 2 ∈ keys(idabv)
+    # @show idabv[1]
+    # @show idabv[2]
     # Do constant propagation
-    # if :value ∈ abvals[1] ⊻ :value ∈ abvals[2]
+    # if :value ∈ idabv[1] ⊻ :value ∈ idabv[2]
     # @assert false
   end
   IdAbValues()
@@ -61,7 +61,7 @@ end
 "Broadcast Arrow"
 struct ExplicitBroadcastArrow <: PrimArrow
 end
-name(::ExplicitBroadcastArrow) = :bcast
+name(::ExplicitBroadcastArrow) = :exbcast
 props(::ExplicitBroadcastArrow) = [Props(true, :x, Any),
                                    Props(true, :size, Tuple),
                                    Props(false, :y, Array)]
@@ -78,16 +78,16 @@ end
 function bcastarray(a::Array, size::Tuple)
 end
 
-function valueprop(arr::ExplicitBroadcastArrow, abvals::IdAbValues)::IdAbValues
-  if in(idabv, 1, :value) && ub
+function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
+  if in(idabv, 1, :value) && in(idabv, 2, :size)
     val = idabv[1][:value]
     sz = idabv[1][:size]
     inner = map()
     repeat(val, inner)
-    # @show abvals[1]
-    # @show abvals[2]
+    # @show idabv[1]
+    # @show idabv[2]
     # Do constant propagation
-    # if :value ∈ abvals[1] ⊻ :value ∈ abvals[2]
+    # if :value ∈ idabv[1] ⊻ :value ∈ idabv[2]
     # @assert false
   end
   IdAbValues()
@@ -103,12 +103,12 @@ function constprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
   end
 end
 
-struct InvBroadcastArrow <: PrimArrow
+struct ExplicitInvBroadcastArrow <: PrimArrow
 end
-name(::InvBroadcastArrow) = :inv_bcast
-props(::InvBroadcastArrow) = [Props(true, :y, Any), Props(false, :x, Any)]
+name(::ExplicitInvBroadcastArrow) = :inv_exbcast
+props(::ExplicitInvBroadcastArrow) = [Props(true, :y, Any), Props(false, :x, Any)]
 
-function sizeprop(arr::InvBroadcastArrow, idabv::IdAbValues)::IdAbValues
+function sizeprop(arr::ExplicitInvBroadcastArrow, idabv::IdAbValues)::IdAbValues
   return IdAbValues()
   # @assert false
   # If any re constant all are constant!
@@ -119,12 +119,12 @@ function sizeprop(arr::InvBroadcastArrow, idabv::IdAbValues)::IdAbValues
     IdAbValues()
   end
 end
-abinterprets(::InvBroadcastArrow) = [sizeprop]
+abinterprets(::ExplicitInvBroadcastArrow) = [sizeprop]
 
-function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     BroadcastArrow(), Dict(:x => :x, :y => :y)
   else
-    InvBroadcastArrow(), Dict(:x => :x, :y => :y)
+    ExplicitInvBroadcastArrow(), Dict(:x => :x, :y => :y)
   end
 end
