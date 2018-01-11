@@ -21,7 +21,7 @@ function same(xs, eq=(==))::Bool
 end
 
 "Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
-function uniquename(x, nms)
+function uniquename(x::Symbol, nms::Vector{Symbol})
   names = Set(nms)
   nm = x
   i = 1

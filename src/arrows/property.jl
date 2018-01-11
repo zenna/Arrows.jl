@@ -55,7 +55,6 @@ name(prps::Props) = prps.namedprops.name
 string(nm::Name) = string(nm.name)
 setprop!(nm::Name, prps::Props) =
   prps.namedprops = merge(@NT(name = nm), prps.namedprops)
-namei(nm::Name, i::Integer) = Name(Symbol(nm.name, i))
 
 "In or Out?"
 struct Direction <: Prop
