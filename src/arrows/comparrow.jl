@@ -327,10 +327,7 @@ end
 function add_port_like!(carr::CompArrow, prt::Port, genname=true)
   prps = deepcopy(props(prt)) # FIXME: Copying prps twice, here and add_port!
   if genname && name(prt) ∈ name.(⬧(carr))
-    typeof(name(prt))
-    @show name(prt)
-    @show name.(⬧(carr))
-    @show nm = uniquename(name(prt).name, [nm.name for nm in name.(⬧(carr))])
+    nm = uniquename(name(prt).name, [nm.name for nm in name.(⬧(carr))])
     setprop!(Name(nm), prps)
   end
   add_port!(carr, prps)
