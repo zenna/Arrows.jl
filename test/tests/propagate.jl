@@ -37,3 +37,15 @@ function test_value_prop()
 end
 
 test_value_prop()
+
+function test_size_bcast()
+  c = CompArrow(:c, [:x, :y], [:z])
+  two, = ◃(add_sub_arr!(c, SourceArrow(2)))
+  g = (x,y) -> x .* (bcast(two)) .+ y
+  x, y = ▹(c)
+  g(x, y) ⥅ ◃(c,1)
+  init_size = x=>Arrows.AbValues(:size=>Arrows.Size((3, 2)))
+  traceprop!(c, SprtAbValues(init_size))
+end
+
+test_size_bcast()

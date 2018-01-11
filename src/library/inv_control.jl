@@ -11,11 +11,12 @@ abinterprets(::InvDuplArrow) = [sizeprop]
 
 "f(x, x) = (x,)"
 function inv_dupl(xs...)
+  @assert !any(x->isa(x, AbstractArray), xs)
   same(xs, ≈) || throw(ArgumentError("All inputs to invdupl should be same $xs"))
   first(xs)
 end
 
-function inv_dupl(xs::Array...)
+function inv_dupl(xs::AbstractArray...)
   ## TODO: Simplify!
   base = first(xs)
   answer = similar(base)

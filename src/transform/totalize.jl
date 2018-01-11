@@ -1,3 +1,4 @@
+using Memoize
 # Approximate Totalization #
 
 sub_aprx_totalize(sarr::SubArrow) = sub_aprx_totalize(deref(sarr), sarr)
@@ -6,16 +7,24 @@ sub_aprx_totalize(carr::CompArrow, sarr::SubArrow) = aprx_totalize!(carr)
 "Fallback to do nothing if `parr` is total"
 sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
 
-function non_zero!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε, [:den, :num], [:denout, :numout])
+@memoize function __non_zero_clip_ε()
+  clip_ε = CompArrow(:clip_ε_non_zero,
+                      [:den, :num],
+                      [:denout, :numout])
   den, num, denout, numout = ⬨(clip_ε)
-  ε = 0.001
-  num + 4.0 ⥅ numout
-  den + 4.0 ⥅ denout
-  @assert is_wired_ok(clip_ε)
-  # eq_zero = (x == 0)
-  # (x * (1-eq_zero) + ε * eq_zero) ⥅ y
-  inner_compose!(sarr, clip_ε)
+  add = (x)-> add_sub_arr!(clip_ε, x)
+  to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast
+  zero = 0 |> to_bcast
+  ε_val = 0.001 |> to_bcast
+  comparison = EqualArrow()(num, zero)
+  ε = ifelse(comparison, ε_val, zero)
+  num + ε ⥅ numout
+  den  ⥅ denout
+  clip_ε
+end
+
+function non_zero!(sarr::SubArrow)
+  inner_compose!(sarr, __non_zero_clip_ε())
 end
 
 sub_aprx_totalize(carr::DivArrow, sarr::SubArrow) = non_zero!(sarr)

@@ -28,13 +28,19 @@ function nonneg_totalize!(sarr::SubArrow)
   inner_compose!(sarr, clip_zero)
 end
 
-function ε_totalize!(sarr::SubArrow)
-  clip_ε = CompArrow(:clip_ε, [:x], [:y])
+@memoize function __ε_totalize_arr()
+  clip_ε = CompArrow(:clip_ε_totalize, [:x], [:y])
   x, y = ⬨(clip_ε)
-  ε = exp(-10)
-  greater_than = (x > 0)
-  (x * greater_than + ε * (1 - greater_than)) ⥅ y
-  inner_compose!(sarr, clip_ε)
+  add = (x)-> add_sub_arr!(clip_ε, x)
+  to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast
+  ε = exp(-10) |> to_bcast
+  zero = 0 |> to_bcast
+  ifelse(x > zero, x, ε) ⥅ y
+  clip_ε
+end
+
+function ε_totalize!(sarr::SubArrow)
+  inner_compose!(sarr, __ε_totalize_arr())
 end
 
 sub_aprx_totalize(carr::ASinArrow, sarr::SubArrow) = bounded_totalize!(sarr)

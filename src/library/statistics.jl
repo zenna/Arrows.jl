@@ -6,7 +6,8 @@ props(::MeanArrow{I}) where I =
 
 name(::MeanArrow) = :mean
 MeanArrow(n::Integer) = MeanArrow{n}()
-mean(args...) = sum(args)/length(args)
+mean_arr(args...) = sum(args)/length(args)
+mean(args...) = mean_arr(args...)
 abinterprets(::MeanArrow) = [sizeprop]
 
 "Reduce Mean"

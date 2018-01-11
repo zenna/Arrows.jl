@@ -22,6 +22,7 @@ end
 # But we have some special cases
 call_expr{N}(arr::DuplArrow{N}, arg) = Expr(:call, dupl, arg, N)
 call_expr{N}(arr::InvDuplArrow{N}, args...) = Expr(:call, inv_dupl, args...)
+call_expr{N}(arr::MeanArrow{N}, args...) = Expr(:call, :mean_arr, args...)
 call_expr(arr::SourceArrow, args...) = arr.value
 call_expr(arr::Arrows.ReduceSumArrow, args) = Expr(:call, :sum, args, arr.axis)
 

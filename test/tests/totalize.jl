@@ -27,3 +27,47 @@ function test_has_error_ports()
 end
 
 test_has_error_ports()
+
+function test_apprx_div()
+  c = CompArrow(:c, [:x, :y], [:z])
+  x, y, z = ⬨(c)
+  (x/y) ⥅ z
+  apprx = aprx_totalize!(c)
+  @test abs(apprx(-2, -4)) != Inf
+  @test abs(apprx(132, 0)) != Inf
+  @test abs(apprx(0, 0)) == 0
+end
+
+test_apprx_div()
+
+
+function test_apprx_div_propagate()
+  c = CompArrow(:c, [:x, :y], [:z])
+  x, y, z = ⬨(c)
+  (x/y) ⥅ z
+  apprx = aprx_totalize!(c)
+  sz = Size([3,2])
+  abtvals = Arrows.traceprop!(apprx, Dict(x => AbValues(:size => sz),
+                                         y => AbValues(:size => sz)))
+  @test Arrows.if_symbol_on_sport(abtvals, :size, z,
+                    (x)->x == sz,
+                    ()->false)
+end
+
+test_apprx_div_propagate()
+
+
+function test_apprx_log_propagate()
+  c = CompArrow(:c, [:x], [:z])
+  x, z = ⬨(c)
+  log(x) ⥅ z
+  apprx = aprx_totalize!(c)
+  @test all(exp.(apprx([0, 0.1])) .> 0)
+  sz = Size([3,2])
+  abtvals = Arrows.traceprop!(apprx, Dict(x => AbValues(:size => sz)))
+  @test Arrows.if_symbol_on_sport(abtvals, :size, z,
+                    (z)->z == sz,
+                    ()->false)
+end
+
+test_apprx_log_propagate()

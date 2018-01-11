@@ -85,19 +85,17 @@ function inv_p(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
    unary_inv(arr, const_in(arr, abvals), ASinArrow)
 end
 
-# function inv(arr::DivArrow,
-#              sarr::SubArrow,
-#              const_in::Vector{Bool},
-#              tparent::TraceParent,
-#              abtvals::AbTraceValues)
-#   binary_inv(arr,
-#              const_in,
-#              inv_div,
-#              MulArrow,
-#              Dict(1 => 1, 2 => 3, 3 => 2),
-#              MulArrow,
-#              Dict(1 => 3, 2 => 2, 3 => 1))
-# end
+function inv(arr::DivArrow,
+             sarr::SubArrow,
+             abvals::IdAbValues)
+  binary_inv(arr,
+             const_in(arr, abvals),
+             inv_div,
+             MulArrow,
+             Dict(1 => 1, 2 => 3, 3 => 2),
+             MulArrow,
+             Dict(1 => 3, 2 => 2, 3 => 1))
+end
 
 
 "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
