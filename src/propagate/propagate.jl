@@ -4,19 +4,19 @@ AbValues = Dict{Symbol, Any}
 "Mapping from `port_id` to abstract values"
 IdAbValues = Dict{Int, AbValues}
 
-"Abstract TraceValues assigns abtract values to TraceValues"
+"Mapping from `TraceValue` name to `AbValues`"
 TraceAbValues = Dict{TraceValue, AbValues}
 
-"Mapping from port name to AbValues"
+"Mapping from port name to `AbValues`"
 NmAbValues = Dict{Symbol, AbValues}
 
-"You get the picture"
+"Mapping from `SubPort` to Abstract Value"
 SprtAbValues = Dict{SubPort, AbValues}
 
-"You get the picture"
+"Mapping from `Port` to Abstract Value"
 PrtAbValues = Dict{Port, AbValues}
 
-"All kinds of AbValues"
+"All kinds of mappings to `AbValues`"
 XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
 # Conversions
