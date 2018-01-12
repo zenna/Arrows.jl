@@ -48,6 +48,14 @@ get_out_ports(arr::Arrow, nm::Symbol) = get_out_ports(arr, prt->name(prt).name =
 get_in_sub_ports(arr::Arrow, nm::Symbol) = get_in_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
 get_out_sub_ports(arr::Arrow, nm::Symbol) = get_out_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
 
+get_ports(arr::Arrow, nms::Vector{Symbol}) = [get_ports(arr, nm) for nm in nms]
+get_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_sub_ports(arr, nm) for nm in nms]
+get_in_ports(arr::Arrow, nms::Vector{Symbol}) = [get_in_ports(arr, nm) for nm in nms]
+get_out_ports(arr::Arrow, nms::Vector{Symbol}) = [get_out_ports(arr, nm) for nm in nms]
+get_in_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_in_sub_ports(arr, nm) for nm in nms]
+get_out_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_out_sub_ports(arr, nm) for nm in nms]
+
+
 ⬧ = get_ports
 ⬨ = get_sub_ports
 ▸ = get_in_ports

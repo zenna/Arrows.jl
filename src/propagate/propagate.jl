@@ -16,7 +16,6 @@ SprtAbValues = Dict{SubPort, AbValues}
 "You get the picture"
 PrtAbValues = Dict{Port, AbValues}
 
-
 "All kinds of AbValues"
 XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
@@ -53,7 +52,7 @@ end
 
 "does `xabv[i][typ]` exist"
 function Base.in(xabv::XAbValues, i, typ::Symbol)
-  i ∈ keys(xabv) && typ in xabv[i]
+  i ∈ keys(xabv) && typ in keys(xabv[i])
 end
 
 "All abstract evaluators of `arr`"
@@ -138,7 +137,6 @@ function traceprop!(carr::CompArrow,
     idabv = IdAbValues(port_id => tabv[tvals[port_id]] for port_id in validids)
 
     # Do the actual abstract interpretation
-    @show parr
     idabv = cycle_abinterprets(parr, idabv)
 
     # Update `tabv` with abstract values from idabv
@@ -157,7 +155,7 @@ end
 
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow,
-                    sprtprp::Dict{SubPort, AbValues})
+                    sprtprp::SprtAbValues)
   tparent = TraceParent(carr)
   tabv = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
   traceprop!(carr, tabv)

@@ -64,7 +64,7 @@ function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
 end
 
 ## Explicit Broadcast ##
-"Broadcast Arrow"
+"Explicit Broadcast Arrow"
 struct ExplicitBroadcastArrow <: PrimArrow
 end
 name(::ExplicitBroadcastArrow) = :exbcast
@@ -73,16 +73,16 @@ props(::ExplicitBroadcastArrow) = [Props(true, :x, Any),
                                    Props(false, :y, Array)]
 abinterprets(::ExplicitBroadcastArrow) = [sizeprop]
 function sizeprop(arr::ExplicitBroadcastArrow, props::IdAbValues)::IdAbValues
-  if 1 ∈ keys(props) && :value ∈ props[1]
-     bcastsize = props[1][:value]
-     IdAbValues(2 => AbValues(:size => Size([bcastsize...])))
+  if 2 ∈ keys(props) && :value ∈ keys(props[2])
+     bcastsize = props[2][:value]
+     IdAbValues(3 => AbValues(:size => Size([bcastsize.value...])))
    else
      IdAbValues()
    end
 end
 
-function bcastarray(a::Array, size::Tuple)
-end
+# function bcastarray(a::Array, size::Tuple)
+# end
 
 function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
   if in(idabv, 1, :value) && in(idabv, 2, :size)
