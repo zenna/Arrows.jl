@@ -1,11 +1,11 @@
 "Duplicates input `I` times dupl_n_(x) = (x,...x)"
 struct InvDuplArrow{I} <: PrimArrow end
 
-props{I}(::InvDuplArrow{I}) =
+props(::InvDuplArrow{I}) where I=
   [[Props(true, Symbol(:x, i), Array{Any}) for i=1:I]...,
    Props(false, :y, Array{Any})]
 
-name{I}(::InvDuplArrow{I}) = Symbol(:inv_dupl_, I)
+name(::InvDuplArrow{I}) where I = Symbol(:inv_dupl_, I)
 InvDuplArrow(n::Integer) = InvDuplArrow{n}()
 abinterprets(::InvDuplArrow) = [sizeprop]
 

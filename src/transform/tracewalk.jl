@@ -19,9 +19,9 @@ function subtracewalk(inner::Function,
 end
 
 function subtracewalk(inner::Function,
-            sarr::SubArrow,
-            tparent::TraceParent,
-            abtvals::TraceAbValues)
+                      sarr::SubArrow,
+                      tparent::TraceParent,
+                      abtvals::TraceAbValues)
   subtracewalk(inner, deref(sarr), sarr, tparent, abtvals)
 end
 

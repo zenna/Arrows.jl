@@ -1,27 +1,34 @@
-"Name (e.g. :value, :size, ...) to abstract value (ConcreteValue, Size, ...)"
+"Name (e.g. :value, :size, ...) to abstract value (Singleton, Size, ...)"
 AbValues = Dict{Symbol, Any}
 
 "Mapping from `port_id` to abstract values"
 IdAbValues = Dict{Int, AbValues}
 
-"Abstract TraceValues assigns abtract values to TraceValues"
+"Mapping from `TraceValue` name to `AbValues`"
 TraceAbValues = Dict{TraceValue, AbValues}
 
-"Mapping from port name to AbValues"
+"Mapping from port name to `AbValues`"
 NmAbValues = Dict{Symbol, AbValues}
 
-"You get the picture"
+"Mapping from `SubPort` to Abstract Value"
 SprtAbValues = Dict{SubPort, AbValues}
 
-"All kinds of AbValues"
-XAbValues = Union{SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
+"Mapping from `Port` to Abstract Value"
+PrtAbValues = Dict{Port, AbValues}
 
+"All kinds of mappings to `AbValues`"
+XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
+
+# Conversions
+sprtabv(arr::Arrow, nmabv::NmAbValues) =
+  SprtAbValues(⬨(arr, nm) => abv for (nm, abv) in nmabv)
 
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
 Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
   tabv[trace_value(sprt)]
 
+# Convenience functions for extracting info from XAbValues
 has(sm::Symbol) = prop -> haskey(prop, sm)
 
 "Executes a function `true_` if the symbol is present or `else_`"
@@ -41,6 +48,11 @@ end
 function allhave(idabv::IdAbValues, abvkey::Symbol, prts::Port...)
   allthere = all((prt.port_id ∈ keys(idabv) for prt in prts))
   allthere && all(has(abvkey), (idabv[pid] for pid in port_id.(prts)))
+end
+
+"does `xabv[i][typ]` exist"
+function Base.in(xabv::XAbValues, i, typ::Symbol)
+  i ∈ keys(xabv) && typ in keys(xabv[i])
 end
 
 "All abstract evaluators of `arr`"
@@ -125,7 +137,6 @@ function traceprop!(carr::CompArrow,
     idabv = IdAbValues(port_id => tabv[tvals[port_id]] for port_id in validids)
 
     # Do the actual abstract interpretation
-    @show parr
     idabv = cycle_abinterprets(parr, idabv)
 
     # Update `tabv` with abstract values from idabv
@@ -144,7 +155,7 @@ end
 
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow,
-                    sprtprp::Dict{SubPort, AbValues})
+                    sprtprp::SprtAbValues)
   tparent = TraceParent(carr)
   tabv = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
   traceprop!(carr, tabv)

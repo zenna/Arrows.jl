@@ -102,7 +102,6 @@ export
   ⥆,
   port_id,
   add_sub_arr!,
-  rem_sub_arr,
   replace_sub_arr!,
   out_sub_port,
   out_sub_ports,
@@ -115,7 +114,6 @@ export
   in_sub_ports,
   in_ports,
   in_port,
-  in_ports,
   out_port,
   out_ports,
   num_in_ports,
@@ -123,24 +121,14 @@ export
   num_ports,
   port,
   ports,
-  propagate!,
-  Shape,
-  #const
-  Const,
-  known_const,
-  known_not_const,
-  const_propagator!,
-  compile,
 
   is_wired_ok,
   is_valid,
   interpret,
-  invert!,
   invert,
   pgf,
   out_values,
   aprx_invert,
-  aprx_totalize!,
   aprx_totalize!,
   domain_error,
   domain_error!,
@@ -152,15 +140,6 @@ export
 
   mean,
   var,
-
-  ◂,
-  ◂,
-  ▸,
-  ▸,
-  n◂,
-  n▸,
-  ◃,
-  ▹,
   θp,
   ϵ,
   idϵ,
@@ -237,7 +216,6 @@ export
   psl,
   supervised,
   traceprop!,
-  UnknownArrow,
   simpletracewalk,
   trace_values,
   is,
@@ -247,6 +225,7 @@ export
   gradient,
   source,
   bcast,
+  exbcast,
   IdAbValues,
   NmAbValues,
   SprtAbValues,
@@ -256,7 +235,14 @@ export
   out_trace_values,
   Sampler,
   @grab,
-  δarr
+  δarr,
+  ▸,
+  ◂,
+  ▹,
+  ◃,
+  ⬧,
+  ⬨
+
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
@@ -281,7 +267,7 @@ include("arrows/trace.jl")          # Arrow Traces
 include("propagate/meet.jl")        # Meeting (intersection) of domains
 include("propagate/propagate.jl")
 include("propagate/size.jl")
-include("propagate/concrete.jl")
+include("propagate/singleton.jl")
 include("propagate/const.jl")           # Const type
 
 # Library #
@@ -321,6 +307,8 @@ include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
 include("apply/interpret.jl")
+include("apply/traceinterpret.jl")
+
 
 # Graph Transformations #
 include("transform/walk.jl")
@@ -336,6 +324,9 @@ include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
 include("transform/supervised.jl")
+
+# Random generation
+include("rand.jl")
 
 # Macros
 include("macros/arr_macro.jl")

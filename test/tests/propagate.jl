@@ -1,6 +1,6 @@
 using Arrows
 using Base.Test
-import Arrows: AbValues, hasarrtype, traceprop!, ConcreteValue
+import Arrows: AbValues, hasarrtype, traceprop!, Singleton
 
 nosources = filter(arr->!hasarrtype(arr, SourceArrow), TestArrows.plain_arrows())
 
@@ -30,8 +30,8 @@ foreach(test_shape_prop ∘ pre_test, nosources)
 function test_value_prop()
   carr = TestArrows.xy_plus_x_arr()
   x, y, z = ⬨(carr)
-  res = traceprop!(carr, Dict(x => Arrows.AbValues(:value => ConcreteValue(3.2)),
-                              y => Arrows.AbValues(:value => ConcreteValue(2.3))))
+  res = traceprop!(carr, Dict(x => Arrows.AbValues(:value => Singleton(3.2)),
+                              y => Arrows.AbValues(:value => Singleton(2.3))))
   # @show res
   @test get(res, z)[:value].value == 3.2 * 2.3 + 3.2
 end

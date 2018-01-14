@@ -30,7 +30,7 @@ struct CatArrow{I} <: PrimArrow
   axis::Int
 end
 name(::CatArrow) = :cat
-props{I}(::CatArrow{I}) =
+props(::CatArrow{I}) where I =
   [[Props(true, Symbol(:x, i), Any) for i=1:I]...,
     Props(false, :y, Any)]
 CatArrow(n::Integer, axis::Integer) = CatArrow{n}(axis)

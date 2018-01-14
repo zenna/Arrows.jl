@@ -4,7 +4,7 @@ import Arrows: TraceParent, TraceSubPort, TraceSubArrow, TraceValue, down
 
 function test_dept(nlayers = 5)
   carr = TestArrows.nested_core(nlayers)
-  sarrs = [sub_arrow(carr)]
+  sarrs = SubArrow[sub_arrow(carr)]
   parent = carr
   for i = 1:nlayers + 1
     sarr = sub_arrows(parent)[1]
