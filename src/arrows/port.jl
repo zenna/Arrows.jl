@@ -59,7 +59,7 @@ in_port(aarr::AbstractArrow, i::Integer)::Port = in_ports(aarr)[i]
 ## Num_ports ##
 
 # FIXME: Deprecate
-"How manny ports does `aarr` have"
+"How many ports does `aarr` have"
 num_ports(aarr::AbstractArrow) = length(props(aarr))
 
 # FIXME: Deprecate
@@ -74,18 +74,19 @@ num_in_ports(aarr::AbstractArrow)::Integer = length(in_ports(aarr))
 name(port::Port) = name(props(port))
 
 ## Label ##
-mann(is_in_port::Bool) = is_in_port ? "▹" : "◃"
+describe(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 
 ## Printing ##
-function mann(prt::Port; show_name=true,
-                         show_port_id=true,
-                         show_is_in_port=true,
-                         show_typ=true,
-                         show_arrow=true,
-                         show_labels=true,
-                         kwargs...)
+"Describe `prt` (as string) with variable options"
+function describe(prt::Port; show_name=true,
+                             show_port_id=true,
+                             show_is_in_port=true,
+                             show_typ=true,
+                             show_arrow=true,
+                             show_labels=true,
+                             kwargs...)
   res = ""
-  if show_is_in_port res *= mann(is_in_port(prt)) end
+  if show_is_in_port res *= describe(is_in_port(prt)) end
   if show_name
     res *= string(name(prt))
     if show_labels
@@ -100,5 +101,5 @@ function mann(prt::Port; show_name=true,
   res
 end
 
-string(prt::Port) = mann(prt)
+string(prt::Port) = describe(prt)
 show(io::IO, prt::Port) = print(io, string(prt))

@@ -225,6 +225,7 @@ export
   gradient,
   source,
   bcast,
+  exbcast,
   IdAbValues,
   NmAbValues,
   SprtAbValues,
@@ -266,7 +267,7 @@ include("arrows/trace.jl")          # Arrow Traces
 include("propagate/meet.jl")        # Meeting (intersection) of domains
 include("propagate/propagate.jl")
 include("propagate/size.jl")
-include("propagate/concrete.jl")
+include("propagate/singleton.jl")
 include("propagate/const.jl")           # Const type
 
 # Library #

@@ -376,14 +376,13 @@ n▸ = num_in_ports
 n◂ = num_out_ports
 
 ## Printing ##
-# FIXME: rename mann to something meaningful
-function mann(carr::CompArrow; kwargs...)
+function describe(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows
   wired_ok? $(is_valid(carr))"""
 end
 
-string(carr::CompArrow) = mann(carr)
+string(carr::CompArrow) = describe(carr)
 print(io::IO, carr::CompArrow) = print(io, string(carr))
 show(io::IO, carr::CompArrow) = print(io, carr)
 
