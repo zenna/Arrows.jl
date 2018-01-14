@@ -293,8 +293,7 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   end
   arr = parent(sarr)
 
-  # Remove every
-
+  # Remove every ...?
   for pxport in copy(proxy_ports(sarr))
     rem_pxport!(pxport, arr)
   end
