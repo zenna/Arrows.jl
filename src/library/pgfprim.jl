@@ -142,27 +142,21 @@ y is constant: f^(-1)(z; θ1, y) = (z ?  y + abs(θ1) : y - abs(θ1))
 none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
 """
 function pgf(arr::GreaterThanArrow, const_in)
-  function basic(name)
-    CompArrow(Symbol(:pgf_, :greaterthan, name), [:x, :y], [:z, :θ1, :θ2])
-  end
+  carr = CompArrow(Symbol(:pgf_, :greaterthan), [:x, :y], [:z, :θ1, :θ2])
+  x, y, z, θ1, θ2 = ⬨(carr)
+  x > y ⥅ z
   if const_in[1]
-    carr = basic(:xconts)
-    x, y, z, θ1, θ2 = ⬨(carr)
-    x > y ⥅ z
     x ⥅ θ1
     y - x ⥅ θ2
+    rename!(carr, Symbol(carr.name, :_xconts))
   elseif const_in[2]
-    carr = basic(:yconts)
-    x, y, z, θ1, θ2 = ⬨(carr)
-    x > y ⥅ z
     y ⥅ θ1
     x - y ⥅ θ2
+    rename!(carr, Symbol(carr.name, :_yconts))
   else
-    carr = basic(:nonconts)
-    x, y, z, θ1, θ2 = ⬨(carr)
-    x > y ⥅ z
     x ⥅ θ1
     x - y ⥅ θ2
+    rename!(carr, Symbol(carr.name, :_nonconts))
   end
   carr
 end
