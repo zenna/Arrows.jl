@@ -14,3 +14,8 @@ props(::OrArrow) = ineq_props
 struct NotArrow <: PrimArrow end
 name(::NotArrow)::Symbol = :!
 props(::NotArrow) = ineq_props
+
+"x ⊻ y"
+struct XorArrow <: PrimArrow end
+name(::XorArrow)::Symbol = :⊻
+props(::XorArrow) = ineq_props

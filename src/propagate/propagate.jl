@@ -121,8 +121,13 @@ function traceprop!(carr::CompArrow,
   # more recently than the last time it was applied
   ready(tarr)::Bool = any(value->lastmeet[value] > lastapply[tarr],
                           trace_values(tarr))
+  if isempty(tarrs)
+    return tabv
+  end
+  tarrid = 1
   while true
-    tarrid = findfirst(ready, tarrs)
+    tarrid = findnext(ready, tarrs, tarrid)
+    tarrid = tarrid == 0 ? findfirst(ready, tarrs) : tarrid
     # Converged
     tarrid == 0 && break
     tarr = tarrs[tarrid]

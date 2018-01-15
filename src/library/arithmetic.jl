@@ -57,10 +57,6 @@ domain_bounds(::ACosArrow) = [-1, 1]
 struct SqrtArrow <: PrimArrow end
 name(::SqrtArrow)::Symbol = :sqrt
 
-# FIXME: Fix port naming of sqr and sqrt rather than have x => y
-function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbValues)
-  SqrArrow(), Dict(:x=>:y, :y=>:x)
-end
 
 "sqr(x)"
 struct SqrArrow <: PrimArrow end

@@ -52,6 +52,7 @@ import Base:  ^,
               ==,
               |,
               &,
+              ⊻,
               !,
               %,
               cos,
@@ -162,6 +163,10 @@ export
   IdentityArrow,
   ExpArrow,
   NegArrow,
+  AndArrow,
+  OrArrow,
+  NotArrow,
+  XorArrow,
   GatherNdArrow,
   ScatterNdArrow,
   ASinArrow,
@@ -287,11 +292,13 @@ include("library/array.jl")
 include("library/compound.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
+include("library/md2.jl")
 
 # Inv Arrows
 include("library/inv_control.jl")
 include("library/inv_array.jl")
 include("library/inv_arith.jl")
+include("library/inv_boolean.jl")
 
 # PGF Primitives
 include("library/pgfprim.jl")
@@ -307,7 +314,6 @@ include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
 include("apply/interpret.jl")
-include("apply/traceinterpret.jl")
 
 
 # Graph Transformations #

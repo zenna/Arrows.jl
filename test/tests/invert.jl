@@ -30,3 +30,13 @@ function test_ex_invert()
 end
 
 test_ex_invert()
+
+
+function test_xor_invert()
+  xor = Arrows.wrap(XorArrow())
+  inv_x = invert(xor)
+  left, right = 0x19, 0xf3
+  @test inv_x(xor(left, right), left) == (right, left)
+end
+
+test_xor_invert()
