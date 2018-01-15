@@ -314,7 +314,6 @@ include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
 include("apply/interpret.jl")
-include("apply/traceinterpret.jl")
 
 
 # Graph Transformations #

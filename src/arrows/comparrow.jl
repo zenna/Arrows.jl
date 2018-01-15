@@ -35,13 +35,12 @@ mutable struct CompArrow <: Arrow
 end
 
 "A component within a `CompArrow`"
-struct SubArrow{A} <: ArrowRef
+struct SubArrow <: ArrowRef
   parent::CompArrow
   name::ArrowName
   # This parameter should be unnecessary
-  function SubArrow(parent::T, name::ArrowName) where T<:CompArrow
-    arr = arrow(parent, name)
-    sarr = new{typeof(arr)}(parent, name)
+  function SubArrow(parent::CompArrow, name::ArrowName)
+    sarr = new(parent, name)
     if !is_valid(sarr)
       throw(ArgumentError("Invalid SubArrow: name not in parent"))
     end
