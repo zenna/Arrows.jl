@@ -4,7 +4,6 @@
 # at least want to just add the parameter part to the arrow and
 # not have to construct the arrow along with the parameter.
 
-pgf(arr, const_in) = pgf(arr)
 
 function pgf(arr::MulArrow, const_in)
   "As f^(-1)(z; θ) = (z/θ, θ), then the pgf becomes r(x, y) = (x*y, y)."
@@ -74,17 +73,6 @@ function pgf(arr::GatherNdArrow)
   carr
 end
 
-pgf_np(arr::SinArrow) = deepcopy(arr)
-pgf_np(arr::CosArrow) = deepcopy(arr)
-pgf(arr::SourceArrow) = deepcopy(arr)
-pgf(arr::IdentityArrow) = deepcopy(arr)
-pgf(arr::MD2SBoxArrow) = deepcopy(arr)
-pgf(arr::ReshapeArrow) = deepcopy(arr)
-pgf(arr::ScatterNdArrow) = deepcopy(arr)
-pgf(arr::NegArrow) = deepcopy(arr)
-pgf(arr::LogArrow) = deepcopy(arr)
-pgf(arr::ExpArrow) = deepcopy(arr)
-
 function pgf(arr::SinArrow)
   "As f^(-1)(y; θ) = πθ + (-1)^θ * asin(y), then the pgf becomes θ = floor((x+π/2)/π)."
   carr = CompArrow(Symbol(:pgf_, :sin), [:x], [:y, :θsin])
@@ -142,14 +130,15 @@ y is constant: f^(-1)(z; θ1, y) = (z ?  y + abs(θ1) : y - abs(θ1))
 none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
 """
 function pgf(arr::GreaterThanArrow, const_in)
+  xconst, yconst = const_in
   carr = CompArrow(Symbol(:pgf_, :greaterthan), [:x, :y], [:z, :θ1, :θ2])
   x, y, z, θ1, θ2 = ⬨(carr)
   x > y ⥅ z
-  if const_in[1]
+  if xconst
     x ⥅ θ1
     y - x ⥅ θ2
     rename!(carr, Symbol(carr.name, :_xconts))
-  elseif const_in[2]
+  elseif yconst
     y ⥅ θ1
     x - y ⥅ θ2
     rename!(carr, Symbol(carr.name, :_yconts))
