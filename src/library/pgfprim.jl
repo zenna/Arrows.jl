@@ -131,21 +131,22 @@ none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
 """
 function pgf(arr::GreaterThanArrow, const_in)
   xconst, yconst = const_in
-  carr = CompArrow(Symbol(:pgf_, :greaterthan), [:x, :y], [:z, :θ1, :θ2])
-  x, y, z, θ1, θ2 = ⬨(carr)
-  x > y ⥅ z
   if xconst
-    x ⥅ θ1
-    y - x ⥅ θ2
-    rename!(carr, Symbol(carr.name, :_xconts))
+    carr = CompArrow(Symbol(:pgf_, :gt_xcnst), [:x, :y], [:z, :θgt])
+    x, y, z, θgt = ⬨(carr)
+    x > y ⥅ z
+    y - x ⥅ θgt
   elseif yconst
-    y ⥅ θ1
-    x - y ⥅ θ2
-    rename!(carr, Symbol(carr.name, :_yconts))
+    carr = CompArrow(Symbol(:pgf_, :gt_ycnst), [:x, :y], [:z, :θgt])
+    x, y, z, θgt = ⬨(carr)
+    x > y ⥅ z
+    x - y ⥅ θgt
   else
-    x ⥅ θ1
-    x - y ⥅ θ2
-    rename!(carr, Symbol(carr.name, :_nonconts))
+    carr = CompArrow(Symbol(:pgf_, :gt), [:x, :y], [:z, :θgt1, :θgt2])
+    x, y, z, θgt1, θgt2 = ⬨(carr)
+    x > y ⥅ z
+    x ⥅ θgt1
+    x - y ⥅ θgt2
   end
   carr
 end
@@ -167,32 +168,25 @@ function pgf(arr::IfElseArrow, const_in)
   if const_in[2] && const_in[3]
     carr = CompArrow(:ifelse_teconst_pgf,
                       [:i, :t, :e],
-                      [:y, :t, :e, :θi])
-    i, ▹t, ▹e = ▹(carr)
-    y, ◃t, ◃e, θi = ◃(carr)
+                      [:y, :θi])
+    i, t, e = ▹(carr)
+    θi, = ◃(carr)
     i ⥅ θi
-    ▹t ⥅ ◃t
-    ▹e ⥅ ◃e
-    ifelse(i, ▹t, e) ⥅ y
   elseif const_in[2]
     carr = CompArrow(:ifelse_tconst_pgf,
                       [:i, :t, :e],
-                      [:y, :t, :θi, :θmissing])
-    i, ▹t, e = ▹(carr)
-    y, ◃t, θi, θmissing = ◃(carr)
-    ▹t ⥅ ◃t
+                      [:θi, :θmissing])
+    i, t, e = ▹(carr)
+    θi, θmissing = ◃(carr)
     i ⥅ θi
-    ifelse(i, ▹t, e) ⥅ y
     e ⥅ θmissing
   elseif const_in[3]
     carr = CompArrow(:ifelse_econst_pgf,
                       [:i, :t, :e],
-                      [:y, :e, :θi, :θmissing])
-    i, t, ▹e = ▹(carr)
-    y, ◃e, θi, θmissing = ◃(carr)
-    ▹e ⥅ ◃e
+                      [:y, :θi, :θmissing])
+    i, t, e = ▹(carr)
+    y, e, θi, θmissing = ◃(carr)
     i ⥅ θi
-    ifelse(i, t, ▹e) ⥅ y
     t ⥅ θmissing
   elseif all(i->!const_in[i], port_id.(get_in_ports(arr)))
     carr = CompArrow(:ifelse_nonconst_pgf,
@@ -201,10 +195,10 @@ function pgf(arr::IfElseArrow, const_in)
     i, t, e = ▹(carr)
     y, θi, θmissing = ◃(carr)
     i ⥅ θi
-    ifelse(i, t, e) ⥅ y
     ifelse(i, e, t) ⥅ θmissing
   else
     throw(ArgumentError("Constness Combination not supported"))
   end
+  ifelse(i, t, e) ⥅ y
   carr
 end
