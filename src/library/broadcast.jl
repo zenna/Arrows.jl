@@ -85,7 +85,7 @@ end
 explicitbroadcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
 exbcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
 
-"Explicitly broadcast array `x` to array of dimensionality sz"
+"Explicitly broadcast array `x` to array of dimensionality `sz`"
 function exbcast(x::Array, sz::Tuple{Vararg{Int}})
   dim_multiples = map(size(x), sz) do a, b
     if b == 1
@@ -100,7 +100,6 @@ function exbcast(x::Array, sz::Tuple{Vararg{Int}})
     end
   end
   # TODO: is inner correct?
-  @show size(x), sz, dim_multiples
   repeat(x, inner=dim_multiples)
 end
 
@@ -149,5 +148,7 @@ function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
     invbcast ⥅ ◃(carr, 1)
     @assert is_wired_ok(carr)
     carr, Dict(:x => :x, :y => :y)
+  else
+    throw(InvertError(arr, idabv))
   end
 end

@@ -77,7 +77,6 @@ struct SubPort <: AbstractPort
 end
 
 ## Type Aliases ##
-
 Link = Tuple{SubPort, SubPort}
 PortMap = Dict{Port, Port}
 PortIdMap = Dict{Int, Int}

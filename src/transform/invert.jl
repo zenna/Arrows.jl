@@ -90,3 +90,12 @@ end
 "copy and `invert!` `arr`"
 invert(arr::CompArrow, inner_inv, nmabv::NmAbValues) =
   invert(arr, inner_inv, sprtabv(arr, nmabv))
+
+"Cannot invert arrow"
+struct InvertError <: Exception
+  arr::Arrow
+  abv::XAbValues
+end
+
+Base.showerror(io::IO, e::InvertError) =
+  print(io, "Cannot invert: $(e.arr) with values $(e.abv)")
