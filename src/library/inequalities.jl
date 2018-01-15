@@ -10,13 +10,13 @@ name(::GreaterThanArrow)::Symbol = :>
 props(::GreaterThanArrow) = ineq_props
 
 function inv(arr::GreaterThanArrow, sarr::SubArrow, idabv::IdAbValues)
-  # @show idabv
-  @show 2 ∈ keys(idabv)
   if isconst(1, idabv)
     inv_gt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
   elseif isconst(2, idabv)
     inv_gt_ycnst(), Dict(:x => :x, :y => :y, :z => :z)
-  else # FIXME: Check that no ports are know, because z could be known
+  elseif isconst(3, idabv)
+    throw(InvertError(arr, idabv))
+  else
     inv_gt_arr(), Dict(:x => :x, :y => :y, :z => :z)
   end
 end
