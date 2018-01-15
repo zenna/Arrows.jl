@@ -83,6 +83,26 @@ end
 
 "Explicitly broadcast `x` into size `sz`"
 explicitbroadcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
+exbcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
+
+"Explicitly broadcast array `x` to array of dimensionality sz"
+function exbcast(x::Array, sz::Tuple{Vararg{Int}})
+  dim_multiples = map(size(x), sz) do a, b
+    if b == 1
+      a == 1 || throw(ArgumentError("Cannot broadcast dimensionality $a to $b"))
+      1
+    elseif a == 1 # e.g., b = 7, a = 1
+      return b
+    elseif a == b # e.g. b = 7, a = 7
+      return 1
+    else
+      throw(ArgumentError("Cannot broadcast dimensionality $a to $b"))
+    end
+  end
+  # TODO: is inner correct?
+  @show size(x), sz, dim_multiples
+  repeat(x, inner=dim_multiples)
+end
 
 function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
   if in(idabv, 1, :value) && in(idabv, 2, :value)
