@@ -84,7 +84,7 @@ function invert(arr::CompArrow,
   sprtabvals = SprtAbValues(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
   custinvreplace = (arr, sarr, tparent, abtvals) -> invreplace(arr, sarr, tparent, abtvals; inv=inner_inv)
-  newtracewalk(custinvreplace, arr, abvals)[1]
+  tracewalk(custinvreplace, arr, abvals)[1]
 end
 
 "copy and `invert!` `arr`"
