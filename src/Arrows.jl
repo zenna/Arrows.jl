@@ -306,6 +306,7 @@ include("library/array.jl")
 include("library/compound.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")
+include("library/md2.jl")
 
 # Inv Arrows
 include("library/inv_control.jl")
