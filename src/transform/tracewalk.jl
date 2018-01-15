@@ -39,19 +39,21 @@ Traverses `carr`, applies `replace` to each subarrow then `outer` to parent.
    and any edge which connects to p1 in orig will connect to p2 in new.
 """
 function tracewalk(replace::Function,
-                      carr::CompArrow,
-                      abtvals::TraceAbValues=traceprop!(carr),
-                      tparent::TraceParent=TraceParent(carr))
+                   carr::CompArrow,
+                   abtvals::TraceAbValues=traceprop!(carr),
+                   tparent::TraceParent=TraceParent(carr))
   newcarr = CompArrow(Symbol(name(carr)))
   for prt in ⬧(carr)
     add_port_like!(newcarr, prt)
   end
+
   # Map from sarrs in old to replacement
   sarrmap = Dict{SubArrow, SubArrow}(sub_arrow(carr) => sub_arrow(newcarr))
   oldnewpmap = Dict{SubArrow, PortIdMap}(sub_arrow(carr) => id_portid_map(carr))
 
-  # Handle Primitives
+  # ∀sarr in carr, add its inverse to newcarr and update sarrmap, oldnewpmap
   for sarr in sub_arrows(carr)
+    # @show typeof(deref(sarr))
     replarr, some_port_map = maybedown(replace, deref(sarr), sarr, abtvals, tparent)
     id_port_map = idportmap(deref(sarr), replarr, some_port_map)
     newsarr = add_sub_arr!(newcarr, replarr)
@@ -77,6 +79,5 @@ function tracewalk(replace::Function,
     l⬨ ⥅ r⬨
   end
   retcarr, retpmap = replace(newcarr, sub_arrow(newcarr), tparent, abtvals)
-  @assert is_wired_ok(retcarr)
   retcarr, retpmap
 end

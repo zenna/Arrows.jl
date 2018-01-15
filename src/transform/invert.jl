@@ -37,15 +37,17 @@ end
 "Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
+"Remove sarr from `carr` if any ports of sarr are unconnected"
 function remove_dead_arrows!(carr)
   # iterate until none left
   nremoved = 1
   while nremoved != 0
     nremoved = 0
     for sarr in sub_arrows(carr)
-      nloose = length(filter(loose, sub_ports(sarr)))
-      if nloose > 0
-        # println("removing: ", sarr)
+      looseprts = finditems(loose, sub_ports(sarr))
+      if length(looseprts) > 0
+        println("removing: ", sarr)
+        println("because follow ports are loose: ", name.(deref.(looseprts)))
         rem_sub_arr!(sarr)
         nremoved = nremoved + 1
       end
