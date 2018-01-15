@@ -4,11 +4,11 @@
 end
 
 name(::SourceArrow) = :source
-props{T}(::SourceArrow{T}) =  [Props(false, :x, T)]
+props(::SourceArrow{T}) where T =  [Props(false, :x, T)]
 source(value) = SourceArrow(value)
 
 # FIXME: Specialize this to things which have sizes, maybe
-function sizeprop{T}(arr::SourceArrow{T}, props::IdAbValues)
+function sizeprop(arr::SourceArrow{T}, props::IdAbValues) where T
   if T <: Union{Number, Array}
     IdAbValues(1 => AbValues(:size => Size([size(arr.value)...])))
   else
@@ -18,7 +18,7 @@ end
 
 abinterprets(::SourceArrow{<:Union{Array, Number}}) = [sizeprop]
 valueprop(arr::SourceArrow, props::IdAbValues) =
-  IdAbValues(1 => AbValues(:value => ConcreteValue(arr.value)))
+  IdAbValues(1 => AbValues(:value => Singleton(arr.value)))
 constprop(arr::SourceArrow, props::IdAbValues)::IdAbValues =
   IdAbValues(1 => AbValues(:isconst => true))
 

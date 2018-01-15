@@ -35,11 +35,13 @@ mutable struct CompArrow <: Arrow
 end
 
 "A component within a `CompArrow`"
-struct SubArrow <: ArrowRef
+struct SubArrow{A} <: ArrowRef
   parent::CompArrow
   name::ArrowName
-  function SubArrow(parent::CompArrow, name::ArrowName)
-    sarr = new(parent, name)
+  # This parameter should be unnecessary
+  function SubArrow(parent::T, name::ArrowName) where T<:CompArrow
+    arr = arrow(parent, name)
+    sarr = new{typeof(arr)}(parent, name)
     if !is_valid(sarr)
       throw(ArgumentError("Invalid SubArrow: name not in parent"))
     end
@@ -256,15 +258,6 @@ function add_sub_arr!(carr::CompArrow, arr::Arrow)::SubArrow
   sarr
 end
 
-"Remove `prt` from a `CompArrow`"
-function rem_port!(prt::Port{<:CompArrow})
-  carr = prt.arrow
-  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
-  rem_pxport(pxport, carr)
-  deleteat!(carr.props, prt.port_id)
-  carr
-end
-
 "Remove `pxport` from a `CompArrow`"
 function rem_pxport!(pxport::ProxyPort, carr::CompArrow)
   # This section replicates the logic of LG.rem_vertex!(arr.edges, vtx_id)
@@ -284,6 +277,15 @@ function rem_pxport!(pxport::ProxyPort, carr::CompArrow)
   carr
 end
 
+"Remove `prt` from a `CompArrow`"
+function rem_port!(prt::Port{<:CompArrow})
+  carr = prt.arrow
+  pxport = ProxyPort(name(carr), prt.port_id) # FIXME
+  rem_pxport!(pxport, carr)
+  deleteat!(carr.props, prt.port_id)
+  carr
+end
+
 "Remove `sarr` from `parent(sarr)`, return updated Arrow"
 function rem_sub_arr!(sarr::SubArrow)::Arrow
   if self_parent(sarr)
@@ -291,8 +293,7 @@ function rem_sub_arr!(sarr::SubArrow)::Arrow
   end
   arr = parent(sarr)
 
-  # Remove every
-
+  # Remove every ...?
   for pxport in copy(proxy_ports(sarr))
     rem_pxport!(pxport, arr)
   end
@@ -321,13 +322,12 @@ function add_port!(carr::CompArrow, prps::Props)::Port
   Port(carr, port_id)
 end
 
-"Add a port like (i.e. same `Props`) to carr"
+"Add a port like `prt` (i.e. same `Props`) to carr"
 function add_port_like!(carr::CompArrow, prt::Port, genname=true)
   prps = deepcopy(props(prt)) # FIXME: Copying prps twice, here and add_port!
   if genname && name(prt) ∈ name.(⬧(carr))
-    typeof(name(prt))
-    nm = uniquename(name(prt), name.(⬧(carr)))
-    setprop!(nm, prps)
+    nm = uniquename(name(prt).name, [nm.name for nm in name.(⬧(carr))])
+    setprop!(Name(nm), prps)
   end
   add_port!(carr, prps)
 end

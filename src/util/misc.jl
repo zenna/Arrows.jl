@@ -21,12 +21,12 @@ function same(xs, eq=(==))::Bool
 end
 
 "Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
-function uniquename(x, nms)
+function uniquename(x::Symbol, nms::Vector{Symbol})
   names = Set(nms)
   nm = x
   i = 1
   while nm ∈ names
-    nm = namei(x, i)
+    nm = Symbol(x, i)
     i += 1
   end
   nm
@@ -36,7 +36,7 @@ end
 hasduplicates(xs) = length(unique(xs)) != length(xs)
 
 "Split a collection `xs` by a predicate"
-function partition{T}(pred, xs::Vector{T})
+function partition(pred, xs::Vector{T}) where T
   in = T[]
   out = T[]
   foreach(x -> pred(x) ? push!(in, x) : push!(out, x), xs)
@@ -47,7 +47,7 @@ end
 allin_f(xs) = coll -> all((x ∈ coll for x in xs))
 
 "Given a `partition` return a mapping from elements to the cell (integer id)"
-function cell_membership{T}(partition::Vector{Vector{T}})::Dict{T, Int}
+function cell_membership(partition::Vector{Vector{T}})::Dict{T, Int} where T
   element_to_class = Dict{T, Int}()
   for (i, class) in enumerate(partition), element in class
     @assert element ∉ keys(element_to_class)
@@ -67,9 +67,8 @@ function switch(p, x, y)
   end
 end
 
-## Data Structures ##
 "`l` s.t. `dict[l] == r`. If many `l` map to `r` output is nondeterminsitic"
-function rev{L, R}(dict::Associative{L, R}, r::R)
+function rev(dict::Associative{L, R}, r::R) where {L, R}
   for (k, v) in dict
     if v == r
       return k
@@ -134,7 +133,7 @@ end
 # Returns
 - [method(x) for method in f if f(::T) exists]
 """
-function accumapply{T}(f::Function, x::T)
+function accumapply(f::Function, x::T) where T
   allmethods = methodswith.(T, f, true)
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end

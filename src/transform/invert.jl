@@ -10,9 +10,6 @@ end
 
 "Do I need to switch this `link`"
 function need_switch(l::Link)
-  # @show l
-  # @show l[1].sub_arrow
-  # @show l[2].sub_arrow
   needswitch1 = should_src(l[1]) ⊻ is_src(l[1])
   needswitch2 = should_dst(l[2]) ⊻ is_dst(l[2])
   @assert needswitch1 == needswitch2 "$needswitch1 $needswitch2 $l"
@@ -82,10 +79,14 @@ end
 "copy and `invert!` `arr`"
 function invert(arr::CompArrow,
                 inner_inv=inv,
-                sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
+                sprtabvals::SprtAbValues = SprtAbValues())
   arr = duplify(arr)
-  sprtabvals = Dict{SubPort, AbValues}(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
+  sprtabvals = SprtAbValues(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
   custinvreplace = (arr, sarr, tparent, abtvals) -> invreplace(arr, sarr, tparent, abtvals; inv=inner_inv)
   newtracewalk(custinvreplace, arr, abvals)[1]
 end
+
+"copy and `invert!` `arr`"
+invert(arr::CompArrow, inner_inv, nmabv::NmAbValues) =
+  invert(arr, inner_inv, sprtabv(arr, nmabv))

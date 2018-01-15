@@ -1,3 +1,12 @@
+# TODO: This is a illegible, replace with simpler code (without codegen)
+
+function get_ports end
+function get_sub_ports end
+function get_in_ports end
+function get_in_sub_ports end
+function get_out_ports end
+function get_out_sub_ports end
+
 function expander(short_symb, f_symb)
   plural = Symbol(f_symb, :s)
   fname = Symbol(:get_, plural)
@@ -13,7 +22,7 @@ function expander(short_symb, f_symb)
   $fname(sarr::SubArrow, pred) = filter(pred, $plural(sarr))
   $fname(sarr::SubArrow) = $plural(sarr)
 
-  $short_symb = $fname
+  # $short_symb = $fname
   export $fname
   export $short_symb
   end
@@ -28,7 +37,7 @@ fs = [(:⬧, :port)
 codes = map(f -> expander(f...), fs)
 foreach(eval, codes)
 
-# Deprecate is(▸)
+# TODO: Deprecate is(▸)
 is▸ = is_in_port
 is◂ = is_out_port
 
@@ -39,4 +48,17 @@ get_out_ports(arr::Arrow, nm::Symbol) = get_out_ports(arr, prt->name(prt).name =
 get_in_sub_ports(arr::Arrow, nm::Symbol) = get_in_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
 get_out_sub_ports(arr::Arrow, nm::Symbol) = get_out_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
 
-export is◂, is▸
+get_ports(arr::Arrow, nms::Vector{Symbol}) = [get_ports(arr, nm) for nm in nms]
+get_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_sub_ports(arr, nm) for nm in nms]
+get_in_ports(arr::Arrow, nms::Vector{Symbol}) = [get_in_ports(arr, nm) for nm in nms]
+get_out_ports(arr::Arrow, nms::Vector{Symbol}) = [get_out_ports(arr, nm) for nm in nms]
+get_in_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_in_sub_ports(arr, nm) for nm in nms]
+get_out_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_out_sub_ports(arr, nm) for nm in nms]
+
+
+⬧ = get_ports
+⬨ = get_sub_ports
+▸ = get_in_ports
+▹ = get_in_sub_ports
+◂ = get_out_ports
+◃ = get_out_sub_ports

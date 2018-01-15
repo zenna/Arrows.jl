@@ -42,7 +42,7 @@ abstract type ArrowRef <: AbstractArrow end
 
 ## Printing ##
 "String for cartesian product of ports"
-port_prod(prts; kwargs...) = join([mann(prt; kwargs...) for prt in prts], " × ")
+port_prod(prts; kwargs...) = join([describe(prt; kwargs...) for prt in prts], " × ")
 
 function sig(aarr::AbstractArrow; kwargs...)
   in = port_prod(in_ports(aarr); show_is_in_port = false, show_port_id = false, show_arrow = false, kwargs...)
