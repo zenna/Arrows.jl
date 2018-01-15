@@ -20,6 +20,19 @@ function pgf(arr::MulArrow, const_in)
   end
 end
 
+function pgf(arr::XorArrow, const_in)
+  "As f^(-1)(z; θ) = (z ⊻ θ, θ), then the pgf becomes r(x, y) = (x ⊻ y, y)."
+  if const_in[1] || const_in[2]
+    deepcopy(arr)
+  else
+    carr = CompArrow(Symbol(:pgf_, :xor), [:x, :y], [:z, :θxor])
+    x, y, z, θ = ⬨(carr)
+    x ⊻ y ⥅ z
+    y ⥅ θ
+    carr
+  end
+end
+
 function pgf(arr::AddArrow, const_in)
   "As f^(-1)(z; θ) = (z-θ, θ), then the pgf becomes r(x, y) = (x+y, y)."
   if const_in[1] || const_in[2]
@@ -65,6 +78,7 @@ pgf_np(arr::SinArrow) = deepcopy(arr)
 pgf_np(arr::CosArrow) = deepcopy(arr)
 pgf(arr::SourceArrow) = deepcopy(arr)
 pgf(arr::IdentityArrow) = deepcopy(arr)
+pgf(arr::MD2SBoxArrow) = deepcopy(arr)
 pgf(arr::ReshapeArrow) = deepcopy(arr)
 pgf(arr::ScatterNdArrow) = deepcopy(arr)
 pgf(arr::NegArrow) = deepcopy(arr)
@@ -121,6 +135,37 @@ function pgf(arr::DivArrow)
     deepcopy(arr)
   end
 end
+"""
+Three cases:
+x is constant: f^(-1)(z; x, θ1) = (z ?  x - abs(θ1) : x + abs(θ1))
+y is constant: f^(-1)(z; θ1, y) = (z ?  y + abs(θ1) : y - abs(θ1))
+none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
+"""
+function pgf(arr::GreaterThanArrow, const_in)
+  function basic(name)
+    CompArrow(Symbol(:pgf_, :greaterthan, name), [:x, :y], [:z, :θ1, :θ2])
+  end
+  if const_in[1]
+    carr = basic(:xconts)
+    x, y, z, θ1, θ2 = ⬨(carr)
+    x > y ⥅ z
+    x ⥅ θ1
+    y - x ⥅ θ2
+  elseif const_in[2]
+    carr = basic(:yconts)
+    x, y, z, θ1, θ2 = ⬨(carr)
+    x > y ⥅ z
+    y ⥅ θ1
+    x - y ⥅ θ2
+  else
+    carr = basic(:nonconts)
+    x, y, z, θ1, θ2 = ⬨(carr)
+    x > y ⥅ z
+    x ⥅ θ1
+    x - y ⥅ θ2
+  end
+  carr
+end
 
 function pgf(arr::LessThanArrow)
   "As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z), then the pgf becomes r(x, y) = (x<y, x, abs(x-y))."
@@ -131,5 +176,52 @@ function pgf(arr::LessThanArrow)
   x ⥅ θ1
   x - y ⥅ (abs, 1)
   link_ports!((abs, 2), θ2)
+  carr
+end
+
+
+function pgf(arr::IfElseArrow, const_in)
+  if const_in[2] && const_in[3]
+    carr = CompArrow(:ifelse_teconst_pgf,
+                      [:i, :t, :e],
+                      [:y, :t, :e, :θi])
+    i, ▹t, ▹e = ▹(carr)
+    y, ◃t, ◃e, θi = ◃(carr)
+    i ⥅ θi
+    ▹t ⥅ ◃t
+    ▹e ⥅ ◃e
+    ifelse(i, ▹t, e) ⥅ y
+  elseif const_in[2]
+    carr = CompArrow(:ifelse_tconst_pgf,
+                      [:i, :t, :e],
+                      [:y, :t, :θi, :θmissing])
+    i, ▹t, e = ▹(carr)
+    y, ◃t, θi, θmissing = ◃(carr)
+    ▹t ⥅ ◃t
+    i ⥅ θi
+    ifelse(i, ▹t, e) ⥅ y
+    e ⥅ θmissing
+  elseif const_in[3]
+    carr = CompArrow(:ifelse_econst_pgf,
+                      [:i, :t, :e],
+                      [:y, :e, :θi, :θmissing])
+    i, t, ▹e = ▹(carr)
+    y, ◃e, θi, θmissing = ◃(carr)
+    ▹e ⥅ ◃e
+    i ⥅ θi
+    ifelse(i, t, ▹e) ⥅ y
+    t ⥅ θmissing
+  elseif all(i->!const_in[i], port_id.(get_in_ports(arr)))
+    carr = CompArrow(:ifelse_nonconst_pgf,
+                      [:i, :t, :e],
+                      [:y, :θi, :θmissing])
+    i, t, e = ▹(carr)
+    y, θi, θmissing = ◃(carr)
+    i ⥅ θi
+    ifelse(i, t, e) ⥅ y
+    ifelse(i, e, t) ⥅ θmissing
+  else
+    throw(ArgumentError("Constness Combination not supported"))
+  end
   carr
 end

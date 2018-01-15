@@ -10,8 +10,6 @@ name(::GreaterThanArrow)::Symbol = :>
 props(::GreaterThanArrow) = ineq_props
 
 function inv(arr::GreaterThanArrow, sarr::SubArrow, idabv::IdAbValues)
-  # @show idabv
-  @show 2 ∈ keys(idabv)
   if isconst(1, idabv)
     inv_gt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
   elseif isconst(2, idabv)
