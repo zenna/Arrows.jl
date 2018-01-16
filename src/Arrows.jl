@@ -216,6 +216,9 @@ export
   meetall,
   meet,
 
+  # Symbolic Execution
+  all_constraints,
+
   accumapply,
   trace_value,
   psl,

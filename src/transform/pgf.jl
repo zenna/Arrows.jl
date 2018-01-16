@@ -39,5 +39,8 @@ function pgf(arr::CompArrow,
   custpgfreplace = function (arr, sarr, tparent, abtvals)
                     pgfreplace(arr, sarr, tparent, abtvals; pgf=inner_pgf)
                   end
-  newtracewalk(custpgfreplace, arr, abvals)[1]
+  tracewalk(custpgfreplace, arr, abvals)[1]
 end
+
+pgf(arr::CompArrow, inner_pgf, nmabv::NmAbValues) =
+  pgf(arr, inner_pgf, sprtabv(arr, nmabv))

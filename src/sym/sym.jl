@@ -74,18 +74,18 @@ Sym(sprt::SubPort) = sprt |> deref |> Sym
 Sym(prt::Port) = prt |> props |> Sym
 RefnSym(prt::Port) = RefnSym(Sym(prt))
 
-
+"If inputs satisfy `domainpred`icates then then `arr` is well defined on them"
 domainpreds(::Arrow, args...) = Set{SymUnion}()
-function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion,
-                        xs::Vararg)
+
+function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion, xs::Vararg)
+  # All inputs to invdupl must be equal
   symbols = map(xs) do x
     :($(x.value) == $(x1.value))
   end
   Set{SymUnion}(SymUnion.(symbols))
 end
 
-function domainpreds(::InvDuplArrow, x1::Array,
-                        xs::Vararg)
+function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
   answer = Array{SymUnion, 1}()
   for x in xs
     for (left, right) in zip(x1, x)
@@ -95,7 +95,6 @@ function domainpreds(::InvDuplArrow, x1::Array,
   end
   Set{SymUnion}(answer)
 end
-
 
 +(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) + $(y.value)))
 -(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) - $(y.value)))
@@ -127,7 +126,8 @@ end
 
 "Generic Symbolic Interpret of `parr`"
 function prim_sym_interpret(parr::PrimArrow, args...)
-  ex = [SymUnion(Expr(:call, name(parr), args...))]
+  @assert num_out_ports(parr) == 1
+  ex = [SymUnion(Expr(:call, name(parr), args...)),]
 end
 
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
