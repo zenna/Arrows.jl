@@ -12,7 +12,7 @@ function inv_xor()
   c
 end
 
-"Inverse or"
+"Inverse Or"
 function inv_or()
   c = CompArrow(:inv_or, [:z, :θor1, :θor2], [:x, :y])
   z, θor1, θor2, x, y = ⬨(c)

@@ -117,6 +117,10 @@ function s_var(xs::Vararg{<:Array})
   end
 end
 
+"Generic Symbolic Interpret of `parr`"
+function prim_sym_interpret(parr::PrimArrow, args...)
+  ex = [SymUnion(Expr(:call, name(parr), args...))]
+end
 
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
 prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
@@ -204,7 +208,7 @@ sym_interpret(carr::CompArrow, args) =
 "Constraints on inputs to `carr`"
 function constraints(carr::CompArrow, initprops)
   info = ConstraintInfo()
-  symbol_in_ports(carr, info, initprops)
+  symbol_in_ports!(carr, info, initprops)
   outs = interpret(sym_interpret, carr, info.inp)
   allpreds = reduce(union, (out->out.preds).(outs))
   preds_with_outs = union(allpreds, map(out->out.var, outs))
@@ -254,7 +258,7 @@ function expand_θ(θ, sz::Size)::RefnSym
   symbols |> sym_unsym |> RefnSym
 end
 
-function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
+function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
   trcp = traceprop!(arr, initprops)
   info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
