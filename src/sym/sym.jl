@@ -101,10 +101,18 @@ end
 -(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) - $(y.value)))
 /(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) / $(y.value)))
 *(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
+xor(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) ⊻ $(y.value)))
 log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
 neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
+abs(x::SymUnion)::SymUnion = SymUnion(:(abs($(x.value))))
 exp(x::SymUnion)::SymUnion = SymUnion(:(exp($(x.value))))
+inverse_md2box(x::SymUnion)::SymUnion = SymUnion(:(inverse_md2box($(x.value))))
+md2box(x::SymUnion)::SymUnion = SymUnion(:(md2box($(x.value))))
 var(xs::Array{SymUnion}) = SymUnion(:())
+function ifelse(boolean::SymUnion,true_::SymUnion, false_::SymUnion)
+  SymUnion(:(ifelse($(boolean.value), $(true_.value), $(false_.value))))
+end
+
 
 function s_arrayed(xs::Array{SymUnion}, name)
   values = [x.value for x in xs]
@@ -129,8 +137,15 @@ prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
 prim_sym_interpret(::ExpArrow, x) = [exp.(x),]
 prim_sym_interpret(::NegArrow, x) = [neg.(x),]
-prim_sym_interpret(::Arrows.BroadcastArrow, x) = [x,]
+prim_sym_interpret(::AbsArrow, x) = [abs.(x),]
+prim_sym_interpret(::XorArrow, x, y) = [xor.(x, y),]
+prim_sym_interpret(::MD2SBoxArrow, x) = [md2box.(x),]
+prim_sym_interpret(::InverseMD2SBoxArrow, x) = [inverse_md2box.(x),]
+prim_sym_interpret(::BroadcastArrow, x) = [x,]
 prim_sym_interpret{N}(::DuplArrow{N}, x) = [x  for _ in 1:N]
+function prim_sym_interpret(::IfElseArrow, condition, true_, false_)
+  [ifelse.(condition,true_, false_),]
+end
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
   [first(xs)]

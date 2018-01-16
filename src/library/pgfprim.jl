@@ -4,36 +4,48 @@
 # at least want to just add the parameter part to the arrow and
 # not have to construct the arrow along with the parameter.
 
-pgf(arr, const_in) = pgf(arr)
+function binary_pgf(arr, const_in, inner_pgf)
+  if const_in[1] || const_in[2]
+    deepcopy(arr)
+  else
+    inner_pgf()
+  end
+end
 
-function pgf(arr::MulArrow, const_in)
+pgf(arr::MulArrow, const_in) = binary_pgf(arr, const_in, pgf_mul)
+pgf(arr::XorArrow, const_in) = binary_pgf(arr, const_in, pgf_xor)
+pgf(arr::AddArrow, const_in) = binary_pgf(arr, const_in, pgf_add)
+pgf(arr::SubtractArrow, const_in) = binary_pgf(arr, const_in, pgf_sub)
+pgf(arr::DivArrow, const_in) = binary_pgf(arr, const_in, pgf_div)
+
+function pgf_mul()
   "As f^(-1)(z; θ) = (z/θ, θ), then the pgf becomes r(x, y) = (x*y, y)."
-  ## HAck
-  if const_in[1] || const_in[2]
-    deepcopy(arr)
-  else
-    carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θmul])
-    x, y, z, θ = ⬨(carr)
-    x * y ⥅ z
-    y ⥅ θ
-    carr
-  end
+  carr = CompArrow(Symbol(:pgf_, :mul), [:x, :y], [:z, :θmul])
+  x, y, z, θ = ⬨(carr)
+  x * y ⥅ z
+  y ⥅ θ
+  carr
 end
 
-function pgf(arr::AddArrow, const_in)
+function pgf_xor()
+  "As f^(-1)(z; θ) = (z ⊻ θ, θ), then the pgf becomes r(x, y) = (x ⊻ y, y)."
+  carr = CompArrow(Symbol(:pgf_, :xor), [:x, :y], [:z, :θxor])
+  x, y, z, θ = ⬨(carr)
+  x ⊻ y ⥅ z
+  y ⥅ θ
+  carr
+end
+
+function pgf_add()
   "As f^(-1)(z; θ) = (z-θ, θ), then the pgf becomes r(x, y) = (x+y, y)."
-  if const_in[1] || const_in[2]
-    deepcopy(arr)
-  else
-    carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θadd])
-    x, y, z, θ = ⬨(carr)
-    x + y ⥅ z
-    y ⥅ θ
-    carr
-  end
+  carr = CompArrow(Symbol(:pgf_, :add), [:x, :y], [:z, :θadd])
+  x, y, z, θ = ⬨(carr)
+  x + y ⥅ z
+  y ⥅ θ
+  carr
 end
 
-function pgf(arr::SubtractArrow)
+function pgf_sub()
   "As f^(-1)(z; θ) = (z+θ, θ), then the pgf becomes r(x, y) = (x-y, y)."
   carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θ])
   x, y, z, θ = ⬨(carr)
@@ -43,7 +55,7 @@ function pgf(arr::SubtractArrow)
 end
 
 
-function pgf(arr::GatherNdArrow)
+function pgf(arr::GatherNdArrow, const_in)
   carr = CompArrow(Symbol(:pgf_, :sub),
                       [:param, :indices, :shape],
                       [:z, :θgather])
@@ -61,17 +73,7 @@ function pgf(arr::GatherNdArrow)
   carr
 end
 
-pgf_np(arr::SinArrow) = deepcopy(arr)
-pgf_np(arr::CosArrow) = deepcopy(arr)
-pgf(arr::SourceArrow) = deepcopy(arr)
-pgf(arr::IdentityArrow) = deepcopy(arr)
-pgf(arr::ReshapeArrow) = deepcopy(arr)
-pgf(arr::ScatterNdArrow) = deepcopy(arr)
-pgf(arr::NegArrow) = deepcopy(arr)
-pgf(arr::LogArrow) = deepcopy(arr)
-pgf(arr::ExpArrow) = deepcopy(arr)
-
-function pgf(arr::SinArrow)
+function pgf(arr::SinArrow, const_in)
   "As f^(-1)(y; θ) = πθ + (-1)^θ * asin(y), then the pgf becomes θ = floor((x+π/2)/π)."
   carr = CompArrow(Symbol(:pgf_, :sin), [:x], [:y, :θsin])
   x, y, θ = sub_ports(carr)
@@ -92,7 +94,7 @@ function pgf(arr::SinArrow)
   carr
 end
 
-function pgf(arr::CosArrow)
+function pgf(arr::CosArrow, const_in)
   "As f^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y), then the pgf becomes θ = floor(x/π)."
   carr = CompArrow(Symbol(:pgf_, :cos), [:x], [:y, :θcos])
   x, y, θ = sub_ports(carr)
@@ -109,20 +111,43 @@ function pgf(arr::CosArrow)
   carr
 end
 
-function pgf(arr::DivArrow)
-  ## Hack
-  if false
-    carr = CompArrow(Symbol(:pgf_, :div), [:x, :y], [:z, :θ])
-    x, y, z, θ = ⬨(carr)
-    x / y ⥅ z
-    y ⥅ θ
-    carr
-  else
-    deepcopy(arr)
-  end
+function pgf_div()
+  carr = CompArrow(Symbol(:pgf_, :div), [:x, :y], [:z, :θdiv])
+  x, y, z, θ = ⬨(carr)
+  x / y ⥅ z
+  y ⥅ θ
+  carr
 end
 
-function pgf(arr::LessThanArrow)
+"""
+Three cases:
+x is constant: f^(-1)(z; x, θ1) = (z ?  x - abs(θ1) : x + abs(θ1))
+y is constant: f^(-1)(z; θ1, y) = (z ?  y + abs(θ1) : y - abs(θ1))
+none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
+"""
+function pgf(arr::GreaterThanArrow, const_in)
+  xconst, yconst = const_in
+  if xconst
+    carr = CompArrow(Symbol(:pgf_, :gt_xcnst), [:x, :y], [:z, :θgt])
+    x, y, z, θgt = ⬨(carr)
+    x > y ⥅ z
+    y - x ⥅ θgt
+  elseif yconst
+    carr = CompArrow(Symbol(:pgf_, :gt_ycnst), [:x, :y], [:z, :θgt])
+    x, y, z, θgt = ⬨(carr)
+    x > y ⥅ z
+    x - y ⥅ θgt
+  else
+    carr = CompArrow(Symbol(:pgf_, :gt), [:x, :y], [:z, :θgt1, :θgt2])
+    x, y, z, θgt1, θgt2 = ⬨(carr)
+    x > y ⥅ z
+    x ⥅ θgt1
+    x - y ⥅ θgt2
+  end
+  carr
+end
+
+function pgf(arr::LessThanArrow, const_in)
   "As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z), then the pgf becomes r(x, y) = (x<y, x, abs(x-y))."
   carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
   x, y, z, θ1, θ2 = ⬨(carr)
@@ -131,5 +156,45 @@ function pgf(arr::LessThanArrow)
   x ⥅ θ1
   x - y ⥅ (abs, 1)
   link_ports!((abs, 2), θ2)
+  carr
+end
+
+
+function pgf(arr::IfElseArrow, const_in)
+  if const_in[2] && const_in[3]
+    carr = CompArrow(:ifelse_teconst_pgf,
+                      [:i, :t, :e],
+                      [:y, :θi])
+    i, t, e = ▹(carr)
+    θi, = ◃(carr)
+    i ⥅ θi
+  elseif const_in[2]
+    carr = CompArrow(:ifelse_tconst_pgf,
+                      [:i, :t, :e],
+                      [:θi, :θmissing])
+    i, t, e = ▹(carr)
+    θi, θmissing = ◃(carr)
+    i ⥅ θi
+    e ⥅ θmissing
+  elseif const_in[3]
+    carr = CompArrow(:ifelse_econst_pgf,
+                      [:i, :t, :e],
+                      [:y, :θi, :θmissing])
+    i, t, e = ▹(carr)
+    y, e, θi, θmissing = ◃(carr)
+    i ⥅ θi
+    t ⥅ θmissing
+  elseif all(i->!const_in[i], port_id.(get_in_ports(arr)))
+    carr = CompArrow(:ifelse_nonconst_pgf,
+                      [:i, :t, :e],
+                      [:y, :θi, :θmissing])
+    i, t, e = ▹(carr)
+    y, θi, θmissing = ◃(carr)
+    i ⥅ θi
+    ifelse(i, e, t) ⥅ θmissing
+  else
+    throw(ArgumentError("Constness Combination not supported"))
+  end
+  ifelse(i, t, e) ⥅ y
   carr
 end

@@ -98,7 +98,6 @@ function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtva
 end
 
 function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbValues; inv=inv)
-  const_in = map(is_src_source, ▹(sarr))
   idabvals = tarr_idabv(TraceSubArrow(tparent, sarr), abtvals)
   inv(parr, sarr, idabvals)
 end

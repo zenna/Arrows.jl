@@ -1,10 +1,28 @@
 "Attach the prefix pgf_ to the name of the arrow."
 pgf_rename!(carr::CompArrow) = (rename!(carr, Symbol(:pgf_, carr.name)); carr)
 
-"Inner method that will replace all the subarrows with their respective pgfs."
-pgf_in(sarr::SubArrow, const_in) = pgf(deref(sarr), const_in)
+
 "Outer method that connects the loose ports and renames the arrow."
 pgf_out = pgf_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_src))
+
+
+"Inner method that will replace all the subarrows with their respective pgfs."
+function pgf(parr::PrimArrow, const_in)
+  parr
+end
+
+function pgfreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent,
+                    abtvals::TraceAbValues; pgf=pgf)
+  pmap = id_portid_map(carr)
+  pgf_out(carr), pmap
+end
+
+function pgfreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent,
+                    abtvals::TraceAbValues; pgf=pgf)
+  idabvals = tarr_idabv(TraceSubArrow(tparent, sarr), abtvals)
+  pgf(parr, const_in(parr, idabvals)), id_portid_map(parr)
+end
+
 
 """Construct a parameter generating function (pgf) of carr
   Args:
@@ -12,13 +30,14 @@ pgf_out = pgf_rename! ∘ (carr -> link_to_parent!(carr, loose ∧ should_src))
   Returns:
     A parameter generating function of carr that for a given input x outputs
     the corresponding value y as well as θ such that f^(-1)(y;θ) = x."""
-function pgf_change!(carr::CompArrow, inner_pgf)
-  for sarr in sub_arrows(carr)
-    const_in = map(is_src_source, ▹(sarr))
-    replarr, port_map = inner_pgf(sarr, const_in), id_portid_map(deref(sarr))
-    replace_sub_arr!(sarr, replarr, port_map)
-  end
-  pgf_out(carr)
+function pgf(arr::CompArrow,
+             inner_pgf=pgf,
+             sprtabvals::SprtAbValues = SprtAbValues())
+  arr = duplify(arr)
+  sprtabvals = SprtAbValues(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
+  abvals = traceprop!(arr, sprtabvals)
+  custpgfreplace = function (arr, sarr, tparent, abtvals)
+                    pgfreplace(arr, sarr, tparent, abtvals; pgf=inner_pgf)
+                  end
+  newtracewalk(custpgfreplace, arr, abvals)[1]
 end
-
-pgf(carr::CompArrow, inner_pgf=pgf_in) = pgf_change!(deepcopy(carr), inner_pgf)
