@@ -277,13 +277,18 @@ function symbol_in_ports(arr::CompArrow, info::ConstraintInfo, initprops)
     info.is_θ_by_portn[idx] = is(θp)(sport)
     sym = Sym(sport)
     info.port_to_index[sym] = idx
+    else_ = ()-> RefnSym(sym)
     true_ = function(size)
-      prx = SymbolPrx(sym)
-      expand_θ(prx, size)
+      if ndims(size) > 0
+        prx = SymbolPrx(sym)
+        expand_θ(prx, size)
+      else
+        else_()
+      end
     end
     inp[idx] = if_symbol_on_sport(trcp, :size, sport,
                                   true_,
-                                  ()-> RefnSym(sym))
+                                  else_)
   end
 end
 
