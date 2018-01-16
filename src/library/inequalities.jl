@@ -31,7 +31,7 @@ end
 
 "Complete parameric inverse for >"
 function inv_gt_ycnst()
-  carr = CompArrow(:inv_gt_xcnst, [:z, :y, :θgt], [:x])
+  carr = CompArrow(:inv_gt_ycnst, [:z, :y, :θgt], [:x])
   z, y, θgt, x = ⬨(carr)
   ifelse(z, y + abs(θgt), y - abs(θgt)) ⥅ x
   foreach(add!(θp), (θgt,))
