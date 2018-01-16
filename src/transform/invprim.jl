@@ -89,13 +89,11 @@ function inv(arr::XorArrow, sarr::SubArrow, idabv::IdAbValues)
 end
 
 function inv(arr::OrArrow, sarr::SubArrow, idabv::IdAbValues)
-  binary_inv(arr,
-             const_in(arr, idabv),
-             inv_xor,
-             XorArrow,
-             Dict(1 => 2, 2 => 3, 3 => 1),
-             XorArrow,
-             Dict(1 => 3, 2 => 2, 3 => 1))
+  if !any(const_in(arr, idabv))
+    inv_or(), Dict(:x => :x, :y => :y, :z => :z)
+  else
+    InvertError(arr, idabv)
+  end
 end
 
 function inv_p(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)

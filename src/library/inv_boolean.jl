@@ -16,10 +16,11 @@ end
 function inv_or()
   c = CompArrow(:inv_or, [:z, :θor1, :θor2], [:x, :y])
   z, θor1, θor2, x, y = ⬨(c)
-  ifelse(z,
-         θor1 & !θor2,
-         θor1 ⊻ θor2) ⥅ x
-  z ⥅ y
+  addprop!(θp, θor1)
+  addprop!(θp, θor2)
+  onetwo = !(θor1 & θor2)
+  z & (θor1 ⊻ onetwo) ⥅ x
+  z & (θor2 ⊻ onetwo) ⥅ y
   @assert is_wired_ok(c)
   c
 end
