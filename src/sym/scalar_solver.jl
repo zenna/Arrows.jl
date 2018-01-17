@@ -1,4 +1,4 @@
-
+using NamedTuples
 
 collect_symbols(::Any, seen = Set()) = seen
 function collect_symbols(expr::Expr, seen=Set())
@@ -28,10 +28,15 @@ function generate_forward(names, expr)
   context = Dict()
   context[:inverse_md2box] = Arrows.inverse_md2box
   context[:md2box] = Arrows.inverse_md2box
-  for p in in_sub_ports(carr)
+  for p ∈ in_sub_ports(carr)
     context[name(deref(p)).name] = p
   end
   p = Arrows.generate_function(context, expr)
+  ## When the expression is a single variable, we need to add
+  ## the identity function
+  if isa(expr, Symbol)
+    p = Arrows.compose!(vcat(p), IdentityArrow())[1]
+  end
   newport = link_to_parent!(p)
   Arrows.setprop!(Arrows.Name(:forward_z), Arrows.props(newport))
   carr
@@ -47,23 +52,60 @@ function partial_invert_to(carr_original, target)
       sport |> deref |> Arrows.make_out_port!
     end
   end
-  Arrows.invert(carr, inv, sprtabvals)
+  inverted = Arrows.invert(carr, inv, sprtabvals)
+  @assert num_ports(carr_original) == num_ports(inverted)
+  inverted
 end
 
+#TODO: Compute this dynamically
+valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box])
+"find a variable to solve for, and compute the solution to that"
+function solve_expression(expr, computed, arrows)
+  if !isempty(setdiff(collect_calls(expr), valid_calls))
+    warn("cannot solve constraint: $(expr)")
+    return
+  end
+  names = collect_symbols(expr)
+  for variable ∈ setdiff(names, computed)
+    String(variable)[1] == 'z' && continue
+    ## TODO: n might appear many times in the expression.
+    left, right = map(forward, expr.args[2:end])
+    if variable ∈ left.names && variable ∈ right.names
+      continue
+    end
+    if variable ∈ left.names
+      left, right = right, left
+    end
+    arr = solve_to(variable, left, right)
+    push!(computed, variable)
+    return arrows[variable] = arr
+  end
+  warn("cannot solve constraint: $(expr)")
+end
 
-function compute_inverse_constraint(expr)
-  valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box])
-  @assert isempty(setdiff(collect_calls(expr), valid_calls))
-  left, right = expr.args[2:end]
-  names_right = collect_symbols(right)
-  names_left = collect_symbols(left)
-  carr_right = generate_forward(names_right, right)
-  inv_right = partial_invert_to(carr_right, pop!(names_right))
-  carr_left = generate_forward(names_left, left)
-  portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(carr_left)
+function solve_expressions(exprs)
+  computed = Set{Symbol}()
+  arrows = Dict{Symbol, Arrow}()
+  foreach(exprs) do expr
+    solve_expression(expr, computed, arrows)
+  end
+  arrows
+end
+
+function forward(expr)
+  names = collect_symbols(expr)
+  carr = generate_forward(names, expr)
+  @NT(names = names, carr = carr, expr = expr)
+end
+
+function solve_to(variable, left, right)
+  @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
+  @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
+  inv_right = partial_invert_to(right.carr, variable)
+  portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
                                                      for p2 in ▸(inv_right)
                                                      if name(p1) == name(p2)])
-  Arrows.compose(inv_right, carr_left, portmap)
+  Arrows.compose(inv_right, left.carr, portmap)
 end
 
 
