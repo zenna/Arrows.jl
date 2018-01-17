@@ -22,6 +22,11 @@ function inv(arr::MD2SBoxArrow, sarr::SubArrow, abvals::IdAbValues)
   unary_inv(arr, const_in(arr, abvals), InverseMD2SBoxArrow)
 end
 
+function inv(arr::InverseMD2SBoxArrow, sarr::SubArrow, abvals::IdAbValues)
+  unary_inv(arr, const_in(arr, abvals), MD2SBoxArrow)
+end
+
+
 
 
 function md2box(idx::Arrows.AbstractPort)
