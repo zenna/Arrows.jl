@@ -257,12 +257,63 @@ function string(tarr::TraceSubArrow)
   $sarrsstring
   """
 end
+
 show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
+show(io::IO, tval::TraceValue) = print(io, string(tval))
 
 function string(tval::TraceValue)
   """TraceValue
   $(tval.srctprt)
   """
 end
-
-show(io::IO, tval::TraceValue) = print(io, string(tval))
+#
+# "Depth First Trace Iterator"
+# struct DFTraceIter
+#   tarr::TraceSubArrow
+#   pos::Vector{Int}
+# end
+#
+# trace_sub_arrows(carr::CompArrow) = DFTraceIter(TraceSubArrow(carr))
+# Base.eltype(::Type{DFTraceIter}) = TraceSubArrow
+# function Base.start(it::DFTraceIter)
+#   [1]
+# end
+#
+# function Base.next(it::DFTraceIter, state)
+#   pos, tarr = state.pos, state.tarr
+#   sarr = sub_arrows(it.tarr)[state]
+#   # If current state is composite arrow go down
+#   if deref(tarr) isa CompArrow
+#     downtarr = down(tarr)
+#     (downtarr, DFTraceIter(downtarr, push(pos, 1)))
+#   elseif pos + 1 > length(sarrs)
+#     next(DFTraceIter(down(it.tarr), pop(pos)))
+#   else
+#     sarr = sarrs[pos + 1]
+#   end
+#     DFTraceIter(down(it.tarr), push(pos, 1))
+#   elseif atend
+#     = (it.f(), nothing)
+#     if root
+#       finish
+#     else
+#       up
+#     end
+#   else
+#     ...
+#   end
+# end
+#
+# ## The state required for this iteration is
+# ## the number in the set of sub arrows
+#
+# function Base.done(it::DFTraceIter, state)
+#   if atroot(it, state) && state == length(all_sub_arrows(it.tarr))
+#     true
+#   else
+#     false
+#   end
+# end
+#
+# Base.iteratorsize(::Type{<:DFTraceIter}) = Base.IsInfinite()
+# Base.iteratoreltype(::Type{<:DFTraceIter}) = Base.HasEltype()

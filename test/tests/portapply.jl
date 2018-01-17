@@ -1,3 +1,5 @@
+using Base.Test
+using Arrows
 
 function test_port_apply()
   carr = CompArrow(:test, [:x, :y], Symbol[])
@@ -6,5 +8,5 @@ function test_port_apply()
   ret = DivArrow()(z, 5)
   Arrows.link_to_parent!(ret)
   carr
-  is_wired_ok(carr)
+  @assert is_valid(carr)
 end

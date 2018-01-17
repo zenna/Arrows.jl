@@ -1,10 +1,12 @@
 "Does `arr` reuse values, i.e. any `Port` project to more than 1 other `Port`"
-function no_reuse(arr::CompArrow)::Bool
+function shell_no_reuse(arr::CompArrow)::Bool
   all((out_degree(port) == 1 for port in all_src_sub_ports(arr)))
 end
 
+no_reuse(arr::CompArrow) = all(maprecur(shell_no_reuse, arr))
+
 "in-place `duplyify`"
-function duplify!(arr::CompArrow)
+function shell_duplify!(arr::CompArrow)
   src_ports = all_src_sub_ports(arr)
   for src_port in src_ports
     # Only need to duplyify ports with multiple recipients
@@ -21,9 +23,12 @@ function duplify!(arr::CompArrow)
       end
     end
   end
-  @assert no_reuse(arr)
+  @assert shell_no_reuse(arr)
   arr
 end
+
+"Recursive duplify"
+duplify!(arr::CompArrow) = (maprecur(shell_duplify!, arr); arr)
 
 "Use `Dupl` (i.e. `dupl(x) = (x, x)` to remove ports with more than 1 dest"
 duplify(arr::CompArrow) = duplify!(deepcopy(arr))

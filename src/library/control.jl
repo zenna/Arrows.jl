@@ -45,7 +45,7 @@ function invifelse_teconst_diff()
   truarr = add_sub_arr!(carr, source(true)); tru = ◃(truarr, 1)
   ii = ifelse(EqualArrow()(y, t), bcast(tru), bcast(fls))
   ii ⥅ i
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -65,7 +65,7 @@ function invifelse_teconst()
                      bcast(fls)))   # domain error
 
   ii ⥅ i
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -78,7 +78,7 @@ function invifelse_tconst()
   ii = ifelse(EqualArrow()(y, t), θi, bcast(fls))
   ii ⥅ i
   ifelse(ii, θmissing, y) ⥅ e
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -91,7 +91,7 @@ function invifelse_econst()
   ii = ifelse(EqualArrow()(y, e), θi, bcast(tru))
   ii ⥅ i
   ifelse(ii, y, θmissing) ⥅ e
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -102,6 +102,6 @@ function invifelse_fullpi()
   foreach(add!(θp), (θi, θmissing))
   ifelse(θi, y, θmissing) ⥅ t
   ifelse(θi, θmissing, y) ⥅ e
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end

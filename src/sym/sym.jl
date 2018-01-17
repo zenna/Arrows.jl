@@ -9,7 +9,7 @@ end
 token_name = :τᵗᵒᵏᵉⁿ
 SymPlaceHolder() = SymUnion(token_name)
 
-"Refined Symbol {x | pred}"
+"Refined Symbol ``{x | pred}``"
 struct RefnSym
   var::SymUnion
   preds::Set{} # Conjunction of predicates
@@ -212,13 +212,9 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
   map(f, sym_unions)
 end
 
-
 sym_interpret(sarr::SubArrow, args) = sym_interpret(deref(sarr), args)
 sym_interpret(carr::CompArrow, args) =
   interpret(sym_interpret, carr, args)
-
-
-
 
 "Constraints on inputs to `carr`"
 function constraints(carr::CompArrow, initprops)

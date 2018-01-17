@@ -18,6 +18,6 @@ function inv_or()
   onetwo = !(θor1 & θor2)
   z & (θor1 ⊻ onetwo) ⥅ x
   z & (θor2 ⊻ onetwo) ⥅ y
-  @assert is_wired_ok(c)
+  @assert is_valid(c)
   c
 end

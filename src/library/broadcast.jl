@@ -146,7 +146,7 @@ function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
     szsarr = add_sub_arr!(carr, source(tpl_sz))
     invbcast = ExplicitInvBroadcastArrow()(▹(carr, 1), ◃(szsarr, 1))
     invbcast ⥅ ◃(carr, 1)
-    @assert is_wired_ok(carr)
+    @assert is_valid(carr)
     carr, Dict(:x => :x, :y => :y)
   else
     throw(InvertError(arr, idabv))

@@ -3,7 +3,7 @@ function δarr()
   carr = CompArrow(:δ, [:x1, :x2], [:diff])
   x1, x2, diff = ⬨(carr)
   sqrt(sqr(x1 - x2)) ⥅ diff
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -75,7 +75,7 @@ function floss(arr::Arrow, lossf::Function, custϵ::Type{Err}=ϵ)
   loss = add_port_like!(carr, deref(total))
   total ⥅ loss
   addprop!(custϵ, loss)
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -181,7 +181,7 @@ function superloss(fwd::Arrow)
   bothe = link_to_parent!(both)
 
   foreach(link_to_parent!, ◃(finv))
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   Dict(:idtotal => idtotal,
        :totdomϵ => totdomϵ,
        :invcarr => carr,

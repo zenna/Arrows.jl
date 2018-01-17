@@ -300,7 +300,7 @@ include("library/md2.jl")
 # Inv Arrows
 include("library/inv_control.jl")
 include("library/inv_array.jl")
-include("library/inv_arith.jl")
+include("library/inv_arithmetic.jl")
 include("library/inv_boolean.jl")
 
 # PGF Primitives

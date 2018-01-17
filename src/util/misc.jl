@@ -144,7 +144,17 @@ function accumapply(f::Function, x::T) where T
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end
 
-"Global capture"
+"Global capture
+
+```
+function f(x)
+  x = 2x + 3
+  @grab x
+  y = 3x*2
+end
+
+x_grab
+"
 macro grab(var)
   @show var
   grabname = Symbol(var, :_grab)

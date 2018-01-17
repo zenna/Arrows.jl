@@ -20,8 +20,20 @@ PrtAbValues = Dict{Port, AbValues}
 XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValues}
 
 # Conversions
-sprtabv(arr::Arrow, nmabv::NmAbValues) =
-  SprtAbValues(⬨(arr, nm) => abv for (nm, abv) in nmabv)
+"""Convert `nm::NmAbValues` to `SprtAbValues` where names in `nmabv` are names
+of `SubPort`s on `arr`"""
+function sprtabv(arr::Arrow, nmabv::NmAbValues)
+  pnames = [nm.name for nm in name.(ports(arr))]
+  sprtabvs = SprtAbValues()
+  for (nm, abv) in nmabv
+    if nm in pnames
+      sprtabvs[⬨(arr, nm)] = abv
+    else
+      warn("Passed in name $nm whiich is not a name of any port")
+    end
+  end
+  sprtabvs
+end
 
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
