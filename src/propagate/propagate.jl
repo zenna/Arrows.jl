@@ -171,20 +171,17 @@ function traceprop!(carr::CompArrow,
 end
 
 "Convenience for specifying abstraact values for subports on root"
-function traceprop!(carr::CompArrow,
-                    sprtprp::SprtAbValues)
+function traceprop!(carr::CompArrow, sprtprp::SprtAbValues)
   tparent = TraceParent(carr)
   tabv = Dict{TraceValue, AbValues}(TraceValue(tparent, sprt) => props for (sprt, props) in sprtprp)
   traceprop!(carr, tabv)
 end
 
 "Convenience for specifying abstraact values for subports on root"
-function traceprop!(carr::CompArrow,
-                    nmabv::NmAbValues)
+function traceprop!(carr::CompArrow, nmabv::NmAbValues)
   tparent = TraceParent(carr)
   sprtabv = SprtAbValues(⬨(carr, nm) => abv for (nm, abv) in nmabv)
   traceprop!(carr, sprtabv)
 end
-
 
 @pre traceprop! !isrecursive(carr)
