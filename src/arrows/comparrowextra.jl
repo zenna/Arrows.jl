@@ -362,7 +362,7 @@ n◂ = num_out_ports
 function describe(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows
-  wired_ok? $(is_valid(carr))"""
+  is_valid? $(is_valid(carr))"""
 end
 
 string(carr::CompArrow) = describe(carr)
