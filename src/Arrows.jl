@@ -187,6 +187,11 @@ export
   # Compound
   addn,
   gather_nd,
+  scatter_nd,
+
+  # extra arrows
+  md2box,
+  inverse_md2box,
 
   # Optimization
   optimize,
@@ -343,6 +348,7 @@ include("macros/arr_macro.jl")
 include("sym/sym.jl")
 include("sym/prim.jl")
 include("sym/convenience.jl")
+include("sym/md2_solver.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
