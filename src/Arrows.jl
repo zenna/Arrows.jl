@@ -347,6 +347,7 @@ include("macros/arr_macro.jl")
 # Solving constraints
 include("sym/sym.jl")
 include("sym/prim.jl")
+include("sym/rewrite.jl")
 include("sym/convenience.jl")
 include("sym/md2_solver.jl")
 
