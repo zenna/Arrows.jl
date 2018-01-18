@@ -178,7 +178,7 @@ function traceprop!(carr::CompArrow, sprtprp::SprtAbValues)
 end
 
 "Does `carr` contain itself?"
-isrecursive(carr::CompArrow) = true # FIXME: Implement
+isrecursive(carr::CompArrow) = false # FIXME: Implement
 
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow, nmabv::NmAbValues)
