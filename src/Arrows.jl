@@ -135,6 +135,7 @@ export
   domain_error!,
   dupl,
   inv_dupl,
+  first_arr,
   duplify!,
   assert!,
   deref,
@@ -183,6 +184,7 @@ export
   LogArrow,
   LogBaseArrow,
   ReduceMean,
+  FirstArrow,
 
   # Compound
   addn,
