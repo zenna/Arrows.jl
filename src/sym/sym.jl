@@ -1,8 +1,9 @@
 ## PureSymbolic = Union{Expr, Symbol}
-##SymUnion = Union{PureSymbolic, Array, Tuple, Number}
+## SymUnion = Union{PureSymbolic, Array, Tuple, Number}
 using NamedTuples
 import DataStructures: DefaultDict
 
+# Zen: Is this a union of a variable an expression?
 mutable struct SymUnion
   value
 end
@@ -10,23 +11,25 @@ token_name = :τᵗᵒᵏᵉⁿ
 SymPlaceHolder() = SymUnion(token_name)
 
 "Refined Symbol ``{x | pred}``"
-struct RefnSym
+struct RefinedSym
   var::SymUnion
   preds::Set{} # Conjunction of predicates
 end
 
+# Zen: Prx = Prefix?
 struct SymbolPrx
   var::SymUnion
 end
 
+# Zen. Why does this function exist?
 as_expr{N}(values::Union{NTuple{N, SymUnion}, AbstractArray{SymUnion, N}}) =
   map(as_expr, values)
 as_expr(sym::SymUnion) = sym.value
-as_expr(ref::Union{RefnSym, SymbolPrx}) = as_expr(ref.var)
-sym_unsym{N}(sym::Array{SymUnion, N})  = SymUnion(as_expr.(sym))
-sym_unsym(sym::SymUnion)  = sym
+as_expr(ref::Union{RefinedSym, SymbolPrx}) = as_expr(ref.var)
+sym_unsym{N}(sym::Array{SymUnion, N}) = SymUnion(as_expr.(sym))
+sym_unsym(sym::SymUnion) = sym
 
-
+# Zen: This kind of object scares me
 mutable struct ConstraintInfo
   exprs::Vector{Expr}
   θs::Set{Union{Symbol, Expr}}
@@ -38,7 +41,7 @@ mutable struct ConstraintInfo
   assigns_by_portn::Vector
   unassigns_by_portn::Vector
   specials_by_portn::Vector
-  inp::Vector{RefnSym}
+  inp::Vector{RefinedSym}
   port_to_index::Dict{SymUnion, Number}
   master_carr::CompArrow
   names_to_inital_sarr::Dict{Union{Symbol, Expr}, SubArrow}
@@ -62,9 +65,10 @@ function getindex(s::SymbolPrx, i::Int)
 end
 
 "Unconstrained Symbol"
-RefnSym(sym::SymUnion) = RefnSym(sym, Set{SymUnion}())
+RefinedSym(sym::SymUnion) = RefinedSym(sym, Set{SymUnion}())
 
-
+# Zen. There is no Sym type, If this is outer constructo for SymUnion it should be
+# called SymUnion
 function Sym(prps::Props)
   # TODO: Add Type assumption
   ustring = string(name(prps))
@@ -72,137 +76,26 @@ function Sym(prps::Props)
 end
 Sym(sprt::SubPort) = sprt |> deref |> Sym
 Sym(prt::Port) = prt |> props |> Sym
-RefnSym(prt::Port) = RefnSym(Sym(prt))
+RefinedSym(prt::Port) = RefinedSym(Sym(prt))
 
-"If inputs satisfy `domainpred`icates then then `arr` is well defined on them"
-domainpreds(::Arrow, args...) = Set{SymUnion}()
-
-function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion, xs::Vararg)
-  # All inputs to invdupl must be equal
-  symbols = map(xs) do x
-    :($(x.value) == $(x1.value))
-  end
-  Set{SymUnion}(SymUnion.(symbols))
+function sym_interpret(x::SourceArrow, args)::Vector{RefinedSym}
+  [RefinedSym(SymUnion(x.value))]
 end
 
-function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
-  answer = Array{SymUnion, 1}()
-  for x in xs
-    for (left, right) in zip(x1, x)
-      e = :($(left.value) == $(right.value))
-      push!(answer, SymUnion(e))
-    end
-  end
-  Set{SymUnion}(answer)
-end
-
-+(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) + $(y.value)))
--(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) - $(y.value)))
-/(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) / $(y.value)))
-*(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
-xor(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) ⊻ $(y.value)))
-log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
-neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
-abs(x::SymUnion)::SymUnion = SymUnion(:(abs($(x.value))))
-exp(x::SymUnion)::SymUnion = SymUnion(:(exp($(x.value))))
-inverse_md2box(x::SymUnion)::SymUnion = SymUnion(:(inverse_md2box($(x.value))))
-md2box(x::SymUnion)::SymUnion = SymUnion(:(md2box($(x.value))))
-var(xs::Array{SymUnion}) = SymUnion(:())
-function ifelse(boolean::SymUnion,true_::SymUnion, false_::SymUnion)
-  SymUnion(:(ifelse($(boolean.value), $(true_.value), $(false_.value))))
-end
-
-
-function s_arrayed(xs::Array{SymUnion}, name)
-  values = [x.value for x in xs]
-  SymUnion(:($(name)($(values))))
-end
-s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
-function s_var(xs::Vararg{<:Array})
-  map(xs |> first |> eachindex) do iter
-    s_arrayed([x[iter] for x in xs], :var)
-  end
-end
-
-"Generic Symbolic Interpret of `parr`"
-function prim_sym_interpret(parr::PrimArrow, args...)
-  @assert num_out_ports(parr) == 1
-  ex = [SymUnion(Expr(:call, name(parr), args...)),]
-end
-
-prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
-prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
-prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]
-prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
-prim_sym_interpret(::LogArrow, x) = [log.(x),]
-prim_sym_interpret(::ExpArrow, x) = [exp.(x),]
-prim_sym_interpret(::NegArrow, x) = [neg.(x),]
-prim_sym_interpret(::AbsArrow, x) = [abs.(x),]
-prim_sym_interpret(::XorArrow, x, y) = [xor.(x, y),]
-prim_sym_interpret(::MD2SBoxArrow, x) = [md2box.(x),]
-prim_sym_interpret(::InverseMD2SBoxArrow, x) = [inverse_md2box.(x),]
-prim_sym_interpret(::BroadcastArrow, x) = [x,]
-prim_sym_interpret{N}(::DuplArrow{N}, x) = [x  for _ in 1:N]
-function prim_sym_interpret(::IfElseArrow, condition, true_, false_)
-  [ifelse.(condition,true_, false_),]
-end
-function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg{SymUnion, N})::Vector{SymUnion}
-  [first(xs)]
-end
-
-function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg)::Vector{SymUnion}
-  [xs |> first |> sym_unsym,]
-end
-
-function  prim_sym_interpret(::Arrows.ReshapeArrow,
-                              data::Array{Arrows.SymUnion,2},
-                              shape::Array{Arrows.SymUnion,1})
-  data = as_expr(data)
-  shape = as_expr(shape)
-  [SymUnion(reshape(data, shape)),]
-
-end
-
-function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
-  indices = as_expr(indices)
-  shape = as_expr(shape)
-  z = sym_unsym(z)
-  arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
-                          SymPlaceHolder())
-  [sym_unsym(arrayed_sym),]
-end
-
-function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg)
-  [s_arrayed([sym_unsym(x) for x in xs], :reduce_var),]
-end
-
-function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg)
-  [s_arrayed([sym_unsym(x) for x in xs], :mean),]
-end
-
-function  prim_sym_interpret(::Arrows.ReshapeArrow, data::Arrows.SymUnion,
-                            shape)
-  shape = sym_unsym(shape)
-  expr = :(reshape($(data.value), $(shape.value)))
-  [SymUnion(expr),]
-end
-
-function sym_interpret(x::SourceArrow, args)::Vector{RefnSym}
-  [RefnSym(SymUnion(x.value))]
-end
-
-
-function sym_interpret(parr::PrimArrow, args::Vector{RefnSym})::Vector
+function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
+  @show args
+  @show typeof(args)
+  @grab args
   vars = [SymUnion.(as_expr(arg)) for arg in args]
+  @grab vars
   preds = Set[arg.preds for arg in args]
-  outputs = prim_sym_interpret(parr, vars...)
+  @show parr
+  @show outputs = prim_sym_interpret(parr, vars...)
   dompreds = domainpreds(parr, vars...)
   allpreds = union(dompreds, preds...)
-  f = var -> RefnSym(var, allpreds)
+  f = var -> RefinedSym(var, allpreds)
   if length(outputs) > 0 && isa(outputs[1], Array)
-    sym_unions = Array{SymUnion, ndims(outputs)}(size(outputs)...)
+    sym_unions::Vector{SymUnion} = Array{SymUnion, ndims(outputs)}(size(outputs)...)
     for iter in eachindex(outputs)
       sym_unions[iter] = sym_unsym(outputs[iter])
     end
@@ -260,24 +153,24 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   info.θs = union(θs, non_gather_θ)
 end
 
-function expand_θ(θ, sz::Size)::RefnSym
+function expand_θ(θ, sz::Size)::RefinedSym
   shape = get(sz)
   symbols = Array{Arrows.SymUnion, ndims(sz)}(shape...)
   for iter in eachindex(symbols)
     symbols[iter] = θ[iter]
   end
-  symbols |> sym_unsym |> RefnSym
+  symbols |> sym_unsym |> RefinedSym
 end
 
 function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
   trcp = traceprop!(arr, initprops)
-  info.inp = inp = (Vector{RefnSym} ∘ n▸)(arr)
+  info.inp = inp = (Vector{RefinedSym} ∘ n▸)(arr)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
     sym = Sym(sport)
     info.port_to_index[sym] = idx
-    else_ = ()-> RefnSym(sym)
+    else_ = ()-> RefinedSym(sym)
     true_ = function(size)
       if ndims(size) > 0
         prx = SymbolPrx(sym)
