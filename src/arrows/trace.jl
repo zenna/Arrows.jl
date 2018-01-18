@@ -85,6 +85,7 @@ deref(tarr::TraceSubArrow)::Arrow = deref(tarr.leaf)
 
 "Get all trace arrows within `carr`"
 function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  @pre !isrecursive(carr)
   tarrs::Vector{TraceSubArrow} = TraceSubArrow[]
   sarrs = sub_arrows(carr)
   csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
@@ -94,8 +95,6 @@ function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(
   end
   tarrs
 end
-
-@pre inner_trace_arrows !isrecursive(carr)
 
 "Port of a `TraceSubArrow`"
 struct TraceSubPort <: AbstractPort

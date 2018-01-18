@@ -177,11 +177,13 @@ function traceprop!(carr::CompArrow, sprtprp::SprtAbValues)
   traceprop!(carr, tabv)
 end
 
+"Does `carr` contain itself?"
+isrecursive(carr::CompArrow) = true # FIXME: Implement
+
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow, nmabv::NmAbValues)
+  @pre !isrecursive(carr)
   tparent = TraceParent(carr)
   sprtabv = SprtAbValues(⬨(carr, nm) => abv for (nm, abv) in nmabv)
   traceprop!(carr, sprtabv)
 end
-
-@pre traceprop! !isrecursive(carr)
