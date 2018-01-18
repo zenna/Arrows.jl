@@ -224,6 +224,9 @@ export
   # Symbolic Execution
   all_constraints,
 
+  @pre,
+  @with_pre,
+
   accumapply,
   trace_value,
   psl,
