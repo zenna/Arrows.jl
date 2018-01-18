@@ -8,7 +8,7 @@ function all_constraints(arr::Arrow, initprop::XAbValues = SprtAbValues())
 end
 
 "Union constraints from all the outputs of `sym_interpret_all`"
-union_constraints(xs::Vector{Arrows.RefnSym}) = union([x.preds for x in xs]...)
+union_constraints(xs::Vector{Arrows.RefinedSym}) = union([x.preds for x in xs]...)
 
 "Symbolic Interpretation of `arr` to derive constraints"
 function sym_interpret_all(arr::Arrow, initprop::XAbValues = SprtAbValues())

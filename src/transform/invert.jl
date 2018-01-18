@@ -37,6 +37,26 @@ end
 "Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
+#FIXME: rename rm functions appropriately and move outside of invert
+"Remove all `SubArrow`s in `carr` which have *any* unconnected port"
+function rm_partially_loose_sub_arrows!(carr::CompArrow)
+  # iterate until none left
+  nremoved = 1
+  while nremoved != 0
+    nremoved = 0
+    for sarr in sub_arrows(carr)
+      nloose = length(filter(loose, sub_ports(sarr)))
+      if nloose > 0
+        # println("removing: ", sarr)
+        rem_sub_arr!(sarr)
+        nremoved = nremoved + 1
+      end
+    end
+    # println("removed $nremoved !")
+  end
+  carr
+end
+
 function remove_dead_arrow(arr::Arrow, sarr::SubArrow)::Bool
   if all(loose, get_out_sub_ports(sarr))
     println("Removing $sarr")

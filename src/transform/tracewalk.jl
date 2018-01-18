@@ -42,7 +42,7 @@ function tracewalk(replace::Function,
                    carr::CompArrow,
                    abtvals::TraceAbValues=traceprop!(carr),
                    tparent::TraceParent=TraceParent(carr))
-  @show newcarr = CompArrow(Symbol(name(carr)))
+  newcarr = CompArrow(Symbol(name(carr)))
   for prt in ⬧(carr)
     add_port_like!(newcarr, prt)
   end
