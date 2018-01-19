@@ -152,7 +152,7 @@ function pgf(arr::ModArrow, const_in)
   carr = CompArrow(:pgf_mod, [:x, :y], [:z, :θmod])
   x, y, z, θ = ⬨(carr)
   x % y ⥅ z
-  (x - z) / y ⥅ θ
+  div((x - z), y) ⥅ θ
   carr
 end
 
