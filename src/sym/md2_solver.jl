@@ -59,14 +59,7 @@ function partial_invert_to(carr_original, target)
       sport |> deref |> Arrows.make_out_port!
     end
   end
-  @show sprtabvals
   inverted = Arrows.invert(carr, partial_invert, sprtabvals)
-  if num_ports(carr_original) != num_ports(inverted)
-    @show carr_original
-    @show inverted
-    @grab inverted
-    @show target
-  end
   @assert num_ports(carr_original) == num_ports(inverted)
   inverted
 end
@@ -116,7 +109,6 @@ end
 function solve_to(variable, left, right)
   @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
   @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
-  @show right.expr
   inv_right = partial_invert_to(right.carr, variable)
   portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
                                                      for p2 in ▸(inv_right)
@@ -227,13 +219,22 @@ function create_wirer(arrows)
   carr
 end
 
-"Compose the constraints solver with the inverse"
-function wire(inverse::CompArrow, solvers)
+function ensure_out_link_to_parent(sprt)
+  arr = parent(sprt)
+  n = sprt |> deref |> name
+  for p in ◂(arr)
+    if name(p) == n
+      return
+    end
+  end
+  link_to_parent!(sprt)
+end
+
+function compose_by_name(solvers)
   wired = CompArrow(gensym(:wired), 0, 0)
   add = x->add_sub_arr!(wired, x)
-  sinverse = inverse |> add
-  actual_name = (name ∘ deref)
-  sarrs = vcat(sinverse, map(add, solvers))
+  actual_name = x-> x |> deref |> name
+  sarrs = map(add, solvers)
   in_, out_ = Dict(), Dict()
   for sarr ∈ sarrs
     for sprt ∈ ⬨(sarr)
@@ -250,8 +251,17 @@ function wire(inverse::CompArrow, solvers)
       out_[moniker] ⥅ sprt
     end
   end
-  Arrows.link_to_parent!(sinverse, Arrows.is_out_port ∧ Arrows.loose)
+  for sarr in sarrs
+    Arrows.link_to_parent!(sarr, Arrows.is_out_port ∧ Arrows.loose)
+    Arrows.link_to_parent!(sarr, Arrows.is_out_port ∧ Arrows.loose)
+  end
   wired
+end
+
+
+"Compose the constraints solver with the inverse"
+function wire(inverse::CompArrow, solvers)
+  compose_by_name([inverse, solvers...])
 end
 
 includes_ifelse(expr) = false
@@ -300,7 +310,35 @@ end
 function solve_md2(carr::CompArrow, initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
   wirer = info.exprs |> solve_expressions |> create_wirer
-  wire(carr, [wirer,])
+  wire(carr, [wirer,]), wirer
+end
+
+
+function find_unsolved_constraints(carr, inv_carr, wirer, context)
+  actual_name = x->name(x).name
+  function add_from_output(arr, inputs)
+    for (p, o) ∈ zip(◂(arr), arr(inputs...))
+      context[p |> actual_name] = o
+    end
+  end
+  add_from_output(carr, 1:16)
+  info = Arrows.constraints(inv_carr, SprtAbValues())
+  add_if_absent = function (p)
+    n_ = p |> actual_name
+    if n_ ∉ keys(context)
+      context[n_] = 0x19
+    end
+    context[n_]
+  end
+  inputs = map(add_if_absent, ▸(wirer))
+  add_from_output(wirer, inputs)
+  foreach(add_if_absent, ▸(inv_carr))
+  solved, unsolved = Array{Any,1}(), Array{Any,1}()
+  for expr ∈ info.exprs
+    set = Arrows.generate_function(context, expr) ? solved : unsolved
+    push!(set, expr)
+  end
+  solved, unsolved, context
 end
 
 function rewrite_exprs(exprs, basic_context, wirer)
