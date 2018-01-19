@@ -20,12 +20,5 @@ function test_pipeline()
   context = Dict{Symbol, Any}()
   solved, unsolved, context = Arrows.find_unsolved_constraints(carr, inv_carr,
                                                               wirer, context)
-  newcontext = Dict{Symbol, Any}([:θi => false, :θi1 => false])
-  extra_wirers = solve_with_ifelse(unsolved, newcontext, wirer)
-  unified = compose_by_name([wirer, extra_wirers...])
-  [ensure_link_to_parent(sprt) for sarr in sub_arrows(unified)
-                               for sprt in ◃(sarr)]
-  solved, unsolved, context = find_unsolved_constraints(carr, inv_carr,
-                                                        unified, newcontext)
   @show unsolved
 end
