@@ -105,7 +105,7 @@ function forward(expr)
   @NT(names = names, carr = carr, expr = expr)
 end
 
-function solve_to(variable, left, right)
+function solve_to(variable::Symbol, left, right)
   @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
   @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
   inv_right = partial_invert_to(right.carr, variable)
@@ -315,13 +315,16 @@ end
 
 function find_unsolved_constraints(carr, inv_carr, wirer, context)
   actual_name = x->name(x).name
-  function add_from_output(arr, inputs)
+  function add_from_output!(arr, inputs)
     for (p, o) ∈ zip(◂(arr), arr(inputs...))
       context[p |> actual_name] = o
     end
   end
-  add_from_output(carr, 1:16)
-  info = Arrows.constraints(inv_carr, SprtAbValues())
+  ## Populate the context with the output of the forward on
+  ## a fixed input: 1:16
+  add_from_output!(carr, 1:16)
+
+  # Create inputs to arrow if not in context
   add_if_absent = function (p)
     n_ = p |> actual_name
     if n_ ∉ keys(context)
@@ -330,9 +333,10 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
     context[n_]
   end
   inputs = map(add_if_absent, ▸(wirer))
-  add_from_output(wirer, inputs)
+  add_from_output!(wirer, inputs)
   foreach(add_if_absent, ▸(inv_carr))
   solved, unsolved = Array{Any,1}(), Array{Any,1}()
+  info = Arrows.constraints(inv_carr, SprtAbValues())
   for expr ∈ info.exprs
     set = try
       Arrows.generate_function(context, expr) ? solved : unsolved
