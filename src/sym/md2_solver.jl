@@ -75,10 +75,9 @@ function solve_expression_naive(expr, computed, arrows)
   names = collect_symbols(expr)
   for variable ∈ setdiff(names, computed)
     String(variable)[1] == 'z' && continue
-    ## TODO: n might appear many times in the expression.
     left, right = map(forward, expr.args[2:end])
     if variable ∈ left.names && variable ∈ right.names
-      @warn "skipping: $expr"
+      warn("skipping: $expr")
       continue
     end
     if variable ∈ left.names
@@ -335,7 +334,11 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   foreach(add_if_absent, ▸(inv_carr))
   solved, unsolved = Array{Any,1}(), Array{Any,1}()
   for expr ∈ info.exprs
-    set = Arrows.generate_function(context, expr) ? solved : unsolved
+    set = try
+      Arrows.generate_function(context, expr) ? solved : unsolved
+    catch y
+      unsolved
+    end
     push!(set, expr)
   end
   solved, unsolved, context
