@@ -147,6 +147,15 @@ function pgf(arr::GreaterThanArrow, const_in)
   carr
 end
 
+function pgf(arr::ModArrow, const_in)
+  @assert const_in[2]
+  carr = CompArrow(:pgf_mod, [:x, :y], [:z, :θmod])
+  x, y, z, θ = ⬨(carr)
+  x % y ⥅ z
+  (x - z) / y ⥅ θ
+  carr
+end
+
 function pgf(arr::LessThanArrow, const_in)
   "As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z), then the pgf becomes r(x, y) = (x<y, x, abs(x-y))."
   carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])

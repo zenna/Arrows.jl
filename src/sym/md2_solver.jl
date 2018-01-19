@@ -388,27 +388,3 @@ function solve_with_ifelse(unsatisfied, context, wirer)
   # TODO: add arrows for the things we have in the context
   rewrite_exprs(exprs, context, wirer) |> Arrows.solve_expressions
 end
-
-# left, right = expr_4.args[2:end]
-# names_4 = collect_symbols(right)
-# c = CompArrow(:bla, [x for x in names_4], Array{Symbol,1}())
-# context = Dict()
-# context[:inverse_md2box] = Arrows.inverse_md2box
-# for p in in_sub_ports(c)
-#   context[name(deref(p)).name] = p
-# end
-#
-# p = Arrows.generate_function(context, right)
-# link_to_parent!(p)
-# c |> Arrows.compile
-#
-# sprtabvals = SprtAbValues()
-# sprtabvals[context[:θxor91]] = Dict([:isconst=>true])
-# Arrows.invert(c, inv, sprtabvals)
-#
-#
-#
-# bla = Arrows.wrap(XorArrow())
-# sprtabvals = SprtAbValues()
-# sprtabvals[in_sub_port(bla, 1)] = Dict([:isconst=>true])
-# Arrows.invert(bla, inv, sprtabvals)
