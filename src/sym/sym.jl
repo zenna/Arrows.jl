@@ -125,7 +125,7 @@ function s_var(xs::Vararg{<:Array})
   end
 end
 
-
+prim_sym_interpret(::Arrows.IdentityArrow, x) = [x,]
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
 prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
 prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]

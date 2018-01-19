@@ -1,14 +1,14 @@
 using NamedTuples
-import DataStructures: DefaultDict
+import DataStructures: DefaultDict, counter
 
-collect_symbols(::Any, seen = Set()) = seen
-function collect_symbols(expr::Expr, seen=Set())
+collect_symbols(::Any, seen = counter(Symbol)) = seen
+function collect_symbols(expr::Expr, seen = counter(Symbol))
   foreach(expr.args[2:end]) do e
     collect_symbols(e, seen)
   end
   seen
 end
-function collect_symbols(sym::Symbol, seen = Set())
+function collect_symbols(sym::Symbol, seen = counter(Symbol))
   push!(seen, sym)
   seen
 end
@@ -43,6 +43,12 @@ function generate_forward(names, expr)
   carr
 end
 
+partial_invert(arr, sarr, abvals::IdAbValues) = inv(arr, sarr, abvals)
+function partial_invert(arr::AbsArrow, sarr, abvals::IdAbValues)
+  unary_inv(arr, const_in(arr, abvals), IdentityArrow)
+end
+
+
 "Given a forward function and a target, compute its partial inverse"
 function partial_invert_to(carr_original, target)
   carr = deepcopy(carr_original)
@@ -53,13 +59,20 @@ function partial_invert_to(carr_original, target)
       sport |> deref |> Arrows.make_out_port!
     end
   end
-  inverted = Arrows.invert(carr, inv, sprtabvals)
+  @show sprtabvals
+  inverted = Arrows.invert(carr, partial_invert, sprtabvals)
+  if num_ports(carr_original) != num_ports(inverted)
+    @show carr_original
+    @show inverted
+    @grab inverted
+    @show target
+  end
   @assert num_ports(carr_original) == num_ports(inverted)
   inverted
 end
 
 #TODO: Compute this dynamically
-valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box])
+valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs])
 "find a variable to solve for, and compute the solution to that"
 function solve_expression_naive(expr, computed, arrows)
   if !isempty(setdiff(collect_calls(expr), valid_calls))
@@ -72,6 +85,7 @@ function solve_expression_naive(expr, computed, arrows)
     ## TODO: n might appear many times in the expression.
     left, right = map(forward, expr.args[2:end])
     if variable ∈ left.names && variable ∈ right.names
+      @warn "skipping: $expr"
       continue
     end
     if variable ∈ left.names
@@ -95,13 +109,14 @@ end
 
 function forward(expr)
   names = collect_symbols(expr)
-  carr = generate_forward(names, expr)
+  carr = generate_forward(names |> keys, expr)
   @NT(names = names, carr = carr, expr = expr)
 end
 
 function solve_to(variable, left, right)
   @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
   @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
+  @show right.expr
   inv_right = partial_invert_to(right.carr, variable)
   portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
                                                      for p2 in ▸(inv_right)
@@ -114,8 +129,7 @@ function build_mappings(exprs)
   expr_to_var = DefaultDict(Set)
   for expr ∈ exprs
     !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
-    variables = collect_symbols(expr)
-    length(variables) == 1 && continue
+    variables = expr |> collect_symbols |> keys
     for variable ∈ variables
       String(variable)[1] == 'z' && continue
       push!(var_to_expr[variable], expr)
@@ -138,8 +152,7 @@ function matching(v_to_e, e_to_v)
   run = true
   function remove_var(var, expr)
     for other ∈ v_to_e[var]
-      other == expr && continue
-      pop!(e_to_v[other], var)
+      var ∈ e_to_v[other] && pop!(e_to_v[other], var)
     end
     pop!(v_to_e, var)
   end
@@ -150,8 +163,13 @@ function matching(v_to_e, e_to_v)
         var = pop!(vars)
         @assert var ∉ keys(answer)
         left, right = map(forward, expr.args[2:end])
-        if var ∈ left.names && var ∈ right.names
-          pop!(v_to_e, expr)
+        names = merge(left.names, right.names)
+        if names[var] != 1
+          # There are things we cannot solve:
+          # When a variable appears multiple times in a constraint
+          # So, if we find that we should be able to solve a variable from a
+          # constraint, we skipt that.
+          pop!(e_to_v, expr)
           continue
         end
         run = true
@@ -177,7 +195,7 @@ function solve_expressions(exprs)
   for (var, pair) ∈ matchs
     isa(pair, Void) && continue
     left, right = pair
-    if var ∈ left.names
+    if var ∈ keys(left.names)
       left, right = right, left
     end
     push!(arrows, solve_to(var, left, right))
@@ -232,12 +250,98 @@ function wire(inverse::CompArrow, solver::CompArrow)
   wired
 end
 
+includes_ifelse(expr) = false
+function includes_ifelse(expr::Expr)
+  if expr.head == :call
+    if expr.args[1] == :ifelse
+      if any(includes_ifelse, expr.args)
+        warn("cannot compute nested if statements")
+        return false
+      end
+      return true
+    end
+  end
+  return any(includes_ifelse, expr.args)
+end
+
+
+extract_ifelse(base_expr) = nothing
+function extract_ifelse(expr::Expr)
+  if expr.head == :call && expr.args[1] == :ifelse
+    return Dict([:condition => expr.args[2],
+               :true_ => expr.args[3],
+               :else_ => expr.args[4]])
+  end
+  filtered = filter(x->x != nothing,
+                    map(extract_ifelse, expr.args))
+  length(filtered) > 0 ? filtered[1] : nothing
+end
+
+function process_ifelse(expr)
+  replace_ifelse(expr, other) = expr
+  function replace_ifelse(expr::Expr, other)
+    if expr.head == :call && expr.args[1] == :ifelse
+      return other
+    end
+    Expr(expr.head, [replace_ifelse(e, other) for e in expr.args]...)
+  end
+  ifelse_ = extract_ifelse(expr)
+  ifelse_[:true_] = replace_ifelse(expr, ifelse_[:true_])
+  ifelse_[:else_] = replace_ifelse(expr, ifelse_[:else_])
+  ifelse_
+end
+
 
 "Solve constraints and create a composed arrows witht the solution"
 function solve_md2(carr::CompArrow, initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
   wirer = info.exprs |> solve_expressions |> create_wirer
   wire(carr, wirer)
+end
+
+function rewrite_exprs(exprs, basic_context, wirer)
+  context = Dict{Symbol, Any}()
+  for (k,v) ∈ basic_context
+    context[k] = v
+  end
+  info = Arrows.ConstraintInfo()
+  Arrows.symbol_in_ports(wirer, info, SprtAbValues())
+  outs = interpret(Arrows.sym_interpret, wirer, info.inp)
+  for (idx, port) in enumerate(name.(◂(wirer)))
+    context[port.name] = outs[idx] |> Arrows.as_expr
+  end
+  rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
+  rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)
+  rewrite(x) = x
+  map(rewrite, exprs)
+end
+
+function solve_with_ifelse(unsatisfied, context, wirer)
+  # TODO rewrite expressions to be expressed as a function of previously defined
+  # independent variables
+  exprs = []
+  for expr ∈ unsatisfied
+    left, right = expr.args[2:end]
+    if includes_ifelse(left)
+      ifelse_ = extract_ifelse(left)
+      cond = ifelse_[:condition]
+      if cond ∉ keys(context)
+        continue
+      end
+      left = context[cond] ? ifelse_[:true_] : ifelse_[:else_]
+    end
+    if includes_ifelse(right)
+      ifelse_ = extract_ifelse(right)
+      cond = ifelse_[:condition]
+      if cond ∉ keys(context)
+        continue
+      end
+      right = context[cond] ? ifelse_[:true_] : ifelse_[:else_]
+    end
+    push!(exprs, Expr(:call, :(==), left, right))
+  end
+  # TODO: add arrows for the things we have in the context
+  rewrite_exprs(exprs, context, wirer) |> Arrows.solve_expressions
 end
 
 # left, right = expr_4.args[2:end]
