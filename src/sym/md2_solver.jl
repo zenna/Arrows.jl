@@ -228,25 +228,29 @@ function create_wirer(arrows)
 end
 
 "Compose the constraints solver with the inverse"
-function wire(inverse::CompArrow, solver::CompArrow)
+function wire(inverse::CompArrow, solvers)
   wired = CompArrow(gensym(:wired), 0, 0)
-  sarr = add_sub_arr!(wired, inverse)
-  swirer = add_sub_arr!(wired, solver)
+  add = x->add_sub_arr!(wired, x)
+  sinverse = inverse |> add
   actual_name = (name ∘ deref)
-  wirer_in = Dict([actual_name(p)=> p for p ∈ ▹(swirer)])
-  wirer_out = Dict([actual_name(p)=> p for p ∈ ◃(swirer)])
-  for sport ∈ ▹(sarr)
-    if actual_name(sport) ∈ keys(wirer_out)
-      wirer_out[actual_name(sport)] ⥅ sport
-    else
-      newport = Arrows.link_to_parent!(sport)
-      if name(newport) ∈ keys(wirer_in)
-        newport ⥅ wirer_in[name(newport)]
-      end
+  sarrs = vcat(sinverse, map(add, solvers))
+  in_, out_ = Dict(), Dict()
+  for sarr ∈ sarrs
+    for sprt ∈ ⬨(sarr)
+      d = is_in_port(sprt) ? in_ : out_
+      d[actual_name(sprt)] = sprt
     end
   end
-  Arrows.link_to_parent!(swirer, Arrows.is_in_port ∧ Arrows.loose)
-  Arrows.link_to_parent!(sarr, Arrows.is_out_port ∧ Arrows.loose)
+  for sarr ∈ sarrs
+    for sprt ∈ ▹(sarr)
+      moniker = sprt |> actual_name
+      if moniker ∉ keys(out_)
+        out_[moniker] = add_port_like!(wired, sprt |> deref) |> sub_port
+      end
+      out_[moniker] ⥅ sprt
+    end
+  end
+  Arrows.link_to_parent!(sinverse, Arrows.is_out_port ∧ Arrows.loose)
   wired
 end
 
@@ -296,7 +300,7 @@ end
 function solve_md2(carr::CompArrow, initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
   wirer = info.exprs |> solve_expressions |> create_wirer
-  wire(carr, wirer)
+  wire(carr, [wirer,])
 end
 
 function rewrite_exprs(exprs, basic_context, wirer)
