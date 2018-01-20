@@ -54,7 +54,6 @@ end
 prim_sym_interpret(::BroadcastArrow, x::SymUnion)::Vector{SymUnion} = [x,]
 
 function prim_sym_interpret{N}(::DuplArrow{N}, x::SymUnion)
-  @show x
   [x  for _ in 1:N]
 end
 
@@ -84,7 +83,7 @@ function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
   indices = as_expr(indices)
   shape = as_expr(shape)
   z = sym_unsym(z)
-  arrayed_sym = prim_scatter_nd(SymbolPrx(z), indices, shape,
+  arrayed_sym = prim_scatter_nd(SymbolProxy(z), indices, shape,
                           SymPlaceHolder())
   [sym_unsym(arrayed_sym),]
 end

@@ -224,9 +224,6 @@ export
   # Symbolic Execution
   all_constraints,
 
-  @pre,
-  @with_pre,
-
   accumapply,
   trace_value,
   psl,
@@ -259,11 +256,12 @@ export
   ⬧,
   ⬨
 
+include("spec/Spec.jl")             # Specification and Testing
+import Arrows.Spec: @pre, @invariant
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/pre.jl")              # methods that should be in LightGraphs
 include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
@@ -349,7 +347,7 @@ include("macros/arr_macro.jl")
 
 # Solving constraints
 include("sym/sym.jl")
-include("sym/prim.jl")
+include("sym/symprim.jl")
 include("sym/rewrite.jl")
 include("sym/convenience.jl")
 include("sym/md2_solver.jl")

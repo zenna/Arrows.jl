@@ -50,7 +50,7 @@ function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
     else_ = ()-> RefinedSym(sym)
     true_ = function(size)
       if ndims(size) > 0
-        prx = SymbolPrx(sym)
+        prx = SymbolProxy(sym)
         expand_θ(prx, size)
       else
         else_()

@@ -10,14 +10,13 @@ end
 token_name = :τᵗᵒᵏᵉⁿ
 SymPlaceHolder() = SymUnion(token_name)
 
-"Refined Symbol ``{x | pred}``"
+"Refined Symbol ``{var | pred}``"
 struct RefinedSym
   var::SymUnion
   preds::Set{} # Conjunction of predicates
 end
 
-# Zen: Prx = Prefix?
-struct SymbolPrx
+struct SymbolProxy
   var::SymUnion
 end
 
@@ -25,9 +24,14 @@ end
 as_expr{N}(values::Union{NTuple{N, SymUnion}, AbstractArray{SymUnion, N}}) =
   map(as_expr, values)
 as_expr(sym::SymUnion) = sym.value
-as_expr(ref::Union{RefinedSym, SymbolPrx}) = as_expr(ref.var)
+as_expr(ref::Union{RefinedSym, SymbolProxy}) = as_expr(ref.var)
+
+"Convert an tuple of symbols into a symbol representing a tuple"
 sym_unsym{N}(sym::NTuple{N, SymUnion}) = SymUnion(as_expr.(sym))
+
+"Convert an Array of symbols into a symbol representing a Array"
 sym_unsym{N}(sym::Array{SymUnion, N}) = SymUnion(as_expr.(sym))
+sym_unsym{N}(sym::Tuple{N, SymUnion}) = SymUnion(as_expr.(sym))
 sym_unsym(sym::SymUnion) = sym
 
 # Zen: This kind of object scares me
@@ -58,7 +62,7 @@ mutable struct ConstraintInfo
   end
 end
 
-function getindex(s::SymbolPrx, i::Int)
+function getindex(s::SymbolProxy, i::Int)
   inner_getindex(v) = v
   inner_getindex(v::Array) = getindex(v,i)
   inner_getindex(v::Union{Symbol, Expr}) = Expr(:ref, v, i)
@@ -70,6 +74,8 @@ RefinedSym(sym::SymUnion) = RefinedSym(sym, Set{SymUnion}())
 
 # Zen. There is no Sym type, If this is outer constructo for SymUnion it should be
 # called SymUnion
+
+"`SymUnion` with name of `prps`"
 function Sym(prps::Props)
   # TODO: Add Type assumption
   ustring = string(name(prps))
@@ -77,6 +83,8 @@ function Sym(prps::Props)
 end
 Sym(sprt::SubPort) = sprt |> deref |> Sym
 Sym(prt::Port) = prt |> props |> Sym
+
+"`RefinedSymbol` with port_name of `prt`"
 RefinedSym(prt::Port) = RefinedSym(Sym(prt))
 
 function sym_interpret(x::SourceArrow, args)::Vector{RefinedSym}
@@ -87,28 +95,22 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
   @show args
   @show typeof(args)
   @grab args
-  vars = [SymUnion.(as_expr(arg)) for arg in args]
+  @show vars = [SymUnion.(as_expr(arg)) for arg in args]
   @grab vars
-  preds = Set[arg.preds for arg in args]
   @show parr
   @show outputs = prim_sym_interpret(parr, vars...)
-  dompreds = domainpreds(parr, vars...)
-  allpreds = union(dompreds, preds...)
-  f = var -> RefinedSym(var, allpreds)
-  if length(outputs) > 0 && isa(outputs[1], Array)
-    sym_unions::Vector{SymUnion} = Array{SymUnion, ndims(outputs)}(size(outputs)...)
-    for iter in eachindex(outputs)
-      sym_unions[iter] = sym_unsym(outputs[iter])
-    end
-  else
-    sym_unions = outputs
-  end
-  map(f, sym_unions)
+
+  # Find predicates from all outputs and conjoin constraints
+  @show dompreds = domainpreds(parr, vars...)
+  @show preds = Set[arg.preds for arg in args]
+  @show allpreds = union(dompreds, preds...)
+
+  # attach all constraints to all symbolic outputs of parr
+  @show map((var -> RefinedSym(var, allpreds)) ∘ sym_unsym, outputs)
 end
 
 sym_interpret(sarr::SubArrow, args) = sym_interpret(deref(sarr), args)
-sym_interpret(carr::CompArrow, args) =
-  interpret(sym_interpret, carr, args)
+sym_interpret(carr::CompArrow, args) = interpret(sym_interpret, carr, args)
 
 "Constraints on inputs to `carr`"
 function constraints(carr::CompArrow, initprops)
