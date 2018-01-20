@@ -107,24 +107,23 @@ function sym_interpret(x::SourceArrow{<:Array}, args)::Vector{RefinedSym}
 end
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
-  @show args
-  if any(arg->arg.var.value isa Array, args)
-    @assert false
-  end
-  @show typeof(args)
-  @grab args
-  @show vars = [SymUnion.(as_expr(arg)) for arg in args]
-  @grab vars
-  @show parr
-  @show outputs = prim_sym_interpret(parr, vars...)
+  vars = [SymUnion.(as_expr(arg)) for arg in args]
+  outputs = prim_sym_interpret(parr, vars...)
 
   # Find predicates from all outputs and conjoin constraints
-  @show dompreds = domainpreds(parr, vars...)
-  @show preds = Set[arg.preds for arg in args]
-  @show allpreds = union(dompreds, preds...)
+  dompreds = domainpreds(parr, vars...)
+  preds = Set[arg.preds for arg in args]
+  allpreds = union(dompreds, preds...)
 
+  # @show vars
+  # @grab vars
+  # @show parr
+  # @show outputs
+  # @show dompreds
+  # @show preds
+  # @show allpreds
   # attach all constraints to all symbolic outputs of parr
-  @show map((var -> RefinedSym(var, allpreds)) ∘ sym_unsym, outputs)
+  map((var -> RefinedSym(var, allpreds)) ∘ sym_unsym, outputs)
 end
 
 sym_interpret(sarr::SubArrow, args) = sym_interpret(deref(sarr), args)
