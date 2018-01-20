@@ -83,6 +83,8 @@ end
 
 "Explicitly broadcast `x` into size `sz`"
 explicitbroadcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
+explicitbroadcast(x::Number, sz::Array{Int}) = fill(x, Tuple(sz))
+
 exbcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
 
 "Explicitly broadcast array `x` to array of dimensionality `sz`"
@@ -139,7 +141,6 @@ function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
     # Need to know size of x
   elseif 1 ∈ keys(idabv) && :size in keys(idabv[1])
     sz = idabv[1][:size]
-    @show sz
     # FIXME: Decide between tuple{Int...} and Size
     tpl_sz = tuple(get(sz)...)
     carr = CompArrow(:inv_bcast, [:y], [:x])

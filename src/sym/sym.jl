@@ -1,35 +1,41 @@
-## PureSymbolic = Union{Expr, Symbol}
-## SymUnion = Union{PureSymbolic, Array, Tuple, Number}
-using NamedTuples
-import DataStructures: DefaultDict
-
-# Zen: Is this a union of a variable an expression?
+"`Union{Symbol, Expr}`, Either a variable an expression"
 mutable struct SymUnion
   value
 end
+
+@invariant SymUnion value isa Union{Expr, Symbol} # FIXME: Why isn't this in type?
+@invariant SymUnion if value isa Union; value.head == :call else true end #FIXME< use implies
+
+# FIXME: Label these?
 token_name = :τᵗᵒᵏᵉⁿ
 SymPlaceHolder() = SymUnion(token_name)
 
 "Refined Symbol ``{var | pred}``"
-struct RefinedSym
-  var::SymUnion
-  preds::Set{} # Conjunction of predicates
+struct RefinedSym # FIXME: This should really be called a RefinementExpr
+  var::SymUnion # base expression
+  preds::Set{SymUnion}  # Conjunction of predicates
 end
+
 
 struct SymbolProxy
   var::SymUnion
 end
 
-# Zen. Why does this function exist?
+
+"(base) expression "
+as_expr(sym::SymUnion) = sym.value
+
+""
 as_expr{N}(values::Union{NTuple{N, SymUnion}, AbstractArray{SymUnion, N}}) =
   map(as_expr, values)
-as_expr(sym::SymUnion) = sym.value
+
+"(base) expression of `ref`"
 as_expr(ref::Union{RefinedSym, SymbolProxy}) = as_expr(ref.var)
 
-"Convert an tuple of symbols into a symbol representing a tuple"
+"Convert `Tuple` of symbols into a `SymUnion` representing a Tuple"
 sym_unsym{N}(sym::NTuple{N, SymUnion}) = SymUnion(as_expr.(sym))
 
-"Convert an Array of symbols into a symbol representing a Array"
+"Convert `Array` of symbols into a `Symbol` representing a `Array`"
 sym_unsym{N}(sym::Array{SymUnion, N}) = SymUnion(as_expr.(sym))
 sym_unsym{N}(sym::Tuple{N, SymUnion}) = SymUnion(as_expr.(sym))
 sym_unsym(sym::SymUnion) = sym
@@ -62,9 +68,12 @@ mutable struct ConstraintInfo
   end
 end
 
-function getindex(s::SymbolProxy, i::Int)
+"Expression `:(s[i])` for symbol `s` and index `i`"
+function getindex(s::SymbolProxy, i::Int)::SymUnion
+  # @show s, i
+  # @assert false
   inner_getindex(v) = v
-  inner_getindex(v::Array) = getindex(v,i)
+  inner_getindex(v::Array) = getindex(v, i) # FIXME: This can never be called
   inner_getindex(v::Union{Symbol, Expr}) = Expr(:ref, v, i)
   s |> as_expr |> inner_getindex |> SymUnion
 end
@@ -72,27 +81,36 @@ end
 "Unconstrained Symbol"
 RefinedSym(sym::SymUnion) = RefinedSym(sym, Set{SymUnion}())
 
-# Zen. There is no Sym type, If this is outer constructo for SymUnion it should be
-# called SymUnion
-
 "`SymUnion` with name of `prps`"
-function Sym(prps::Props)
+function SymUnion(prps::Props)
   # TODO: Add Type assumption
   ustring = string(name(prps))
   SymUnion(Symbol(ustring))
 end
-Sym(sprt::SubPort) = sprt |> deref |> Sym
-Sym(prt::Port) = prt |> props |> Sym
+
+SymUnion(sprt::SubPort) = sprt |> deref |> SymUnion
+SymUnion(prt::Port) = prt |> props |> SymUnion
 
 "`RefinedSymbol` with port_name of `prt`"
-RefinedSym(prt::Port) = RefinedSym(Sym(prt))
+RefinedSym(prt::Port) = RefinedSym(SymUnion(prt))
 
-function sym_interpret(x::SourceArrow, args)::Vector{RefinedSym}
+function sym_interpret(x::SourceArrow{T}, args)::Vector{RefinedSym} where T
+  @show T
+  @show x
+  # @assert false
+  [RefinedSym(SymUnion(x.value))]
+end
+
+function sym_interpret(x::SourceArrow{<:Array}, args)::Vector{RefinedSym}
+  # @assert false "why"
   [RefinedSym(SymUnion(x.value))]
 end
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
   @show args
+  if any(arg->arg.var.value isa Array, args)
+    @assert false
+  end
   @show typeof(args)
   @grab args
   @show vars = [SymUnion.(as_expr(arg)) for arg in args]

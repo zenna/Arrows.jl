@@ -6,6 +6,9 @@ struct TraceParent
   sarrs::Vector{SubArrow}
 end
 
+@invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
+
+
 "`TraceParent` where `sarr` is the root"
 function TraceParent(sarr::SubArrow)
   deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
@@ -17,12 +20,10 @@ function TraceParent(carr::CompArrow)
   TraceParent([sub_arrow(carr)])
 end
 
-@invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
-
 "Root `sarr`"
 root(tparent::TraceParent) = tparent.sarrs[1]
 
-"Is `tparent` the root: i.e. parentless"
+"Is `tparent` the `root`: i.e. parentless"
 isroot(tparent::TraceParent) = length(tparent.sarrs) == 1 #length(tparent) == 1
 
 "Get lower most context"
@@ -50,6 +51,7 @@ struct TraceSubArrow <: ArrowRef
   parent::TraceParent # Parent sarrs
   leaf::SubArrow
 end
+
 
 isequal(tarr1::TraceSubArrow, tarr2::TraceSubArrow)::Bool =
   isequal(tarr1.parent, tarr2.parent) && isequal(tarr1.leaf, tarr2.leaf)
@@ -102,6 +104,7 @@ struct TraceSubPort <: AbstractPort
   port_id::Int
 end
 
+
 "`TraceSubPort` referencing `sprt` where trace is `parent`"
 function TraceSubPort(tparent::TraceParent, sprt::SubPort)
   sub_arrow(sprt) ∈ all_sub_arrows(deref(bottom(tparent))) || throw(ArgumentError("prt must be in parent"))
@@ -124,12 +127,10 @@ in_trace_ports(tarr::TraceSubArrow) =
 out_trace_ports(tarr::TraceSubArrow) =
   [TraceSubPort(tarr, prt.port_id) for prt in ◂(deref(tarr))]
 
-
 "Which `SubPort` does this `traceport` trace to"
 function sub_port(tprt::TraceSubPort)::SubPort
   SubPort(sub_arrow(tprt.trace_arrow), tprt.port_id)
 end
-
 
 """
 The root source of a a `TraceValue`.  `src(sprt::SubPort)` is the `SubPort`
@@ -158,7 +159,6 @@ function rootsrc(tprt::TraceSubPort)::TraceSubPort
     return TraceSubPort(tparent, srcsprt)
   end
 end
-
 
 "A `Value` of a `TraceSubArrow`"
 struct TraceValue <: Value

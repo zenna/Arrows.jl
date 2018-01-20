@@ -19,9 +19,22 @@ Some shorthands used throughout
 - `aprx`: Approximate(ly)
 - `inv` : inverse, invert
 
-
 - θ: parameter
 - ϵ: error
+
+
+# Style Guidelines
+- Add a docstring for every function, even unexposed ones
+- Leave one space after definition function
+- Leave two spaces after type definition
+
+## Testing / Correctness
+
+- Liberally use @pre, and @post (even for expensive checks since they can be disabled)
+- Add @invariant for conditions which should hold for any type
+- Include jldcotests wherever possible
+
+- Break any rule when appropriate
 """
 module Arrows
 
@@ -31,6 +44,10 @@ import NamedTuples: @NT, NamedTuple
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
 import Base: gradient
+import Spec: @pre, @invariant
+
+using NamedTuples
+import DataStructures: DefaultDict
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -255,9 +272,6 @@ export
   ◃,
   ⬧,
   ⬨
-
-include("spec/Spec.jl")             # Specification and Testing
-import Arrows.Spec: @pre, @invariant
 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities

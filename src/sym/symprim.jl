@@ -22,6 +22,8 @@ function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
   Set{SymUnion}(answer)
 end
 
+## Primitive Symbolc Interpretation
+
 # Zen: What is this?
 var(xs::Array{SymUnion}) = SymUnion(:())
 
@@ -30,9 +32,11 @@ function ifelse(i::SymUnion, t::SymUnion, e::SymUnion)
 end
 
 # Zen: what is thi?
-function s_arrayed(xs::Array{SymUnion}, name)
-  values = [x.value for x in xs]
-  SymUnion(:($(name)($(values))))
+"[:a, :b, :c] -> `name([:a, :b, :c])`"
+function s_arrayed(xs::Array{SymUnion}, name::Symbol)
+  @show values = [x.value for x in xs]
+  @show SymUnion(:($(name)($(values))))
+  @assert false
 end
 
 s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
@@ -42,7 +46,6 @@ function s_var(xs::Vararg{<:Array})
   end
 end
 
-## Primitive Symbolc Interpretation
 
 "Generic Symbolic Interpret of `parr`"
 function prim_sym_interpret(parr::PrimArrow, args::SymUnion...)::Vector{SymUnion}
@@ -62,6 +65,7 @@ prim_sym_interpret(::IfElseArrow, i::SymUnion, t::SymUnion, e::SymUnion) =
 
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymUnion, N})::Vector{SymUnion}
+  ## XXX: What are the consequences of just taking the first?
   [first(xs)]
 end
 

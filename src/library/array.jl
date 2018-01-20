@@ -35,8 +35,6 @@ props(::CatArrow{I}) where I =
     Props(false, :y, Any)]
 CatArrow(n::Integer, axis::Integer) = CatArrow{n}(axis)
 function sizeprop(arr::CatArrow, idabv::IdAbValues)
-  @show idabv
-  @show arr
   # @assert false
   IdAbValues()
 end
@@ -98,7 +96,7 @@ end
 function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
   @show Dict(id => collect(keys(vals)) for (id, vals) in abvals)
   if 3 ∈ keys(abvals) && :value ∈ keys(abvals[3])
-    @show sz = abvals[3][:value].value
+    sz = abvals[3][:value].value
     IdAbValues(4 => AbValues(:size => Size([sz...])))
   else
     IdAbValues()

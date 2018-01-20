@@ -45,7 +45,7 @@ function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
-    sym = Sym(sport)
+    sym = SymUnion(sport)
     info.port_to_index[sym] = idx
     else_ = ()-> RefinedSym(sym)
     true_ = function(size)
@@ -61,7 +61,6 @@ function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
                                   else_)
   end
 end
-
 
 find_gather_params!(expr, θs) = expr
 find_gather_params!(expr::Array, θs) = map(e->find_gather_params!(e, θs), expr)
@@ -80,7 +79,6 @@ function find_gather_params!(expr::Expr, θs)
   expr
 end
 
-
 remove_unused_θs!(expr, θs) = expr
 function remove_unused_θs!(expr::Expr, θs)
   if expr.head == :call
@@ -95,7 +93,6 @@ function remove_unused_θs!(expr::Expr, θs)
   expr
 end
 
-
 function replace!(left::Union{Expr, Symbol}, right, expr::Expr)
   for (id, e) in enumerate(expr.args)
     if e == left
@@ -103,9 +100,6 @@ function replace!(left::Union{Expr, Symbol}, right, expr::Expr)
     end
   end
 end
-
-
-
 
 symbolic_includes(left, right) = false
 symbolic_includes(left::Symbol, right::Symbol) = left == right
@@ -121,7 +115,6 @@ function symbolic_includes(left, right::Expr)
   false
 end
 
-
 collect_symbols_solver(info, v, seen) = seen
 collect_symbols_solver(info, v::Symbol, seen) = (v ∈ info.θs) && push!(seen, v)
 function collect_symbols_solver(info, v::Expr, seen)
@@ -134,6 +127,7 @@ function collect_symbols_solver(info, v::Expr, seen)
   end
   seen
 end
+
 """A special assigment appears when having constraint of the
 form `f(x) = g(y)` and `g⁻¹` exists"""
 assign_special_if_possible(info, left, right) = false
@@ -175,7 +169,6 @@ function assign_if_possible(info, left::Union{Symbol, Expr}, right)
     true
   end
 end
-
 
 function add_preds(info::ConstraintInfo, allpreds::Set)
   info.exprs = allpreds |> collect |> as_expr
@@ -371,7 +364,6 @@ function create_first_step_of_connection(info)
   end
 end
 
-
 function create_inner_special_connector(info::ConstraintInfo,
                                 pairs, idx,
                                 block)
@@ -558,7 +550,6 @@ function finish_parameter_wiring(info, sarr, idx)
   setprop!(Name(nm), prps)
   outp ⥅ add_port!(info.master_carr, prps)
 end
-
 
 """solve constraints on inputs to `carr`
 It will return a tuple with a `CompArrow` (the wirer), and information regarding
