@@ -180,6 +180,15 @@ function pgf(arr::LessThanArrow, const_in)
   carr
 end
 
+function pgf(arr::ModArrow, const_in)
+  @assert const_in[2]
+  carr = CompArrow(:pgf_mod, [:x, :y], [:z, :θmod])
+  x, y, z, θ = ⬨(carr)
+  x % y ⥅ z
+  div((x - z), y) ⥅ θ
+  carr
+end
+
 function pgf(arr::IfElseArrow, const_in)
   if const_in[2] && const_in[3]
     carr = CompArrow(:ifelse_teconst_pgf,

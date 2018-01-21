@@ -96,6 +96,16 @@ function inv(arr::OrArrow, sarr::SubArrow, idabv::IdAbValues)
   end
 end
 
+function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbValues)
+  constin = const_in(arr, idabv)
+  constin[2] == false && throw(ArgumentError("Constness Combination not supported"))
+  carr = CompArrow(:inv_modulo, [:z, :y, :θmod], [:x])
+  z, y, θ, x = ⬨(carr)
+  addprop!(θp, deref(θ))
+  (z + θ * y) ⥅ x
+  carr, Dict(1=>4,2=>2, 3=>1)
+end
+
 function inv_p(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
    unary_inv(arr, const_in(arr, abvals), ACosArrow)
 end

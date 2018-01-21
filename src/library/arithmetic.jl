@@ -89,6 +89,10 @@ name(::MaxArrow)::Symbol = :max
 struct ModArrow <: PrimArrow end
 name(::ModArrow)::Symbol = :%
 
+"div(x, y) Integer division"
+struct IntDivArrow <: PrimArrow end
+name(::IntDivArrow)::Symbol = :div
+
 "ceil(x)"
 struct CeilArrow <: PrimArrow end
 name(::CeilArrow)::Symbol = :ceil
@@ -107,6 +111,7 @@ end
 ArithArrow = Union{AddArrow,
                   SubtractArrow,
                   DivArrow,
+                  IntDivArrow,
                   MulArrow,
                   ExpArrow,
                   LogArrow,
