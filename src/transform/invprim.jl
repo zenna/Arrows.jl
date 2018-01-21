@@ -77,6 +77,17 @@ function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbValues)
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
+function inv(arr::IntMulArrow, sarr::SubArrow, idabv::IdAbValues)
+  # @show idabv
+  binary_inv(arr,
+             const_in(arr, idabv),
+             inv_mul,
+             IntDivArrow,
+             Dict(1 => 2, 2 => 3, 3 => 1),
+             IntDivArrow,
+             Dict(1 => 3, 2 => 2, 3 => 1))
+end
+
 function inv(arr::XorArrow, sarr::SubArrow, idabv::IdAbValues)
   # @show idabv
   binary_inv(arr,
@@ -94,7 +105,7 @@ function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbValues)
   carr = CompArrow(:inv_modulo, [:z, :y, :θmod], [:x])
   z, y, θ, x = ⬨(carr)
   addprop!(θp, deref(θ))
-  (z + θ * y) ⥅ x
+  (z + mul(θ, y)) ⥅ x
   carr, Dict(1=>4,2=>2, 3=>1)
 end
 

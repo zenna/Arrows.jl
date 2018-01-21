@@ -77,6 +77,7 @@ import Base:  ^,
               one,
               floor,
               ceil,
+              div,
               getindex
 
 export
@@ -140,6 +141,9 @@ export
   assert!,
   deref,
 
+  div,
+  mul,
+
   mean,
   var,
   θp,
@@ -185,6 +189,9 @@ export
   LogBaseArrow,
   ReduceMean,
   FirstArrow,
+  IntMulArrow,
+  IntDivArrow,
+
 
   # Compound
   addn,

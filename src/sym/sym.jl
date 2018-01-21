@@ -102,6 +102,8 @@ end
 /(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) / $(y.value)))
 *(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) * $(y.value)))
 xor(x::SymUnion, y::SymUnion) = SymUnion(:($(x.value) ⊻ $(y.value)))
+mul(x::SymUnion, y::SymUnion) = SymUnion(:(mul($(x.value), $(y.value))))
+div(x::SymUnion, y::SymUnion) = SymUnion(:(div($(x.value), $(y.value))))
 log(x::SymUnion)::SymUnion = SymUnion(:(log($(x.value))))
 neg(x::SymUnion)::SymUnion = SymUnion(:(-$(x.value)))
 abs(x::SymUnion)::SymUnion = SymUnion(:(abs($(x.value))))
@@ -129,6 +131,8 @@ prim_sym_interpret(::Arrows.IdentityArrow, x) = [x,]
 prim_sym_interpret(::SubtractArrow, x, y) = [x .- y,]
 prim_sym_interpret(::MulArrow, x, y) = [x .* y,]
 prim_sym_interpret(::AddArrow, x, y) = [x .+ y,]
+prim_sym_interpret(::IntMulArrow, x, y) = [mul.(x,y),]
+prim_sym_interpret(::IntDivArrow, x, y) = [div.(x,y),]
 prim_sym_interpret(::DivArrow, x, y) = [x ./ y,]
 prim_sym_interpret(::LogArrow, x) = [log.(x),]
 prim_sym_interpret(::ExpArrow, x) = [exp.(x),]

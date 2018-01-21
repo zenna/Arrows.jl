@@ -93,6 +93,13 @@ name(::ModArrow)::Symbol = :%
 struct IntDivArrow <: PrimArrow end
 name(::IntDivArrow)::Symbol = :div
 
+"""mul(x, y) Integer multiplication: forward is multiplication but its inverse
+is `InDivArrow`"""
+struct IntMulArrow <: PrimArrow end
+name(::IntMulArrow)::Symbol = :mul
+
+mul(x::Integer, y::Integer) = x * y
+
 "ceil(x)"
 struct CeilArrow <: PrimArrow end
 name(::CeilArrow)::Symbol = :ceil
@@ -112,6 +119,7 @@ ArithArrow = Union{AddArrow,
                   SubtractArrow,
                   DivArrow,
                   IntDivArrow,
+                  IntMulArrow,
                   MulArrow,
                   ExpArrow,
                   LogArrow,
@@ -140,7 +148,8 @@ to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       AbsArrow, LogBaseArrow, NegArrow, CeilArrow,
                       FloorArrow,]
 to_binary_functions = [AddArrow, DivArrow, SubtractArrow,
-                      MulArrow, MinArrow, MaxArrow, ModArrow]
+                      MulArrow, MinArrow, MaxArrow, ModArrow,
+                      IntMulArrow, IntDivArrow]
 codes_unary = map(f -> expander_prop(unary_arith_props, f), to_unary_functions)
 codes_binary = map(f -> expander_prop(bin_arith_props, f), to_binary_functions)
 foreach(eval, vcat(codes_unary, codes_binary))
