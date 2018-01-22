@@ -95,9 +95,6 @@ SymUnion(prt::Port) = prt |> props |> SymUnion
 RefinedSym(prt::Port) = RefinedSym(SymUnion(prt))
 
 function sym_interpret(x::SourceArrow{T}, args)::Vector{RefinedSym} where T
-  @show T
-  @show x
-  # @assert false
   [RefinedSym(SymUnion(x.value))]
 end
 

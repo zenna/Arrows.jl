@@ -55,7 +55,7 @@ function remove_dead_arrows!(carr)
   while changemade
     for sarr in sub_arrows(carr)
       # @show sarr
-      changemade &= remove_dead_arrow(deref(sarr), sarr)
+      changemade &= remove_dead_arrow!(deref(sarr), sarr)
       badloose = (loose ∧ should_dst ∧ is(θp)).(inner_sub_ports(carr))
     end
   end

@@ -243,6 +243,8 @@ export
   # Symbolic Execution
   all_constraints,
 
+  sqr,
+
   accumapply,
   trace_value,
   psl,
