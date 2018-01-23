@@ -3,7 +3,7 @@ dist: trusty
 sudo: true
 os:
   - linux
-  # - osx
+  - osx
 julia:
   - 0.6
   - nightly

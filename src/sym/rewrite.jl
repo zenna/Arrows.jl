@@ -12,7 +12,7 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   for (name, idx) in info.port_to_index
     info.is_θ_by_portn[idx] || continue
     exprs = info.inp[idx] |> as_expr
-    if startswith(String(name.value), String(:θgather))
+    if startswith(String(name), String(:θgather))
       union!(all_gather_θ, exprs)
     else
       f = is_arrayed_port(info, idx) ? union! : push!
@@ -25,7 +25,7 @@ function filter_gather_θ!(carr::CompArrow, info::ConstraintInfo, constraints)
   end
   unused_θ = setdiff(all_gather_θ, θs)
   foreach(constraints) do cons
-    remove_unused_θs!(cons.value, unused_θ)
+    remove_unused_θs!(cons, unused_θ)
   end
   info.θs = union(θs, non_gather_θ)
 end

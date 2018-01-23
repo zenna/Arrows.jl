@@ -245,6 +245,7 @@ export
   all_constraints,
 
   sqr,
+  mean_arr,
 
   accumapply,
   trace_value,
