@@ -25,3 +25,5 @@ constprop(arr::SourceArrow, props::IdAbValues)::IdAbValues =
 # FIXME, Specialize this for different types
 zero(::Type{SubPort}) = SourceArrow(0)
 one(::Type{SubPort}) = SourceArrow(1)
+
+string(arr::SourceArrow) = string(func_decl(arr), " := ", arr.value)

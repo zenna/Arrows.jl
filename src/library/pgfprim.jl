@@ -147,18 +147,47 @@ function pgf(arr::GreaterThanArrow, const_in)
   carr
 end
 
+"""
+Three cases:
+x is constant: f^(-1)(z; x, θ1) = (z ?  x - abs(θ1) : x + abs(θ1))
+y is constant: f^(-1)(z; θ1, y) = (z ?  y + abs(θ1) : y - abs(θ1))
+none is constant: f^(-1)(z; θ1, θ2) = (θ1, z ?  θ1 - θ2 : θ1 + θ2)
+"""
 function pgf(arr::LessThanArrow, const_in)
-  "As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z), then the pgf becomes r(x, y) = (x<y, x, abs(x-y))."
-  carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
-  x, y, z, θ1, θ2 = ⬨(carr)
-  abs = add_sub_arr!(carr, AbsArrow())
-  x < y ⥅ z
-  x ⥅ θ1
-  x - y ⥅ (abs, 1)
-  link_ports!((abs, 2), θ2)
+  # As f^(-1)(z; θ1, θ2) = (θ1, [θ1+θ2, θ1-θ2]^z),
+  # then the pgf becomes r(x, y) = (x<y, x, abs(x-y))
+  xconst, yconst = const_in
+  if xconst
+    carr = CompArrow(Symbol(:pgf_, :lt_xcnst), [:x, :y], [:z, :θlt])
+    x, y, z, θlt = ⬨(carr)
+    x < y ⥅ z
+    x - y ⥅ θlt
+  elseif yconst
+    carr = CompArrow(Symbol(:pgf_, :lt_xcnst), [:x, :y], [:z, :θlt])
+    x, y, z, θlt = ⬨(carr)
+    x < y ⥅ z
+    y - x ⥅ θlt
+  else
+    carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
+    x, y, z, θ1lt, θ2lt = ⬨(carr)
+    abs = add_sub_arr!(carr, AbsArrow())
+    x < y ⥅ z
+    x ⥅ θ1lt
+    x - y ⥅ (abs, 1)
+    link_ports!((abs, 2), θ2lt)
+    carr
+  end
   carr
 end
 
+function pgf(arr::ModArrow, const_in)
+  @assert const_in[2]
+  carr = CompArrow(:pgf_mod, [:x, :y], [:z, :θmod])
+  x, y, z, θ = ⬨(carr)
+  x % y ⥅ z
+  div((x - z), y) ⥅ θ
+  carr
+end
 
 function pgf(arr::IfElseArrow, const_in)
   if const_in[2] && const_in[3]
@@ -166,14 +195,14 @@ function pgf(arr::IfElseArrow, const_in)
                       [:i, :t, :e],
                       [:y, :θi])
     i, t, e = ▹(carr)
-    θi, = ◃(carr)
+    y, θi = ◃(carr)
     i ⥅ θi
   elseif const_in[2]
     carr = CompArrow(:ifelse_tconst_pgf,
                       [:i, :t, :e],
-                      [:θi, :θmissing])
+                      [:y, :θi, :θmissing])
     i, t, e = ▹(carr)
-    θi, θmissing = ◃(carr)
+    y, θi, θmissing = ◃(carr)
     i ⥅ θi
     e ⥅ θmissing
   elseif const_in[3]

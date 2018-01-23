@@ -13,8 +13,7 @@ Base.get(sz::Size)::Vector{Int} = map(get, sz.dims)
 
 Base.getindex(sz::Size, i::Integer) = sz.dims[i]
 
-ndims(sz::Size) = length(sz.dims)
-@pre ndims !sz.ndims_unknown
+ndims(sz::Size) = (@pre !sz.ndims_unknown; length(sz.dims))
 
 function Size(dims::AbstractVector{<:Integer})
   Size([x<0 ? Nullable{Int}() : Nullable{Int}(x) for x in dims])
@@ -30,7 +29,11 @@ end
 
 Size(t::Size) = copy(t)
 
+"Is `x` a disjoint set from `y`"
+isdisjoint(x, y) = false # TODO: Implement
+
 function meet(size1::Size, size2::Size)
+  @pre !isdisjoint(size1, size2) # "Cannot meet Size which are isdisjoint"
   # If either ndims unknown then return other
   if size1.ndims_unknown && size2.ndims_unknown
     size1
@@ -62,7 +65,6 @@ function meet(size1::Size, size2::Size)
   end
 end
 
-@pre meet !disjoint(size1, size2) "Cannot meet Size which are disjoint"
 
 # Primitives
 

@@ -238,26 +238,6 @@ function dst(sprt::SubPort)::SubPort
   end
 end
 
-maprecur!(f, parr::PrimArrow, outputs::Vector, seen::Set{ArrowName}) = nothing
-
-function maprecur!(f, carr::CompArrow, outputs::Vector, seen::Set{ArrowName})
-  if name(carr) ∉ seen
-    push!(outputs, f(carr))
-    push!(seen, name(carr))
-    for sarr in all_sub_arrows(carr)
-      maprecur!(f, deref(sarr), outputs, seen)
-    end
-  end
-end
-
-"Recursively apply `f` to each subarrow of `carr`"
-function maprecur(f, carr::CompArrow)::Vector
-  outputs = []
-  seen = Set{ArrowName}()
-  maprecur!(f, carr, outputs, seen)
-  outputs
-end
-
 ## Validation ##
 
 "Should `port` be a src in context `arr`. Possibly false iff is_valid = false"
@@ -325,9 +305,12 @@ function is_wired_ok(arr::CompArrow)::Bool
   true
 end
 
+"Is `carr` and all `CompArrow`s it contained wired_ok?"
+is_wired_ok_recur(carr::CompArrow) = all(maprecur(is_wired_ok, carr))
+
 "Is `carr` well formed"
 function is_valid(carr::CompArrow)
-  is_wired_ok(carr) && !hasduplicates(name.(ports(carr)))
+  is_wired_ok_recur(carr) && !hasduplicates(name.(ports(carr)))
 end
 
 ## Linking to Parent ##
@@ -379,7 +362,7 @@ n◂ = num_out_ports
 function describe(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...))
   $(num_sub_arrows(carr)) sub arrows
-  wired_ok? $(is_valid(carr))"""
+  is_valid? $(is_valid(carr))"""
 end
 
 string(carr::CompArrow) = describe(carr)

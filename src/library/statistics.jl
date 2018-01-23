@@ -16,8 +16,6 @@ props(::ReduceMean) = [Props(true, :x, Any), Props(false, :y, Any)]
 name(::ReduceMean) = :reduce_mean
 abinterprets(::ReduceMean) = [sizeprop]
 function sizeprop(::ReduceMean, idabv::IdAbValues)::IdAbValues
-  @show idabv
-  # @assert false
   IdAbValues(2 => AbValues(:size => Size([])))
 end
 mean(sprt::SubPort) = ReduceMean()(sprt)

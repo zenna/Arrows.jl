@@ -135,3 +135,11 @@ test_sym_gather_inv()
 test_sym_gather_inv_log()
 test_sym_gather_inv_log_special()
 test_sym_special()
+
+# Symbolic Execution on simple arrows
+function pre_test(arr::Arrow)
+  println("Testing symbolic execution of arrow ", name(arr))
+  arr
+end
+
+foreach(Arrows.all_constraints ∘ pre_test ∘ invert, plain_arrows())

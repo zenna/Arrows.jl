@@ -20,6 +20,12 @@ function same(xs, eq=(==))::Bool
   return true
 end
 
+"Like `find` but return elements of A instead of ids"
+function finditems(f, A)
+  idxs = find(f, A)
+  [A[idx] for idx in idxs]
+end
+
 "Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
 function uniquename(x::Symbol, nms::Vector{Symbol})
   names = Set(nms)
@@ -138,7 +144,17 @@ function accumapply(f::Function, x::T) where T
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end
 
-"Global capture"
+"Global capture
+
+```
+function f(x)
+  x = 2x + 3
+  @grab x
+  y = 3x*2
+end
+
+x_grab
+"
 macro grab(var)
   @show var
   grabname = Symbol(var, :_grab)

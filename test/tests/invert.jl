@@ -40,3 +40,17 @@ function test_xor_invert()
 end
 
 test_xor_invert()
+
+
+function test_mod_invert()
+  carr = Arrows.CompArrow(:mod_test, [:x], [:z])
+  x, z = ⬨(carr)
+  x % 17 ⥅ z
+  inv_carr = carr |> invert
+  answer = inv_carr(3, 5)
+  @test answer > 5 * 17
+  @test carr(answer) == answer % 17
+end
+
+
+test_mod_invert()
