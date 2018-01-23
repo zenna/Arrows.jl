@@ -44,7 +44,11 @@ function s_var(xs::Vararg{<:Array})
 end
 
 
-"Generic Symbolic Interpret of `parr`"
+"""Generic Symbolic Interpret of `parr`
+We are leveraging the broadcasting made by `.`.
+If we know the shape of a port, we create a matrix and then we do symbolic
+evaluation on each element of the matrix.
+"""
 function prim_sym_interpret(parr::PrimArrow, args::SymbolicType...)::Vector{SymbolicType}
   @assert num_out_ports(parr) == 1
   ## TODO: only for scalars
