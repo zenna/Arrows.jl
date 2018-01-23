@@ -121,6 +121,7 @@ export
   port_id,
   add_sub_arr!,
   replace_sub_arr!,
+  rm_partially_loose_sub_arrows!,
   out_sub_port,
   out_sub_ports,
   inner_sub_ports,

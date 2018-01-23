@@ -32,11 +32,11 @@ end
 
 function expand_θ(θ, sz::Size)::RefinedSym
   shape = get(sz)
-  symbols = Array{Arrows.SymUnion, ndims(sz)}(shape...)
+  symbols = Array{Arrows.SymbolicType, ndims(sz)}(shape...)
   for iter in eachindex(symbols)
     symbols[iter] = θ[iter]
   end
-  symbols |> sym_unsym |> RefinedSym
+  symbols |> RefinedSym
 end
 
 function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
@@ -45,7 +45,7 @@ function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
-    sym = SymUnion(sport)
+    sym = (sport |> deref |> name).name
     info.port_to_index[sym] = idx
     else_ = ()-> RefinedSym(sym)
     true_ = function(size)
