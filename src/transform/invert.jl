@@ -37,25 +37,10 @@ end
 "Rename `arr` to `:inv_oldname`"
 inv_rename!(arr::CompArrow) = (rename!(arr, Symbol(:inv_, arr.name)); arr)
 
-function remove_dead_arrows!(carr)
-  # iterate until none left
-  nremoved = 1
-  while nremoved != 0
-    nremoved = 0
-    for sarr in sub_arrows(carr)
-      nloose = length(filter(loose, sub_ports(sarr)))
-      if nloose > 0
-        # println("removing: ", sarr)
-        rem_sub_arr!(sarr)
-        nremoved = nremoved + 1
-      end
-    end
-    # println("removed $nremoved !")
-  end
+function link_param_ports!(carr::CompArrow)
+  link_to_parent!(carr, loose ∧ should_dst ∧ is(θp))
   carr
 end
-
-link_param_ports!(carr::CompArrow) = link_to_parent!(carr, loose ∧ should_dst)
 
 "Invert `arr`, approximately totalize, and check the `domain_error`"
 function aprx_invert(arr::CompArrow,
@@ -83,9 +68,18 @@ function invert(arr::CompArrow,
   sprtabvals = SprtAbValues(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
   custinvreplace = (arr, sarr, tparent, abtvals) -> invreplace(arr, sarr, tparent, abtvals; inv=inner_inv)
-  newtracewalk(custinvreplace, arr, abvals)[1]
+  tracewalk(custinvreplace, arr, abvals)[1]
 end
 
 "copy and `invert!` `arr`"
 invert(arr::CompArrow, inner_inv, nmabv::NmAbValues) =
   invert(arr, inner_inv, sprtabv(arr, nmabv))
+
+"Cannot invert arrow"
+struct InvertError <: Exception
+  arr::Arrow
+  abv::XAbValues
+end
+
+Base.showerror(io::IO, e::InvertError) =
+  print(io, "Cannot invert: $(e.arr) with values $(e.abv)")

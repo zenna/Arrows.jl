@@ -57,3 +57,12 @@ function test_inner_sub_ports(carr::CompArrow)
   end
   true
 end
+
+function badnested()
+  carr = CompArrow(:inner, [:x], [:y])
+  carr2 = CompArrow(:outer)
+  add_sub_arr!(carr2, carr)
+  foreach(Arrows.link_to_parent!, inner_sub_ports(carr2))
+  @test is_wired_ok(carr2)
+  @test !Arrows.is_wired_ok_recur(carr2)
+end

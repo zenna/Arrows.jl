@@ -19,9 +19,22 @@ Some shorthands used throughout
 - `aprx`: Approximate(ly)
 - `inv` : inverse, invert
 
-
 - θ: parameter
 - ϵ: error
+
+
+# Style Guidelines
+- Add a docstring for every function, even unexposed ones
+- Leave one space after definition function
+- Leave two spaces after type definition
+
+## Testing / Correctness
+
+- Liberally use @pre, and @post (even for expensive checks since they can be disabled)
+- Add @invariant for conditions which should hold for any type
+- Include jldcotests wherever possible
+
+- Break any rule when appropriate
 """
 module Arrows
 
@@ -31,6 +44,10 @@ import NamedTuples: @NT, NamedTuple
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
 import Base: gradient
+import Spec: @pre, @invariant
+
+using NamedTuples
+import DataStructures: DefaultDict
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -104,6 +121,7 @@ export
   port_id,
   add_sub_arr!,
   replace_sub_arr!,
+  rm_partially_loose_sub_arrows!,
   out_sub_port,
   out_sub_ports,
   inner_sub_ports,
@@ -135,6 +153,7 @@ export
   domain_error!,
   dupl,
   inv_dupl,
+  first_arr,
   duplify!,
   assert!,
   deref,
@@ -183,10 +202,16 @@ export
   LogArrow,
   LogBaseArrow,
   ReduceMean,
+  FirstArrow,
 
   # Compound
   addn,
   gather_nd,
+  scatter_nd,
+
+  # extra arrows
+  md2box,
+  inverse_md2box,
 
   # Optimization
   optimize,
@@ -215,6 +240,12 @@ export
   Size,
   meetall,
   meet,
+
+  # Symbolic Execution
+  all_constraints,
+
+  sqr,
+  mean_arr,
 
   accumapply,
   trace_value,
@@ -248,11 +279,9 @@ export
   ⬧,
   ⬨
 
-
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/pre.jl")              # methods that should be in LightGraphs
 include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
@@ -297,7 +326,7 @@ include("library/md2.jl")
 # Inv Arrows
 include("library/inv_control.jl")
 include("library/inv_array.jl")
-include("library/inv_arith.jl")
+include("library/inv_arithmetic.jl")
 include("library/inv_boolean.jl")
 
 # PGF Primitives
@@ -319,8 +348,8 @@ include("apply/interpret.jl")
 # Graph Transformations #
 include("transform/walk.jl")
 include("transform/tracewalk.jl")
-include("transform/newtracewalk.jl")
 include("transform/duplify.jl")
+include("transform/remove.jl")
 include("transform/invert.jl")
 include("transform/pgf.jl")
 include("transform/invprim.jl")
@@ -339,6 +368,10 @@ include("macros/arr_macro.jl")
 
 # Solving constraints
 include("sym/sym.jl")
+include("sym/symprim.jl")
+include("sym/rewrite.jl")
+include("sym/convenience.jl")
+include("sym/md2_solver.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")

@@ -6,6 +6,9 @@ struct TraceParent
   sarrs::Vector{SubArrow}
 end
 
+@invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
+
+
 "`TraceParent` where `sarr` is the root"
 function TraceParent(sarr::SubArrow)
   deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
@@ -17,12 +20,10 @@ function TraceParent(carr::CompArrow)
   TraceParent([sub_arrow(carr)])
 end
 
-@invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
-
 "Root `sarr`"
 root(tparent::TraceParent) = tparent.sarrs[1]
 
-"Is `tparent` the root: i.e. parentless"
+"Is `tparent` the `root`: i.e. parentless"
 isroot(tparent::TraceParent) = length(tparent.sarrs) == 1 #length(tparent) == 1
 
 "Get lower most context"
@@ -50,6 +51,7 @@ struct TraceSubArrow <: ArrowRef
   parent::TraceParent # Parent sarrs
   leaf::SubArrow
 end
+
 
 isequal(tarr1::TraceSubArrow, tarr2::TraceSubArrow)::Bool =
   isequal(tarr1.parent, tarr2.parent) && isequal(tarr1.leaf, tarr2.leaf)
@@ -85,6 +87,7 @@ deref(tarr::TraceSubArrow)::Arrow = deref(tarr.leaf)
 
 "Get all trace arrows within `carr`"
 function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  @pre !isrecursive(carr)
   tarrs::Vector{TraceSubArrow} = TraceSubArrow[]
   sarrs = sub_arrows(carr)
   csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
@@ -95,13 +98,12 @@ function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(
   tarrs
 end
 
-@pre inner_trace_arrows !isrecursive(carr)
-
 "Port of a `TraceSubArrow`"
 struct TraceSubPort <: AbstractPort
   trace_arrow::TraceSubArrow
   port_id::Int
 end
+
 
 "`TraceSubPort` referencing `sprt` where trace is `parent`"
 function TraceSubPort(tparent::TraceParent, sprt::SubPort)
@@ -125,12 +127,10 @@ in_trace_ports(tarr::TraceSubArrow) =
 out_trace_ports(tarr::TraceSubArrow) =
   [TraceSubPort(tarr, prt.port_id) for prt in ◂(deref(tarr))]
 
-
 "Which `SubPort` does this `traceport` trace to"
 function sub_port(tprt::TraceSubPort)::SubPort
   SubPort(sub_arrow(tprt.trace_arrow), tprt.port_id)
 end
-
 
 """
 The root source of a a `TraceValue`.  `src(sprt::SubPort)` is the `SubPort`
@@ -159,7 +159,6 @@ function rootsrc(tprt::TraceSubPort)::TraceSubPort
     return TraceSubPort(tparent, srcsprt)
   end
 end
-
 
 "A `Value` of a `TraceSubArrow`"
 struct TraceValue <: Value
@@ -197,6 +196,46 @@ inner_trace_values(carr::CompArrow)::Vector{TraceValue} =
 "`TraceValue` where parent `sprt` is root `TraceParent`"
 trace_value(sprt::SubPort) = TraceValue(TraceParent(deref(sprt.sub_arrow)), sprt)
 
+"Recursively find destinations"
+function recurdst(dstsprt::SubPort, tparent::TraceParent)::Vector{TraceSubPort}
+  if on_boundary(dstsprt)
+    if isroot(tparent)
+      return TraceSubPort[TraceSubPort(tparent, dstsprt)]
+    else
+      # If the source is on boundary and its not a root, need to recurse up
+      srctarr = TraceSubArrow(tparent, sub_arrow(dstsprt))
+      return out_neighbors(TraceSubPort(up(srctarr), dstsprt.port_id))
+    end
+  elseif deref(sub_arrow(dstsprt)) isa CompArrow
+    # If the source is on a CompArrow we need to recursve down
+    srctarr = TraceSubArrow(tparent, sub_arrow(dstsprt))
+    return out_neighbors(TraceSubPort(down(srctarr), dstsprt.port_id))
+  else
+    # @assert false #on_boundary(dstsprt)
+    @assert deref(sub_arrow(dstsprt)) isa PrimArrow || isroot(tparent)
+    return TraceSubPort[TraceSubPort(tparent, dstsprt)]
+  end
+end
+
+"All `TraceSubPort`s that `tprt` projects to"
+function out_neighbors(tprt::TraceSubPort)::Vector{TraceSubPort}
+  tparent = trace_parent(tprt)
+  dstsprts = out_neighbors(sub_port(tprt))
+  tsprts = TraceSubPort[]
+  for dstsprt in dstsprts
+    append!(tsprts, recurdst(dstsprt, tparent))
+  end
+  tsprts
+end
+
+"`TraceSubPort`s within `TraceValue`"
+trace_sub_ports(tval::TraceValue)::Vector{TraceSubPort} =
+  vcat([tval.srctprt], out_neighbors(tval.srctprt))
+
+function trace_sub_arrows(tval::TraceValue)::Vector{TraceSubArrow}
+  unique(map(tsprt -> tsprt.trace_arrow, trace_sub_ports(tval)))
+end
+
 "SubPorts ∈ Value"
 function SrcValue(tval::TraceValue)::SrcValue
   SrcValue(sub_port(tval.srctprt))
@@ -217,12 +256,63 @@ function string(tarr::TraceSubArrow)
   $sarrsstring
   """
 end
+
 show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
+show(io::IO, tval::TraceValue) = print(io, string(tval))
 
 function string(tval::TraceValue)
   """TraceValue
   $(tval.srctprt)
   """
 end
-
-show(io::IO, tval::TraceValue) = print(io, string(tval))
+#
+# "Depth First Trace Iterator"
+# struct DFTraceIter
+#   tarr::TraceSubArrow
+#   pos::Vector{Int}
+# end
+#
+# trace_sub_arrows(carr::CompArrow) = DFTraceIter(TraceSubArrow(carr))
+# Base.eltype(::Type{DFTraceIter}) = TraceSubArrow
+# function Base.start(it::DFTraceIter)
+#   [1]
+# end
+#
+# function Base.next(it::DFTraceIter, state)
+#   pos, tarr = state.pos, state.tarr
+#   sarr = sub_arrows(it.tarr)[state]
+#   # If current state is composite arrow go down
+#   if deref(tarr) isa CompArrow
+#     downtarr = down(tarr)
+#     (downtarr, DFTraceIter(downtarr, push(pos, 1)))
+#   elseif pos + 1 > length(sarrs)
+#     next(DFTraceIter(down(it.tarr), pop(pos)))
+#   else
+#     sarr = sarrs[pos + 1]
+#   end
+#     DFTraceIter(down(it.tarr), push(pos, 1))
+#   elseif atend
+#     = (it.f(), nothing)
+#     if root
+#       finish
+#     else
+#       up
+#     end
+#   else
+#     ...
+#   end
+# end
+#
+# ## The state required for this iteration is
+# ## the number in the set of sub arrows
+#
+# function Base.done(it::DFTraceIter, state)
+#   if atroot(it, state) && state == length(all_sub_arrows(it.tarr))
+#     true
+#   else
+#     false
+#   end
+# end
+#
+# Base.iteratorsize(::Type{<:DFTraceIter}) = Base.IsInfinite()
+# Base.iteratoreltype(::Type{<:DFTraceIter}) = Base.HasEltype()

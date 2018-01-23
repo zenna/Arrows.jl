@@ -22,7 +22,7 @@ function psl(arr::Arrow)
   foreach(⥅, normalsrc, ▹(pslsarr))
   @assert length(◃(pslsarr)) == length(▹(sarr, is(θp)))
   foreach(⥅, ◃(pslsarr), ▹(sarr, is(θp)))
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -36,7 +36,7 @@ function supervised(fwd::Arrow, inv::Arrow)
   foreach(⥅, ◃(fwdsarr), ▹(invsarr, !is(θp)))
   foreach(link_to_parent!, ▹(invsarr, is(θp)))
   foreach(link_to_parent!, ◃(invsarr))
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -52,7 +52,7 @@ function supervisedloss(xxarr::Arrow)
   total ⥅ loss
   addprop!(supϵ, loss)
   link_to_parent!(xxsarr, is_out_port ∧ loose)
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 

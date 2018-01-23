@@ -36,3 +36,20 @@ function inv_dupl(xs::AbstractArray...)
   end
   answer
 end
+
+
+struct FirstArrow{I} <: PrimArrow end
+
+props(::FirstArrow{I}) where I=
+  [[Props(true, Symbol(:x, i), Array{Any}) for i=1:I]...,
+   Props(false, :y, Array{Any})]
+
+name(::FirstArrow{I}) where I = :first_arr
+FirstArrow(n::Integer) = FirstArrow{n}()
+abinterprets(::FirstArrow) = [sizeprop]
+
+"f(x, x) = (x,)"
+function first_arr(xs...)
+  @assert !any(x->isa(x, AbstractArray), xs)
+  first(xs)
+end

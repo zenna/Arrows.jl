@@ -61,14 +61,13 @@ end
 "Non mutating `walk!`"
 walk(inner, outer, carr::CompArrow) = walk!(inner, outer, deepcopy(carr))
 
-"""Traverses `carr`, applies `inner` to each subarrow then `outer` to parent.
-"""
+"Traverses `carr`, applies `inner` to each subarrow then `outer` to parent"
 function lightwalk(inner, outer, carr::CompArrow)::CompArrow
   foreach(inner, sub_arrows(carr))
   outer(carr)
 end
 
-"Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
+"Recursive walk, concatenates `f(parr)` for every primitive in carr, recusively"
 function simplewalk(f::Function, carr::CompArrow)
   sarrs = sub_arrows(carr)
   csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
@@ -77,6 +76,26 @@ function simplewalk(f::Function, carr::CompArrow)
     res = vcat(res, simplewalk(f, deref(csarr)))
   end
   res
+end
+
+maprecur!(f, parr::PrimArrow, outputs::Vector, seen::Set{ArrowName}) = nothing
+
+function maprecur!(f, carr::CompArrow, outputs::Vector, seen::Set{ArrowName})
+  if name(carr) ∉ seen
+    push!(outputs, f(carr))
+    push!(seen, name(carr))
+    for sarr in all_sub_arrows(carr)
+      maprecur!(f, deref(sarr), outputs, seen)
+    end
+  end
+end
+
+"Recursively apply `f` to each unique `SubArrow{CompArrow}` of `carr`"
+function maprecur(f, carr::CompArrow)::Vector
+  outputs = []
+  seen = Set{ArrowName}()
+  maprecur!(f, carr, outputs, seen)
+  outputs
 end
 
 "Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"

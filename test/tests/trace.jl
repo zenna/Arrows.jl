@@ -35,3 +35,15 @@ function test_dept(nlayers = 5)
 end
 
 test_dept()
+
+function test_out_neighbors()
+  carr = TestArrows.test_nested()
+  tarrs = Arrows.inner_trace_arrows(carr)
+  idx = findfirst(tarr -> deref(sub_arrow(tarr)) isa SqrtArrow, tarrs)
+  sqrttarr = tarrs[idx]
+  tprt = Arrows.out_trace_ports(sqrttarr)[1]
+  @test length(Arrows.out_neighbors(tprt)) == 3
+  @test length(Arrows.trace_sub_arrows(Arrows.TraceValue(tprt))) == 4
+end
+
+test_out_neighbors()

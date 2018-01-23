@@ -50,7 +50,7 @@ function abc_arr()
   e = a + b - c
   Arrows.link_to_parent!(d)
   Arrows.link_to_parent!(e)
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -61,7 +61,7 @@ function ifelseconst()
              a + b,
              a * b)
   d ⥅ z
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -76,7 +76,7 @@ function ifelseconstbcast()
              bcast(four),
              bcast(four))
   d ⥅ z
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -86,7 +86,7 @@ function ifelsesimple()
   a, b, c, d, e = ⬨(carr)
   ee = ifelse(a > b, c, d)
   ee ⥅ e
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -95,7 +95,7 @@ function ifelsesimple2()
   a, b, c, d, e = ⬨(carr)
   ee = ifelse(a > b, c, d)
   ee ⥅ e
-  @assert is_wired_ok(carr)
+  @assert is_valid(carr)
   carr
 end
 
@@ -263,6 +263,36 @@ function nested_core(nlevels=3, core_arrow=SinArrow())
     y ⥅ yy
   end
   carr1
+end
+
+"Tests functions with far flung constants"
+function test_chain_invert()
+  carr = CompArrow(:cx, [:x], [:y])
+  x, y = get_sub_ports(carr)
+  src = add_sub_arr!(carr, source(1.0))
+  sqrtx = exp(get_sub_ports(src, 1))
+  x + sqrtx ⥅ y
+  @assert is_valid(carr)
+  carr
+end
+
+function test_nested()
+  carr = CompArrow(:test_out_neigh, [:x], [:y1, :y2, :y3])
+  icarr = CompArrow(:inner_test_out_neigh, [:a], [:b1, :b2, :b3])
+  a, b1, b2, b3 = get_sub_ports(icarr)
+  b = sqrt(a)
+  cos(b) ⥅ b1
+  b ⥅ b2
+  b ⥅ b3
+  @assert is_valid(icarr)
+
+  x, y1, y2, y3 = get_sub_ports(carr)
+  oy1, oy2, oy3 = icarr(x)
+  oy1 ⥅ y1
+  sin(oy2) ⥅ y2
+  oy3 ⥅ y3
+  @assert is_valid(carr)
+  carr
 end
 
 function easyarrs()
