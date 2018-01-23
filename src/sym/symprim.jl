@@ -1,45 +1,42 @@
 ## Domain Predicates
 
 "If inputs satisfy `domainpred`icates then then `arr` is well defined on them"
-domainpreds(::Arrow, args...) = Set{SymUnion}() # by default assume no constraints
+domainpreds(::Arrow, args...) = Set{SymbolicType}() # by default assume no constraints
 
-function domainpreds{N}(::InvDuplArrow{N}, x1::SymUnion, xs::Vararg)
+function domainpreds{N}(::InvDuplArrow{N}, x1::SymbolicType, xs::Vararg)
   # All inputs to invdupl must be equal
   symbols = map(xs) do x
-    :($(x.value) == $(x1.value))
+    :($(x) == $(x1))
   end
-  Set{SymUnion}(SymUnion.(symbols))
+  Set{SymbolicType}(symbols)
 end
 
+"""each element of the first array must be equal to each element of each of the
+other arrays"""
 function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
-  answer = Array{SymUnion, 1}()
+  answer = Array{SymbolicType, 1}()
   for x in xs
     for (left, right) in zip(x1, x)
-      e = :($(left.value) == $(right.value))
-      push!(answer, SymUnion(e))
+      e = :($(left) == $(right))
+      push!(answer, e)
     end
   end
-  Set{SymUnion}(answer)
+  Set{SymbolicType}(answer)
 end
 
 ## Primitive Symbolc Interpretation
 
 # Zen: What is this?
-var(xs::Array{SymUnion}) = SymUnion(:())
-
-function ifelse(i::SymUnion, t::SymUnion, e::SymUnion)
-  SymUnion(:(ifelse($(i.value), $( t.value), $(e.value))))
-end
+var(xs::Array{SymbolicType}) = :()
 
 # Zen: what is thi?
 "[:a, :b, :c] -> `name([:a, :b, :c])`"
-function s_arrayed(xs::Array{SymUnion}, name::Symbol)
+function s_arrayed(xs::Array{SymbolicType}, name::Symbol)
   @show values = [x.value for x in xs]
-  @show SymUnion(:($(name)($(values))))
   @assert false
 end
 
-s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
+s_mean(xs::Array{SymbolicType}) = s_arrayed(xs, :mean)
 function s_var(xs::Vararg{<:Array})
   map(xs |> first |> eachindex) do iter
     s_arrayed([x[iter] for x in xs], :var)
@@ -47,49 +44,56 @@ function s_var(xs::Vararg{<:Array})
 end
 
 
-"Generic Symbolic Interpret of `parr`"
-function prim_sym_interpret(parr::PrimArrow, args::SymUnion...)::Vector{SymUnion}
-  @show typeof(args)
+"""Generic Symbolic Interpret of `parr`
+We are leveraging the broadcasting made by `.`.
+If we know the shape of a port, we create a matrix and then we do symbolic
+evaluation on each element of the matrix.
+"""
+function prim_sym_interpret(parr::PrimArrow, args::SymbolicType...)::Vector{SymbolicType}
   @assert num_out_ports(parr) == 1
-  ex = [SymUnion(Expr(:call, name(parr), args...)),]
+  ## TODO: only for scalars
+  f = (function_args...)-> Expr(:call, name(parr), function_args...)
+  ex = [f.(args...),]
 end
 
-prim_sym_interpret(::BroadcastArrow, x::SymUnion)::Vector{SymUnion} = [x,]
+prim_sym_interpret(::BroadcastArrow, x::SymbolicType)::Vector{SymbolicType} = [x,]
 
-function prim_sym_interpret{N}(::DuplArrow{N}, x::SymUnion)
+function prim_sym_interpret{N}(::DuplArrow{N}, x::SymbolicType)
   [x  for _ in 1:N]
 end
 
-prim_sym_interpret(::IfElseArrow, i::SymUnion, t::SymUnion, e::SymUnion) =
-  [ifelse.(i, t, e)]
+# prim_sym_interpret(::IfElseArrow, i::SymbolicType, t::SymbolicType,
+#                    e::SymbolicType) =
+#   [ifelse.(i, t, e)]
 
 function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg{SymUnion, N})::Vector{SymUnion}
+                                xs::Vararg{SymbolicType, N})::Vector{SymbolicType}
   ## XXX: What are the consequences of just taking the first?
   [first(xs)]
 end
 
 function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg)::Vector{SymUnion}
-  [xs |> first |> sym_unsym,]
+                                xs::Vararg)::Vector{SymbolicType}
+  [xs |> first,]
 end
 
 function  prim_sym_interpret(::Arrows.ReshapeArrow,
-                              data::Array{Arrows.SymUnion,2},
-                              shape::Array{Arrows.SymUnion,1})
-  data = as_expr(data)
-  shape = as_expr(shape)
-  [SymUnion(reshape(data, shape)),]
+                              data::Array{SymbolicType,2},
+                              shape::Array{SymbolicType,1})
+  [reshape(data, shape),]
+end
 
+function  prim_sym_interpret(::Arrows.ReshapeArrow, data::SymbolicType,
+                            shape::SymbolicType)
+  shape = sym_unsym(shape)
+  expr = :(reshape($(data), $(shape)))
+  [expr,]
 end
 
 function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
-  indices = as_expr(indices)
-  shape = as_expr(shape)
-  z = sym_unsym(z)
   arrayed_sym = prim_scatter_nd(SymbolProxy(z), indices, shape,
                           SymPlaceHolder())
-  [sym_unsym(arrayed_sym),]
+  [arrayed_sym,]
 end
 
 function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg)
@@ -98,11 +102,4 @@ end
 
 function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg)
   [s_arrayed([sym_unsym(x) for x in xs], :mean),]
-end
-
-function  prim_sym_interpret(::Arrows.ReshapeArrow, data::Arrows.SymUnion,
-                            shape)
-  shape = sym_unsym(shape)
-  expr = :(reshape($(data.value), $(shape.value)))
-  [SymUnion(expr),]
 end
