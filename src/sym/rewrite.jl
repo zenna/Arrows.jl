@@ -205,7 +205,7 @@ function find_assignments(info)
     special = (l, r) -> assign_special_if_possible(info, l, r)
     if !assign(left, right) && !assign(right, left)
       if !special(left, right) && !special(right, left)
-        push!(info.unsat, SymUnion(expr))
+        push!(info.unsat, expr)
       end
     end
   end

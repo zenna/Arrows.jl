@@ -27,20 +27,16 @@ end
 ## Primitive Symbolc Interpretation
 
 # Zen: What is this?
-var(xs::Array{SymUnion}) = SymUnion(:())
-
-# function ifelse(i::SymbolicType, t::SymbolicType, e::SymbolicType)
-#   :(ifelse($(i), $(t), $(e)))
-# end
+var(xs::Array{SymbolicType}) = :()
 
 # Zen: what is thi?
 "[:a, :b, :c] -> `name([:a, :b, :c])`"
-function s_arrayed(xs::Array{SymUnion}, name::Symbol)
+function s_arrayed(xs::Array{SymbolicType}, name::Symbol)
   @show values = [x.value for x in xs]
   @assert false
 end
 
-s_mean(xs::Array{SymUnion}) = s_arrayed(xs, :mean)
+s_mean(xs::Array{SymbolicType}) = s_arrayed(xs, :mean)
 function s_var(xs::Vararg{<:Array})
   map(xs |> first |> eachindex) do iter
     s_arrayed([x[iter] for x in xs], :var)
@@ -50,13 +46,9 @@ end
 
 "Generic Symbolic Interpret of `parr`"
 function prim_sym_interpret(parr::PrimArrow, args::SymbolicType...)::Vector{SymbolicType}
-  @show typeof(args)
-  @show parr
   @assert num_out_ports(parr) == 1
   ## TODO: only for scalars
-  @show :asdfaafsd
   f = (function_args...)-> Expr(:call, name(parr), function_args...)
-  @show f.(args...)
   ex = [f.(args...),]
 end
 

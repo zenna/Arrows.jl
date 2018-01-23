@@ -1,12 +1,5 @@
-"`Union{Symbol, Expr}`, Either a variable an expression"
-mutable struct SymUnion
-  value
-end
 
 const SymbolicType = Union{Expr, Symbol, Number, AbstractArray, Tuple, NTuple}
-
-@invariant SymUnion value isa Union{Expr, Symbol} # FIXME: Why isn't this in type?
-@invariant SymUnion if value isa Union; value.head == :call else true end #FIXME< use implies
 
 # FIXME: Label these?
 token_name = :τᵗᵒᵏᵉⁿ
@@ -105,8 +98,6 @@ function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
   preds = Set[arg.preds for arg in args]
   allpreds = union(dompreds, preds...)
 
-  @show outputs[1]
-  @show outputs
   # @show vars
   # @grab vars
   # @show parr
