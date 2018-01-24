@@ -242,7 +242,6 @@ export
   accumapply,
   trace_value,
   psl,
-  supervised,
   traceprop!,
   simpletracewalk,
   trace_values,
@@ -349,7 +348,6 @@ include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
-include("transform/supervised.jl")
 
 # Random generation
 include("rand.jl")

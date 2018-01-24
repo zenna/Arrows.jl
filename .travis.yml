@@ -13,8 +13,6 @@ env:
   - DOCUMENTER_DEBUG="true" CONDA_JL_VERSION="2" PYTHON=""
 script:
   - julia -e 'Pkg.clone("https://github.com/zenna/Spec.jl")'
-  - julia -e 'Pkg.clone("NLopt")'
-  - julia -e 'Pkg.build("NLopt")'
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Arrows")'
   - julia -e 'Pkg.add("MacroTools")'
