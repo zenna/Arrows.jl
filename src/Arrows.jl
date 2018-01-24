@@ -262,6 +262,8 @@ export
   out_trace_values,
   Sampler,
   @grab,
+  n▸,
+  n◂,
   ▸,
   ◂,
   ▹,
