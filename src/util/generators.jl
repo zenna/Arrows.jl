@@ -6,6 +6,8 @@ struct Sampler{O}
   end
 end
 
+Sampler(f::Function) = Sampler{typeof(f())}(f)
+
 """
     sampler(f)
 An iterator that samples from f forever

@@ -1,3 +1,4 @@
+__precompile__()
 "Testing and specification"
 module Spec
 
@@ -19,6 +20,9 @@ include("src/pre.jl")      # preconditions
 
 export @pre,
        @with_pre,
+       with_pre,
+       @post,
+       with_post,
        @invariant
 
 end

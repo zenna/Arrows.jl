@@ -43,7 +43,6 @@ import DataStructures: PriorityQueue, peek, dequeue!
 import NamedTuples: @NT, NamedTuple
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
-import Base: gradient
 import Spec: @pre, @invariant
 
 using NamedTuples
@@ -109,6 +108,7 @@ export
   name,
 
   Arrow,
+  AbstractPort,
   Port,
   SubPort,
 
@@ -213,12 +213,6 @@ export
   md2box,
   inverse_md2box,
 
-  # Optimization
-  optimize,
-  verify_loss,
-  verify_optim,
-  domain_ovrl,
-
   # Inverse Arrows
   InvDuplArrow,
   inv_add,
@@ -228,9 +222,7 @@ export
   arr,
   transform_function,
 
-  # Optim
   julia,
-  id_loss,
 
   # compiler
   compile,
@@ -271,7 +263,6 @@ export
   out_trace_values,
   Sampler,
   @grab,
-  δarr,
   ▸,
   ◂,
   ▹,
@@ -377,12 +368,6 @@ include("sym/md2_solver.jl")
 include("host/overload.jl")
 include("host/filter.jl")
 include("map.jl")
-
-# # Optimziation and Learning #
-include("optim/loss.jl")
-include("optim/util.jl")
-include("gradient/gradient.jl")
-include("optim/optimize.jl")
 
 # # Targets #
 include("targets/targets.jl")

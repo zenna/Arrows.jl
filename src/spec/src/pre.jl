@@ -71,6 +71,42 @@ macro pre(pred)
   end
 end
 
+"""
+Define a postcondition on function argument.
+
+Currently `@post` works similarly to `@assert` except that:
+ 1) an exception is thrown
+ 2) post_check_ons can be disabled
+
+```jldoctest
+julia> f(x::Real) = (@post x > 0; sqrt(x) + 5)
+f (generic function with 1 method)
+
+julia> f(-3)
+ERROR: ArgumentError: x > 0
+```
+
+"""
+macro post(retval, pred)
+  strpred = string(pred)
+  quote
+    if pre_check()
+      if !$(esc(pred))
+        throw(ArgumentError($strpred))
+      end
+    end
+    $(esc(retval))
+  end
+end
+
+"""
+Define a precondition on function argument, with tags
+
+Currently unimplemented, just for documentation
+"""
+macro pre(pred, tag)
+end
+
 
 "Define invariant - currently a dummy for documenation"
 macro invariant(args...)
