@@ -109,37 +109,59 @@ function matching(v_to_e, e_to_v)
   v_to_e, e_to_v = map(deepcopy, (v_to_e, e_to_v))
   answer = Dict()
   run = true
-  function remove_var(var, expr)
+  function remove_var!(var, expr)
+    # remove `var` from each other expression
     for other ∈ v_to_e[var]
       var ∈ e_to_v[other] && pop!(e_to_v[other], var)
     end
+    # remove `expr` from other variables containing it
+    for other ∈ get(e_to_v, expr, Set())
+      expr ∈ v_to_e[other] && pop!(v_to_e[other], expr)
+    end
     pop!(v_to_e, var)
+  end
+  function add_pair(var, expr)
+    @assert var ∉ keys(answer)
+    left, right = map(forward, expr.args[2:end])
+    names = merge(left.names, right.names)
+    if names[var] != 1
+      # There are things we cannot solve:
+      # When a variable appears multiple times in a constraint
+      # So, if we find that we should be able to solve a variable from a
+      # constraint, we skip that.
+      pop!(e_to_v, expr)
+      return false
+    end
+    answer[var] = (left, right)
+    remove_var!(var, expr)
+    true
   end
   while run
     run = false
     for (expr,vars) ∈ e_to_v
       if length(vars) == 1
         var = pop!(vars)
-        @assert var ∉ keys(answer)
-        left, right = map(forward, expr.args[2:end])
-        names = merge(left.names, right.names)
-        if names[var] != 1
-          # There are things we cannot solve:
-          # When a variable appears multiple times in a constraint
-          # So, if we find that we should be able to solve a variable from a
-          # constraint, we skipt that.
-          pop!(e_to_v, expr)
-          continue
-        end
-        run = true
-        answer[var] = (left, right)
-        remove_var(var, expr)
+        run = add_pair(var, expr) ? true : run
       end
     end
+    ## when we found nothing, we need to do some heuristics
+    ## 1) If a variable is related to a single expression, we can pick
+    ## that (var, expression). We now that it's not going to be inefficient as
+    ## if other variables were in that expression, their cannot depend on this one
+    ## as this variable is related to a single expression.
+    if !run && length(v_to_e) > 0
+      for (var, exprs) ∈ v_to_e
+        if length(exprs) == 1
+          expr = pop!(exprs)
+          run = add_pair(var, expr) ? true : run
+        end
+      end
+    end
+    ## When nothing else worked, pick a variable according to its degree
     if !run && length(v_to_e) > 0
       var = sort(collect(v_to_e), by=x->length(x[2]))[end][1]
       answer[var] = nothing
-      remove_var(var, nothing)
+      remove_var!(var, nothing)
       run = true
     end
   end
@@ -274,9 +296,11 @@ end
 
 
 "Solve constraints and create a composed arrows witht the solution"
-function solve_md2(carr::CompArrow, initprops = SprtAbValues())
+function solve_md2(carr::CompArrow,
+                   context = Dict{Symbol, Any}(),
+                   initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
-  wirer = info.exprs |> solve_expressions |> create_wirer
+  wirer = rewrite_exprs(info.exprs, context) |> solve_expressions |> create_wirer
   wire(carr, [wirer,]), wirer
 end
 
@@ -316,6 +340,13 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   solved, unsolved, context
 end
 
+function rewrite_exprs(exprs, context)
+  rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
+  rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)
+  rewrite(x) = x
+  map(rewrite, exprs)
+end
+
 function rewrite_exprs(exprs, basic_context, wirer)
   context = Dict{Symbol, Any}()
   for (k,v) ∈ basic_context
@@ -327,10 +358,7 @@ function rewrite_exprs(exprs, basic_context, wirer)
   for (idx, port) in enumerate(name.(◂(wirer)))
     context[port.name] = outs[idx] |> Arrows.as_expr
   end
-  rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
-  rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)
-  rewrite(x) = x
-  map(rewrite, exprs)
+  rewrite_exprs(exprs, context)
 end
 
 function solve_with_ifelse(unsatisfied, context, wirer)
