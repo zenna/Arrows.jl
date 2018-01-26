@@ -23,7 +23,7 @@ XAbValues = Union{PrtAbValues, SprtAbValues, NmAbValues, TraceAbValues, IdAbValu
 """Convert `nm::NmAbValues` to `SprtAbValues` where names in `nmabv` are names
 of `SubPort`s on `arr`"""
 function sprtabv(arr::Arrow, nmabv::NmAbValues)
-  pnames = [nm.name for nm in name.(ports(arr))]
+  pnames = name.(ports(arr))
   sprtabvs = SprtAbValues()
   for (nm, abv) in nmabv
     if nm in pnames

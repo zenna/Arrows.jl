@@ -1,6 +1,7 @@
 using NamedTuples
 import DataStructures: DefaultDict, counter
 
+"Returns a counter that shows the number of ocurrences of each symbol in `expr::Expr`"
 collect_symbols(::Any, seen = counter(Symbol)) = seen
 function collect_symbols(expr::Expr, seen = counter(Symbol))
   foreach(expr.args[2:end]) do e
@@ -26,11 +27,11 @@ end
 
 function generate_forward(names, expr)
   carr = CompArrow(gensym(:forward), [x for x in names], Array{Symbol,1}())
-  context = Dict()
+  context = Dict{Symbol, Any}()
   context[:inverse_md2box] = Arrows.inverse_md2box
   context[:md2box] = Arrows.inverse_md2box
   for p ∈ in_sub_ports(carr)
-    context[name(deref(p)).name] = p
+    context[p |> deref |> name] = p
   end
   p = Arrows.generate_function(context, expr)
   ## When the expression is a single variable, we need to add
@@ -50,11 +51,11 @@ end
 
 
 "Given a forward function and a target, compute its partial inverse"
-function partial_invert_to(carr_original, target)
+function partial_invert_to(carr_original::CompArrow, target::Symbol)
   carr = deepcopy(carr_original)
   sprtabvals = SprtAbValues()
   for sport in ▹(carr)
-    if (sport |> deref |> name).name != target
+    if (sport |> deref |> name) != target
       sprtabvals[sport] = Dict([:isconst=>true])
       sport |> deref |> Arrows.make_out_port!
     end
@@ -197,8 +198,8 @@ end
 "create a wirer for the solved constraints"
 function create_wirer(arrows)
   carr = CompArrow(gensym(:wirer), 0, 0)
-  sports = Dict()
-  actual_name = x->(x |> deref |> name).name
+  sports = Dict{Symbol, SubPort}()
+  actual_name = x->(x |> deref |> name)
   sarrs = map(arrows) do arr
     sarr = Arrows.add_sub_arr!(carr, arr)
     sport = ◃(sarr, 1)
@@ -313,11 +314,10 @@ function solve_md2(carr::CompArrow, initprops = SprtAbValues())
 end
 
 
-function find_unsolved_constraints(carr, inv_carr, wirer, context)
-  actual_name = x->name(x).name
+function find_unsolved_constraints(carr, inv_carr, wirer, context::Dict{Symbol, Any})
   function add_from_output!(arr, inputs)
     for (p, o) ∈ zip(◂(arr), arr(inputs...))
-      context[p |> actual_name] = o
+      context[p |> name] = o
     end
   end
   ## Populate the context with the output of the forward on
@@ -326,11 +326,11 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
 
   # Create inputs to arrow if not in context
   add_if_absent = function (p)
-    n_ = p |> actual_name
-    if n_ ∉ keys(context)
-      context[n_] = 0x19
+    nm = p |> name
+    if nm ∉ keys(context)
+      context[nm] = 0x19
     end
-    context[n_]
+    context[nm]
   end
   inputs = map(add_if_absent, ▸(wirer))
   add_from_output!(wirer, inputs)
@@ -348,7 +348,7 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   solved, unsolved, context
 end
 
-function rewrite_exprs(exprs, basic_context, wirer)
+function rewrite_exprs(exprs, basic_context::Dict{Symbol, Any}, wirer)
   context = Dict{Symbol, Any}()
   for (k,v) ∈ basic_context
     context[k] = v
@@ -356,8 +356,8 @@ function rewrite_exprs(exprs, basic_context, wirer)
   info = Arrows.ConstraintInfo()
   Arrows.symbol_in_ports(wirer, info, SprtAbValues())
   outs = interpret(Arrows.sym_interpret, wirer, info.inp)
-  for (idx, port) in enumerate(name.(◂(wirer)))
-    context[port.name] = outs[idx] |> Arrows.as_expr
+  for (idx, nm) in enumerate(name.(◂(wirer)))
+    context[nm] = outs[idx] |> Arrows.as_expr
   end
   rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
   rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)

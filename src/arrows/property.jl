@@ -1,3 +1,4 @@
+import Base: convert, promote_rule
 """
 A property that an entity (e.g. a `Port` or `Arrow` possess).
 
@@ -51,6 +52,9 @@ is(P::Type{<:Prop}) = prps -> in(P, prps)
 struct Name <: Prop
   name::Symbol
 end
+convert(::Type{Symbol}, nm::Name) = nm.name
+promote_rule(::Type{Name}, ::Type{Symbol}) = Symbol
+
 name(prps::Props) = prps.namedprops.name
 string(nm::Name) = string(nm.name)
 setprop!(nm::Name, prps::Props) =

@@ -45,7 +45,7 @@ function symbol_in_ports!(arr::CompArrow, info::ConstraintInfo, initprops)
   info.is_θ_by_portn = (Vector{Bool} ∘ n▸)(arr)
   for (idx, sport) in enumerate(▹(arr))
     info.is_θ_by_portn[idx] = is(θp)(sport)
-    sym = (sport |> deref |> name).name
+    sym = (sport |> deref |> name)
     info.port_to_index[sym] = idx
     else_ = ()-> RefinedSym(sym)
     true_ = function(size)

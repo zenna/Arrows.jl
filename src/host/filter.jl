@@ -41,12 +41,12 @@ foreach(eval, codes)
 is▸ = is_in_port
 is◂ = is_out_port
 
-get_ports(arr::Arrow, nm::Symbol) = get_ports(arr, prt->name(prt).name == nm)[1]
-get_sub_ports(arr::Arrow, nm::Symbol) = get_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
-get_in_ports(arr::Arrow, nm::Symbol) = get_in_ports(arr, prt->name(prt).name == nm)[1]
-get_out_ports(arr::Arrow, nm::Symbol) = get_out_ports(arr, prt->name(prt).name == nm)[1]
-get_in_sub_ports(arr::Arrow, nm::Symbol) = get_in_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
-get_out_sub_ports(arr::Arrow, nm::Symbol) = get_out_sub_ports(arr, prt->name(deref(prt)).name == nm)[1]
+get_ports(arr::Arrow, nm::Symbol) = get_ports(arr, prt->name(prt) == nm)[1]
+get_sub_ports(arr::Arrow, nm::Symbol) = get_sub_ports(arr, prt->name(deref(prt)) == nm)[1]
+get_in_ports(arr::Arrow, nm::Symbol) = get_in_ports(arr, prt->name(prt) == nm)[1]
+get_out_ports(arr::Arrow, nm::Symbol) = get_out_ports(arr, prt->name(prt) == nm)[1]
+get_in_sub_ports(arr::Arrow, nm::Symbol) = get_in_sub_ports(arr, prt->name(deref(prt)) == nm)[1]
+get_out_sub_ports(arr::Arrow, nm::Symbol) = get_out_sub_ports(arr, prt->name(deref(prt)) == nm)[1]
 
 get_ports(arr::Arrow, nms::Vector{Symbol}) = [get_ports(arr, nm) for nm in nms]
 get_sub_ports(arr::Arrow, nms::Vector{Symbol}) = [get_sub_ports(arr, nm) for nm in nms]

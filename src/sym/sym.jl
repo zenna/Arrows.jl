@@ -41,7 +41,7 @@ mutable struct ConstraintInfo
   unassigns_by_portn::Vector
   specials_by_portn::Vector
   inp::Vector{RefinedSym}
-  port_to_index::Dict{SymbolicType, Number}
+  port_to_index::Dict{Symbol, Number}
   master_carr::CompArrow
   names_to_inital_sarr::Dict{Union{Symbol, Expr}, SubArrow}
   function ConstraintInfo()
@@ -51,7 +51,7 @@ mutable struct ConstraintInfo
     c.assignments = Dict()
     c.specials = Dict()
     c.names_to_inital_sarr = Dict()
-    c.port_to_index = Dict{SymbolicType, Number}()
+    c.port_to_index = Dict{Symbol, Number}()
     c
   end
 end
@@ -74,7 +74,7 @@ RefinedSym(sym::SymbolicType) = RefinedSym(sym, Set{SymbolicType}())
 
 
 "`RefinedSymbol` with port_name of `prt`"
-RefinedSym(prt::Port) = RefinedSym(name(prps).name)
+RefinedSym(prt::Port) = RefinedSym(name(prps)::Symbol)
 RefinedSym(sprt::SubPort) = RefinedSym(sprt |> deref)
 
 function sym_interpret(x::SourceArrow{T}, args)::Vector{RefinedSym} where T
@@ -90,7 +90,7 @@ end
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
   vars = [as_expr(arg) for arg in args]
-  @show vars
+  # @show vars
   outputs = prim_sym_interpret(parr, vars...)
 
   # Find predicates from all outputs and conjoin constraints
