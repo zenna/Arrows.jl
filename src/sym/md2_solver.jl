@@ -66,38 +66,6 @@ end
 
 #TODO: Compute this dynamically
 valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs])
-"find a variable to solve for, and compute the solution to that"
-function solve_expression_naive(expr, computed, arrows)
-  if !isempty(setdiff(collect_calls(expr), valid_calls))
-    warn("cannot solve constraint: $(expr)")
-    return
-  end
-  names = collect_symbols(expr)
-  for variable ∈ setdiff(names, computed)
-    String(variable)[1] == 'z' && continue
-    left, right = map(forward, expr.args[2:end])
-    if variable ∈ left.names && variable ∈ right.names
-      warn("skipping: $expr")
-      continue
-    end
-    if variable ∈ left.names
-      left, right = right, left
-    end
-    arr = solve_to(variable, left, right)
-    push!(computed, variable)
-    return arrows[variable] = arr
-  end
-  warn("cannot solve constraint: $(expr)")
-end
-
-function solve_expressions_naive(exprs)
-  computed = Set{Symbol}()
-  arrows = Dict{Symbol, Arrow}()
-  foreach(exprs) do expr
-    solve_expression_naive(expr, computed, arrows)
-  end
-  arrows
-end
 
 function forward(expr)
   names = collect_symbols(expr)
