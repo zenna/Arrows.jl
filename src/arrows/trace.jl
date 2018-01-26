@@ -37,7 +37,7 @@ end
 
 "Down one step in the trace through `sarr`"
 function down(tparent::TraceParent, sarr::SubArrow)
-  sarr ∈ sub_arrows(deref(bottom(tparent))) || throw(ArgumentError("sarr must be subarrow of bottom(tparent)"))
+  @pre sarr ∈ sub_arrows(deref(bottom(tparent))) # "sarr must be subarrow of `bottom(tparent)`"
   TraceParent(vcat(tparent.sarrs, sarr))
 end
 
@@ -60,7 +60,7 @@ hash(tarr::TraceSubArrow, h::UInt) = hash((tarr.parent, tarr.leaf), h)
 
 "`TraceSubArrow` where `sarr` is the root"
 function TraceSubArrow(sarr::SubArrow)::TraceSubArrow
-  deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
+  # deref(sarr) isa CompArrow || throw(ArgumentError("Root must be CompArrow"))
   TraceSubArrow(TraceParent([sarr]), sarr)
 end
 
@@ -85,18 +85,31 @@ sub_arrow(tarr::TraceSubArrow)::SubArrow = tarr.leaf
 "Arrow that `trace` references"
 deref(tarr::TraceSubArrow)::Arrow = deref(tarr.leaf)
 
+"Get all primitive trace arrows within `carr`"
+function inner_prim_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  @pre !isrecursive(carr) # "Infinite number of `TraceSubArrow`s for recursive `carr``"
+  sarrs = sub_arrows(carr)
+  csarrs, psarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  tarrs = TraceSubArrow[TraceSubArrow(tparent, psarr) for psarr in psarrs]
+  for csarr in csarrs
+    tarrs = vcat(tarrs, inner_prim_trace_arrows(deref(csarr), down(tparent, csarr)))
+  end
+  tarrs
+end
+
 "Get all trace arrows within `carr`"
 function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(carr))
-  @pre !isrecursive(carr)
-  tarrs::Vector{TraceSubArrow} = TraceSubArrow[]
+  @pre !isrecursive(carr) # "Infinite number of `TraceSubArrow`s for recursive `carr``"
+  # FIXME, should this include TraceSubArrow(tparent, sub_arrow(carr)) in tarrs
   sarrs = sub_arrows(carr)
-  csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
-  tarrs = vcat(tarrs, [TraceSubArrow(tparent, ptarr) for ptarr in ptarrs])
+  csarrs, psarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
+  tarrs = TraceSubArrow[TraceSubArrow(tparent, sarr) for sarr in sarrs]
   for csarr in csarrs
     tarrs = vcat(tarrs, inner_trace_arrows(deref(csarr), down(tparent, csarr)))
   end
   tarrs
 end
+
 
 "Port of a `TraceSubArrow`"
 struct TraceSubPort <: AbstractPort
@@ -137,6 +150,9 @@ end
 function sub_port(tprt::TraceSubPort)::SubPort
   SubPort(sub_arrow(tprt.trace_arrow), tprt.port_id)
 end
+
+"Which `Port` does this `traceport` trace to"
+deref(tprt::TraceSubPort) = deref(sub_port(tprt))
 
 """
 The root source of a a `TraceValue`.  `src(sprt::SubPort)` is the `SubPort`
@@ -195,7 +211,7 @@ out_trace_values(tarr::TraceSubArrow) = map(TraceValue, out_trace_ports(tarr))
 
 "All the trace values inside `carr`"
 inner_trace_values(carr::CompArrow)::Vector{TraceValue} =
-  unique(vcat(trace_values.(inner_trace_arrows(carr))...))
+  unique(vcat(trace_values.(inner_prim_trace_arrows(carr))...))
 
 # FIXME: Maybe rename this, a sprt could be in many trace values, so name
 # should reflect its teh root
@@ -238,6 +254,7 @@ end
 trace_sub_ports(tval::TraceValue)::Vector{TraceSubPort} =
   vcat([tval.srctprt], out_neighbors(tval.srctprt))
 
+"All `TraceSubArrow`s ∈ `tval`"
 function trace_sub_arrows(tval::TraceValue)::Vector{TraceSubArrow}
   unique(map(tsprt -> tsprt.trace_arrow, trace_sub_ports(tval)))
 end
@@ -255,21 +272,27 @@ end
 show(io::IO, tparent::TraceParent) = print(io, string(tparent))
 
 function string(tarr::TraceSubArrow)
-  sarrsstring = join([string("  [", i, "]: ", sarr) for (i, sarr) in enumerate(tarr.parent.sarrs)], "\n")
-  """Trace Arrow
-  $(sub_arrow(tarr))
+  sarrsstring = join([string(name(deref(sarr))) for sarr in tarr.parent.sarrs], ", ")
 
-  $sarrsstring
+  """tarr: $sarrsstring
+  $(sub_arrow(tarr))
   """
 end
 
+function string(tprt::TraceSubPort)
+  sarrs = tprt.trace_arrow.parent.sarrs
+  sarrsstring = join([string(name(deref(sarr))) for sarr in sarrs], ", ")
+
+  """tarrs: $sarrsstring, port: $(describe(deref(tprt)))
+  """
+end
+
+show(io::IO, tprt::TraceSubPort) = print(io, string(tprt))
 show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
 show(io::IO, tval::TraceValue) = print(io, string(tval))
 
 function string(tval::TraceValue)
-  """TraceValue
-  $(tval.srctprt)
-  """
+  "tval:$(tval.srctprt)"
 end
 #
 # "Depth First Trace Iterator"

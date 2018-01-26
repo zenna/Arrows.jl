@@ -55,5 +55,4 @@ function func_decl(aarr::AbstractArrow; kwargs...)
 end
 
 string(aarr::AbstractArrow) = func_decl(aarr)
-print(io::IO, aarr::AbstractArrow) = print(io, string(aarr))
-show(io::IO, aarr::AbstractArrow) = print(io, aarr)
+show(io::IO, aarr::AbstractArrow) = print(io, string(aarr))

@@ -358,11 +358,11 @@ hasarrtype(carr::CompArrow, ArrowType::Type) =
 n▸ = num_in_ports
 n◂ = num_out_ports
 
+
 ## Printing ##
 function describe(carr::CompArrow; kwargs...)
-  """$(func_decl(carr; kwargs...))
-  $(num_sub_arrows(carr)) sub arrows
-  is_valid? $(is_valid(carr))"""
+  f(x::Bool) = x ? "✓" : "x"
+  """$(func_decl(carr; kwargs...)) [$(num_sub_arrows(carr)), $(f(is_valid(carr)))]"""
 end
 
 string(carr::CompArrow) = describe(carr)

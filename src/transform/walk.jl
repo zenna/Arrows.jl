@@ -100,6 +100,7 @@ end
 
 "Simple recursive walk, concatenates `f(parr)` for every primitive within carr, recusively"
 function simpletracewalk(f::Function, carr::CompArrow, tparent::TraceParent = TraceParent(carr))
+  @pre !isrecursive(carr) # "Infinite number of `TraceSubArrow`s for recursive `carr``"
   sarrs = sub_arrows(carr)
   csarrs, ptarrs = partition(sarr -> isa(deref(sarr), CompArrow), sarrs)
   tarrs = TraceSubArrow[TraceSubArrow(tparent, ptarr) for ptarr in ptarrs]
