@@ -120,7 +120,7 @@ function inv(arr::DivArrow,
   binary_inv(arr,
              const_in(arr, abvals),
              inv_div,
-             MulArrow,
+             DivArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              MulArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
