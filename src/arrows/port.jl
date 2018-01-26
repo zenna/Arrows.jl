@@ -73,6 +73,9 @@ num_in_ports(aarr::AbstractArrow)::Integer = length(in_ports(aarr))
 "Name of `port`"
 name(port::Port) = name(props(port))
 
+"Symbol name of `prt`"
+port_sym_name(prt::Port) = name(prt).name
+
 ## Label ##
 describe(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 

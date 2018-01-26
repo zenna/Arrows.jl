@@ -127,8 +127,6 @@ in_trace_ports(tarr::TraceSubArrow) =
 out_trace_ports(tarr::TraceSubArrow) =
   [TraceSubPort(tarr, prt.port_id) for prt in ◂(deref(tarr))]
 
-port_sym_name(prt::Port) = name(prt).name
-
 "`TraceSubPort` of `tarr` with name `portnm`"
 function trace_port(tarr::TraceSubArrow, portnm::Symbol)::TraceSubPort
   idx = findfirst(prt -> port_sym_name(prt) == portnm, ⬧(deref(tarr)))

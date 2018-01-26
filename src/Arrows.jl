@@ -39,14 +39,12 @@ Some shorthands used throughout
 module Arrows
 
 import LightGraphs; const LG = LightGraphs
-import DataStructures: PriorityQueue, peek, dequeue!
+import DataStructures: PriorityQueue, peek, dequeue!, DefaultDict
 import NamedTuples: @NT, NamedTuple
+using NamedTuples
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
 import Spec: @pre, @invariant
-
-using NamedTuples
-import DataStructures: DefaultDict
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -119,6 +117,7 @@ export
   ⥅,
   ⥆,
   port_id,
+  port_sym_name,
   add_sub_arr!,
   replace_sub_arr!,
   rm_partially_loose_sub_arrows!,
@@ -260,7 +259,6 @@ export
   XAbValues,
   in_trace_values,
   out_trace_values,
-  Sampler,
   @grab,
   n▸,
   n◂,
@@ -274,7 +272,6 @@ export
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures

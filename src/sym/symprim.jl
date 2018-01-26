@@ -24,6 +24,16 @@ function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
   Set{SymbolicType}(answer)
 end
 
+function domainpreds(::ExplicitInvBroadcastArrow, dargs...)
+  @grab dargs
+  invbcasteddims = hello
+  for dim in invbcasteddims
+    x
+  end
+  # @assert false
+  Set{SymbolicType}()
+end
+
 ## Primitive Symbolc Interpretation
 
 # Zen: What is this?
@@ -43,17 +53,34 @@ function s_var(xs::Vararg{<:Array})
   end
 end
 
-
 """Generic Symbolic Interpret of `parr`
 We are leveraging the broadcasting made by `.`.
 If we know the shape of a port, we create a matrix and then we do symbolic
-evaluation on each element of the matrix.
-"""
+evaluation on each element of the matrix."""
 function prim_sym_interpret(parr::PrimArrow, args::SymbolicType...)::Vector{SymbolicType}
   @assert num_out_ports(parr) == 1
   ## TODO: only for scalars
+  @grab args
   f = (function_args...)-> Expr(:call, name(parr), function_args...)
+  @grab parr
   ex = [f.(args...),]
+end
+
+function prim_sym_interpret(::ExplicitBroadcastArrow, x::SymbolicType, sz::SymbolicType)
+  # [explicitbroadcast(x, sz)]
+  answer = Array{SymbolicType, length(sz)}(sz...)
+  [broadcast!(identity, answer, x)]
+end
+
+function prim_sym_interpret(::ExplicitInvBroadcastArrow,
+                            x::SymbolicType,
+                            sz::SymbolicType)
+  # [explicitbroadcast(x, sz)]
+  invbcasted = similar(x, sz)
+  for a in CartesianRange(sz)
+    invbcasted[a] = x[a]
+  end
+  [invbcasted]
 end
 
 prim_sym_interpret(::BroadcastArrow, x::SymbolicType)::Vector{SymbolicType} = [x,]
@@ -69,6 +96,7 @@ end
 function prim_sym_interpret{N}(::InvDuplArrow{N},
                                 xs::Vararg{SymbolicType, N})::Vector{SymbolicType}
   ## XXX: What are the consequences of just taking the first?
+
   [first(xs)]
 end
 

@@ -106,6 +106,12 @@ function CompArrow(name::Symbol, inames::Vector{Symbol}, onames::Vector{Symbol})
   CompArrow(name, props)
 end
 
+"Construct `CompArrow` with sane nanes as `iprts` and `oprts`"
+function CompArrow(name::Symbol, iprts::Vector{Port}, oprts::Vector{Port})
+  # TODO: transfer type information from iprts and oprts, not just name
+  CompArrow(name, port_sym_name.(iprts), port_sym_name.(oprts))
+end
+
 "Port Properties of all ports of `arr`"
 props(arr::CompArrow) = arr.props
 
@@ -376,6 +382,9 @@ end
 ## Naming ##
 name(sarr::SubArrow)::ArrowName = sarr.name
 name(sport::SubPort) = Symbol(name(sub_arrow(sport)), :_, port_id(sport))
+
+"Symbol name of `Port` that `sprt` references"
+port_sym_name(sprt::SubPort)::Symbol = port_sym_name(deref(sprt))
 
 ## Sub Arrow ##
 num_all_sub_arrows(arr::CompArrow) = length(all_sub_arrows(arr))

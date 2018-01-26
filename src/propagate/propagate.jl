@@ -35,6 +35,11 @@ function sprtabv(arr::Arrow, nmabv::NmAbValues)
   sprtabvs
 end
 
+"`TraceAbValue` from `xabv`. Assumes each key in `xabv` corresponds to port on tarr"
+function tabvfromxabv(tarr::TraceSubArrow, xabv::XAbValues)::TraceAbValues
+  TraceAbValues(TraceValue(trace_port(tarr, x)) => abv for (x, abv) in xabv)
+end
+
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
 Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
