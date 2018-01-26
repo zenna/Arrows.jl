@@ -147,7 +147,9 @@ function accumapply(f::Function, x::T) where T
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end
 
-"Global capture
+setinmod!(s::Symbol, val, mod=Main) = eval(Main, :($s = $val))
+
+"Global capture into Main
 
 ```
 function f(x)
@@ -161,5 +163,5 @@ x_grab
 macro grab(var)
   @show var
   grabname = Symbol(var, :_grab)
-  :(global $grabname = $(esc(var)))
+  :(setinmod!($(Meta.quot(grabname)), $(esc(var))))
 end
