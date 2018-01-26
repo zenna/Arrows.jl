@@ -65,7 +65,8 @@ function partial_invert_to(carr_original, target)
 end
 
 #TODO: Compute this dynamically
-valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs])
+valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs, :/])
+
 
 function forward(expr)
   names = collect_symbols(expr)
@@ -77,10 +78,12 @@ function solve_to(variable::Symbol, left, right)
   @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
   @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
   inv_right = partial_invert_to(right.carr, variable)
+  # using the fact that the output of the `forward` is always named `forward_z`
+  # and that was designed to provid composition
   portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
                                                      for p2 in ▸(inv_right)
                                                      if name(p1) == name(p2)])
-  Arrows.compose(inv_right, left.carr, portmap)
+  answer = Arrows.compose_share_by_name(inv_right, left.carr, portmap)
 end
 
 function build_mappings(exprs)
