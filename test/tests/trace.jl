@@ -38,7 +38,7 @@ test_dept()
 
 function test_out_neighbors()
   carr = TestArrows.test_nested()
-  tarrs = Arrows.inner_trace_arrows(carr)
+  tarrs = Arrows.inner_prim_trace_arrows(carr)
   idx = findfirst(tarr -> deref(sub_arrow(tarr)) isa SqrtArrow, tarrs)
   sqrttarr = tarrs[idx]
   tprt = Arrows.out_trace_ports(sqrttarr)[1]

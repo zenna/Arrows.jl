@@ -294,6 +294,14 @@ show(io::IO, tval::TraceValue) = print(io, string(tval))
 function string(tval::TraceValue)
   "tval:$(tval.srctprt)"
 end
+
+# Some Helpers
+
+"Find `TraceSubArrow`s within `carr` which `deref` to `arr`"
+function findtarrs(carr::CompArrow, arr::Arrow)::Vector{Arrows.TraceSubArrow}
+  filter(tarr -> deref(tarr) == arr, Arrows.inner_trace_arrows(carr))
+end
+
 #
 # "Depth First Trace Iterator"
 # struct DFTraceIter

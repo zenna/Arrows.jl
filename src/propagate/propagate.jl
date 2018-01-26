@@ -40,6 +40,17 @@ function tabvfromxabv(tarr::TraceSubArrow, xabv::XAbValues)::TraceAbValues
   TraceAbValues(TraceValue(trace_port(tarr, x)) => abv for (x, abv) in xabv)
 end
 
+"Return `Port`s on deref(tarr) that are not in `tabv``"
+function missingprtsfromtabv(tarr::TraceSubArrow, tabv::TraceAbValues)::Vector{Port}
+  missing = Port[]
+  for (i, tval) in enumerate(trace_values(tarr))
+    if tval ∉ keys(tabv)
+      push!(missing, ⬧(deref(tarr), i))
+    end
+  end
+  missing
+end
+
 # FIXME: This is quite a few layers of misdirection
 "Get `sprt` in `tabv` assuming `sprt` is on root"
 Base.get(tabv::Dict{TraceValue, AbValues}, sprt::SubPort) =
@@ -125,7 +136,7 @@ function traceprop!(carr::CompArrow,
                     tabv::TraceAbValues=TraceAbValues(),
                     tparent::TraceParent=TraceParent(carr))
   Time = Int
-  tarrs = inner_trace_arrows(carr)
+  tarrs = inner_prim_trace_arrows(carr)
   # last time a tarr was applied
   lastapply = Dict{TraceSubArrow, Time}(zip(tarrs, fill(-1, length(tarrs))))
   # last time a value was contracted
