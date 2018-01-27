@@ -261,6 +261,7 @@ end
 
 function generate_function(context, expr)
   M = Module()
+  eval(M, :(using Arrows))
   for (k,v) in context
          eval(M, :($k = $v))
   end
