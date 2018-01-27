@@ -86,14 +86,14 @@ function solve_to(variable::Symbol, left, right)
   answer = Arrows.compose_share_by_name(inv_right, left.carr, portmap)
 end
 
-function build_mappings(exprs)
+function build_mappings(exprs, non_parameters::Set{Symbol})
   var_to_expr = DefaultDict(Set)
   expr_to_var = DefaultDict(Set)
   for expr ∈ exprs
     !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
     variables = expr |> collect_symbols |> keys
     for variable ∈ variables
-      String(variable)[1] == 'z' && continue
+      (variable ∈ non_parameters) && continue
       push!(var_to_expr[variable], expr)
       push!(expr_to_var[expr], variable)
     end
@@ -172,8 +172,8 @@ function matching(v_to_e, e_to_v)
 end
 
 "solve expressions using bipartite matching"
-function solve_expressions(exprs)
-  var_to_expr, expr_to_var = build_mappings(exprs)
+function solve_expressions(exprs, non_parameters::Set{Symbol})
+  var_to_expr, expr_to_var = build_mappings(exprs, non_parameters)
   matchs, var_to_expr, expr_to_var = matching(var_to_expr, expr_to_var)
   arrows = []
   for (var, pair) ∈ matchs
@@ -303,7 +303,11 @@ function solve_md2(carr::CompArrow,
                    context = Dict{Symbol, Any}(),
                    initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
-  wirer = rewrite_exprs(info.exprs, context) |> solve_expressions |> create_wirer
+  non_parameters = map(port_sym_name, filter(!is(θp), ▸(carr)))
+  non_parameters = Set{Symbol}(non_parameters)
+  exprs = rewrite_exprs(info.exprs, context)
+  arrs = solve_expressions(exprs, non_parameters)
+  wirer = arrs |> create_wirer
   wire(carr, [wirer,]), wirer
 end
 

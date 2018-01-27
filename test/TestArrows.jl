@@ -193,13 +193,13 @@ function triple_add()
   a1 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a2 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
   a3 = Arrows.add_sub_arr!(c, Arrows.AddArrow())
-  (c, 1) ⥅ (a1, 1)
-  (c, 1) ⥅ (a2, 1)
-  (c, 2) ⥅ (a1, 2)
-  (c, 2) ⥅ (a2, 2)
+  x ⥅ (a1, 1)
+  x ⥅ (a2, 1)
+  y ⥅ (a1, 2)
+  y ⥅ (a2, 2)
   (a1, 1) ⥅ (a3, 1)
   (a2, 1) ⥅ (a3, 2)
-  (a3, 1) ⥅ (c, 1)
+  (a3, 1) ⥅ z
   c
 end
 
