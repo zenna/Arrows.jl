@@ -191,17 +191,16 @@ end
 function create_wirer(arrows)
   carr = CompArrow(gensym(:wirer), 0, 0)
   sports = Dict()
-  actual_name = x->(x |> deref |> name).name
   sarrs = map(arrows) do arr
     sarr = Arrows.add_sub_arr!(carr, arr)
     sport = ◃(sarr, 1)
-    sports[sport |> actual_name] = sport
+    sports[sport |> port_sym_name] = sport
     Arrows.link_to_parent!(sport)
     sarr
   end
   foreach(sarrs) do sarr
     foreach(▹(sarr)) do dst
-      var = dst |> actual_name
+      var = dst |> port_sym_name
       if var ∉ keys(sports)
         sports[var] = Arrows.add_port_like!(carr, dst |> deref) |> sub_port
       end
@@ -225,18 +224,17 @@ end
 function compose_by_name(solvers)
   wired = CompArrow(gensym(:wired), 0, 0)
   add = x->add_sub_arr!(wired, x)
-  actual_name = x-> x |> deref |> name
   sarrs = map(add, solvers)
   in_, out_ = Dict(), Dict()
   for sarr ∈ sarrs
     for sprt ∈ ⬨(sarr)
       d = is_in_port(sprt) ? in_ : out_
-      d[actual_name(sprt)] = sprt
+      d[port_sym_name(sprt)] = sprt
     end
   end
   for sarr ∈ sarrs
     for sprt ∈ ▹(sarr)
-      moniker = sprt |> actual_name
+      moniker = sprt |> port_sym_name
       if moniker ∉ keys(out_)
         out_[moniker] = add_port_like!(wired, sprt |> deref) |> sub_port
       end
@@ -313,10 +311,9 @@ end
 
 
 function find_unsolved_constraints(carr, inv_carr, wirer, context)
-  actual_name = x->name(x).name
   function add_from_output!(arr, inputs)
     for (p, o) ∈ zip(◂(arr), arr(inputs...))
-      context[p |> actual_name] = o
+      context[port_sym_name(p)] = o
     end
   end
   ## Populate the context with the output of the forward on
@@ -324,13 +321,7 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   add_from_output!(carr, 1:16)
 
   # Create inputs to arrow if not in context
-  add_if_absent = function (p)
-    n_ = p |> actual_name
-    if n_ ∉ keys(context)
-      context[n_] = 0x19
-    end
-    context[n_]
-  end
+  add_if_absent = p -> get!(context, port_sym_name(p), 0x19)
   inputs = map(add_if_absent, ▸(wirer))
   add_from_output!(wirer, inputs)
   foreach(add_if_absent, ▸(inv_carr))
