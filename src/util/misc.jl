@@ -1,3 +1,12 @@
+"""(Partial) inverse of `vcat`
+
+```jldoctest
+julia> invvcat([1,2,3,4,5,6], 3)
+([1, 2, 3], [4, 5, 6])
+```
+"""
+invvcat(xs, i::Integer) = (@pre 0 < i < length(xs); (xs[1:i], xs[i+1:end]))
+
 "function which splats inputs to `f`"
 splat(f) = xs -> f(xs...)
 

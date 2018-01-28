@@ -4,7 +4,7 @@ using Arrows
 import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
 
 "f(x) = sin(x)"
-function sin_arr()
+function sin_arr(bcast=identity)
   c = CompArrow(:x2, 1, 1)
   x, y = ⬧(c)
   sinarr = add_sub_arr!(c, Arrows.SinArrow())
@@ -14,7 +14,7 @@ function sin_arr()
 end
 
 "x * y + x"
-function xy_plus_x_arr()
+function xy_plus_x_arr(bcast=identity)
   c = CompArrow(:xyx, [:x, :y], [:z])
   x, y, z = ⬧(c)
   m2 = add_sub_arr!(c, MulArrow())
@@ -27,12 +27,33 @@ function xy_plus_x_arr()
   c
 end
 
+
 "x * y + x"
-function twoxy_plus_x_arr()
+function twoxy_plus_x_arr(bcast=identity)
   c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
   x, y, z1, z2 = ⬨(c)
-  (x*y)>2*x ⥅ z1
-  sqrt(y+x*3)<(3*y+2) ⥅ z2
+  (x*y)>bcast(2.0)*x ⥅ z1
+  sqrt(y+x*bcast(3.0))<(bcast(3.0)*y+bcast(2.0)) ⥅ z2
+  @grab c
+end
+
+
+"Broadcasted Source"
+function bsource(x)
+  c = CompArrow(:bsource)
+  ssarr = add_sub_arr!(c, source(x))
+  bsarr = add_sub_arr!(c, Arrows.BroadcastArrow())
+  ◃(ssarr, 1) ⥅ ▹(bsarr, 1)
+  link_to_parent!(◃(bsarr, 1))
+  c
+end
+
+"x * y + x"
+function twoxy_plus_x_arr_bcast(bcast=identity)
+  c = CompArrow(:xyx2, [:x, :y], [:z1])
+  x, y, z1 = ⬨(c)
+  two = ◃(Arrows.add_sub_arr!(c, bsource(2.0)), 1)
+  x*y*two + x ⥅ z1
   c
 end
 

@@ -25,7 +25,6 @@ function domainpreds(::InvDuplArrow, x1::Array, xs::Vararg)
 end
 
 function domainpreds(::ExplicitInvBroadcastArrow, dargs...)
-  @grab dargs
   invbcasteddims = hello
   for dim in invbcasteddims
     x

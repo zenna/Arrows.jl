@@ -54,10 +54,12 @@ function portapply!(arr::Arrow, sprts::SubPort...)
   end
 end
 
+(arr::CompArrow)(sprt::SubPort) = portapply!(arr, sprt)
 (arr::CompArrow)(sprt::SubPort, sprts::SubPort...) = portapply!(arr, sprt, sprts...)
 (arr::CompArrow)(nm_sprts::Dict{Symbol, SubPort}) = portapplykwarg!(arr, nm_sprts)
 
 for Arrtype in subtypes(PrimArrow)
+  (arr::Arrtype)(sprt::SubPort) = portapply!(arr, sprt)
   (arr::Arrtype)(sprt::SubPort, sprts::SubPort...) = portapply!(arr, sprt, sprts...)
   (arr::Arrtype)(nm_sprts::Dict{Symbol, SubPort}) = portapplykwarg!(arr, nm_sprts)
 end
