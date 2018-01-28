@@ -24,6 +24,7 @@ function pgf_mul()
   x, y, z, θ = ⬨(carr)
   x * y ⥅ z
   y ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -33,6 +34,7 @@ function pgf_xor()
   x, y, z, θ = ⬨(carr)
   x ⊻ y ⥅ z
   y ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -42,6 +44,7 @@ function pgf_add()
   x, y, z, θ = ⬨(carr)
   x + y ⥅ z
   y ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -51,6 +54,7 @@ function pgf_sub()
   x, y, z, θ = ⬨(carr)
   x - y ⥅ z
   y ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -70,6 +74,7 @@ function pgf(arr::GatherNdArrow, const_in)
   indices ⥅ (scatter, 2)
   shape ⥅ (scatter, 3)
   (param - ◃(scatter, 1)) ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -91,6 +96,7 @@ function pgf(arr::SinArrow, const_in)
   link_ports!((pi, 1), (div, 2))
   link_ports!((div, 1), (floor, 1))
   link_ports!((floor, 1), θ)
+  add!(θp)(θ)
   carr
 end
 
@@ -108,6 +114,7 @@ function pgf(arr::CosArrow, const_in)
   link_ports!((pi, 1), (div, 2))
   link_ports!((div, 1), (floor, 1))
   link_ports!((floor, 1), θ)
+  add!(θp)(θ)
   carr
 end
 
@@ -116,6 +123,7 @@ function pgf_div()
   x, y, z, θ = ⬨(carr)
   x / y ⥅ z
   y ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -132,17 +140,21 @@ function pgf(arr::GreaterThanArrow, const_in)
     x, y, z, θgt = ⬨(carr)
     x > y ⥅ z
     y - x ⥅ θgt
+    add!(θp)(θgt)
   elseif yconst
     carr = CompArrow(Symbol(:pgf_, :gt_ycnst), [:x, :y], [:z, :θgt])
     x, y, z, θgt = ⬨(carr)
     x > y ⥅ z
     x - y ⥅ θgt
+    add!(θp)(θgt)
   else
     carr = CompArrow(Symbol(:pgf_, :gt), [:x, :y], [:z, :θgt1, :θgt2])
     x, y, z, θgt1, θgt2 = ⬨(carr)
     x > y ⥅ z
     x ⥅ θgt1
     x - y ⥅ θgt2
+    add!(θp)(θgt1)
+    add!(θp)(θgt2)
   end
   carr
 end
@@ -162,11 +174,13 @@ function pgf(arr::LessThanArrow, const_in)
     x, y, z, θlt = ⬨(carr)
     x < y ⥅ z
     x - y ⥅ θlt
+    add!(θp)(θlt)
   elseif yconst
     carr = CompArrow(Symbol(:pgf_, :lt_xcnst), [:x, :y], [:z, :θlt])
     x, y, z, θlt = ⬨(carr)
     x < y ⥅ z
     y - x ⥅ θlt
+    add!(θp)(θlt)
   else
     carr = CompArrow(Symbol(:pgf_, :lessthan), [:x, :y], [:z, :θ1, :θ2])
     x, y, z, θ1lt, θ2lt = ⬨(carr)
@@ -175,6 +189,8 @@ function pgf(arr::LessThanArrow, const_in)
     x ⥅ θ1lt
     x - y ⥅ (abs, 1)
     link_ports!((abs, 2), θ2lt)
+    add!(θp)(θ1lt)
+    add!(θp)(θ2lt)
     carr
   end
   carr
@@ -186,6 +202,7 @@ function pgf(arr::ModArrow, const_in)
   x, y, z, θ = ⬨(carr)
   x % y ⥅ z
   div((x - z), y) ⥅ θ
+  add!(θp)(θ)
   carr
 end
 
@@ -197,6 +214,7 @@ function pgf(arr::IfElseArrow, const_in)
     i, t, e = ▹(carr)
     y, θi = ◃(carr)
     i ⥅ θi
+    add!(θp)(θi)
   elseif const_in[2]
     carr = CompArrow(:ifelse_tconst_pgf,
                       [:i, :t, :e],
@@ -205,6 +223,8 @@ function pgf(arr::IfElseArrow, const_in)
     y, θi, θmissing = ◃(carr)
     i ⥅ θi
     e ⥅ θmissing
+    add!(θp)(θi)
+    add!(θp)(θmissing)
   elseif const_in[3]
     carr = CompArrow(:ifelse_econst_pgf,
                       [:i, :t, :e],
@@ -213,6 +233,8 @@ function pgf(arr::IfElseArrow, const_in)
     y, e, θi, θmissing = ◃(carr)
     i ⥅ θi
     t ⥅ θmissing
+    add!(θp)(θi)
+    add!(θp)(θmissing)
   elseif all(i->!const_in[i], port_id.(get_in_ports(arr)))
     carr = CompArrow(:ifelse_nonconst_pgf,
                       [:i, :t, :e],
@@ -221,6 +243,8 @@ function pgf(arr::IfElseArrow, const_in)
     y, θi, θmissing = ◃(carr)
     i ⥅ θi
     ifelse(i, e, t) ⥅ θmissing
+    add!(θp)(θi)
+    add!(θp)(θmissing)
   else
     throw(ArgumentError("Constness Combination not supported"))
   end

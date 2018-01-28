@@ -1,10 +1,10 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, bsource!
 
 "f(x) = sin(x)"
-function sin_arr()
+function sin_arr(bcast=identity)
   c = CompArrow(:x2, 1, 1)
   x, y = ⬧(c)
   sinarr = add_sub_arr!(c, Arrows.SinArrow())
@@ -14,7 +14,7 @@ function sin_arr()
 end
 
 "x * y + x"
-function xy_plus_x_arr()
+function xy_plus_x_arr(bcast=identity)
   c = CompArrow(:xyx, [:x, :y], [:z])
   x, y, z = ⬧(c)
   m2 = add_sub_arr!(c, MulArrow())
@@ -27,12 +27,20 @@ function xy_plus_x_arr()
   c
 end
 
+# "x * y + x"
+# function twoxy_plus_x_arr(bcast=identity)
+#   c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
+#   x, y, z1, z2 = ⬨(c)
+#   (x*y)>bcast(2.0)*x ⥅ z1
+#   sqrt(y+x*bcast(3.0))<(bcast(3.0)*y+bcast(2.0)) ⥅ z2
+#   @grab c
+# end
+
 "x * y + x"
 function twoxy_plus_x_arr()
-  c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
-  x, y, z1, z2 = ⬨(c)
-  (x*y)>2*x ⥅ z1
-  sqrt(y+x*3)<(3*y+2) ⥅ z2
+  c = CompArrow(:xyx2, [:x, :y], [:z1])
+  x, y, z1 = ⬨(c)
+  x*y*bsource!(c, 2.0) + x ⥅ z1
   c
 end
 
@@ -57,7 +65,7 @@ end
 function ifelseconst()
   carr = CompArrow(:ifelseconst, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  d = ifelse(c > 3,
+  d = ifelse(c > bsource!(carr, 3),
              a + b,
              a * b)
   d ⥅ z
@@ -68,13 +76,9 @@ end
 function ifelseconstbcast()
   carr = CompArrow(:ifelseconstbcast, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  threearr = add_sub_arr!(carr, source(3.0))
-  thr = ◃(threearr, 1)
-  fourarr = add_sub_arr!(carr, source(4.0))
-  four = ◃(fourarr, 1)
-  d = ifelse((a + b + c) > bcast(thr),
-             bcast(four),
-             bcast(four))
+  d = ifelse((a + b + c) > bsource!(carr, 3.0),
+             bsource!(carr, 4.0),
+             bsource!(carr, 7.0))
   d ⥅ z
   @assert is_valid(carr)
   carr
@@ -216,9 +220,9 @@ end
 function weird_arr()
   carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
   x, y, z, a, b = ⬨(carr)
-  e = z * x + y * 2.0 * z + y
+  e = z * x + y * bsource!(carr, 3.0) * z + y
   f = e * x + y
-  g = 6.0*x+x
+  g = bsource!(arr, 6.0)*x+x
   h = f * g
   h ⥅ a
   g ⥅ b
@@ -242,7 +246,7 @@ function cond_arr_eq()
 end
 
 "Make a nested function with `core_arrow` at core, `nlevels` levels deep"
-function nested_core(nlevels=3, core_arrow=SinArrow())
+function nested_core(nlevels=3, core_arrow=SqrtArrow())
   carr1 = CompArrow(:nested_core, [:x], [:y])
   parr = carr1
   sarrs = []

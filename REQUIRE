@@ -1,8 +1,6 @@
 julia 0.6
 LightGraphs
-SymPy
 NamedTuples
 MacroTools
 AutoHashEquals
-ReverseDiff
 Memoize

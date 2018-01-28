@@ -22,3 +22,9 @@ function UnknownArrow(name::Symbol, innms::Vector{Symbol}, outnms::Vector{Symbol
   outprts = [Props(false, outnm, Any) for outnm in outnms]
   UnknownArrow(name, vcat(inprts, outprts))
 end
+
+"Construct `UnknownArrow` with sane nanes as `iprts` and `oprts`"
+function UnknownArrow(name::Symbol, iprts::Vector{Port}, oprts::Vector{Port})
+  # TODO: transfer type information from iprts and oprtss, not just name
+  UnknownArrow(name, port_sym_name.(iprts), port_sym_name.(oprts))
+end

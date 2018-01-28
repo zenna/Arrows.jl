@@ -1,4 +1,4 @@
-# Booleans #
+# Bools #
 const binary_bool_props = [Props(true, :x, Bool),
                            Props(true, :y, Bool),
                            Props(false, :z, Bool)]
@@ -23,3 +23,6 @@ props(::NotArrow) = [Props(true, :x, Bool), Props(false, :y, Bool)]
 struct XorArrow <: PrimArrow end
 name(::XorArrow)::Symbol = :⊻
 props(::XorArrow) = binary_bool_props
+
+BoolArrow = Union{AndArrow, OrArrow, NotArrow, XorArrow}
+abinterprets(::BoolArrow) = [sizeprop]

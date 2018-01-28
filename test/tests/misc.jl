@@ -19,15 +19,6 @@ function test_aprx_inverse()
 end
 test_aprx_inverse()
 
-function test_id_loss()
-  sin_arr = Arrows.TestArrows.sin_arr()
-  aprx = Arrows.aprx_invert(sin_arr)
-  lossarr = Arrows.id_loss(sin_arr, aprx)
-  @test is_valid(lossarr)
-end
-
-test_id_loss()
-
 function test_accumapply()
   f(x::Real) = [Real]
   f(x::Float64) = [Float64]

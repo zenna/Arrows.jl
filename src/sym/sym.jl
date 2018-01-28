@@ -27,7 +27,6 @@ as_expr{N}(values::Union{NTuple{N, SymbolicType}, AbstractArray{SymbolicType, N}
 "(base) expression of `ref`"
 as_expr(ref::Union{RefinedSym, SymbolProxy}) = as_expr(ref.var)
 
-
 # Zen: This kind of object scares me
 mutable struct ConstraintInfo
   exprs::Vector{Expr}

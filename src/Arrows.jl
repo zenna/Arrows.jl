@@ -39,15 +39,12 @@ Some shorthands used throughout
 module Arrows
 
 import LightGraphs; const LG = LightGraphs
-import DataStructures: PriorityQueue, peek, dequeue!
+import DataStructures: PriorityQueue, peek, dequeue!, DefaultDict
 import NamedTuples: @NT, NamedTuple
+using NamedTuples
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
-import Base: gradient
 import Spec: @pre, @invariant
-
-using NamedTuples
-import DataStructures: DefaultDict
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -109,6 +106,7 @@ export
   name,
 
   Arrow,
+  AbstractPort,
   Port,
   SubPort,
 
@@ -119,6 +117,7 @@ export
   ⥅,
   ⥆,
   port_id,
+  port_sym_name,
   add_sub_arr!,
   replace_sub_arr!,
   rm_partially_loose_sub_arrows!,
@@ -213,12 +212,6 @@ export
   md2box,
   inverse_md2box,
 
-  # Optimization
-  optimize,
-  verify_loss,
-  verify_optim,
-  domain_ovrl,
-
   # Inverse Arrows
   InvDuplArrow,
   inv_add,
@@ -228,9 +221,7 @@ export
   arr,
   transform_function,
 
-  # Optim
   julia,
-  id_loss,
 
   # compiler
   compile,
@@ -250,7 +241,6 @@ export
   accumapply,
   trace_value,
   psl,
-  supervised,
   traceprop!,
   simpletracewalk,
   trace_values,
@@ -269,9 +259,9 @@ export
   XAbValues,
   in_trace_values,
   out_trace_values,
-  Sampler,
   @grab,
-  δarr,
+  n▸,
+  n◂,
   ▸,
   ◂,
   ▹,
@@ -282,7 +272,6 @@ export
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs
-include("util/generators.jl")       # methods that should be in LightGraphs
 
 # Core Arrow Data structures #
 include("arrows/arrow.jl")          # Core Arrow data structures
@@ -358,7 +347,6 @@ include("transform/totalize.jl")
 include("transform/totalizeprim.jl")
 include("transform/domainerror.jl")
 include("transform/domainerrorprim.jl")
-include("transform/supervised.jl")
 
 # Random generation
 include("rand.jl")
@@ -377,12 +365,6 @@ include("sym/md2_solver.jl")
 include("host/overload.jl")
 include("host/filter.jl")
 include("map.jl")
-
-# # Optimziation and Learning #
-include("optim/loss.jl")
-include("optim/util.jl")
-include("gradient/gradient.jl")
-include("optim/optimize.jl")
 
 # # Targets #
 include("targets/targets.jl")
