@@ -84,7 +84,6 @@ end
 "Explicitly broadcast `x` into size `sz`"
 explicitbroadcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
 explicitbroadcast(x::Number, sz::Array{Int}) = fill(x, Tuple(sz))
-
 exbcast(x::Number, sz::Tuple{Vararg{Int}}) = fill(x, sz)
 
 "Explicitly broadcast array `x` to array of dimensionality `sz`"
@@ -104,6 +103,14 @@ function exbcast(x::Array, sz::Tuple{Vararg{Int}})
   # TODO: is inner correct?
   repeat(x, inner=dim_multiples)
 end
+
+function exbcast(x::Array{T}, sz::Array) where T
+  answer = Array{T}(sz...)
+  broadcast!(identity, answer, x)
+end
+
+exbcast(x::Number, sz::Array) = explicitbroadcast(x, sz)
+
 
 function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
   if in(idabv, 1, :value) && in(idabv, 2, :value)
