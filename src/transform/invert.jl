@@ -31,6 +31,7 @@ fix_links!(arr::CompArrow)::CompArrow = (foreach(fix_link!, links(arr)); arr)
 "Make each in_port (resp, out_port) of `arr` an out_port (in_port)"
 function invert_all_ports!(arr::CompArrow)::CompArrow
   foreach(p -> is_in_port(p) ? make_out_port!(p) : set_in_port!(p), ports(arr))
+  @grab arr
   arr
 end
 

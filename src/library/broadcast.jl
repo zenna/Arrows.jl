@@ -12,16 +12,6 @@ function sizeprop(arr::BroadcastArrow, props::IdAbValues)::IdAbValues
   IdAbValues()
 end
 
-"Broadcasted Source"
-function bsource(x)
-  c = CompArrow(:bsource)
-  ssarr = add_sub_arr!(c, source(x))
-  bsarr = add_sub_arr!(c, Arrows.BroadcastArrow())
-  ◃(ssarr, 1) ⥅ ▹(bsarr, 1)
-  link_to_parent!(◃(bsarr, 1))
-  c
-end
-
 function valueprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
   # @show idabv
   if 1 ∈ keys(idabv) && 2 ∈ keys(idabv)

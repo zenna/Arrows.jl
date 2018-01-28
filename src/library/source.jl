@@ -17,6 +17,14 @@ function bsource(x)
   c
 end
 
+"Broadcasting source arrow, connect to arr, and return outport"
+function bsource!(arr::Arrow, x)
+  ssarr = add_sub_arr!(arr, source(x))
+  bsarr = add_sub_arr!(arr, Arrows.BroadcastArrow())
+  ◃(ssarr, 1) ⥅ ▹(bsarr, 1)
+  ◃(bsarr, 1)
+end
+
 # FIXME: Specialize this to things which have sizes, maybe
 function sizeprop(arr::SourceArrow{T}, props::IdAbValues) where T
   if T <: Union{Number, Array}

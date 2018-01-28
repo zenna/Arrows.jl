@@ -1,7 +1,7 @@
 "Various test (example) arrows and generators of test_arrows"
 module TestArrows
 using Arrows
-import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul
+import Arrows: add_sub_arr!, in_sub_port, out_sub_port, inv_add, inv_mul, bsource!
 
 "f(x) = sin(x)"
 function sin_arr(bcast=identity)
@@ -27,33 +27,20 @@ function xy_plus_x_arr(bcast=identity)
   c
 end
 
+# "x * y + x"
+# function twoxy_plus_x_arr(bcast=identity)
+#   c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
+#   x, y, z1, z2 = ⬨(c)
+#   (x*y)>bcast(2.0)*x ⥅ z1
+#   sqrt(y+x*bcast(3.0))<(bcast(3.0)*y+bcast(2.0)) ⥅ z2
+#   @grab c
+# end
 
 "x * y + x"
-function twoxy_plus_x_arr(bcast=identity)
-  c = CompArrow(:xyx2, [:x, :y], [:z1, :z2])
-  x, y, z1, z2 = ⬨(c)
-  (x*y)>bcast(2.0)*x ⥅ z1
-  sqrt(y+x*bcast(3.0))<(bcast(3.0)*y+bcast(2.0)) ⥅ z2
-  @grab c
-end
-
-
-"Broadcasted Source"
-function bsource(x)
-  c = CompArrow(:bsource)
-  ssarr = add_sub_arr!(c, source(x))
-  bsarr = add_sub_arr!(c, Arrows.BroadcastArrow())
-  ◃(ssarr, 1) ⥅ ▹(bsarr, 1)
-  link_to_parent!(◃(bsarr, 1))
-  c
-end
-
-"x * y + x"
-function twoxy_plus_x_arr_bcast(bcast=identity)
+function twoxy_plus_x_arr()
   c = CompArrow(:xyx2, [:x, :y], [:z1])
   x, y, z1 = ⬨(c)
-  two = ◃(Arrows.add_sub_arr!(c, bsource(2.0)), 1)
-  x*y*two + x ⥅ z1
+  x*y*bsource!(c, 2.0) + x ⥅ z1
   c
 end
 
@@ -78,7 +65,7 @@ end
 function ifelseconst()
   carr = CompArrow(:ifelseconst, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  d = ifelse(c > 3,
+  d = ifelse(c > bsource!(carr, 3),
              a + b,
              a * b)
   d ⥅ z
@@ -89,13 +76,9 @@ end
 function ifelseconstbcast()
   carr = CompArrow(:ifelseconstbcast, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  threearr = add_sub_arr!(carr, source(3.0))
-  thr = ◃(threearr, 1)
-  fourarr = add_sub_arr!(carr, source(4.0))
-  four = ◃(fourarr, 1)
-  d = ifelse((a + b + c) > bcast(thr),
-             bcast(four),
-             bcast(four))
+  d = ifelse((a + b + c) > bsource!(carr, 3.0),
+             bsource!(carr, 4.0),
+             bsource!(carr, 7.0))
   d ⥅ z
   @assert is_valid(carr)
   carr
@@ -237,9 +220,9 @@ end
 function weird_arr()
   carr = CompArrow(:weird, [:x, :y, :z], [:a, :b])
   x, y, z, a, b = ⬨(carr)
-  e = z * x + y * 2.0 * z + y
+  e = z * x + y * bsource!(carr, 3.0) * z + y
   f = e * x + y
-  g = 6.0*x+x
+  g = bsource!(arr, 6.0)*x+x
   h = f * g
   h ⥅ a
   g ⥅ b
@@ -263,7 +246,7 @@ function cond_arr_eq()
 end
 
 "Make a nested function with `core_arrow` at core, `nlevels` levels deep"
-function nested_core(nlevels=3, core_arrow=SinArrow())
+function nested_core(nlevels=3, core_arrow=SqrtArrow())
   carr1 = CompArrow(:nested_core, [:x], [:y])
   parr = carr1
   sarrs = []

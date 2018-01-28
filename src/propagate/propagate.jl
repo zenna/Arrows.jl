@@ -35,9 +35,28 @@ function sprtabv(arr::Arrow, nmabv::NmAbValues)
   sprtabvs
 end
 
+"Construct NmAbValues by looking up ports of arr in tabv"
+function nmfromtabv(tabv::Arrows.TraceAbValues, arr::Arrow)::NmAbValues
+  # Assume theres only one tabv that corresponds to 
+  tsprts_set = map(Arrows.trace_sub_ports, keys(tabv))
+  ids = Int[]
+  for sprt in ⬨(arr)
+    @show deref(sprt)
+    idx = findfirst(tsprts_set) do tsprts
+      sprt ∈ map(Arrows.sub_port, tsprts)
+    end
+    @assert idx != 0
+    push!(ids, idx)
+  end
+  abv = collect(values(tabv))
+  @show ids
+  Arrows.NmAbValues(port_sym_name(prt) => abv[ids[prt.port_id]] for prt in ⬧(arr))
+end
+
 "`TraceAbValue` from `xabv`. Assumes each key in `xabv` corresponds to port on tarr"
 function tabvfromxabv(tarr::TraceSubArrow, xabv::XAbValues)::TraceAbValues
-  TraceAbValues(TraceValue(trace_port(tarr, x)) => abv for (x, abv) in xabv)
+  TraceAbValues(TraceValue(trace_port(tarr, x)) => abv for (x, abv) in xabv
+                           if x ∈ port_sym_name.(⬧(deref(tarr))))
 end
 
 "Return `Port`s on deref(tarr) that are not in `tabv``"
