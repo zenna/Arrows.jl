@@ -15,7 +15,7 @@ props(::IfElseArrow) =   [Props(true, :i, Bool),
 name(::IfElseArrow) = :ifelse
 abinterprets(::IfElseArrow) = [sizeprop]
 
-function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbVals)
   constin = const_in(arr, idabv)
   # @show idabv
 

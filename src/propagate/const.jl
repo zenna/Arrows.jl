@@ -1,5 +1,5 @@
 "Is port `i` known to be constant (may be constant but we cant infer it)"
-function isconst(i::Integer, idabv::IdAbValues)::Bool
+function isconst(i::Integer, idabv::IdAbVals)::Bool
   if i ∈ keys(idabv)
     if :value in keys(idabv[i])
       return true
@@ -10,15 +10,15 @@ function isconst(i::Integer, idabv::IdAbValues)::Bool
   false
 end
 
-function const_in(arr::Arrow, idabv::IdAbValues)::Vector{Bool}
+function const_in(arr::Arrow, idabv::IdAbVals)::Vector{Bool}
   [isconst(pid, idabv) for pid in port_id.(▸(arr))]
 end
 
 "Constant Propagation"
-function constprop(arr::Arrow, idabv::IdAbValues)::IdAbValues
+function constprop(arr::Arrow, idabv::IdAbVals)::IdAbVals
   if all([isconst(pid, idabv) for pid in port_id.(▸(arr))])
-    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+    IdAbVals(pid => AbVals(:isconst => true) for pid in port_id.(◂(arr)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end

@@ -43,8 +43,8 @@ function generate_forward(names, expr)
   carr
 end
 
-partial_invert(arr, sarr, abvals::IdAbValues) = inv(arr, sarr, abvals)
-function partial_invert(arr::AbsArrow, sarr, abvals::IdAbValues)
+partial_invert(arr, sarr, abvals::IdAbVals) = inv(arr, sarr, abvals)
+function partial_invert(arr::AbsArrow, sarr, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), IdentityArrow)
 end
 
@@ -52,7 +52,7 @@ end
 "Given a forward function and a target, compute its partial inverse"
 function partial_invert_to(carr_original, target)
   carr = deepcopy(carr_original)
-  sprtabvals = SprtAbValues()
+  sprtabvals = SprtAbVals()
   for sport in ▹(carr)
     if (sport |> deref |> name).name != target
       sprtabvals[sport] = Dict([:isconst=>true])
@@ -306,7 +306,7 @@ end
 
 
 "Solve constraints and create a composed arrows witht the solution"
-function solve_md2(carr::CompArrow, initprops = SprtAbValues())
+function solve_md2(carr::CompArrow, initprops = SprtAbVals())
   info = Arrows.constraints(carr, initprops)
   wirer = info.exprs |> solve_expressions |> create_wirer
   wire(carr, [wirer,]), wirer
@@ -336,7 +336,7 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   add_from_output!(wirer, inputs)
   foreach(add_if_absent, ▸(inv_carr))
   solved, unsolved = Array{Any,1}(), Array{Any,1}()
-  info = Arrows.constraints(inv_carr, SprtAbValues())
+  info = Arrows.constraints(inv_carr, SprtAbVals())
   for expr ∈ info.exprs
     set = try
       Arrows.generate_function(context, expr) ? solved : unsolved
@@ -354,7 +354,7 @@ function rewrite_exprs(exprs, basic_context, wirer)
     context[k] = v
   end
   info = Arrows.ConstraintInfo()
-  Arrows.symbol_in_ports(wirer, info, SprtAbValues())
+  Arrows.symbol_in_ports(wirer, info, SprtAbVals())
   outs = interpret(Arrows.sym_interpret, wirer, info.inp)
   for (idx, port) in enumerate(name.(◂(wirer)))
     context[port.name] = outs[idx] |> Arrows.as_expr

@@ -18,11 +18,11 @@ function props(::InverseMD2SBoxArrow)
 
 abinterprets(::InverseMD2SBoxArrow) = [sizeprop]
 
-function inv(arr::MD2SBoxArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::MD2SBoxArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), InverseMD2SBoxArrow)
 end
 
-function inv(arr::InverseMD2SBoxArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::InverseMD2SBoxArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), MD2SBoxArrow)
 end
 

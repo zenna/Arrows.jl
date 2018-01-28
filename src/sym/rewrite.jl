@@ -555,7 +555,7 @@ end
 It will return a tuple with a `CompArrow` (the wirer), and information regarding
 the solving process.
 Use `inv_c << wirer` to connect the wirer to the actual inverse `Arrow`"""
-function solve(carr::CompArrow, initprops = SprtAbValues())
+function solve(carr::CompArrow, initprops = SprtAbVals())
   info = constraints(carr, initprops)
   (compute_assigns_by_portn ∘ find_assignments)(info)
   info.master_carr = CompArrow(gensym(:solver_θ))

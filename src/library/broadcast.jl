@@ -7,12 +7,12 @@ bcast(x) = x
 name(::BroadcastArrow) = :bcast
 props(::BroadcastArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 abinterprets(::BroadcastArrow) = [sizeprop]
-function sizeprop(arr::BroadcastArrow, props::IdAbValues)::IdAbValues
+function sizeprop(arr::BroadcastArrow, props::IdAbVals)::IdAbVals
   # TODO: check constraints are ok
-  IdAbValues()
+  IdAbVals()
 end
 
-function valueprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
+function valueprop(arr::BroadcastArrow, idabv::IdAbVals)::IdAbVals
   # @show idabv
   if 1 ∈ keys(idabv) && 2 ∈ keys(idabv)
     # @show idabv[1]
@@ -21,16 +21,16 @@ function valueprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
     # if :value ∈ idabv[1] ⊻ :value ∈ idabv[2]
     # @assert false
   end
-  IdAbValues()
+  IdAbVals()
 end
 
-function constprop(arr::BroadcastArrow, idabv::IdAbValues)::IdAbValues
+function constprop(arr::BroadcastArrow, idabv::IdAbVals)::IdAbVals
   # If any re constant all are constant!
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     # @assert false
-    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+    IdAbVals(pid => AbVals(:isconst => true) for pid in port_id.(◂(arr)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 
@@ -42,20 +42,20 @@ inv_bcast(x) = x
 name(::InvBroadcastArrow) = :inv_bcast
 props(::InvBroadcastArrow) = [Props(true, :y, Any), Props(false, :x, Any)]
 
-function sizeprop(arr::InvBroadcastArrow, idabv::IdAbValues)::IdAbValues
-  return IdAbValues()
+function sizeprop(arr::InvBroadcastArrow, idabv::IdAbVals)::IdAbVals
+  return IdAbVals()
   # @assert false
   # If any re constant all are constant!
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     # @assert false
-    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+    IdAbVals(pid => AbVals(:isconst => true) for pid in port_id.(◂(arr)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 abinterprets(::InvBroadcastArrow) = [sizeprop]
 
-function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::BroadcastArrow, sarr::SubArrow, idabv::IdAbVals)
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     BroadcastArrow(), Dict(:x => :x, :y => :y)
   else
@@ -72,12 +72,12 @@ props(::ExplicitBroadcastArrow) = [Props(true, :x, Any),
                                    Props(true, :size, Tuple),
                                    Props(false, :y, Array)]
 abinterprets(::ExplicitBroadcastArrow) = [sizeprop]
-function sizeprop(arr::ExplicitBroadcastArrow, props::IdAbValues)::IdAbValues
+function sizeprop(arr::ExplicitBroadcastArrow, props::IdAbVals)::IdAbVals
   if 2 ∈ keys(props) && :value ∈ keys(props[2])
      bcastsize = props[2][:value]
-     IdAbValues(3 => AbValues(:size => Size([bcastsize.value...])))
+     IdAbVals(3 => AbVals(:size => Size([bcastsize.value...])))
    else
-     IdAbValues()
+     IdAbVals()
    end
 end
 
@@ -112,14 +112,14 @@ end
 exbcast(x::Number, sz::Array) = explicitbroadcast(x, sz)
 
 
-function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbValues)::IdAbValues
+function valueprop(arr::ExplicitBroadcastArrow, idabv::IdAbVals)::IdAbVals
   if in(idabv, 1, :value) && in(idabv, 2, :value)
     val = idabv[1][:value]
     sz = idabv[2][:value]
     bcasted = explicitbroadcast(val.value, sz.value)
-    return IdAbValues(3 => AbValues(:value => Singleton(bcasted)))
+    return IdAbVals(3 => AbVals(:value => Singleton(bcasted)))
   end
-  IdAbValues()
+  IdAbVals()
 end
 
 struct ExplicitInvBroadcastArrow <: PrimArrow
@@ -129,20 +129,20 @@ props(::ExplicitInvBroadcastArrow) = [Props(true, :y, Any),
                                       Props(true, :size, Tuple),
                                       Props(false, :x, Any)]
 
-# function sizeprop(arr::ExplicitInvBroadcastArrow, idabv::IdAbValues)::IdAbValues
-#   return IdAbValues()
+# function sizeprop(arr::ExplicitInvBroadcastArrow, idabv::IdAbVals)::IdAbVals
+#   return IdAbVals()
 #   # @assert false
 #   # If any re constant all are constant!
 #   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
 #     # @assert false
-#     IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+#     IdAbVals(pid => AbVals(:isconst => true) for pid in port_id.(◂(arr)))
 #   else
-#     IdAbValues()
+#     IdAbVals()
 #   end
 # end
 # abinterprets(::ExplicitInvBroadcastArrow) = [sizeprop]
 
-function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::ExplicitBroadcastArrow, sarr::SubArrow, idabv::IdAbVals)
   if all([isconst(pid, idabv) for pid in port_id.(▸(arr))])
     ExplicitBroadcastArrow(), Dict(:x => :x, :size => :size, :y => :y)
     # Need to know size of x

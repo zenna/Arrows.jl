@@ -69,7 +69,7 @@ end
 # Primitives
 
 "Propagate shapes"
-function sizeprop(arr::Arrow, props)::IdAbValues
+function sizeprop(arr::Arrow, props)::IdAbVals
   szs = Size[]
   for prop in values(props)
     if :size in keys(prop)
@@ -77,10 +77,10 @@ function sizeprop(arr::Arrow, props)::IdAbValues
     end
   end
   if isempty(szs)
-    IdAbValues()
+    IdAbVals()
   else
     unionsz = meet(szs...)
-    IdAbValues(prt.port_id => AbValues(:size => unionsz) for prt in ⬧(arr))
+    IdAbVals(prt.port_id => AbVals(:size => unionsz) for prt in ⬧(arr))
   end
 end
 

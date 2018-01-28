@@ -12,7 +12,7 @@ end
 function maybedown(replace::Function,
                    carr::CompArrow,
                    sarr::SubArrow,
-                   abtvals::TraceAbValues,
+                   abtvals::TraceAbVals,
                    tparent::TraceParent)
   newtparent = down(tparent, sarr)
   tracewalk(replace, carr, abtvals, newtparent)
@@ -21,7 +21,7 @@ end
 function maybedown(replace::Function,
                    parr::PrimArrow,
                    sarr::SubArrow,
-                   abtvals::TraceAbValues,
+                   abtvals::TraceAbVals,
                    tparent::TraceParent)
   replace(parr, sarr, tparent, abtvals)
 end
@@ -40,7 +40,7 @@ Traverses `carr`, applies `replace` to each subarrow then `outer` to parent.
 """
 function tracewalk(replace::Function,
                    carr::CompArrow,
-                   abtvals::TraceAbValues=traceprop!(carr),
+                   abtvals::TraceAbVals=traceprop!(carr),
                    tparent::TraceParent=TraceParent(carr))
   newcarr = CompArrow(Symbol(name(carr)))
   for prt in ⬧(carr)

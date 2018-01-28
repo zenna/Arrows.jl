@@ -26,19 +26,19 @@ function bsource!(arr::Arrow, x)
 end
 
 # FIXME: Specialize this to things which have sizes, maybe
-function sizeprop(arr::SourceArrow{T}, props::IdAbValues) where T
+function sizeprop(arr::SourceArrow{T}, props::IdAbVals) where T
   if T <: Union{Number, Array}
-    IdAbValues(1 => AbValues(:size => Size([size(arr.value)...])))
+    IdAbVals(1 => AbVals(:size => Size([size(arr.value)...])))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 
 abinterprets(::SourceArrow{<:Union{Array, Number}}) = [sizeprop]
-valueprop(arr::SourceArrow, props::IdAbValues) =
-  IdAbValues(1 => AbValues(:value => Singleton(arr.value)))
-constprop(arr::SourceArrow, props::IdAbValues)::IdAbValues =
-  IdAbValues(1 => AbValues(:isconst => true))
+valueprop(arr::SourceArrow, props::IdAbVals) =
+  IdAbVals(1 => AbVals(:value => Singleton(arr.value)))
+constprop(arr::SourceArrow, props::IdAbVals)::IdAbVals =
+  IdAbVals(1 => AbVals(:isconst => true))
 
 # FIXME, Specialize this for different types
 zero(::Type{SubPort}) = SourceArrow(0)

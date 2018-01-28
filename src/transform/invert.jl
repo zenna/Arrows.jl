@@ -46,17 +46,17 @@ end
 "Invert `arr`, approximately totalize, and check the `domain_error`"
 function aprx_invert(arr::CompArrow,
                      inner_inv::Function=inv,
-                     sprtabvals::Dict{SubPort, AbValues} = Dict{SubPort, AbValues}())
+                     sprtabvals::Dict{SubPort, AbVals} = Dict{SubPort, AbVals}())
   aprx_totalize!(domain_error!(invert(arr, inner_inv, sprtabvals)))
 end
 
-function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbValues; inv=inv)
+function invreplace(carr::CompArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbVals; inv=inv)
   pmap = id_portid_map(carr)
   f = inv_rename! ∘ remove_dead_arrows! ∘ link_param_ports! ∘ fix_links! ∘ invert_all_ports!
   f(carr), pmap
 end
 
-function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbValues; inv=inv)
+function invreplace(parr::PrimArrow, sarr::SubArrow, tparent::TraceParent, abtvals::TraceAbVals; inv=inv)
   idabvals = tarr_idabv(TraceSubArrow(tparent, sarr), abtvals)
   inv(parr, sarr, idabvals)
 end
@@ -64,22 +64,22 @@ end
 "copy and `invert!` `arr`"
 function invert(arr::CompArrow,
                 inner_inv=inv,
-                sprtabvals::SprtAbValues = SprtAbValues())
+                sprtabvals::SprtAbVals = SprtAbVals())
   arr = duplify(arr)
-  sprtabvals = SprtAbValues(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
+  sprtabvals = SprtAbVals(⬨(arr, sprt.port_id) => abvals for (sprt, abvals) in sprtabvals)
   abvals = traceprop!(arr, sprtabvals)
   custinvreplace = (arr, sarr, tparent, abtvals) -> invreplace(arr, sarr, tparent, abtvals; inv=inner_inv)
   tracewalk(custinvreplace, arr, abvals)[1]
 end
 
 "copy and `invert!` `arr`"
-invert(arr::CompArrow, inner_inv, nmabv::NmAbValues) =
+invert(arr::CompArrow, inner_inv, nmabv::NmAbVals) =
   invert(arr, inner_inv, sprtabv(arr, nmabv))
 
 "Cannot invert arrow"
 struct InvertError <: Exception
   arr::Arrow
-  abv::XAbValues
+  abv::XAbVals
 end
 
 Base.showerror(io::IO, e::InvertError) =

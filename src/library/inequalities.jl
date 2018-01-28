@@ -9,7 +9,7 @@ struct GreaterThanArrow <: PrimArrow end
 name(::GreaterThanArrow)::Symbol = :>
 props(::GreaterThanArrow) = ineq_props
 
-function inv(arr::GreaterThanArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::GreaterThanArrow, sarr::SubArrow, idabv::IdAbVals)
   if isconst(1, idabv)
     inv_gt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)
   elseif isconst(2, idabv)
@@ -85,7 +85,7 @@ struct LessThanArrow <: PrimArrow end
 name(::LessThanArrow)::Symbol = :(<)
 props(::LessThanArrow) = ineq_props
 
-function inv(arr::LessThanArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::LessThanArrow, sarr::SubArrow, idabv::IdAbVals)
   if isconst(1, idabv)
     # @assert false
     inv_lt_xcnst(), Dict(:x => :x, :y => :y, :z => :z)

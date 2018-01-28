@@ -9,19 +9,19 @@ name(::DuplArrow{O}) where O = Symbol(:dupl_, O)
 DuplArrow(n::Integer) = DuplArrow{n}()
 abinterprets(::DuplArrow) = [sizeprop]
 
-function constprop(arr::DuplArrow, idabv::IdAbValues)::IdAbValues
+function constprop(arr::DuplArrow, idabv::IdAbVals)::IdAbVals
   # If any re constant all are constant!
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     # @assert false
-    IdAbValues(pid => AbValues(:isconst => true) for pid in port_id.(◂(arr)))
+    IdAbVals(pid => AbVals(:isconst => true) for pid in port_id.(◂(arr)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 
 # FIXME: implement valueprop for dupl
 
-function inv(arr::DuplArrow{O}, sarr::SubArrow, idabv::IdAbValues) where O
+function inv(arr::DuplArrow{O}, sarr::SubArrow, idabv::IdAbVals) where O
   if any([isconst(pid, idabv) for pid in port_id.(⬧(arr))])
     DuplArrow(O), Dict(i => i for i=1:O + 1)
   else

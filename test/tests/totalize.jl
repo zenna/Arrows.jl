@@ -47,8 +47,8 @@ function test_apprx_div_propagate()
   (x/y) ⥅ z
   apprx = aprx_totalize!(c)
   sz = Size([3,2])
-  abtvals = Arrows.traceprop!(apprx, Dict(x => AbValues(:size => sz),
-                                         y => AbValues(:size => sz)))
+  abtvals = Arrows.traceprop!(apprx, Dict(x => AbVals(:size => sz),
+                                         y => AbVals(:size => sz)))
   @test Arrows.if_symbol_on_sport(abtvals, :size, z,
                     (x)->x == sz,
                     ()->false)
@@ -64,7 +64,7 @@ function test_apprx_log_propagate()
   apprx = aprx_totalize!(c)
   @test all(exp.(apprx([0, 0.1])) .> 0)
   sz = Size([3,2])
-  abtvals = Arrows.traceprop!(apprx, Dict(x => AbValues(:size => sz)))
+  abtvals = Arrows.traceprop!(apprx, Dict(x => AbVals(:size => sz)))
   @test Arrows.if_symbol_on_sport(abtvals, :size, z,
                     (z)->z == sz,
                     ()->false)

@@ -13,15 +13,15 @@ struct ReshapeArrow <: PrimArrow end
 name(::ReshapeArrow)::Symbol = :reshape
 props(::ReshapeArrow) = bin_arith_props()
 abinterprets(::ReshapeArrow) = [sizeprop]
-function sizeprop(::ReshapeArrow, idabv::IdAbValues)
+function sizeprop(::ReshapeArrow, idabv::IdAbVals)
   # size of the output is value of second input
   # does the second input have the property :value
   if 2 ∈ keys(idabv) && has(:value)(idabv[2])
     @show typeof(idabv[2][:value].value)
     outsz = [idabv[2][:value].value...]
-    IdAbValues(3 => AbValues(:size => Size(outsz)))
+    IdAbVals(3 => AbVals(:size => Size(outsz)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 
@@ -34,9 +34,9 @@ props(::CatArrow{I}) where I =
   [[Props(true, Symbol(:x, i), Any) for i=1:I]...,
     Props(false, :y, Any)]
 CatArrow(n::Integer, axis::Integer) = CatArrow{n}(axis)
-function sizeprop(arr::CatArrow, idabv::IdAbValues)
+function sizeprop(arr::CatArrow, idabv::IdAbVals)
   # @assert false
-  IdAbValues()
+  IdAbVals()
 end
 abinterprets(::CatArrow) = [sizeprop]
 
@@ -45,7 +45,7 @@ function Base.reshape(array::Array, newshape::Array)
 end
 
 "Inverse reshape must take the shape of `value`"
-function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::ReshapeArrow, sarr::SubArrow, abvals::IdAbVals)
   const_in(arr, abvals)[2] || throw(ArgumentError("Nonconst indices unimplemented"))
   # The input shape to the inverse is shape of the input to the forward arr
   sz = abvals[1][:size]
@@ -93,13 +93,13 @@ function getindex(x::FakeArray, index)
   x.count += 1
 end
 
-function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
+function sizeprop(::ScatterNdArrow, abvals::IdAbVals)
   @show Dict(id => collect(keys(vals)) for (id, vals) in abvals)
   if 3 ∈ keys(abvals) && :value ∈ keys(abvals[3])
     sz = abvals[3][:value].value
-    IdAbValues(4 => AbValues(:size => Size([sz...])))
+    IdAbVals(4 => AbVals(:size => Size([sz...])))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 

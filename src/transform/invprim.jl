@@ -42,11 +42,11 @@ function unary_inv(arr::Arrow,
   invarr, port_map
 end
 
-function inv(::GatherNdArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(::GatherNdArrow, sarr::SubArrow, abvals::IdAbVals)
   Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
-function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbVals)
   binary_inv(arr,
              const_in(arr, abvals),
              inv_add,
@@ -56,7 +56,7 @@ function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbValues)
              Dict(3 => 1, 2 => 2, 1 => 3))
 end
 
-function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbVals)
   binary_inv(arr,
              const_in(arr, abvals),
              inv_sub,
@@ -66,7 +66,7 @@ function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbValues)
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbVals)
   # @show idabv
   binary_inv(arr,
              const_in(arr, idabv),
@@ -77,7 +77,7 @@ function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbValues)
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv(arr::XorArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::XorArrow, sarr::SubArrow, idabv::IdAbVals)
   # @show idabv
   binary_inv(arr,
              const_in(arr, idabv),
@@ -88,7 +88,7 @@ function inv(arr::XorArrow, sarr::SubArrow, idabv::IdAbValues)
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
-function inv(arr::OrArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::OrArrow, sarr::SubArrow, idabv::IdAbVals)
   if !any(const_in(arr, idabv))
     inv_or(), Dict(:x => :x, :y => :y, :z => :z)
   else
@@ -96,7 +96,7 @@ function inv(arr::OrArrow, sarr::SubArrow, idabv::IdAbValues)
   end
 end
 
-function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbVals)
   constin = const_in(arr, idabv)
   constin[2] == false && throw(ArgumentError("Constness Combination not supported"))
   carr = CompArrow(:inv_modulo, [:z, :y, :θmod], [:x])
@@ -106,17 +106,17 @@ function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbValues)
   carr, Dict(1=>4,2=>2, 3=>1)
 end
 
-function inv_p(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv_p(arr::CosArrow, sarr::SubArrow, abvals::IdAbVals)
    unary_inv(arr, const_in(arr, abvals), ACosArrow)
 end
 
-function inv_p(arr::SinArrow, sarr::SubArrow,  abvals::IdAbValues)
+function inv_p(arr::SinArrow, sarr::SubArrow,  abvals::IdAbVals)
    unary_inv(arr, const_in(arr, abvals), ASinArrow)
 end
 
 function inv(arr::DivArrow,
              sarr::SubArrow,
-             abvals::IdAbValues)
+             abvals::IdAbVals)
   binary_inv(arr,
              const_in(arr, abvals),
              inv_div,
@@ -128,7 +128,7 @@ end
 
 
 "The parametric inverse of cos, cos^(-1)(y; θ) = 2π * ceil(θ/2) + (-1)^θ * acos(y)."
-function inv(arr::CosArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::CosArrow, sarr::SubArrow, abvals::IdAbVals)
   inv_cos = CompArrow(:inv_cos, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_cos)
   addprop!(θp, deref(θ))
@@ -173,7 +173,7 @@ end
 
 "The parametric inverse of sin, sin^(-1)(y; θ) = πθ + (-1)^θ * asin(y)."
 # (-1)^θ is implemented as θ % 2 == 0 ? 1 : -1
-function inv(arr::SinArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::SinArrow, sarr::SubArrow, abvals::IdAbVals)
   inv_sin = CompArrow(:inv_sin, [:y, :θ], [:x])
   y, θ, x = sub_ports(inv_sin)
   addprop!(θp, deref(θ))
@@ -211,31 +211,31 @@ function inv(arr::SinArrow, sarr::SubArrow, abvals::IdAbValues)
   inv_sin, Dict(1 => 3, 2 => 1)
 end
 
-function inv(arr::ExpArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::ExpArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), LogArrow)
 end
 
-function inv(arr::LogArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::LogArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), ExpArrow)
 end
 
 
-function inv(arr::SourceArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::SourceArrow, sarr::SubArrow, abvals::IdAbVals)
   (SourceArrow(arr.value), Dict(1 => 1))
 end
 
-function inv(arr::NegArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::NegArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), NegArrow)
 end
 
-function inv(arr::IdentityArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::IdentityArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), IdentityArrow)
 end
 
 
-function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbValues)
+function inv(arr::SqrtArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), SqrArrow)
 end
-# function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
+# function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbVals)
 #   SourceArrow(true), Dict(1 => 1)
 # end

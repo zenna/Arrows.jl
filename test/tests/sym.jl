@@ -89,8 +89,8 @@ function test_sym_gather_inv_log_special()
   inv_c = Arrows.invert(c)
   z = f(params, 2)
   ▹z = ▹(inv_c, 1)
-  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size(size(z)))
-  wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
+  init_size = ▹z=>Arrows.AbVals(:size=>Arrows.Size(size(z)))
+  wirer, info = Arrows.solve(inv_c, SprtAbVals(init_size));
   apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = vcat(1:21, 23:24, 26:100);
 
@@ -116,8 +116,8 @@ function test_sym_special()
   inv_c = c |> Arrows.duplify |> Arrows.invert
   ▹z = ▹(inv_c, 1)
   z = f(params)
-  init_size = ▹z=>Arrows.AbValues(:size=>Arrows.Size(z |> size))
-  wirer, info = Arrows.solve(inv_c, SprtAbValues(init_size));
+  init_size = ▹z=>Arrows.AbVals(:size=>Arrows.Size(z |> size))
+  wirer, info = Arrows.solve(inv_c, SprtAbVals(init_size));
   apprx = Arrows.aprx_totalize(inv_c << wirer);
   parts = exp.(vcat(1:13, 15:21, 23:24, 26:45, 47:100));
    θm = [22, 25]

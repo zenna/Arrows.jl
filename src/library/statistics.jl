@@ -15,8 +15,8 @@ struct ReduceMean <: PrimArrow end
 props(::ReduceMean) = [Props(true, :x, Any), Props(false, :y, Any)]
 name(::ReduceMean) = :reduce_mean
 abinterprets(::ReduceMean) = [sizeprop]
-function sizeprop(::ReduceMean, idabv::IdAbValues)::IdAbValues
-  IdAbValues(2 => AbValues(:size => Size([])))
+function sizeprop(::ReduceMean, idabv::IdAbVals)::IdAbVals
+  IdAbVals(2 => AbVals(:size => Size([])))
 end
 mean(sprt::SubPort) = ReduceMean()(sprt)
 
@@ -59,20 +59,20 @@ name(::ReduceSumArrow) = :reduce_sum
 props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 reduce_sum(xs::Array, axis) = sum(xs, axis)
 abinterprets(::ReduceSumArrow) = [sizeprop]
-function sizeprop(arr::ReduceSumArrow, idabv::IdAbValues)::IdAbValues
+function sizeprop(arr::ReduceSumArrow, idabv::IdAbVals)::IdAbVals
   # FIXME: Assumes keepdims is true
   if 1 ∈ keys(idabv) && :size in keys(idabv[1])
     sz = idabv[1][:size]
     outsz = deepcopy(sz)
     outsz.dims[arr.axis] = 1
-    IdAbValues(2 => AbValues(:size => outsz))
+    IdAbVals(2 => AbVals(:size => outsz))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
 
 "Inverse reduce sum does multiple inverse adds"
-function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbValues)
+function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbVals)
   if allhave(idabv, :size, ⬧(arr, 1))
     sz = idabv[1][:size]
     expanddimsz = get(sz)[arr.axis]   # Size of dimension to invreduce to

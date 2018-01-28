@@ -20,15 +20,15 @@ function meet(x::Singleton, y::Singleton)
   x
 end
 
-function valueprop(arr::Arrow, idabv::IdAbValues)::IdAbValues
+function valueprop(arr::Arrow, idabv::IdAbVals)::IdAbVals
   # Does every _inport_ have the property
   if allhave(idabv, :value, ▸(arr)...)
     # args = [prop[:value] for prop in values(idabv)]
     args = [idabv[prt.port_id][:value].value for (i, prt) in enumerate(▸(arr))]
     res = interpret(arr, args...)
     cres = Singleton.(res)
-    IdAbValues(prt.port_id => AbValues(:value => cres[i]) for (i, prt) in enumerate(◂(arr)))
+    IdAbVals(prt.port_id => AbVals(:value => cres[i]) for (i, prt) in enumerate(◂(arr)))
   else
-    IdAbValues()
+    IdAbVals()
   end
 end
