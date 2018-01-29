@@ -40,6 +40,35 @@ function sizeprop(arr::CatArrow, idabv::IdAbVals)
 end
 abinterprets(::CatArrow) = [sizeprop]
 
+
+"Inverse of `CatArrow`, splits an array along axis"
+struct InvCatArrow{I} <: PrimArrow
+  axis::Int
+end
+name(::InvCatArrow) = :invcat
+props(::InvCatArrow{I}) where I =
+  [Props(true, :y, Any),
+   [Props(false, Symbol(:x, i), Any) for i=1:I]...]
+InvCatArrow(n::Integer, axis::Integer) = InvCatArrow{n}(axis)
+
+function invcat(axis, nout, x)
+  @pre size(x)[axis] == nout
+  slices = Arrows.splitdim(x, axis)
+  return tuple(slices...)
+end
+# function sizeprop(arr::InvCatArrow, idabv::IdAbVals)
+#   @assert false
+#   IdAbVals()
+# end
+# abinterprets(::CatArrow) = [sizeprop]
+
+function inv(arr::CatArrow{I}, sarr::SubArrow, idabv::IdAbVals) where I
+  invarr = InvCatArrow(I, arr.axis)
+  pmap = Dict(Symbol(:x, i) => Symbol(:x, i) for i=1)
+  pmap[:y] = :y
+  invarr, pmap
+end
+
 function Base.reshape(array::Array, newshape::Array)
   reshape(array, (newshape...))
 end

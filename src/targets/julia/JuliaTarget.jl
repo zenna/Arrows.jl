@@ -2,6 +2,7 @@
 module JuliaTarget
 using ..Arrows
 importall ..Arrows
+using Spec
 
 import ..Arrows: interpret, expr
 import Arrows: interpret, Target, compile

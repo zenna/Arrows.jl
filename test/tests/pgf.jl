@@ -18,4 +18,14 @@ end
 
 test_pgf(Arrows.TestArrows.xy_plus_x_arr())
 
-# foreach(test_pgf ∘ pre_test, plain_arrows())
+"Are Pgf and Pi consistent - `invf(f(x); pgf(x) = x`"
+function ispipgfid(f::Arrow, x::Vector, xabv::XAbVals=NmAbVals(), eq=(==))
+  invf = invert(f, inv, xabv) 
+  pgff = pgf(f, pgf, xabv)
+  y, θ = (AlioAnalysis.y_θ_split(pgff) ∘ pgff)(x...)
+  x = invf(y..., θ...)
+  all(map(eq, x, x))
+end
+
+
+foreach(test_pgf ∘ pre_test, plain_arrows())

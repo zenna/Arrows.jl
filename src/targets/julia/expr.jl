@@ -20,11 +20,15 @@ function call_expr(arr::CompArrow, args...)
 end
 
 # But we have some special cases
-call_expr{N}(arr::DuplArrow{N}, arg) = Expr(:call, dupl, arg, N)
-call_expr{N}(arr::InvDuplArrow{N}, args...) = Expr(:call, inv_dupl, args...)
-call_expr{N}(arr::MeanArrow{N}, args...) = Expr(:call, :mean_arr, args...)
+call_expr(arr::DuplArrow{N}, arg) where {N} = Expr(:call, :dupl, arg, N)
+call_expr(arr::InvDuplArrow{N}, args...) where {N} = Expr(:call, :inv_dupl, args...)
+call_expr(arr::MeanArrow{N}, args...) where {N} = Expr(:call, :mean_arr, args...)
 call_expr(arr::SourceArrow, args...) = arr.value
 call_expr(arr::Arrows.ReduceSumArrow, args) = Expr(:call, :sum, args, arr.axis)
+call_expr(arr::Arrows.CatArrow{N}, args...) where {N} =
+  (@pre N==length(args); Expr(:call, cat, arr.axis, args...))
+call_expr(arr::Arrows.InvCatArrow{N}, arg) where {N} =
+  Expr(:call, :invcat, arr.axis, N, arg)
 
 function func_decl_expr(carr::CompArrow)
   funcname = name(carr)

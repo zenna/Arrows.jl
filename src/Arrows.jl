@@ -208,6 +208,8 @@ export
   gather_nd,
   scatter_nd,
 
+  invcat,
+
   # extra arrows
   md2box,
   inverse_md2box,

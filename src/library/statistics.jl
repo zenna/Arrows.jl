@@ -60,7 +60,7 @@ props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
 reduce_sum(xs::Array, axis) = sum(xs, axis)
 abinterprets(::ReduceSumArrow) = [sizeprop]
 function sizeprop(arr::ReduceSumArrow, idabv::IdAbVals)::IdAbVals
-  # FIXME: Assumes keepdims is true
+  @pre arr.keepdims "Case where arr.keepdims == false unimplemented"
   if 1 ∈ keys(idabv) && :size in keys(idabv[1])
     sz = idabv[1][:size]
     outsz = deepcopy(sz)
@@ -71,17 +71,19 @@ function sizeprop(arr::ReduceSumArrow, idabv::IdAbVals)::IdAbVals
   end
 end
 
-"Inverse reduce sum does multiple inverse adds"
-function inv(arr::Arrows.ReduceSumArrow, sarr::SubArrow, idabv::IdAbVals)
+"Inverse reduce sum does multiple inverse adds, then concatenates"
+function inv(arr::ReduceSumArrow, sarr::SubArrow, idabv::IdAbVals)
   if allhave(idabv, :size, ⬧(arr, 1))
     sz = idabv[1][:size]
     expanddimsz = get(sz)[arr.axis]   # Size of dimension to invreduce to
     nθ = expanddimsz - 1
+
     θprops = [Symbol(:θrs, i) for i = 1:nθ]
     carr = CompArrow(:inv_reduce_sum, vcat([:y], θprops), [:x])
-    y = ⬨(carr, :y)
     θs = [⬨(carr, θprop) for θprop in θprops]
     foreach(add!(θp), θs)
+
+    y = ⬨(carr, :y)
     tocat = []
     local a
     for θi in θs

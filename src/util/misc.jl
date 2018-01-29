@@ -7,6 +7,31 @@ julia> invvcat([1,2,3,4,5,6], 3)
 """
 invvcat(xs, i::Integer) = (@pre 0 < i < length(xs); (xs[1:i], xs[i+1:end]))
 
+"""Split `A` along `dim`, returning size(A)[dim] arrays
+
+```jldoctest
+julia> A = reshape(1:20, 5,4)
+5×4 Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}:
+ 1   6  11  16
+ 2   7  12  17
+ 3   8  13  18
+ 4   9  14  19
+ 5  10  15  20
+
+ julia> splitdim(A,1)
+ 5-element Array{Array{Int64,1},1}:
+  [1, 6, 11, 16] 
+  [2, 7, 12, 17] 
+  [3, 8, 13, 18] 
+  [4, 9, 14, 19] 
+  [5, 10, 15, 20]
+```` 
+"""
+function splitdim(A::AbstractArray, dim::Integer)
+  @pre dim <= ndims(A)
+  [A[(i == dim ? slice : Colon() for i = 1:ndims(A))...] for slice = 1:size(A)[dim]]
+end
+
 "function which splats inputs to `f`"
 splat(f) = xs -> f(xs...)
 

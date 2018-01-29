@@ -1,4 +1,9 @@
-"This file contains the pgfs of primitive arrows."
+# This file contains the pgfs of primitive arrows."
+
+# Most pgf just need constancy information
+function pgf(parr::PrimArrow, sarr::SubArrow, idabv::IdAbVals)
+  pgf(parr, const_in(parr, idabv)), id_portid_map(parr)
+end
 
 # FIXME: at the moment all of the pgfs are manually constructed.
 # at least want to just add the parameter part to the arrow and
@@ -50,14 +55,13 @@ end
 
 function pgf_sub()
   "As f^(-1)(z; θ) = (z+θ, θ), then the pgf becomes r(x, y) = (x-y, y)."
-  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θ])
+  carr = CompArrow(Symbol(:pgf_, :sub), [:x, :y], [:z, :θsub])
   x, y, z, θ = ⬨(carr)
   x - y ⥅ z
   y ⥅ θ
   add!(θp)(θ)
   carr
 end
-
 
 function pgf(arr::GatherNdArrow, const_in)
   carr = CompArrow(Symbol(:pgf_, :sub),
@@ -250,4 +254,39 @@ function pgf(arr::IfElseArrow, const_in)
   end
   ifelse(i, t, e) ⥅ y
   carr
+end
+
+"PGF for reduce sum"
+function pgf(arr::ReduceSumArrow, sarr::SubArrow, idabv::IdAbVals)
+  if allhave(idabv, :size, ⬧(arr, 1))
+    sz = idabv[1][:size]
+    expanddimsz = get(sz)[arr.axis]   # Size of dimension to invreduce to
+    nθ = expanddimsz - 1
+
+    θprops = [Symbol(:θrs, i) for i = 1:nθ]
+    carr = CompArrow(:pgf_reduce_sum, [:x], [:y; θprops])
+    θs = [⬨(carr, θprop) for θprop in θprops]
+    foreach(add!(θp), θs)
+
+    # Do we have a split arrow?
+    x = ⬨(carr, :x)
+    slices = InvCatArrow(expanddimsz, arr.axis)(x)
+
+    addθs = []
+    x = slices[1]
+    local x_add_y
+    for y in slices[2:end]
+      x_add_y, θ = pgf_add()(x, y)
+      push!(addθs, θ)
+      x = x_add_y
+    end
+
+    x_add_y ⥅ ◃(carr, :y)
+    @assert length(θs) == nθ == length(addθs)
+    foreach(⥅, addθs, θs)
+    @assert is_wired_ok(carr)
+    carr, Dict(:x=>:x, :y=>:y)
+  else
+    throw(PgfError(arr, idabv))
+  end
 end
