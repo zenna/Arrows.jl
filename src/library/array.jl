@@ -103,8 +103,11 @@ function sizeprop(::ScatterNdArrow, abvals::IdAbValues)
   end
 end
 
-function prim_scatter_nd(params, indices, shape, value::T) where {T}
-  answer = fill(value, shape)
+function prim_scatter_nd(params, indices, shape, 
+                        default_value::T, 
+                        t::Type=typeof(default_value)) where {T}
+  answer = Array{t, length(shape)}(shape)
+  fill!(answer, default_value)
   indices = indices + 1
   for (idx,rr) in enumerate(CartesianRange(size(indices)[1:end-1]))
     answer[indices[rr,:]...] = params[idx]
