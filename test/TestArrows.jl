@@ -94,15 +94,6 @@ function ifelsesimple()
   carr
 end
 
-function ifelsesimple2()
-  carr = CompArrow(:ifelsesimple2, [:a, :b, :c, :d], [:e])
-  a, b, c, d, e = ⬨(carr)
-  ee = ifelse(a > b, c, d)
-  ee ⥅ e
-  @assert is_valid(carr)
-  carr
-end
-
 function inv_xy_plus_x_arr()
   carr = CompArrow(:inv_xy_plus_x_arr, [:z, :θ], [:x, :y])
   z, θ, x, y = ⬨(carr)
@@ -315,7 +306,6 @@ function all_test_arrows()
   #  weird_arr(),
    nested_core(),
    ifelsesimple(),
-   ifelsesimple2(),
    ifelseconst(),
    twoxy_plus_x_arr()]
 end
