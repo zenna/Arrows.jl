@@ -1,23 +1,72 @@
 using Spec
 
+abstract type SolverElement end
+
 "Struct that represents the bipartite graph between variables and constraints"
 mutable struct SolverGraph
-  variables
-  constraints
+  variables::Dict{Symbol, SolverElement}
+  constraints::Set{SolverElement}
+  function SolverGraph()
+    g = new()
+    g.variables = Dict{Symbol, SolverElement}()
+    g.constraints = Set{SolverElement}()
+    g
+  end
 end
 
-abstract type SolverElement end
+
 struct SolverEdge
   variable::SolverElement
   constraint::SolverElement
   weight::UInt
 end
 
-mutable struct SolverVariable
+mutable struct SolverVariable <: SolverElement
+  name::Symbol
   edges::Set{SolverEdge}
+  function SolverVariable(name)
+    v = new()
+    v.name = name
+    v.edges = Set{SolverEdge}()
+    v
+  end
 end
-mutable struct SolverConstraint
+
+mutable struct SolverConstraint <: SolverElement
   edges::Set{SolverEdge}
+  expr::Expr
+  function SolverConstraint(expr)
+    c = new()
+    c.expr = expr
+    c.edges = Set{SolverEdge}()
+    c
+  end
+end
+
+function SolverEdge(variable::SolverVariable, constraint::SolverConstraint)::SolverEdge
+  SolverEdge(variable, constraint, 0)
+end
+
+name(v::SolverVariable) = v.name
+name(v::SolverConstraint) = v.expr
+
+function Base.show(io::IO, e::SolverEdge)
+  print(io, "SolverEdge($(name(e.variable)) -> $(name(e.constraint)))")
+end
+
+function add_to!(graph::SolverGraph, sym::Symbol)::SolverVariable
+  if sym ∈ keys(graph.variables)
+    graph.variables[sym]
+  else
+    var = SolverVariable(sym)
+    graph.variables[sym] = var
+  end
+end
+
+function add_to!(graph::SolverGraph, exp::Expr)::SolverConstraint
+  constraint = SolverConstraint(exp)
+  push!(graph.constraints, constraint)
+  constraint
 end
 
 SolverSolution = Dict{SolverVariable, SolverConstraint}
@@ -36,7 +85,7 @@ Graph algorithm
 5) go to 1.
 """
 function solve_graph(exprs, non_parameters::Set{Symbol})
-  graph = SolverGraph()
+  graph = build_graph(exprs, non_parameters::Set{Symbol})
   solution = SolverSolution()
   foreach(graph.constraints) do constraint
    propagate!(graph, constraint, solution)
@@ -46,14 +95,33 @@ function solve_graph(exprs, non_parameters::Set{Symbol})
     modified = modified || solve_single_constraint!(graph, solution)
     modified = modified || mark_highest_degree!(graph, solution)
   end
+  solution
+end
+
+"build a `graph` from a set of expression excluding variables in `non_parameters`"
+function build_graph(exprs, non_parameters::Set{Symbol})
+  graph = SolverGraph()
+  for expr ∈ exprs
+    !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
+    symbols = expr |> collect_symbols |> keys
+    constraint = add_to!(graph, expr)
+    for symbol ∈ symbols
+      (symbol ∈ non_parameters) && continue
+      variable = add_to!(graph, symbol)
+      edge = SolverEdge(variable, constraint)
+      push!(variable.edges, edge)
+      push!(constraint.edges, edge)
+    end
+  end
+  graph
 end
 
 """When a variable is associated with a single constraint, then we should use that 
 constraint to solve the variable"""
 function solve_single_constraint!(graph::SolverGraph, solution::SolverSolution)
-  for variable ∈ graph.variables
+  for variable ∈ values(graph.variables)
     if length(variable.edges) == 1
-      solve!(graph, variable.edges[1], solution)
+      solve!(graph, first(variable.edges), solution)
       return true
     end
   end
@@ -66,8 +134,8 @@ function solve_nonzero!(graph::SolverGraph, solution::SolverSolution)
   function min_weight(variable::SolverVariable)
     minimum(map(e->e.weight, variable.edges))
   end
-  for variable in graph.variables
-    if min_weight(variable) > 0
+  for variable in values(graph.variables)
+    if length(variable.edges) > 0 && min_weight(variable) > 0
       remove!(graph, variable, solution)
       return true
     end
@@ -78,7 +146,7 @@ end
 """When we cannot deduce any more variables, we pick the variable with the highest degree"""
 function mark_highest_degree!(graph::SolverGraph, solution::SolverSolution)
   @pre !isempty(graph.variables)
-  var = sort(collect(graph.variables), by=v->length(v.edges))[end][1]
+  var = sort(graph.variables |> values |> collect, by=v->length(v.edges))[end]
   remove!(graph, var, solution)
   true
 end
@@ -95,8 +163,19 @@ function solve!(graph::SolverGraph,
   remove!(graph, variable, solution)  
 end
 
+"remove `constraint` from `graph`"
+function remove!(graph::SolverGraph, constraint::SolverConstraint)
+  @grab graph
+  pop!(graph.constraints, constraint)
+  for edge in constraint.edges
+    @grab edge
+    pop!(edge.variable.edges, edge)
+  end
+end
+
 """Removing a `variable` from the graph propagate the knowledge about it"""
 function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverSolution)
+  pop!(graph.variables, variable.name)
   to_propagate = []
   for edge ∈ variable.edges
     constraint = edge.constraint
@@ -117,6 +196,7 @@ function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverS
   end
 end
 
+"If a `constraint` contains a single edge, solve that edge, and recurse"
 function propagate!(graph::SolverGraph, 
                     constraint::SolverConstraint, 
                     solution::SolverSolution)
