@@ -11,15 +11,18 @@ mean(args...) = mean_arr(args...)
 abinterprets(::MeanArrow) = [sizeprop]
 
 "Reduce Mean"
-struct ReduceMean <: PrimArrow end
-props(::ReduceMean) = [Props(true, :x, Any), Props(false, :y, Any)]
-name(::ReduceMean) = :reduce_mean
-abinterprets(::ReduceMean) = [sizeprop]
-function sizeprop(::ReduceMean, idabv::IdAbVals)::IdAbVals
+struct ReduceMeanArrow <: PrimArrow
+  axis
+  keepdims
+end
+props(::ReduceMeanArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
+name(::ReduceMeanArrow) = :reduce_mean
+abinterprets(::ReduceMeanArrow) = [sizeprop]
+function sizeprop(::ReduceMeanArrow, idabv::IdAbVals)::IdAbVals
   IdAbVals(2 => AbVals(:size => Size([])))
 end
-mean(sprt::SubPort) = ReduceMean()(sprt)
-
+mean(sprt::SubPort) = ReduceMeanArrow()(sprt)
+reduce_mean(x; axis=nothing, keepdims=false) = ReduceMeanArrow(axis, keepdims)(x)
 
 "Variance"
 struct VarArrow{I} <: PrimArrow end
@@ -57,6 +60,7 @@ struct ReduceSumArrow <: PrimArrow
 end
 name(::ReduceSumArrow) = :reduce_sum
 props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
+reduce_sum(xs::SubPort; axis=nothing) = ReduceSumArrow(axis, false)(xs)
 reduce_sum(xs::Array, axis) = sum(xs, axis)
 abinterprets(::ReduceSumArrow) = [sizeprop]
 function sizeprop(arr::ReduceSumArrow, idabv::IdAbVals)::IdAbVals
