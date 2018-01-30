@@ -44,7 +44,7 @@ import NamedTuples: @NT, NamedTuple
 using NamedTuples
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
-import Spec: @pre, @invariant
+import Spec: @pre, @invariant, @post
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
@@ -309,6 +309,7 @@ include("library/inequalities.jl")
 include("library/dupl.jl")
 include("library/control.jl")
 include("library/array.jl")
+include("library/onehot.jl")
 include("library/compound.jl")
 include("library/statistics.jl")
 include("library/boolean.jl")

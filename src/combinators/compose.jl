@@ -1,6 +1,7 @@
 # Helpers 1#
-pfx(prefix::Symbol, name::Symbol) = Symbol(:prefix_, name)
-pfx(prefix::Symbol, arr::Arrow) = pfx(prefix, name(arr))
+pfx(v::Symbol, name::Symbol) = Symbol(v, :_, name)
+pfx(v::Symbol, arr::Arrow) = pfx(v, name(arr))
+pfx(arr::Arrow, v::Symbol) = pfx(name(arr), v)
 
 ## Unary Combinators ##
 "Wrap an `arr` in a container `CompArrow` `wrap(f) = g`, where `g(x) = f(x)"
