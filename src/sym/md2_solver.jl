@@ -331,7 +331,7 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
     set = try
       Arrows.generate_function(context, expr) ? solved : unsolved
     catch y
-      warn("expression $expr failed to run with exception $y$")
+      warn("expression $(expr) failed to run with exception $y")
       unsolved
     end
     push!(set, expr)

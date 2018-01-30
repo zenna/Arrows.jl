@@ -360,6 +360,7 @@ include("sym/symprim.jl")
 include("sym/rewrite.jl")
 include("sym/convenience.jl")
 include("sym/md2_solver.jl")
+include("sym/graph_solver.jl")
 
 # Integration of arrow with julia #
 include("host/overload.jl")
