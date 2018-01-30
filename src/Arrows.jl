@@ -240,6 +240,9 @@ export
   sqr,
   mean_arr,
 
+  onehot,
+  invonehot,
+
   accumapply,
   trace_value,
   psl,

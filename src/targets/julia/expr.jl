@@ -29,6 +29,8 @@ call_expr(arr::Arrows.CatArrow{N}, args...) where {N} =
   (@pre N==length(args); Expr(:call, cat, arr.axis, args...))
 call_expr(arr::Arrows.InvCatArrow{N}, arg) where {N} =
   Expr(:call, :invcat, arr.axis, N, arg)
+call_expr(arr::Arrows.OneHotToInt, arg) = Expr(:call, :invonehot, arg)
+call_expr(arr::Arrows.IntToOneHot, arg) = Expr(:call, :onehot, arg, arr.bitlength)
 
 function func_decl_expr(carr::CompArrow)
   funcname = name(carr)

@@ -24,29 +24,39 @@ function sizeprop(arr::IntToOneHot, idabv::IdAbVals)::IdAbVals
   if in(idabv, 1, :size)
     intsz = get(idabv[1][:size])
     onehotsz = Size([intsz; arr.bitlength])
+    # @show intsz, onehotsz, "1 inttoonehot"
     return IdAbVals(2 => AbVals(:size => onehotsz)) 
   elseif in(idabv, 2, :size)
     onehotsz = get(idabv[2][:size])
-    intsz = Size([onehotsz[1:end-1]])
+    intsz = Size(onehotsz[1:end-1])
+    # @show intsz, onehotsz, "2 inttoonehot"
     return IdAbVals(1 => AbVals(:size => intsz)) 
   else
     IdAbVals()
   end
 end
 
+abinterprets(arr::IntToOneHot) = [sizeprop]
+
 function sizeprop(arr::OneHotToInt, idabv::IdAbVals)::IdAbVals
   if in(idabv, 2, :size)
-    intsz = get(idabv[2][:size])
-    onehotsz = Size([intsz; arr.bitlength])
+    @grab intsz = get(idabv[2][:size])
+    # @assert false ":aok"
+    @grab onehotsz = Size([intsz; arr.bitlength])
+    intsz, onehotsz, "2 onehottoint"
     return IdAbVals(1 => AbVals(:size => onehotsz)) 
   elseif in(idabv, 1, :size)
-    onehotsz = get(idabv[1][:size])
-    intsz = Size([onehotsz[1:end-1]])
+    @grab onehotsz = get(idabv[1][:size])
+    # @assert false ":aokadadad"
+    intsz = Size(onehotsz[1:end-1])
+    # @show intsz, onehotsz, "1 onehottoint"
     return IdAbVals(2 => AbVals(:size => intsz)) 
   else
     IdAbVals()
   end
 end
+
+abinterprets(arr::OneHotToInt) = [sizeprop]
 
 function inv(arr::OneHotToInt, sarr::SubArrow, idabv::IdAbVals)
   IntToOneHot(arr.bitlength), Dict(:x => :x, :y => :y)
@@ -55,6 +65,8 @@ end
 "Wrap `f` putting one hot <-> int encoders/decoders between inputs and outpts``"
 function wraponehot(f::Arrow, bitlength::Int)
   c = CompArrow(pfx(f, :onehot), ▸(f), ◂(f))
+  foreach(transferlabels!, ▸(f), ▸(c))
+  foreach(transferlabels!, ◂(f), ◂(c))
   fsarr = add_sub_arr!(c, f)
   intxsprts = map(sprt -> OneHotToInt(bitlength)(sprt), ▹(c))
   fsarrin = ▹(fsarr)
@@ -104,8 +116,8 @@ end
 julia> invonehot([0,0,0,1])
 3
 """
-function invonehot(x::Vector{T}) where T <: Integer
-  @pre length(findn(x)) == 1 "x must contain only one `1`"
+function invonehot(x::Vector{T}) where T
+  @pre length(findn(x)) == 1 "x must contain only one `1`, $x"
   pos = findfirst(x) - 1
   @pre pos >= 0
   pos

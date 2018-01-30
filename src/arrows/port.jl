@@ -18,6 +18,13 @@ labels(prt::AbstractPort) = labels(props(prt))
 addprop!(T::Type{<:Prop}, prt::AbstractPort) = (addprop!(T, props(prt)); prt)
 in(P::Type{<:Prop}, prt::AbstractPort) = in(P, props(prt))
 
+"Transfer labels from `prta` to `prtb`"
+function transferlabels!(prta::Port, prtb::Port) # FIXME: define in terms of props first
+  for label in labels(prta)
+    push!(props(prtb).labels, label)
+  end
+end
+
 "Is `port` an `out_port`"
 is_out_port(prt::AbstractPort)::Bool = isout(props(prt))
 
