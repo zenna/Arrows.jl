@@ -152,7 +152,7 @@ function pgf(arr::GreaterThanArrow, const_in)
     x, y, z, θgt1, θgt2 = ⬨(carr)
     x > y ⥅ z
     x ⥅ θgt1
-    x - y ⥅ θgt2
+    ifelse(z, x - y, y - x) ⥅ θgt2
     add!(θp)(θgt1)
     add!(θp)(θgt2)
   end
