@@ -76,3 +76,50 @@ function test_sqr_invert()
 end
 
 test_sqr_invert()
+
+
+function test_greaterthan_inv()
+  carr = CompArrow(:test_gt_inv, [:x], [:z])
+  x, z = ⬨(carr)
+  x > 3 ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, -4)...) == true
+  @test carr(inv_carr(false, -4)...) == false
+  carr = CompArrow(:test_gt_pgf, [:x], [:z])
+  x, z = ⬨(carr)
+  3 > x ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, -4)...) == true
+  @test carr(inv_carr(false, -4)...) == false
+  carr = CompArrow(:test_gt_pgf, [:x, :y], [:z])
+  x, y, z = ⬨(carr)
+  x > y ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, 1, -4)...) == true
+  @test carr(inv_carr(false, 1, -4)...) == false
+end
+
+test_greaterthan_inv()
+
+function test_lessthan_inv()
+  carr = CompArrow(:test_gt_inv, [:x], [:z])
+  x, z = ⬨(carr)
+  x < 3 ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, -4)...) == true
+  @test carr(inv_carr(false, -4)...) == false
+  carr = CompArrow(:test_gt_pgf, [:x], [:z])
+  x, z = ⬨(carr)
+  3 < x ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, -4)...) == true
+  @test carr(inv_carr(false, -4)...) == false
+  carr = CompArrow(:test_gt_pgf, [:x, :y], [:z])
+  x, y, z = ⬨(carr)
+  x < y ⥅ z
+  inv_carr = carr |> invert
+  @test carr(inv_carr(true, 1, -4)...) == true
+  @test carr(inv_carr(false, 1, -4)...) == false
+end
+
+test_greaterthan_inv()

@@ -41,11 +41,14 @@ function inv_gt_ycnst()
   carr
 end
 
-"Complete parameric inverse for >"
+"""Complete parameric inverse for >
+If x > y and x is known, then we know that we should substract a non-negative δ to
+get y. Otherwise, we add a non-negative δ"""
 function inv_gt_xcnst()
   carr = CompArrow(:inv_gt_xcnst, [:z, :x, :θgt], [:y])
   z, x, θgt, y = ⬨(carr)
-  ifelse(z, x - abs(θgt), x + abs(θgt)) ⥅ y
+  δ = abs(θgt)
+  ifelse(z, x - δ, x + δ) ⥅ y
   foreach(add!(θp), (θgt, ))
   @assert is_wired_ok(carr)
   carr
@@ -55,7 +58,8 @@ function inv_gt_arr()
   carr = CompArrow(:inv_gt, [:z, :θgt1, :θgt2], [:x, :y])
   z, θgt1, θgt2, x, y = ⬨(carr)
   θgt1 ⥅ x
-  ifelse(z, θgt1 - θgt2, θgt1 + θgt2) ⥅ y
+  δ = abs(θgt2)
+  ifelse(z, x - δ, x + δ) ⥅ y
   foreach(add!(θp), (θgt1, θgt2))
   @assert is_wired_ok(carr)
   carr
@@ -121,7 +125,8 @@ function inv_lt_arr()
   carr = CompArrow(:inv_lt, [:z, :θlt1, :θlt2], [:x, :y])
   z, θlt1, θlt2, x, y = ⬨(carr)
   θlt1 ⥅ x
-  ifelse(z, θlt1 + θlt2, θlt1 - θlt2) ⥅ y
+  δ = abs(θlt2)
+  ifelse(z, x + δ, x - δ) ⥅ y
   @assert is_wired_ok(carr)
   foreach(add!(θp), (θlt1, θlt2))
   carr
