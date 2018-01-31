@@ -60,7 +60,6 @@ function partial_invert_to(carr_original, target)
     end
   end
   inverted = Arrows.invert(carr, partial_invert, sprtabvals)
-  @assert num_ports(carr_original) == num_ports(inverted)
   inverted
 end
 

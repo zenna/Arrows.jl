@@ -15,11 +15,31 @@ mutable struct SolverGraph
 end
 
 
-struct SolverEdge
+mutable struct SolverEdge
   variable::SolverElement
   constraint::SolverElement
-  weight::UInt
+  weight::Number
+  carr::Arrow
+  function SolverEdge(variable::SolverElement, 
+    constraint::SolverElement, 
+    weight::Number)
+    edge = new()
+    edge.variable = variable
+    edge.constraint = constraint
+    edge.weight = weight
+    edge
+  end
 end
+
+function SolverEdge(variable::SolverElement, 
+    constraint::SolverElement, 
+    weight::Number,
+    carr::Arrow)
+  edge = SolverEdge(variable, constraint, weight)
+  edge.carr = carr
+  edge
+end
+
 
 mutable struct SolverVariable <: SolverElement
   name::Symbol
@@ -41,10 +61,6 @@ mutable struct SolverConstraint <: SolverElement
     c.edges = Set{SolverEdge}()
     c
   end
-end
-
-function SolverEdge(variable::SolverVariable, constraint::SolverConstraint)::SolverEdge
-  SolverEdge(variable, constraint, 0)
 end
 
 name(v::SolverVariable) = v.name
@@ -102,13 +118,27 @@ end
 function build_graph(exprs, non_parameters::Set{Symbol})
   graph = SolverGraph()
   for expr ∈ exprs
-    !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
     symbols = expr |> collect_symbols |> keys
     constraint = add_to!(graph, expr)
+    left, right = map(forward, expr.args[2:end])
+    names = merge(left.names, right.names)
     for symbol ∈ symbols
       (symbol ∈ non_parameters) && continue
       variable = add_to!(graph, symbol)
-      edge = SolverEdge(variable, constraint)
+      edge = if names[symbol] != 1
+        SolverEdge(variable, constraint, Inf)
+      else
+        left, right = symbol ∈ keys(left.names) ? (left, right) : (right, left)
+        inv_left = partial_invert_to(left.carr, symbol)
+        weight = (⬧(inv_left) |> length) - (⬧(left.carr) |> length)
+        # using the fact that the output of the `forward` is always named `forward_z`
+        # and that was designed to provid composition
+        portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(right.carr)
+                                                          for p2 in ▸(inv_left)
+                                                          if name(p1) == name(p2)])
+        solver = compose_share_by_name(inv_left, right.carr, portmap)
+        SolverEdge(variable, constraint, weight, solver)
+      end
       push!(variable.edges, edge)
       push!(constraint.edges, edge)
     end
@@ -165,10 +195,8 @@ end
 
 "remove `constraint` from `graph`"
 function remove!(graph::SolverGraph, constraint::SolverConstraint)
-  @grab graph
   pop!(graph.constraints, constraint)
   for edge in constraint.edges
-    @grab edge
     pop!(edge.variable.edges, edge)
   end
 end
@@ -182,12 +210,12 @@ function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverS
     to_remove = filter(constraint.edges) do e
       e.variable == variable
     end
-    map(e->remove!(constraint.edges, e), to_remove)
-    if length(constraint.edge) == 0
+    foreach(e->pop!(constraint.edges, e), to_remove)
+    if length(constraint.edges) == 0
       warn("Possible incompatible constraint: $(constraint)")
       remove!(graph, constraint)
     end
-    if length(constraint.edge) == 1
+    if length(constraint.edges) == 1
       push!(to_propagate, constraint)
     end
   end
@@ -201,7 +229,7 @@ function propagate!(graph::SolverGraph,
                     constraint::SolverConstraint, 
                     solution::SolverSolution)
   if length(constraint.edges) == 1
-    variable = constraint.edges[1].variable
-    solve!(graph, variable, constraint)
+    edge = first(constraint.edges)
+    solve!(graph, edge, solution)
   end
 end
