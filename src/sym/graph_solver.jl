@@ -117,6 +117,23 @@ function solve_graph(exprs, non_parameters::Set{Symbol})
   end
 end
 
+"compute the weight of a `carr` as the extra parameters add during inversion"
+function compute_weights(original, inverted)
+  length(⬧(inverted)) - length(⬧(original))
+end
+
+"Given both sides of an equality and a symbol, create an arrow that compute the value of it"
+function build_solver(left, right, symbol)
+  inv_left = partial_invert_to(left.carr, symbol)
+  # using the fact that the output of the `forward` is always named `forward_z`
+  # and that was designed to provid composition
+  portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(right.carr)
+                                                    for p2 in ▸(inv_left)
+                                                    if name(p1) == name(p2)])
+  solver = compose_connected_by_name(inv_left, right.carr, portmap)
+  solver, compute_weights(left.carr, inv_left)
+end
+
 "build a `graph` from a set of expression excluding variables in `non_parameters`"
 function build_graph(exprs, non_parameters::Set{Symbol})
   graph = SolverGraph()
@@ -132,14 +149,7 @@ function build_graph(exprs, non_parameters::Set{Symbol})
         SolverEdge(variable, constraint, Inf)
       else
         left, right = symbol ∈ keys(left.names) ? (left, right) : (right, left)
-        inv_left = partial_invert_to(left.carr, symbol)
-        weight = (⬧(inv_left) |> length) - (⬧(left.carr) |> length)
-        # using the fact that the output of the `forward` is always named `forward_z`
-        # and that was designed to provid composition
-        portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(right.carr)
-                                                          for p2 in ▸(inv_left)
-                                                          if name(p1) == name(p2)])
-        solver = compose_share_by_name(inv_left, right.carr, portmap)
+        solver, weight = build_solver(left, right, symbol)
         SolverEdge(variable, constraint, weight, solver)
       end
       push!(variable.edges, edge)
@@ -228,12 +238,12 @@ function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverS
   end
 end
 
-"If a `constraint` contains a single edge, solve that edge, and recurse"
+"If a `constraint` contains a single edge, solve that edge, and recur"
 function propagate!(graph::SolverGraph, 
                     constraint::SolverConstraint, 
                     solution::SolverSolution)
   if length(constraint.edges) == 1
     edge = first(constraint.edges)
-    solve!(graph, edge, solution)
+    edge.weight == 0 ? solve!(graph, edge, solution) : nothing
   end
 end

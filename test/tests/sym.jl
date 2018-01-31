@@ -201,9 +201,9 @@ function test_solve_twoxy_plus_x_arr()
   wired, wirer = Arrows.solve_md2(inv_carr)
   x, y = rand(2)
   expected = carr(x, y)
-  @test_broken filter(is(θp), ▸(wired)) |> length == 2
+  @test filter(is(θp), ▸(wired)) |> length == 3
   @test in_θ(wired) |> length < in_θ(inv_carr) |> length
-  @test_broken carr(wired(expected, rand(2)...)...) ≈ expected 
+  @test_broken carr(wired(expected..., rand(3)...)...) ≈ expected 
 end
 
 test_solve_xy_plus_x()

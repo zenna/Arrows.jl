@@ -59,7 +59,7 @@ end
 <<(f, g) = compose(f, g)
 
 """Compose with shared inputs by name"""
-function compose_share_by_name(f::Arrow,
+function compose_connected_by_name(f::Arrow,
   g::Arrow,
   portmap::PortMap=composeall(f, g),
   arr_name=composename(f, g))
