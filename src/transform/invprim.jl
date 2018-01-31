@@ -239,3 +239,15 @@ end
 # function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbValues)
 #   SourceArrow(true), Dict(1 => 1)
 # end
+
+function inv(arr::Arrows.SqrArrow, sarr::SubArrow,  abvals::IdAbValues)
+  function inv_sqr()
+    carr = CompArrow(:inv_sqr, [:z, :θsqr], [:x])
+    z, θsqr, x = ⬨(carr)
+    addprop!(θp, deref(θsqr))
+    sqrt(z) * θsqr ⥅ x
+    carr
+  end
+  
+  unary_inv(arr, const_in(arr, abvals), inv_sqr, Dict(1 => 3, 2 => 1))
+end

@@ -56,7 +56,7 @@ end
 test_mod_invert()
 
 
-function  test_div_ivnert()
+function  test_div_invert()
   carr = CompArrow(:div_test, [:x], [:z])
   x, z = ⬨(carr)
   10 / x ⥅ z
@@ -64,3 +64,15 @@ function  test_div_ivnert()
   @test inv_carr(carr(5)) ≈ 5
   @test inv_carr(2) ≈ 5 
 end
+
+
+test_div_invert()
+
+function test_sqr_invert()
+  carr = Arrows.wrap(SqrArrow())
+  inv_carr = carr |> invert
+  @test inv_carr(100, 1) ≈ 10
+  @test inv_carr(100, -1) ≈ -10
+end
+
+test_sqr_invert()
