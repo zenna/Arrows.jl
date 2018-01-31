@@ -1,5 +1,4 @@
 using Arrows
-using Arrows.TestArrows
 using Base.Test
 
 function pre_test(arr::Arrow)

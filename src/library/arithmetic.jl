@@ -93,6 +93,17 @@ name(::ModArrow)::Symbol = :%
 struct IntDivArrow <: PrimArrow end
 name(::IntDivArrow)::Symbol = :div
 
+"div(x, y) Integer multiplication"
+struct IntMulArrow <: PrimArrow end
+name(::IntMulArrow)::Symbol = :mul_arr
+
+function mul_arr(x::Arrows.AbstractPort, y::Arrows.AbstractPort)
+  IntMulArrow()(x, y)
+end
+
+mul_arr(x::Int, y::Int) = x * y
+
+
 "ceil(x)"
 struct CeilArrow <: PrimArrow end
 name(::CeilArrow)::Symbol = :ceil
@@ -112,6 +123,7 @@ ArithArrow = Union{AddArrow,
                   SubtractArrow,
                   DivArrow,
                   IntDivArrow,
+                  IntMulArrow,
                   MulArrow,
                   ExpArrow,
                   LogArrow,
@@ -139,7 +151,7 @@ to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       CosArrow, ACosArrow, SqrtArrow, SqrArrow,
                       AbsArrow, LogBaseArrow, NegArrow, CeilArrow,
                       FloorArrow,]
-to_binary_functions = [AddArrow, DivArrow, SubtractArrow,
+to_binary_functions = [AddArrow, DivArrow, SubtractArrow, IntMulArrow,
                       MulArrow, MinArrow, MaxArrow, ModArrow]
 codes_unary = map(f -> expander_prop(unary_arith_props, f), to_unary_functions)
 codes_binary = map(f -> expander_prop(bin_arith_props, f), to_binary_functions)

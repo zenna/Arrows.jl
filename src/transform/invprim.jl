@@ -60,7 +60,7 @@ function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbVals)
   binary_inv(arr,
              const_in(arr, abvals),
              inv_sub,
-             AddArrow,
+             SubtractArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              AddArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
@@ -74,6 +74,17 @@ function inv(arr::MulArrow, sarr::SubArrow, idabv::IdAbVals)
              DivArrow,
              Dict(1 => 2, 2 => 3, 3 => 1),
              DivArrow,
+             Dict(1 => 3, 2 => 2, 3 => 1))
+end
+
+function inv(arr::IntMulArrow, sarr::SubArrow, idabv::IdAbVals)
+  # @show idabv
+  binary_inv(arr,
+             const_in(arr, idabv),
+             inv_mul,
+             IntDivArrow,
+             Dict(1 => 2, 2 => 3, 3 => 1),
+             IntDivArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
 end
 
@@ -102,7 +113,7 @@ function inv(arr::ModArrow, sarr::SubArrow, idabv::IdAbVals)
   carr = CompArrow(:inv_modulo, [:z, :y, :θmod], [:x])
   z, y, θ, x = ⬨(carr)
   addprop!(θp, deref(θ))
-  (z + θ * y) ⥅ x
+  (z + mul_arr(θ, y)) ⥅ x
   carr, Dict(1=>4,2=>2, 3=>1)
 end
 
@@ -120,7 +131,7 @@ function inv(arr::DivArrow,
   binary_inv(arr,
              const_in(arr, abvals),
              inv_div,
-             MulArrow,
+             DivArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              MulArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
@@ -239,3 +250,15 @@ end
 # function inv(arr::AssertArrow, sarr::SubArrow, abvals::IdAbVals)
 #   SourceArrow(true), Dict(1 => 1)
 # end
+
+function inv(arr::Arrows.SqrArrow, sarr::SubArrow,  abvals::IdAbVals)
+  function inv_sqr()
+    carr = CompArrow(:inv_sqr, [:z, :θsqr], [:x])
+    z, θsqr, x = ⬨(carr)
+    addprop!(θp, deref(θsqr))
+    sqrt(z) * θsqr ⥅ x
+    carr
+  end
+  
+  unary_inv(arr, const_in(arr, abvals), inv_sqr, Dict(1 => 3, 2 => 1))
+end
