@@ -265,6 +265,7 @@ export
   in_trace_values,
   out_trace_values,
   @grab,
+  @req,
   n▸,
   n◂,
   ▸,
