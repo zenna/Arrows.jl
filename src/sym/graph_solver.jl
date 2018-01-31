@@ -104,11 +104,9 @@ Graph algorithm
 function solve_graph(exprs, non_parameters::Set{Symbol})
   graph = build_graph(exprs, non_parameters::Set{Symbol})
   solution = SolverSolution()
-  foreach(graph.constraints) do constraint
-   propagate!(graph, constraint, solution)
-  end
   while !isempty(graph.variables)
-    modified = solve_nonzero!(graph, solution)
+    modified = solve_single_variable!(graph, solution)
+    modified = modified || solve_nonzero!(graph, solution)
     modified = modified || solve_single_constraint!(graph, solution)
     modified = modified || mark_highest_degree!(graph, solution)
   end
@@ -159,6 +157,19 @@ function build_graph(exprs, non_parameters::Set{Symbol})
   graph
 end
 
+
+"""This is the cannonical heuristic: when a constraint contains a single incoming
+edge, then we can solve that variable with the constraint """
+function solve_single_variable!(graph::SolverGraph, solution::SolverSolution)
+  for constraint ∈ graph.constraints
+    if length(constraint.edges) == 1
+      solve!(graph, first(constraint.edges), solution)
+      return true
+    end
+  end
+  false
+end
+
 """When a variable is associated with a single constraint, then we should use that 
 constraint to solve the variable"""
 function solve_single_constraint!(graph::SolverGraph, solution::SolverSolution)
@@ -179,7 +190,7 @@ function solve_nonzero!(graph::SolverGraph, solution::SolverSolution)
   end
   for variable in values(graph.variables)
     if length(variable.edges) > 0 && min_weight(variable) > 0
-      remove!(graph, variable, solution)
+      remove!(graph, variable)
       return true
     end
   end
@@ -190,7 +201,7 @@ end
 function mark_highest_degree!(graph::SolverGraph, solution::SolverSolution)
   @pre !isempty(graph.variables)
   var = sort(graph.variables |> values |> collect, by=v->length(v.edges))[end]
-  remove!(graph, var, solution)
+  remove!(graph, var)
   true
 end
 
@@ -204,7 +215,7 @@ function solve!(graph::SolverGraph,
   solution[variable] = constraint
   variable.solution = edge
   remove!(graph, constraint)
-  remove!(graph, variable, solution)  
+  remove!(graph, variable)
 end
 
 "remove `constraint` from `graph`"
@@ -216,9 +227,8 @@ function remove!(graph::SolverGraph, constraint::SolverConstraint)
 end
 
 """Removing a `variable` from the graph propagate the knowledge about it"""
-function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverSolution)
+function remove!(graph::SolverGraph, variable::SolverVariable)
   pop!(graph.variables, variable.name)
-  to_propagate = []
   for edge ∈ variable.edges
     constraint = edge.constraint
     to_remove = filter(constraint.edges) do e
@@ -229,21 +239,5 @@ function remove!(graph::SolverGraph, variable::SolverVariable, solution::SolverS
       warn("Possible incompatible constraint: $(constraint)")
       remove!(graph, constraint)
     end
-    if length(constraint.edges) == 1
-      push!(to_propagate, constraint)
-    end
-  end
-  for constraint ∈ to_propagate
-    propagate!(graph, constraint, solution)
-  end
-end
-
-"If a `constraint` contains a single edge, solve that edge, and recur"
-function propagate!(graph::SolverGraph, 
-                    constraint::SolverConstraint, 
-                    solution::SolverSolution)
-  if length(constraint.edges) == 1
-    edge = first(constraint.edges)
-    edge.weight == 0 ? solve!(graph, edge, solution) : nothing
   end
 end

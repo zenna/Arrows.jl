@@ -183,7 +183,7 @@ end
 
 
 "Solve constraints and create a composed arrows witht the solution"
-function solve_md2(carr::CompArrow,
+function solve_scalar(carr::CompArrow,
                    context = Dict{Symbol, Any}(),
                    initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)

@@ -234,6 +234,7 @@ export
 
   # Symbolic Execution
   all_constraints,
+  solve_scalar,
 
   sqr,
   mean_arr,
