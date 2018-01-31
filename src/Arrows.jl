@@ -48,7 +48,7 @@ import Spec: @pre, @invariant
 
 import Base: convert, union, first, ndims, print, println, string, show,
   showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
-  map, mean
+  map, mean, div
 import Base: getindex, setindex!
 
 import Base: is, in
@@ -69,6 +69,7 @@ import Base:  ^,
               ⊻,
               !,
               %,
+              div,
               cos,
               acos,
               sin,
@@ -178,6 +179,8 @@ export
   EqualArrow,
   SubtractArrow,
   DivArrow,
+  IntDivArrow,
+  IntMulArrow,
   IdentityArrow,
   ExpArrow,
   NegArrow,
@@ -207,6 +210,10 @@ export
   addn,
   gather_nd,
   scatter_nd,
+  
+  # integer
+  mul_arr,
+  div,
 
   # extra arrows
   md2box,
