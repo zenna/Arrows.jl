@@ -54,3 +54,13 @@ end
 
 
 test_mod_invert()
+
+
+function  test_div_ivnert()
+  carr = CompArrow(:div_test, [:x], [:z])
+  x, z = ⬨(carr)
+  10 / x ⥅ z
+  inv_carr = carr |> invert
+  @test inv_carr(carr(5)) ≈ 5
+  @test inv_carr(2) ≈ 5 
+end

@@ -153,7 +153,7 @@ function test_solve_xy_plus_x()
   x, y, θ = rand(3)
   expected = carr(x, y)
   @test in_θ(wired) |> length == 1
-  @test carr(wired(expected, θ)...) == expected 
+  @test carr(wired(expected, θ)...) ≈ expected 
 end
 
 
@@ -165,7 +165,7 @@ function test_solve_triple_add()
   expected = carr(x, y)
   θ2 = expected/2
   @test_broken in_θ(wired) |> length == 1
-  @test carr(wired(expected, θ1, θ2)...) == expected 
+  @test carr(wired(expected, θ1, θ2)...) ≈ expected 
 end
 
 function test_solve_nested_core()

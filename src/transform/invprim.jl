@@ -60,7 +60,7 @@ function inv(arr::SubtractArrow, sarr::SubArrow, abvals::IdAbValues)
   binary_inv(arr,
              const_in(arr, abvals),
              inv_sub,
-             AddArrow,
+             SubtractArrow,
              Dict(1 => 1, 2 => 3, 3 => 2),
              AddArrow,
              Dict(1 => 3, 2 => 2, 3 => 1))
