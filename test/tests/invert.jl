@@ -122,4 +122,4 @@ function test_lessthan_inv()
   @test carr(inv_carr(false, 1, -4)...) == false
 end
 
-test_greaterthan_inv()
+test_lessthan_inv()
