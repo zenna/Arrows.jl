@@ -73,119 +73,6 @@ function forward(expr)
   @NT(names = names, carr = carr, expr = expr)
 end
 
-function solve_to(variable::Symbol, left, right)
-  @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
-  @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
-  inv_right = partial_invert_to(right.carr, variable)
-  # using the fact that the output of the `forward` is always named `forward_z`
-  # and that was designed to provid composition
-  portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
-                                                     for p2 in ▸(inv_right)
-                                                     if name(p1) == name(p2)])
-  answer = Arrows.compose_share_by_name(inv_right, left.carr, portmap)
-end
-
-function build_mappings(exprs, non_parameters::Set{Symbol})
-  var_to_expr = DefaultDict(Set)
-  expr_to_var = DefaultDict(Set)
-  for expr ∈ exprs
-    !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
-    variables = expr |> collect_symbols |> keys
-    for variable ∈ variables
-      (variable ∈ non_parameters) && continue
-      push!(var_to_expr[variable], expr)
-      push!(expr_to_var[expr], variable)
-    end
-  end
-  var_to_expr, expr_to_var
-end
-
-"""This function creates a bipartite graph. Nodes on the left are
-variables and nodes on the right are expressions. An edge means that
-a variable is present in the expression.
-We choose expressions with a single edge, and use the variable that
-this edge represents. Then we remove the edges associated with that variable.
-When no expression contains a single edge, we arbitrarily choose the variable
-with the largest amount of edges, and continue"""
-function matching(v_to_e, e_to_v)
-  v_to_e, e_to_v = map(deepcopy, (v_to_e, e_to_v))
-  answer = Dict()
-  run = true
-  function remove_var!(var, expr)
-    # remove `var` from each other expression
-    for other ∈ v_to_e[var]
-      var ∈ e_to_v[other] && pop!(e_to_v[other], var)
-    end
-    # remove `expr` from other variables containing it
-    for other ∈ get(e_to_v, expr, Set())
-      expr ∈ v_to_e[other] && pop!(v_to_e[other], expr)
-    end
-    pop!(v_to_e, var)
-  end
-  function add_pair(var, expr)
-    @assert var ∉ keys(answer)
-    left, right = map(forward, expr.args[2:end])
-    names = merge(left.names, right.names)
-    if names[var] != 1
-      # There are things we cannot solve:
-      # When a variable appears multiple times in a constraint
-      # So, if we find that we should be able to solve a variable from a
-      # constraint, we skip that.
-      pop!(e_to_v, expr)
-      return false
-    end
-    answer[var] = (left, right)
-    remove_var!(var, expr)
-    true
-  end
-  while run
-    run = false
-    for (expr,vars) ∈ e_to_v
-      if length(vars) == 1
-        var = pop!(vars)
-        run = add_pair(var, expr) ? true : run
-      end
-    end
-    ## when we found nothing, we need to do some heuristics
-    ## 1) If a variable is related to a single expression, we can pick
-    ## that (var, expression). We now that it's not going to be inefficient as
-    ## if other variables were in that expression, their cannot depend on this one
-    ## as this variable is related to a single expression.
-    if !run && length(v_to_e) > 0
-      for (var, exprs) ∈ v_to_e
-        if length(exprs) == 1
-          expr = pop!(exprs)
-          run = add_pair(var, expr) ? true : run
-        end
-      end
-    end
-    ## When nothing else worked, pick a variable according to its degree
-    if !run && length(v_to_e) > 0
-      var = sort(collect(v_to_e), by=x->length(x[2]))[end][1]
-      answer[var] = nothing
-      remove_var!(var, nothing)
-      run = true
-    end
-  end
-  answer, v_to_e, e_to_v
-end
-
-"solve expressions using bipartite matching"
-function solve_expressions(exprs, non_parameters::Set{Symbol})
-  var_to_expr, expr_to_var = build_mappings(exprs, non_parameters)
-  matchs, var_to_expr, expr_to_var = matching(var_to_expr, expr_to_var)
-  arrows = []
-  for (var, pair) ∈ matchs
-    isa(pair, Void) && continue
-    left, right = pair
-    if var ∈ keys(left.names)
-      left, right = right, left
-    end
-    push!(arrows, solve_to(var, left, right))
-  end
-  arrows
-end
-
 "create a wirer for the solved constraints"
 function create_wirer(arrows)
   carr = CompArrow(gensym(:wirer), 0, 0)
@@ -303,7 +190,7 @@ function solve_md2(carr::CompArrow,
   non_parameters = map(port_sym_name, filter(!is(θp), ▸(carr)))
   non_parameters = Set{Symbol}(non_parameters)
   exprs = rewrite_exprs(info.exprs, context)
-  arrs = solve_expressions(exprs, non_parameters)
+  arrs = solve_graph(exprs, non_parameters)
   wirer = arrs |> create_wirer
   wire(carr, [wirer,]), wirer
 end

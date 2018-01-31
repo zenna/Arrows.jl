@@ -44,6 +44,7 @@ end
 mutable struct SolverVariable <: SolverElement
   name::Symbol
   edges::Set{SolverEdge}
+  solution::SolverEdge
   function SolverVariable(name)
     v = new()
     v.name = name
@@ -111,7 +112,9 @@ function solve_graph(exprs, non_parameters::Set{Symbol})
     modified = modified || solve_single_constraint!(graph, solution)
     modified = modified || mark_highest_degree!(graph, solution)
   end
-  solution
+  map(solution |> keys) do variable
+    variable.solution.carr
+  end
 end
 
 "build a `graph` from a set of expression excluding variables in `non_parameters`"
@@ -189,6 +192,7 @@ function solve!(graph::SolverGraph,
   variable, constraint = edge.variable, edge.constraint
   @pre variable ∉ keys(solution)
   solution[variable] = constraint
+  variable.solution = edge
   remove!(graph, constraint)
   remove!(graph, variable, solution)  
 end
