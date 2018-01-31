@@ -41,7 +41,6 @@ function nmfromtabv(tabv::Arrows.TraceAbVals, arr::Arrow)::NmAbVals
   tsprts_set = map(Arrows.trace_sub_ports, keys(tabv))
   ids = Int[]
   for sprt in ⬨(arr)
-    @show deref(sprt)
     idx = findfirst(tsprts_set) do tsprts
       sprt ∈ map(Arrows.sub_port, tsprts)
     end

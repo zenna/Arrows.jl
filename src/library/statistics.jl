@@ -60,7 +60,8 @@ struct ReduceSumArrow <: PrimArrow
 end
 name(::ReduceSumArrow) = :reduce_sum
 props(::ReduceSumArrow) = [Props(true, :x, Any), Props(false, :y, Any)]
-reduce_sum(xs::SubPort; axis=nothing) = ReduceSumArrow(axis, false)(xs)
+reduce_sum(xs::SubPort; axis=nothing, keepdims=false) =
+  ReduceSumArrow(axis, keepdims)(xs)
 reduce_sum(xs::Array, axis) = sum(xs, axis)
 abinterprets(::ReduceSumArrow) = [sizeprop]
 function sizeprop(arr::ReduceSumArrow, idabv::IdAbVals)::IdAbVals

@@ -83,6 +83,11 @@ name(port::Port) = name(props(port))
 "Symbol name of `prt`"
 port_sym_name(prt::Port) = name(prt).name
 
+# FIXME: Unecessary functions, deprecate / Move these elsewhere
+port_sym_names(arr::Arrow) = port_sym_name.(ports(arr))
+in_port_sym_names(arr::Arrow) = port_sym_name.(in_ports(arr))
+out_port_sym_names(arr::Arrow) = port_sym_name.(out_ports(arr))
+
 ## Label ##
 describe(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 
