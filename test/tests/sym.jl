@@ -142,4 +142,73 @@ function pre_test(arr::Arrow)
   arr
 end
 
-foreach(Arrows.all_constraints ∘ pre_test ∘ invert, plain_arrows())
+foreach(Arrows.all_constraints ∘ pre_test ∘ invert, TestArrows.plain_arrows())
+
+in_θ(arr) = filter(is(θp), ▸(arr))
+## Test solving scalar constraints
+function test_solve_xy_plus_x()
+  carr = TestArrows.xy_plus_x_arr()
+  inv_carr = carr |> Arrows.invert
+  wired, wirer = Arrows.solve_scalar(inv_carr)
+  x, y, θ = rand(3)
+  expected = carr(x, y)
+  @test in_θ(wired) |> length == 1
+  @test carr(wired(expected, θ)...) ≈ expected 
+end
+
+
+function test_solve_triple_add()
+  carr = TestArrows.triple_add()
+  inv_carr = carr |> Arrows.invert
+  wired, wirer = Arrows.solve_scalar(inv_carr)
+  x, y, θ1 = rand(3)
+  expected = carr(x, y)
+  θ2 = expected/2
+  @test_broken in_θ(wired) |> length == 1
+  @test carr(wired(expected, θ1, θ2)...) ≈ expected 
+end
+
+function test_solve_nested_core()
+  carr = TestArrows.nested_core()
+  inv_carr = carr |> Arrows.invert
+  wired, wirer = Arrows.solve_scalar(inv_carr)
+  x = rand()
+  θ = rand(1:16)
+  expected = carr(x)
+  @test in_θ(wired) |> length == 1
+  @test carr(wired(expected, θ)...) ≈ expected 
+end
+
+
+
+function test_solve_ifelsesimple()
+  carr = TestArrows.ifelsesimple()
+  inv_carr = carr |> Arrows.invert
+  wired, wirer = Arrows.solve_scalar(inv_carr)
+  a, b, c, d = rand(4)
+  θs = Array{Any,1}()
+  [push!(θs, rand()) for i in 1:4]
+  θs[3] = false
+  expected = carr(a, b, c, d)
+  @test in_θ(wired) |> length == 4
+  @test carr(wired(expected, θs...)...) ≈ expected 
+end
+
+
+function test_solve_twoxy_plus_x_arr()
+  carr = TestArrows.twoxy_plus_x_arr()
+  inv_carr = carr |> Arrows.invert
+  wired, wirer = Arrows.solve_scalar(inv_carr)
+  x, y = rand(2)
+  expected = carr(x, y)
+  @test filter(is(θp), ▸(wired)) |> length == 3
+  @test in_θ(wired) |> length < in_θ(inv_carr) |> length
+  @test_broken carr(wired(expected..., rand(3)...)...) ≈ expected 
+end
+
+test_solve_xy_plus_x()
+test_solve_triple_add()
+test_solve_nested_core()
+test_solve_ifelsesimple()
+test_solve_twoxy_plus_x_arr()
+

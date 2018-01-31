@@ -60,44 +60,12 @@ function partial_invert_to(carr_original, target)
     end
   end
   inverted = Arrows.invert(carr, partial_invert, sprtabvals)
-  @assert num_ports(carr_original) == num_ports(inverted)
   inverted
 end
 
 #TODO: Compute this dynamically
-valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs])
-"find a variable to solve for, and compute the solution to that"
-function solve_expression_naive(expr, computed, arrows)
-  if !isempty(setdiff(collect_calls(expr), valid_calls))
-    warn("cannot solve constraint: $(expr)")
-    return
-  end
-  names = collect_symbols(expr)
-  for variable ∈ setdiff(names, computed)
-    String(variable)[1] == 'z' && continue
-    left, right = map(forward, expr.args[2:end])
-    if variable ∈ left.names && variable ∈ right.names
-      warn("skipping: $expr")
-      continue
-    end
-    if variable ∈ left.names
-      left, right = right, left
-    end
-    arr = solve_to(variable, left, right)
-    push!(computed, variable)
-    return arrows[variable] = arr
-  end
-  warn("cannot solve constraint: $(expr)")
-end
+valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs, :/])
 
-function solve_expressions_naive(exprs)
-  computed = Set{Symbol}()
-  arrows = Dict{Symbol, Arrow}()
-  foreach(exprs) do expr
-    solve_expression_naive(expr, computed, arrows)
-  end
-  arrows
-end
 
 function forward(expr)
   names = collect_symbols(expr)
@@ -105,110 +73,20 @@ function forward(expr)
   @NT(names = names, carr = carr, expr = expr)
 end
 
-function solve_to(variable::Symbol, left, right)
-  @assert isempty(setdiff(collect_calls(left.expr), valid_calls))
-  @assert isempty(setdiff(collect_calls(right.expr), valid_calls))
-  inv_right = partial_invert_to(right.carr, variable)
-  portmap = Dict{Arrows.Port, Arrows.Port}([p1 => p2 for p1 in ◂(left.carr)
-                                                     for p2 in ▸(inv_right)
-                                                     if name(p1) == name(p2)])
-  Arrows.compose(inv_right, left.carr, portmap)
-end
-
-function build_mappings(exprs)
-  var_to_expr = DefaultDict(Set)
-  expr_to_var = DefaultDict(Set)
-  for expr ∈ exprs
-    !isempty(setdiff(collect_calls(expr), valid_calls)) && continue
-    variables = expr |> collect_symbols |> keys
-    for variable ∈ variables
-      String(variable)[1] == 'z' && continue
-      push!(var_to_expr[variable], expr)
-      push!(expr_to_var[expr], variable)
-    end
-  end
-  var_to_expr, expr_to_var
-end
-
-"""This function creates a bipartite graph. Nodes on the left are
-variables and nodes on the right are expressions. An edge means that
-a variable is present in the expression.
-We choose expressions with a single edge, and use the variable that
-this edge represents. Then we remove the edges associated with that variable.
-When no expression contains a single edge, we arbitrarily choose the variable
-with the largest amount of edges, and continue"""
-function matching(v_to_e, e_to_v)
-  v_to_e, e_to_v = map(deepcopy, (v_to_e, e_to_v))
-  answer = Dict()
-  run = true
-  function remove_var(var, expr)
-    for other ∈ v_to_e[var]
-      var ∈ e_to_v[other] && pop!(e_to_v[other], var)
-    end
-    pop!(v_to_e, var)
-  end
-  while run
-    run = false
-    for (expr,vars) ∈ e_to_v
-      if length(vars) == 1
-        var = pop!(vars)
-        @assert var ∉ keys(answer)
-        left, right = map(forward, expr.args[2:end])
-        names = merge(left.names, right.names)
-        if names[var] != 1
-          # There are things we cannot solve:
-          # When a variable appears multiple times in a constraint
-          # So, if we find that we should be able to solve a variable from a
-          # constraint, we skipt that.
-          pop!(e_to_v, expr)
-          continue
-        end
-        run = true
-        answer[var] = (left, right)
-        remove_var(var, expr)
-      end
-    end
-    if !run && length(v_to_e) > 0
-      var = sort(collect(v_to_e), by=x->length(x[2]))[end][1]
-      answer[var] = nothing
-      remove_var(var, nothing)
-      run = true
-    end
-  end
-  answer, v_to_e, e_to_v
-end
-
-"solve expressions using bipartite matching"
-function solve_expressions(exprs)
-  var_to_expr, expr_to_var = build_mappings(exprs)
-  matchs, var_to_expr, expr_to_var = matching(var_to_expr, expr_to_var)
-  arrows = []
-  for (var, pair) ∈ matchs
-    isa(pair, Void) && continue
-    left, right = pair
-    if var ∈ keys(left.names)
-      left, right = right, left
-    end
-    push!(arrows, solve_to(var, left, right))
-  end
-  arrows
-end
-
 "create a wirer for the solved constraints"
 function create_wirer(arrows)
   carr = CompArrow(gensym(:wirer), 0, 0)
   sports = Dict()
-  actual_name = x->(x |> deref |> name).name
   sarrs = map(arrows) do arr
     sarr = Arrows.add_sub_arr!(carr, arr)
     sport = ◃(sarr, 1)
-    sports[sport |> actual_name] = sport
+    sports[sport |> port_sym_name] = sport
     Arrows.link_to_parent!(sport)
     sarr
   end
   foreach(sarrs) do sarr
     foreach(▹(sarr)) do dst
-      var = dst |> actual_name
+      var = dst |> port_sym_name
       if var ∉ keys(sports)
         sports[var] = Arrows.add_port_like!(carr, dst |> deref) |> sub_port
       end
@@ -232,18 +110,17 @@ end
 function compose_by_name(solvers)
   wired = CompArrow(gensym(:wired), 0, 0)
   add = x->add_sub_arr!(wired, x)
-  actual_name = x-> x |> deref |> name
   sarrs = map(add, solvers)
   in_, out_ = Dict(), Dict()
   for sarr ∈ sarrs
     for sprt ∈ ⬨(sarr)
       d = is_in_port(sprt) ? in_ : out_
-      d[actual_name(sprt)] = sprt
+      d[port_sym_name(sprt)] = sprt
     end
   end
   for sarr ∈ sarrs
     for sprt ∈ ▹(sarr)
-      moniker = sprt |> actual_name
+      moniker = sprt |> port_sym_name
       if moniker ∉ keys(out_)
         out_[moniker] = add_port_like!(wired, sprt |> deref) |> sub_port
       end
@@ -306,18 +183,23 @@ end
 
 
 "Solve constraints and create a composed arrows witht the solution"
-function solve_md2(carr::CompArrow, initprops = SprtAbValues())
+function solve_scalar(carr::CompArrow,
+                   context = Dict{Symbol, Any}(),
+                   initprops = SprtAbValues())
   info = Arrows.constraints(carr, initprops)
-  wirer = info.exprs |> solve_expressions |> create_wirer
+  non_parameters = map(port_sym_name, filter(!is(θp), ▸(carr)))
+  non_parameters = Set{Symbol}(non_parameters)
+  exprs = rewrite_exprs(info.exprs, context)
+  arrs = solve_graph(exprs, non_parameters)
+  wirer = arrs |> create_wirer
   wire(carr, [wirer,]), wirer
 end
 
 
 function find_unsolved_constraints(carr, inv_carr, wirer, context)
-  actual_name = x->name(x).name
   function add_from_output!(arr, inputs)
     for (p, o) ∈ zip(◂(arr), arr(inputs...))
-      context[p |> actual_name] = o
+      context[port_sym_name(p)] = o
     end
   end
   ## Populate the context with the output of the forward on
@@ -325,13 +207,7 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
   add_from_output!(carr, 1:16)
 
   # Create inputs to arrow if not in context
-  add_if_absent = function (p)
-    n_ = p |> actual_name
-    if n_ ∉ keys(context)
-      context[n_] = 0x19
-    end
-    context[n_]
-  end
+  add_if_absent = p -> get!(context, port_sym_name(p), 0x19)
   inputs = map(add_if_absent, ▸(wirer))
   add_from_output!(wirer, inputs)
   foreach(add_if_absent, ▸(inv_carr))
@@ -341,11 +217,19 @@ function find_unsolved_constraints(carr, inv_carr, wirer, context)
     set = try
       Arrows.generate_function(context, expr) ? solved : unsolved
     catch y
+      warn("expression $(expr) failed to run with exception $y")
       unsolved
     end
     push!(set, expr)
   end
   solved, unsolved, context
+end
+
+function rewrite_exprs(exprs, context)
+  rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
+  rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)
+  rewrite(x) = x
+  map(rewrite, exprs)
 end
 
 function rewrite_exprs(exprs, basic_context, wirer)
@@ -359,10 +243,7 @@ function rewrite_exprs(exprs, basic_context, wirer)
   for (idx, port) in enumerate(name.(◂(wirer)))
     context[port.name] = outs[idx] |> Arrows.as_expr
   end
-  rewrite(x::Symbol) = x ∈ keys(context) ? context[x] : x
-  rewrite(x::Expr) = Expr(x.head, map(rewrite, x.args)...)
-  rewrite(x) = x
-  map(rewrite, exprs)
+  rewrite_exprs(exprs, context)
 end
 
 function solve_with_ifelse(unsatisfied, context, wirer)

@@ -59,9 +59,7 @@ evaluation on each element of the matrix."""
 function prim_sym_interpret(parr::PrimArrow, args::SymbolicType...)::Vector{SymbolicType}
   @assert num_out_ports(parr) == 1
   ## TODO: only for scalars
-  @grab args
   f = (function_args...)-> Expr(:call, name(parr), function_args...)
-  @grab parr
   ex = [f.(args...),]
 end
 
@@ -117,9 +115,12 @@ function  prim_sym_interpret(::Arrows.ReshapeArrow, data::SymbolicType,
   [expr,]
 end
 
-function prim_sym_interpret(::ScatterNdArrow, z, indices, shape)
+function prim_sym_interpret(::ScatterNdArrow, 
+                            z::SymbolicType, 
+                            indices::SymbolicType, 
+                            shape::SymbolicType)
   arrayed_sym = prim_scatter_nd(SymbolProxy(z), indices, shape,
-                          SymPlaceHolder())
+                          SymPlaceHolder(), SymbolicType)
   [arrayed_sym,]
 end
 

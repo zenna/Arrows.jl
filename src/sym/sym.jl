@@ -89,7 +89,6 @@ end
 
 function sym_interpret(parr::PrimArrow, args::Vector{RefinedSym})::Vector
   vars = [as_expr(arg) for arg in args]
-  @show vars
   outputs = prim_sym_interpret(parr, vars...)
 
   # Find predicates from all outputs and conjoin constraints

@@ -58,6 +58,40 @@ end
 "Right compose: g >> f. (g ∘ f)"
 <<(f, g) = compose(f, g)
 
+"""Compose with shared inputs by name"""
+function compose_connected_by_name(f::Arrow,
+  g::Arrow,
+  portmap::PortMap=composeall(f, g),
+  arr_name=composename(f, g))
+carr = CompArrow(arr_name)
+fsarr = add_sub_arr!(carr, f)
+gsarr = add_sub_arr!(carr, g)
+for (gport, fport) in portmap
+  gsport = sub_port(gsarr, gport)
+  fsport = sub_port(fsarr, fport)
+  gsport ⥅ fsport
+end
+ports = Dict{Name, SubPort}()
+for gport in ▹(gsarr)
+  newport = link_to_parent!(gport)
+  ports[name(newport)] = sub_port(newport)
+end
+for fport in ▹(fsarr)
+  if loose(fport)
+    nm = fport |> deref |> name
+    if nm ∈ keys(ports)
+      ports[nm] ⥅ fport
+    else
+      link_to_parent!(fport)
+    end
+  end
+end
+
+link_to_parent!(fsarr, is_out_port ∧ loose)
+link_to_parent!(gsarr, is_out_port ∧ loose)
+carr
+end
+
 """Create a stack of arrows, inputs in order"""
 function stack(arrs::Vararg{<:Arrow})::CompArrow
   carr = CompArrow(:stack)
