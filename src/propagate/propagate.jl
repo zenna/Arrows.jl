@@ -217,6 +217,7 @@ isrecursive(carr::CompArrow) = false # FIXME: Implement
 "Convenience for specifying abstraact values for subports on root"
 function traceprop!(carr::CompArrow, nmabv::NmAbVals)
   @pre !isrecursive(carr)
+  @pre all([nm in port_sym_names(carr) for nm in keys(nmabv)])
   tparent = TraceParent(carr)
   sprtabv = SprtAbVals(⬨(carr, nm) => abv for (nm, abv) in nmabv)
   traceprop!(carr, sprtabv)
