@@ -83,6 +83,12 @@ name(port::Port) = name(props(port))
 "Symbol name of `prt`"
 port_sym_name(prt::Port) = name(prt).name
 
+"Position of `prt` in out_ports of its arrow"
+pos_in_out_ports(prt::Port) = findfirst(◂(prt.arrow), prt)
+
+"Position of prt in its in ports of its arrow"
+pos_in_in_ports(prt::Port) = findfirst(▸(prt.arrow), prt)
+
 # FIXME: Unecessary functions, deprecate / Move these elsewhere
 port_sym_names(arr::Arrow) = port_sym_name.(ports(arr))
 in_port_sym_names(arr::Arrow) = port_sym_name.(in_ports(arr))
