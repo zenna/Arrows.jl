@@ -111,6 +111,8 @@ function cycle_abinterprets(arr::PrimArrow, idabv::IdAbVals)
   while !atfixedpoint
     atfixedpoint = true
     for abinterpret in abinterprets
+      @grab arr
+      @grab idabv
       subabv::IdAbVals = abinterpret(arr, idabv)
       # @show subabv
       # Do resolution on each Value
@@ -178,6 +180,7 @@ function traceprop!(carr::CompArrow,
     tarrid == 0 && break
     tarr = tarrs[tarrid]
     lastapply[tarr] = t
+    @grab tarr
     # An abinterpret abstract evaluator is a function which applies f to concrete domains
     parr = deref(tarr)
     @assert isa(parr, PrimArrow)

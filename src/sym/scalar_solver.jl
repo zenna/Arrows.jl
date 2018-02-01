@@ -185,7 +185,7 @@ end
 "Solve constraints and create a composed arrows witht the solution"
 function solve_scalar(carr::CompArrow,
                    context = Dict{Symbol, Any}(),
-                   initprops = SprtAbValues())
+                   initprops = SprtAbVals())
   info = Arrows.constraints(carr, initprops)
   non_parameters = map(port_sym_name, filter(!is(θp), ▸(carr)))
   non_parameters = Set{Symbol}(non_parameters)

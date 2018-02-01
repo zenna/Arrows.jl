@@ -1,7 +1,7 @@
 # Little functions without a home
 
 "Comp"
-arrsinside(arr::Arrow) = Set(simpletracewalk(Arrows.name ∘ deref, arr))
+arrsinside(arr::Arrow) = Set(simpletracewalk(deref, arr))
 
 # testpi(fwd::Arrow, invarrow)
 
