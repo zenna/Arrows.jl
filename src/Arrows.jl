@@ -251,6 +251,8 @@ export
   onehot,
   invonehot,
 
+  to_dot,
+
   accumapply,
   trace_value,
   psl,
@@ -376,6 +378,9 @@ include("sym/rewrite.jl")
 include("sym/convenience.jl")
 include("sym/scalar_solver.jl")
 include("sym/graph_solver.jl")
+
+# Utils that requires Arrows
+include("util/to_dot.jl")           # render Arrows using the "dot" file format
 
 # Integration of arrow with julia #
 include("host/overload.jl")
