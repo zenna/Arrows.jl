@@ -15,13 +15,11 @@ mutable struct Props
 end
 
 "Empty properties"
-Props() = Props(@NT()(), Set{DataType}())
+Props() = Props(NamedTuple(), Set{DataType}())
 
 function Props(is_in_port::Bool, name::Symbol, typ::Type)
   dir = is_in_port ? In() : Out()
-  Props(@NT(direction = dir,
-            name = Name(name),
-            typ = Typ(typ)))
+  Props((direction = dir, name = Name(name), typ = Typ(typ)))
 end
 
 labels(prps::Props) = prps.labels
@@ -54,7 +52,7 @@ end
 name(prps::Props) = prps.namedprops.name
 string(nm::Name) = string(nm.name)
 setprop!(nm::Name, prps::Props) =
-  prps.namedprops = merge(@NT(name = nm), prps.namedprops)
+  prps.namedprops = merge((name = nm,), prps.namedprops)
 
 "In or Out?"
 struct Direction <: Prop
@@ -63,7 +61,7 @@ end
 In() = Direction(true)
 Out() = Direction(false)
 setprop!(dir::Direction, prps::Props) =
-  prps.namedprops = merge(@NT(direction = dir), prps.namedprops)
+  prps.namedprops = merge((direction = dir,), prps.namedprops)
 
 direction(prps::Props) = Props.namedprops.direction
 isin(dir::Direction) = dir.isin

@@ -2,12 +2,12 @@
 
 PartialArrow = Union{SqrtArrow, ASinArrow, ACosArrow, InvDuplArrow}
 
-function sub_aprx_totalize{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
+function sub_aprx_totalize2(arr::InvDuplArrow{I}, sarr::SubArrow) where I
   meanarr = MeanArrow(I) >> DuplArrow(I)
   inner_compose!(sarr, meanarr)
 end
 
-function sub_aprx_totalize2{I}(arr::InvDuplArrow{I}, sarr::SubArrow)
+function sub_aprx_totalize(arr::InvDuplArrow{I}, sarr::SubArrow) where I
   meanarr = FirstArrow(I) >> DuplArrow(I)
   inner_compose!(sarr, meanarr)
 end

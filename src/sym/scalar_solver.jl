@@ -1,4 +1,3 @@
-using NamedTuples
 import DataStructures: DefaultDict, counter
 
 collect_symbols(::Any, seen = counter(Symbol)) = seen
@@ -70,7 +69,7 @@ valid_calls = Set([:(==), :⊻, :md2box, :inverse_md2box, :-, :abs, :/])
 function forward(expr)
   names = collect_symbols(expr)
   carr = generate_forward(names |> keys, expr)
-  @NT(names = names, carr = carr, expr = expr)
+  (names = names, carr = carr, expr = expr)
 end
 
 "create a wirer for the solved constraints"

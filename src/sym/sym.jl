@@ -21,7 +21,7 @@ end
 as_expr(sym::SymbolicType) = sym
 
 ""
-as_expr{N}(values::Union{NTuple{N, SymbolicType}, AbstractArray{SymbolicType, N}}) =
+as_expr(values::Union{NTuple{N, SymbolicType}, AbstractArray{SymbolicType, N}}) where N =
   map(as_expr, values)
 
 "(base) expression of `ref`"

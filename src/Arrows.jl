@@ -40,10 +40,9 @@ module Arrows
 
 import LightGraphs; const LG = LightGraphs
 import DataStructures: PriorityQueue, peek, dequeue!, DefaultDict
-import NamedTuples: @NT, NamedTuple
-using NamedTuples
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
+import InteractiveUtils
 import Spec: @pre, @invariant, @post
 
 import Base: convert, union, first, ndims, print, println, string, show,

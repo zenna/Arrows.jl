@@ -133,7 +133,7 @@ function switch(p, x, y)
 end
 
 "`l` s.t. `dict[l] == r`. If many `l` map to `r` output is nondeterminsitic"
-function rev(dict::Associative{L, R}, r::R) where {L, R}
+function rev(dict::AbstractDict{L, R}, r::R) where {L, R}
   for (k, v) in dict
     if v == r
       return k
@@ -161,7 +161,7 @@ function conjoin(preds::Vararg{Function})
   pred_conjunct
 end
 
-"`conjoin` \wedge"
+"`conjoin` ∧"
 ∧ = conjoin
 
 """Disjoin predicates

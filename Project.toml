@@ -1,0 +1,12 @@
+name = "Arrows"
+uuid = "28615714-cdc1-11e8-145a-3908306c3133"
+authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+AutoHashEquals = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
+Spec = "b8ccf107-3a88-5e0f-823b-b838c6a0f327"

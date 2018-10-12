@@ -81,7 +81,7 @@ const ignoretyp = Set([DuplArrow,
                        InvCatArrow,
                        IntToOneHot,
                        OneHotToInt])
-for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, subtypes(PrimArrow))
+for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, InteractiveUtils.subtypes(PrimArrow))
   arr = parrtyp()
   opa = name(arr)
   foreach(eval, overload_codegen(num_in_ports(arr), :SubPort, opa))

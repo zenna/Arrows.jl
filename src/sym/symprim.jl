@@ -3,7 +3,7 @@
 "If inputs satisfy `domainpred`icates then then `arr` is well defined on them"
 domainpreds(::Arrow, args...) = Set{SymbolicType}() # by default assume no constraints
 
-function domainpreds{N}(::InvDuplArrow{N}, x1::SymbolicType, xs::Vararg)
+function domainpreds(::InvDuplArrow{N}, x1::SymbolicType, xs::Vararg) where N
   # All inputs to invdupl must be equal
   symbols = map(xs) do x
     :($(x) == $(x1))
@@ -80,9 +80,13 @@ function prim_sym_interpret(::ExplicitInvBroadcastArrow,
   [invbcasted]
 end
 
-prim_sym_interpret(::BroadcastArrow, x::SymbolicType)::Vector{SymbolicType} = [x,]
-
-function prim_sym_interpret{N}(::DuplArrow{N}, x::SymbolicType)
+function prim_sym_interpret(::BroadcastArrow, x::SymbolicType)::Vector{SymbolicType}
+  @grab y = x
+  @show x
+  @show typeof(x)
+  [x,]
+end
+function prim_sym_interpret(::DuplArrow{N}, x::SymbolicType) where N
   [x  for _ in 1:N]
 end
 
@@ -90,15 +94,15 @@ end
 #                    e::SymbolicType) =
 #   [ifelse.(i, t, e)]
 
-function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg{SymbolicType, N})::Vector{SymbolicType}
+function prim_sym_interpret(::InvDuplArrow{N},
+                            xs::Vararg{SymbolicType, N})::Vector{SymbolicType} where N
   ## XXX: What are the consequences of just taking the first?
 
   [first(xs)]
 end
 
-function prim_sym_interpret{N}(::InvDuplArrow{N},
-                                xs::Vararg)::Vector{SymbolicType}
+function prim_sym_interpret(::InvDuplArrow{N},
+                                xs::Vararg)::Vector{SymbolicType} where N
   [xs |> first,]
 end
 
@@ -124,10 +128,10 @@ function prim_sym_interpret(::ScatterNdArrow,
   [arrayed_sym,]
 end
 
-function prim_sym_interpret{N}(::ReduceVarArrow{N}, xs::Vararg)
+function prim_sym_interpret(::ReduceVarArrow{N}, xs::Vararg) where N
   [s_arrayed([sym_unsym(x) for x in xs], :reduce_var),]
 end
 
-function prim_sym_interpret{N}(::MeanArrow{N}, xs::Vararg)
+function prim_sym_interpret(::MeanArrow{N}, xs::Vararg) where N
   [s_arrayed([sym_unsym(x) for x in xs], :mean),]
 end

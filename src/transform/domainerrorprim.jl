@@ -12,6 +12,6 @@ end
 δdomain(arr::SqrtArrow, x) = ifelse(x < 0, abs(x), 0)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)
-function δdomain{I}(arr::InvDuplArrow{I}, args...)
+function δdomain(arr::InvDuplArrow{I}, args...) where I
   compose!([args...], ReduceVarArrow(I))
 end

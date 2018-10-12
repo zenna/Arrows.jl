@@ -1,6 +1,6 @@
 "Size (shape) of an array. Can have missing elements"
 @auto_hash_equals struct Size
-  dims::Vector{Nullable{Int}}
+  dims::Vector{Union{Int, Nothing}}
   ndims_unknown::Bool
 end
 
@@ -16,15 +16,15 @@ Base.getindex(sz::Size, i::Integer) = sz.dims[i]
 ndims(sz::Size) = (@pre !sz.ndims_unknown; length(sz.dims))
 
 function Size(dims::AbstractVector{<:Integer})
-  Size([x<0 ? Nullable{Int}() : Nullable{Int}(x) for x in dims])
+  Size([x<0 ? nothing : x for x in dims])
 end
 
 Size(dims) =  Size(dims, false)
 
-Size(::Void) = Size(Nullable{Int}[], true)
+Size(::Nothing) = Size(Union{Int, Nothing}[], true)
 
 function Size(::Vector{Union{}}) # NB: `Vector{Union{}} == typeof(collect(tuple())))`
-  Size(Nullable{Int}[], false)
+  Size(Union{Int, Nothing}[], false)
 end
 
 Size(t::Size) = copy(t)
@@ -44,7 +44,7 @@ function meet(size1::Size, size2::Size)
   elseif ndims(size1) != ndims(size2)
     throw(MeetError([size1, size2]))
   else
-    dims = Vector{Nullable{Int}}(ndims(size1))
+    dims = Vector{Union{Int, Nothing}}(ndims(size1))
     for i = 1:ndims(size1)
       # Both Null => Null
       if isnull(size1[i]) && isnull(size2[i])

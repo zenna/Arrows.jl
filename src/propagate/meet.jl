@@ -9,7 +9,7 @@ Base.showerror(io::IO, e::MeetError) = print(io, "Could not meet: ", e.vals)
 meet(val) = val
 
 "Meet three or more values, assumes `meet(val1::T, val::T)` is defined for T"
-function meet{T}(val1::T, val2::T, val3::T, vals::T...)
+function meet(val1::T, val2::T, val3::T, vals::T...) where T
   allvals = (val1, val2, val3, vals...)
   mostprecise = val1
   for val in allvals[2:end]

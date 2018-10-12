@@ -147,7 +147,7 @@ function assign_special_if_possible(info, left::Union{Symbol, Expr}, right)
         return false
       end
     end
-    info.specials[left_name] = @NT(dst = left, src = right)
+    info.specials[left_name] = (dst = left, src = right)
     true
   end
 end
@@ -479,9 +479,9 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
   by_block = extract_computation_blocks(assigns)
   blocks = by_block |> keys
   moniker = Symbol(:connector_, name(info, idx)) |> gensym
-  has_initializer = !isa(initial_sarr, Void)
+  has_initializer = !isa(initial_sarr, Nothing)
   connector_arr = CompArrow(moniker,
-                    length(blocks) + (has_initializer ? 1 :0),
+                    length(blocks) + (has_initializer ? 1 : 0),
                     1)
   connector_sarr = add_sub_arr!(info.master_carr, connector_arr)
 
@@ -501,7 +501,7 @@ function create_assignment_graph_for(info::ConstraintInfo, idx, assigns,
     (sarr, 1) ⥅ (connector_sarr, id)
     push!(connectors, ▹(connector_arr, id))
   end
-  add_transformation(_, sarr::Void) = nothing
+  add_transformation(_, sarr::Nothing) = nothing
 
   inputs = map(blocks) do block
     pairs = by_block[block]

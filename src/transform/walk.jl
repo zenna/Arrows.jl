@@ -10,7 +10,7 @@ sub_port_map(sarr::SubArrow, portmap::PortIdMap) =
   SubPortMap(port(sarr, l) => port(sarr, r) for (l, r) in portmap)
 
 "Replace edge `l -> r` in edges with `l -> repl[r]`"
-function rewire!(edges::LG.Graph, repl::Associative)
+function rewire!(edges::LG.Graph, repl::AbstractDict)
   for edge in LG.edges(edges)
     if edge.src in keys(repl)
       LG.rem_edge!(edge)
