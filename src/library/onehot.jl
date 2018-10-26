@@ -40,13 +40,13 @@ abinterprets(arr::IntToOneHot) = [sizeprop]
 
 function sizeprop(arr::OneHotToInt, idabv::IdAbVals)::IdAbVals
   if in(idabv, 2, :size)
-    @grab intsz = get(idabv[2][:size])
+    # @grab intsz = get(idabv[2][:size])
     # @assert false ":aok"
-    @grab onehotsz = Size([intsz; arr.bitlength])
+    # @grab onehotsz = Size([intsz; arr.bitlength])
     intsz, onehotsz, "2 onehottoint"
     return IdAbVals(1 => AbVals(:size => onehotsz)) 
   elseif in(idabv, 1, :size)
-    @grab onehotsz = get(idabv[1][:size])
+    # @grab onehotsz = get(idabv[1][:size])
     # @assert false ":aokadadad"
     intsz = Size(onehotsz[1:end-1])
     # @show intsz, onehotsz, "1 onehottoint"

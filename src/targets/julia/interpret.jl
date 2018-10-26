@@ -1,6 +1,6 @@
 # Interpret ##
 interpret(::DivArrow, x, y) = (x ./ y,)
-interpret{T}(::MulArrow, x, y::Array{T, 0}) = (x * y[1],)
+interpret(::MulArrow, x, y::Array{T, 0}) where T = (x * y[1],)
 interpret(::MulArrow, x, y) = (x .* y,)
 interpret(::SubtractArrow, x, y) = (x .- y,)
 interpret(::AddArrow, x, y) = (x .+ y,)
@@ -26,7 +26,7 @@ function interpret(::GatherNdArrow, params::Array, indices::Array{<:Integer})
   ([params[indices[rr,:]...] for rr in CartesianRange(size(indices)[1:end-1])],)
 end
 interpret(::NegArrow, x) = (-x,)
-interpret{N}(::Arrows.DuplArrow{N}, x) = tuple((x for i = 1:N)...)
+interpret(::Arrows.DuplArrow{N}, x) where N = tuple((x for i = 1:N)...)
 
 ## Expr ##
 expr(arr::SourceArrow, args...) = arr.value

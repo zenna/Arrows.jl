@@ -81,7 +81,7 @@ function prim_sym_interpret(::ExplicitInvBroadcastArrow,
 end
 
 function prim_sym_interpret(::BroadcastArrow, x::SymbolicType)::Vector{SymbolicType}
-  @grab y = x
+  # @grab y = x
   @show x
   @show typeof(x)
   [x,]

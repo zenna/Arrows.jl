@@ -38,11 +38,14 @@ Some shorthands used throughout
 """
 module Arrows
 
-import LightGraphs; const LG = LightGraphs
+import InteractiveUtils
 import DataStructures: PriorityQueue, peek, dequeue!, DefaultDict
+
+import LightGraphs; const LG = LightGraphs
 import AutoHashEquals: @auto_hash_equals
 using MacroTools
-import InteractiveUtils
+
+# using ZenUtils
 import Spec: @pre, @invariant, @post
 
 import Base: convert, union, first, ndims, print, println, string, show,
@@ -271,8 +274,6 @@ export
   XAbVals,
   in_trace_values,
   out_trace_values,
-  @grab,
-  @req,
   n▸,
   n◂,
   ▸,
@@ -377,7 +378,7 @@ include("sym/scalar_solver.jl")
 include("sym/graph_solver.jl")
 
 # Integration of arrow with julia #
-include("host/overload.jl")
+# include("host/overload.jl")
 include("host/filter.jl")
 include("map.jl")
 
