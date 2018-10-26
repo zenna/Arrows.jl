@@ -35,7 +35,7 @@ end
   to_bcast = (x) -> ◃(x |> SourceArrow |> add,1) |> bcast
   ε = exp(-10) |> to_bcast
   zero = 0 |> to_bcast
-  ifelse(x > zero, x, ε) ⥅ y
+  ifthenelse(x > zero, x, ε) ⥅ y
   clip_ε
 end
 

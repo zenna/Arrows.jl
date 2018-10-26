@@ -7,6 +7,7 @@ include("common.jl")
 exclude = ["policy.jl",
            "optimize.jl",
            "value.jl",
-           "sym.jl"]
+           "sym.jl",
+           "array_test.jl"]
 
 walktests(Arrows, exclude = exclude)

@@ -1,8 +1,8 @@
 "Distance from `x` to the interval `[a, b]`"
 function δinterval(x, a, b)
-  ifelse(x > b,
+  ifthenelse(x > b,
          x - b,
-         ifelse(x < a,
+         ifthenelse(x < a,
                 a - x,
                 0))
 end

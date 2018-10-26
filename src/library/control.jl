@@ -1,3 +1,5 @@
+ifthenelse(a, b, c) = ifelse(a, b, c)
+
 "Takes no input simple emits a `value::T`"
 struct CondArrow <: PrimArrow end
 props(::CondArrow) =   [Props(true, :i, Bool),
@@ -6,13 +8,13 @@ props(::CondArrow) =   [Props(true, :i, Bool),
                              Props(false, :e, Real)]
 name(::CondArrow) = :cond
 
-"ifelse(i, t, e)`"
+"ifthenelse(i, t, e)`"
 struct IfElseArrow <: PrimArrow end
 props(::IfElseArrow) =   [Props(true, :i, Bool),
                           Props(true, :t, Real),
                           Props(true, :e, Real),
                           Props(false, :y, Real)]
-name(::IfElseArrow) = :ifelse
+name(::IfElseArrow) = :ifthenelse
 abinterprets(::IfElseArrow) = [sizeprop]
 
 function inv(arr::IfElseArrow, sarr::SubArrow, idabv::IdAbVals)
@@ -43,7 +45,7 @@ function invifelse_teconst_diff()
   y, t, i = ⬨(carr)
   flsarr = add_sub_arr!(carr, source(false)); fls = ◃(flsarr, 1)
   truarr = add_sub_arr!(carr, source(true)); tru = ◃(truarr, 1)
-  ii = ifelse(EqualArrow()(y, t), bcast(tru), bcast(fls))
+  ii = ifthenelse(EqualArrow()(y, t), bcast(tru), bcast(fls))
   ii ⥅ i
   @assert is_valid(carr)
   carr
@@ -56,11 +58,11 @@ function invifelse_teconst()
   add!(θp)(θi)
   flsarr = add_sub_arr!(carr, source(false)); fls = ◃(flsarr, 1)
   truarr = add_sub_arr!(carr, source(true)); tru = ◃(truarr, 1)
-  ii = ifelse(EqualArrow()(y, t),
-              ifelse(EqualArrow()(y, e),
+  ii = ifthenelse(EqualArrow()(y, t),
+              ifthenelse(EqualArrow()(y, e),
                      θi,
                      bcast(tru)),
-              ifelse(EqualArrow()(y, e),
+              ifthenelse(EqualArrow()(y, e),
                      bcast(fls),
                      bcast(fls)))   # domain error
 
@@ -75,9 +77,9 @@ function invifelse_tconst()
   foreach(add!(θp), (θi, θmissing))
   flsarr = add_sub_arr!(carr, source(false))
   fls = ◃(flsarr, 1)
-  ii = ifelse(EqualArrow()(y, t), θi, bcast(fls))
+  ii = ifthenelse(EqualArrow()(y, t), θi, bcast(fls))
   ii ⥅ i
-  ifelse(ii, θmissing, y) ⥅ e
+  ifthenelse(ii, θmissing, y) ⥅ e
   @assert is_valid(carr)
   carr
 end
@@ -88,9 +90,9 @@ function invifelse_econst()
   foreach(add!(θp), (θi, θmissing))
   truarr = add_sub_arr!(carr, source(true))
   tru = ◃(truarr, 1)
-  ii = ifelse(EqualArrow()(y, e), θi, bcast(tru))
+  ii = ifthenelse(EqualArrow()(y, e), θi, bcast(tru))
   ii ⥅ i
-  ifelse(ii, y, θmissing) ⥅ e
+  ifthenelse(ii, y, θmissing) ⥅ e
   @assert is_valid(carr)
   carr
 end
@@ -100,8 +102,8 @@ function invifelse_fullpi()
   y, θi, θmissing, i, t, e = ⬨(carr)
   θi ⥅ i
   foreach(add!(θp), (θi, θmissing))
-  ifelse(θi, y, θmissing) ⥅ t
-  ifelse(θi, θmissing, y) ⥅ e
+  ifthenelse(θi, y, θmissing) ⥅ t
+  ifthenelse(θi, θmissing, y) ⥅ e
   @assert is_valid(carr)
   carr
 end

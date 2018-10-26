@@ -1,3 +1,4 @@
+__precompile__(false)
 """An Arrow of `I` inputs and `O` outputs
 
 Semantics of this model

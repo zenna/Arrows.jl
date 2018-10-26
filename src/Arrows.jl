@@ -48,12 +48,15 @@ using MacroTools
 # using ZenUtils
 import Spec: @pre, @invariant, @post
 
+import LinearAlgebra: dot
+import Statistics: var, mean
+
 import Base: convert, union, first, ndims, print, println, string, show,
-  showcompact, length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
-  map, mean, div
+  length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
+  map, div
 import Base: getindex, setindex!
 
-import Base: is, in
+import Base: in
 
 import Base:  ^,
               +,
@@ -86,10 +89,7 @@ import Base:  ^,
               parent,
               >>,
               <<,
-              dot,
               identity,
-              ifelse,
-              var,
               zero,
               one,
               floor,
@@ -97,6 +97,7 @@ import Base:  ^,
               getindex
 
 export
+  ifthenelse,
   lift,
   conjoin,
   disjoin,
@@ -376,15 +377,15 @@ include("sym/scalar_solver.jl")
 include("sym/graph_solver.jl")
 
 # Integration of arrow with julia #
-# include("host/overload.jl")
+include("host/overload.jl")
 include("host/filter.jl")
 include("map.jl")
 
-# # Targets #
+# Targets #
 include("targets/targets.jl")
 include("targets/julia/ordered_sports.jl")
 
-# # Compile to Julia by default
+# Compile to Julia by default
 compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
 interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
 

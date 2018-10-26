@@ -65,7 +65,7 @@ end
 function ifelseconst()
   carr = CompArrow(:ifelseconst, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  d = ifelse(c > bsource!(carr, 3),
+  d = ifthenelse(c > bsource!(carr, 3),
              a + b,
              a * b)
   d ⥅ z
@@ -76,7 +76,7 @@ end
 function ifelseconstbcast()
   carr = CompArrow(:ifelseconstbcast, [:a, :b, :c], [:z])
   a, b, c, z = ⬨(carr)
-  d = ifelse((a + b + c) > bsource!(carr, 3.0),
+  d = ifthenelse((a + b + c) > bsource!(carr, 3.0),
              bsource!(carr, 4.0),
              bsource!(carr, 7.0))
   d ⥅ z
@@ -88,7 +88,7 @@ end
 function ifelsesimple()
   carr = CompArrow(:ifelsesimple, [:a, :b, :c, :d], [:e])
   a, b, c, d, e = ⬨(carr)
-  ee = ifelse(a > b, c, d)
+  ee = ifthenelse(a > b, c, d)
   ee ⥅ e
   @assert is_valid(carr)
   carr

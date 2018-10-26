@@ -15,7 +15,7 @@ logistic(x) = 1 / (1 + exp(-x))
 # end
 
 "Smooth step with zero 1st and 2nd order derivatives at x=0 and x=1"
-smootherstep(x) = ifelse(x <= 0, 0, ifelse(x >= 1, 1.0, 6x^5 - 15x^4 + 10x^3))
+smootherstep(x) = ifthenelse(x <= 0, 0, ifthenelse(x >= 1, 1.0, 6x^5 - 15x^4 + 10x^3))
 
 """
 Sigmoid with tanh

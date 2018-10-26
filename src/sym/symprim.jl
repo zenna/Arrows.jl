@@ -92,7 +92,7 @@ end
 
 # prim_sym_interpret(::IfElseArrow, i::SymbolicType, t::SymbolicType,
 #                    e::SymbolicType) =
-#   [ifelse.(i, t, e)]
+#   [ifthenelse.(i, t, e)]
 
 function prim_sym_interpret(::InvDuplArrow{N},
                             xs::Vararg{SymbolicType, N})::Vector{SymbolicType} where N

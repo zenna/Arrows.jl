@@ -246,13 +246,13 @@ function pgf(arr::IfElseArrow, const_in)
     i, t, e = ▹(carr)
     y, θi, θmissing = ◃(carr)
     i ⥅ θi
-    ifelse(i, e, t) ⥅ θmissing
+    ifthenelse(i, e, t) ⥅ θmissing
     add!(θp)(θi)
     add!(θp)(θmissing)
   else
     throw(ArgumentError("Constness Combination not supported"))
   end
-  ifelse(i, t, e) ⥅ y
+  ifthenelse(i, t, e) ⥅ y
   carr
 end
 

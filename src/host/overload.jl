@@ -85,7 +85,8 @@ for parrtyp in filter(arrtyp -> arrtyp ∉ ignoretyp, InteractiveUtils.subtypes(
   arr = parrtyp()
   opa = name(arr)
   foreach(eval, overload_codegen(num_in_ports(arr), :SubPort, opa))
-  eval(codegen_2(num_in_ports(arr), :SubPort, opa, parrtyp))
+  code = codegen_2(num_in_ports(arr), :SubPort, opa, parrtyp)
+  eval(code)
   # Generates code like:
   # +(x::SubPort, y) = +(x, promote_constant(parent(x), y))
   # +(x, y::SubPort) = +(promote_constant(parent(y), x), y)

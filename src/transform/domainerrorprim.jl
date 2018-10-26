@@ -9,7 +9,7 @@ function sub_domain_error(carr::PartialArrow, sarr::SubArrow)
   (ϵcarr, id_portid_map(carr))
 end
 
-δdomain(arr::SqrtArrow, x) = ifelse(x < 0, abs(x), 0)
+δdomain(arr::SqrtArrow, x) = ifthenelse(x < 0, abs(x), 0)
 δdomain(arr::ACosArrow, x) = δinterval(x, -1, 1)
 δdomain(arr::ASinArrow, x) = δinterval(x, -1, 1)
 function δdomain(arr::InvDuplArrow{I}, args...) where I

@@ -142,7 +142,7 @@ end
 includes_ifelse(expr) = false
 function includes_ifelse(expr::Expr)
   if expr.head == :call
-    if expr.args[1] == :ifelse
+    if expr.args[1] == :ifthenelse
       if any(includes_ifelse, expr.args)
         warn("cannot compute nested if statements")
         return false
@@ -156,7 +156,7 @@ end
 
 extract_ifelse(base_expr) = nothing
 function extract_ifelse(expr::Expr)
-  if expr.head == :call && expr.args[1] == :ifelse
+  if expr.head == :call && expr.args[1] == :ifthenelse
     return Dict([:condition => expr.args[2],
                :true_ => expr.args[3],
                :else_ => expr.args[4]])
@@ -169,7 +169,7 @@ end
 function process_ifelse(expr)
   replace_ifelse(expr, other) = expr
   function replace_ifelse(expr::Expr, other)
-    if expr.head == :call && expr.args[1] == :ifelse
+    if expr.head == :call && expr.args[1] == :ifthenelse
       return other
     end
     Expr(expr.head, [replace_ifelse(e, other) for e in expr.args]...)

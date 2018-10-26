@@ -17,7 +17,7 @@ sub_aprx_totalize(parr::PrimArrow, sarr::SubArrow) = nothing
   zero = 0 |> to_bcast
   ε_val = 0.001 |> to_bcast
   comparison = EqualArrow()(num, zero)
-  ε = ifelse(comparison, ε_val, zero)
+  ε = ifthenelse(comparison, ε_val, zero)
   num + ε ⥅ numout
   den  ⥅ denout
   clip_ε
