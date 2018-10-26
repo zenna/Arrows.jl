@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 import Arrows: aprx_totalize
 
 function test_aprx_totalize()

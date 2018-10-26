@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 using Arrows
 import Arrows: TraceParent, TraceSubPort, TraceSubArrow, TraceValue, down
 
@@ -36,14 +36,14 @@ end
 
 test_dept()
 
-function test_out_neighbors()
+function test_outneighbors()
   carr = TestArrows.test_nested()
   tarrs = Arrows.inner_prim_trace_arrows(carr)
   idx = findfirst(tarr -> deref(sub_arrow(tarr)) isa SqrtArrow, tarrs)
   sqrttarr = tarrs[idx]
   tprt = Arrows.out_trace_ports(sqrttarr)[1]
-  @test length(Arrows.out_neighbors(tprt)) == 3
+  @test length(Arrows.outneighbors(tprt)) == 3
   @test length(Arrows.trace_sub_arrows(Arrows.TraceValue(tprt))) == 4
 end
 
-test_out_neighbors()
+test_outneighbors()

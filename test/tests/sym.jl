@@ -1,6 +1,6 @@
 using Arrows
 using Arrows.TestArrows
-using Base.Test
+using Test
 
 
 function test_sym_gather_inv()

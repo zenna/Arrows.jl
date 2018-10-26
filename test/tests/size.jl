@@ -1,5 +1,5 @@
 import Arrows: meet, Size, MeetError
-using Base.Test
+using Test
 
 function test_meet_size()
   @test meet(Size(nothing), Size([10, 10])) == Size([10, 10])

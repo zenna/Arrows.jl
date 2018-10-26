@@ -1,7 +1,7 @@
 using Arrows
-using Base.Test
+using Test
 using Arrows.TestArrows
-using Base.Test
+using Test
 
 
 function test_operations()

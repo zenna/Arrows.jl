@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 using Arrows.TestArrows
 import Arrows: name, is_valid
 

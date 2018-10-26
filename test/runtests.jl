@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 using Spec
 
 include("common.jl")
@@ -9,4 +9,4 @@ exclude = ["policy.jl",
            "value.jl",
            "sym.jl"]
 
-walktests(Arrows, exclude=exclude)
+walktests(Arrows, exclude = exclude)

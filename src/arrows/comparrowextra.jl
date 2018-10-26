@@ -143,10 +143,10 @@ is_src(port::SubPort) = lg_to_p(is_src, port)
 neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.all_neighbors, port)
 
 "`Subport`s of ports which `port` receives from"
-in_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.in_neighbors, port)
+inneighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.inneighbors, port)
 
 "`Subport`s which `port` projects to"
-out_neighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.out_neighbors, port)
+outneighbors(port::SubPort)::Vector{SubPort} = v_to_p(LG.outneighbors, port)
 
 "Return the number of `SubPort`s which begin at `port`"
 out_degree(port::SubPort)::Integer = lg_to_p(LG.outdegree, port)
@@ -159,31 +159,31 @@ degree(port::SubPort)::Integer = lg_to_p(LG.degree, port)
 
 "Links that end at `sport`"
 in_links(sport::SubPort)::Vector{Link} =
-  [Link((neigh, sport)) for neigh in in_neighbors(sport)]
+  [Link((neigh, sport)) for neigh in inneighbors(sport)]
 
 "Links that end at `sport`"
 out_links(sport::SubPort)::Vector{Link} =
-  [Link((sport, neigh)) for neigh in out_neighbors(sport)]
+  [Link((sport, neigh)) for neigh in outneighbors(sport)]
 
 "`in_links` and `out_links` of `sport`"
 all_links(sport::SubPort)::Vector{Link} = vcat(in_links(sport), out_links(sport))
 
 "All neighbouring `SubPort`s of `subarr`, each port connected to each outport"
-function out_neighbors(subarr::Arrow)
+function outneighbors(subarr::Arrow)
   ports = Port[]
   for port in out_ports(subarr)
-    for neighport in out_neighbors(port)
+    for neighport in outneighbors(port)
       push!(ports, neighport)
     end
   end
   ports
 end
 
-"out_neighbors"
-function out_neighbors(sprts::Vector{SubPort})::Vector{SubPort}
+"outneighbors"
+function outneighbors(sprts::Vector{SubPort})::Vector{SubPort}
   neighs = SubPort[]
   for sprt in sprts
-    for dst_sprt in out_neighbors(sprt)
+    for dst_sprt in outneighbors(sprt)
       push!(neighs, dst_sprt)
     end
   end
@@ -216,7 +216,7 @@ function src(sprt::SubPort)::SubPort
   if is_src(sprt)
     sprt
   elseif is_dst(sprt)
-    in_neighs = in_neighbors(sprt)
+    in_neighs = inneighbors(sprt)
     length(in_neighs) == 1 || throw(ArgumentError("#in_neighs of $(sprt) should be 1 but is $(length(in_neighs))"))
     first(in_neighs)
   elseif should_src(sprt)
@@ -232,7 +232,7 @@ function dst(sprt::SubPort)::SubPort
   if is_dst(sprt)
     sprt
   else
-    out_neighs = out_neighbors(sprt)
+    out_neighs = outneighbors(sprt)
     length(out_neighs) == 1 || throw(ArgumentError("dst not unique"))
     first(out_neighs)
   end

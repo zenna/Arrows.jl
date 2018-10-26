@@ -226,12 +226,12 @@ function recurdst(dstsprt::SubPort, tparent::TraceParent)::Vector{TraceSubPort}
     else
       # If the source is on boundary and its not a root, need to recurse up
       srctarr = TraceSubArrow(tparent, sub_arrow(dstsprt))
-      return out_neighbors(TraceSubPort(up(srctarr), dstsprt.port_id))
+      return outneighbors(TraceSubPort(up(srctarr), dstsprt.port_id))
     end
   elseif deref(sub_arrow(dstsprt)) isa CompArrow
     # If the source is on a CompArrow we need to recursve down
     srctarr = TraceSubArrow(tparent, sub_arrow(dstsprt))
-    return out_neighbors(TraceSubPort(down(srctarr), dstsprt.port_id))
+    return outneighbors(TraceSubPort(down(srctarr), dstsprt.port_id))
   else
     # @assert false #on_boundary(dstsprt)
     @assert deref(sub_arrow(dstsprt)) isa PrimArrow || isroot(tparent)
@@ -240,9 +240,9 @@ function recurdst(dstsprt::SubPort, tparent::TraceParent)::Vector{TraceSubPort}
 end
 
 "All `TraceSubPort`s that `tprt` projects to"
-function out_neighbors(tprt::TraceSubPort)::Vector{TraceSubPort}
+function outneighbors(tprt::TraceSubPort)::Vector{TraceSubPort}
   tparent = trace_parent(tprt)
-  dstsprts = out_neighbors(sub_port(tprt))
+  dstsprts = outneighbors(sub_port(tprt))
   tsprts = TraceSubPort[]
   for dstsprt in dstsprts
     append!(tsprts, recurdst(dstsprt, tparent))
@@ -252,7 +252,7 @@ end
 
 "`TraceSubPort`s within `TraceValue`"
 trace_sub_ports(tval::TraceValue)::Vector{TraceSubPort} =
-  vcat([tval.srctprt], out_neighbors(tval.srctprt))
+  vcat([tval.srctprt], outneighbors(tval.srctprt))
 
 "All `TraceSubArrow`s ∈ `tval`"
 function trace_sub_arrows(tval::TraceValue)::Vector{TraceSubArrow}

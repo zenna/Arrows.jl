@@ -340,14 +340,12 @@ include("library/pgfprim.jl")
 include("combinators/compose.jl")
 include("combinators/portapply.jl")
 
-
 # Compilation and application of an arrow #
 include("compile/policy.jl")
 include("compile/depend.jl")
 include("compile/detpolicy.jl")
 include("compile/imperative.jl")
 include("apply/interpret.jl")
-
 
 # Graph Transformations #
 include("transform/walk.jl")

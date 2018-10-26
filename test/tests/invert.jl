@@ -1,6 +1,6 @@
 using Arrows
 using Arrows.TestArrows
-using Base.Test
+using Test
 
 function pre_test(arr::Arrow)
   println("Testing arrow ", name(arr))

@@ -10,15 +10,15 @@ function do_compile_module(arr::CompArrow)
   return_stmt = expr.args[2].args[end]
   names = return_stmt.args[1]
   M = Module()
-  eval(M, :(using Arrows))
+  Base.eval(M, :(using Arrows))
   for code ∈ codes
-    eval(M, :($code))
+    Base.eval(M, :($code))
   end
-  eval(M, :($(names)[1]))
+  Base.eval(M, :($(names)[1]))
 end
 
 function do_compile(arr::CompArrow)
-  lambda = eval(compile(arr))
+  lambda = Base.eval(compile(arr))
   Base.invokelatest(lambda)[1]
 end
 

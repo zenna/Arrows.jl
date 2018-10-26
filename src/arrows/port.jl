@@ -111,7 +111,7 @@ function describe(prt::Port; show_name=true,
   if show_name
     res *= string(name(prt))
     if show_labels
-      for label in map(superscript, labels(prt))
+      for label in map(superscript, [labels(prt)...])
         res *= string(label)
       end
     end

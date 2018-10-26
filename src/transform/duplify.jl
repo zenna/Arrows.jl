@@ -11,7 +11,7 @@ function shell_duplify!(arr::CompArrow)
   for src_port in src_ports
     # Only need to duplyify ports with multiple recipients
     if out_degree(src_port) > 1 # Replace multiedges with dupls and propagate
-      in_ports = out_neighbors(src_port)
+      in_ports = outneighbors(src_port)
       # add a link from port to dupl
       dupl = DuplArrow(length(in_ports))
       dupl = add_sub_arr!(arr, dupl)

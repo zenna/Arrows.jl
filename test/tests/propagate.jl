@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 import Arrows: AbVals, hasarrtype, traceprop!, Singleton
 
 nosources = filter(arr->!hasarrtype(arr, SourceArrow), TestArrows.plain_arrows())

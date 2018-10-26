@@ -1,12 +1,12 @@
 using Arrows
-using Base.Test
+using Test
 using Arrows.TestArrows
-using Base.Test
+using Test
 
 
 function test_src_value()
   x,y,z = ⬨(TestArrows.xy_plus_x_arr())
-  @test same(Arrows.SrcValue.(Arrows.out_neighbors(x)))
+  @test same(Arrows.SrcValue.(Arrows.outneighbors(x)))
 end
 
 

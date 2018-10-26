@@ -16,7 +16,7 @@ isequal(v1::SrcValue, v2::SrcValue)::Bool = isequal(v1.srcsprt, v2.srcsprt)
 name(val::SrcValue) = Symbol(:val, :_, name(src(val)))
 
 "Ports represented in `val`"
-sub_ports(val::SrcValue)::Vector{SubPort} = [src(val), out_neighbors(src(val))...]
+sub_ports(val::SrcValue)::Vector{SubPort} = [src(val), outneighbors(src(val))...]
 
 "Get Vector of InPort ValueSet"
 in_values(aarr::AbstractArrow)::Vector{SrcValue} = SrcValue.(▹(aarr))

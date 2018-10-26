@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 using Arrows
 using Arrows.TestArrows
 import Arrows: sub_arrows, add_sub_arr!, replace_sub_arr!, rem_sub_arr!

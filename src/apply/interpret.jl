@@ -14,7 +14,7 @@ end
 "Decrement SubArrows"
 function known_colors(carr::CompArrow)::ArrowColors
   pq = colors(carr)
-  foreach(out_neighbors(▹(carr))) do dst_sprt
+  foreach(outneighbors(▹(carr))) do dst_sprt
     lower!(pq, sub_arrow(dst_sprt))
   end
   pq
@@ -26,7 +26,7 @@ function dst_sub_port_values(carr::CompArrow, inputs::Vector)::Dict{SubPort, Any
   dst_val = Dict{SubPort, Any}()
 
   for (i, sprt) in enumerate(▹(carr))
-    for dst_sprt in out_neighbors(sprt)
+    for dst_sprt in outneighbors(sprt)
       dst_val[dst_sprt] = inputs[i]
     end
   end
@@ -54,7 +54,7 @@ function inner_interpret(sub_interpret,
     # Decrement the priority of each subarrow connected to this arrow
     # Unless of course it is connected to the outside word
     for (i, sprt) in enumerate(◃(sarr))
-      for dst_sprt in out_neighbors(sprt)
+      for dst_sprt in outneighbors(sprt)
         dst_val[dst_sprt] = outputs[i]
         # @assert sub_arrow(dst_sprt) ∈ keys(arrcolors)
         lower!(arrcolors, sub_arrow(dst_sprt))

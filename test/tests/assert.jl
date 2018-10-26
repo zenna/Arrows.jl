@@ -1,4 +1,4 @@
-# using Base.Test
+# using Test
 # using Arrows
 #
 # function test_assert()

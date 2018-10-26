@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 
 function test_overload()
   carr = CompArrow(:tester, [:x, :y], [:z])

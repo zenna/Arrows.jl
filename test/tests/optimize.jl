@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 
 function test_optimize(fwd)
   invarr = aprx_invert(fwd)

@@ -1,5 +1,5 @@
 using Arrows
-using Base.Test
+using Test
 using Arrows.TestArrows
 
 function test_inv_xy_plus_x()
@@ -23,7 +23,7 @@ function test_accumapply()
   f(x::Real) = [Real]
   f(x::Float64) = [Float64]
   f(x::Union{AbstractFloat, Int32}) = [AbstractFloat, Int32]
-  Base.Test.@test Set(vcat(accumapply(f, 3.0)...)) == Set([Real, Float64, AbstractFloat, Int32])
+  Test.@test Set(vcat(accumapply(f, 3.0)...)) == Set([Real, Float64, AbstractFloat, Int32])
 end
 
 test_accumapply()

@@ -1,6 +1,6 @@
 import Arrows: name, is_valid, interpret, pol_to_julia
 using Arrows.TestArrows
-using Base.Test
+using Test
 
 include("../common.jl")
 
