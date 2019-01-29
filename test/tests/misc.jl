@@ -1,6 +1,6 @@
 using Arrows
 using Test
-using Arrows.TestArrows
+using TestArrows
 
 function test_inv_xy_plus_x()
   z_orig  = rand()

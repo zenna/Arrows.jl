@@ -14,4 +14,4 @@ function test_optimize(fwd)
   θ_optim = optimize(invarr, over, ϵprt, init; callbacks = [dataget])
 end
 
-test_optimize(Arrows.TestArrows.xy_plus_x_arr())
+test_optimize(TestArrows.xy_plus_x_arr())

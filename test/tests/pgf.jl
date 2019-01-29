@@ -15,7 +15,7 @@ function test_pgf(arr)
   @test all(map(≈, randin, out))
 end
 
-test_pgf(Arrows.TestArrows.xy_plus_x_arr())
+test_pgf(TestArrows.xy_plus_x_arr())
 
 "Are Pgf and Pi consistent - `invf(f(x); pgf(x) = x`"
 function ispipgfid(f::Arrow, x::Vector, xabv::XAbVals=NmAbVals(), eq=(==))

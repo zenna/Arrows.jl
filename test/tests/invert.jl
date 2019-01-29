@@ -1,5 +1,5 @@
 using Arrows
-using Arrows.TestArrows
+using TestArrows
 using Test
 
 function pre_test(arr::Arrow)

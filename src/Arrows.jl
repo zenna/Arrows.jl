@@ -21,20 +21,6 @@ Some shorthands used throughout
 
 - θ: parameter
 - ϵ: error
-
-
-# Style Guidelines
-- Add a docstring for every function, even unexposed ones
-- Leave one space after definition function
-- Leave two spaces after type definition
-
-## Testing / Correctness
-
-- Liberally use @pre, and @post (even for expensive checks since they can be disabled)
-- Add @invariant for conditions which should hold for any type
-- Include jldcotests wherever possible
-
-- Break any rule when appropriate
 """
 module Arrows
 
@@ -239,7 +225,6 @@ export
   compile,
   order_sports,
 
-  TestArrows,
   Size,
   meetall,
   meet,
@@ -391,7 +376,6 @@ interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
 
 include("apply/call.jl")
 include("targets/julia/JuliaTarget.jl")
-include("../test/TestArrows.jl")
 
 include("homeless.jl")    # Unosrted
 end
