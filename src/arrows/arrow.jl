@@ -1,4 +1,5 @@
-__precompile__(false)
+
+# zt: this shouldnt be a docstring for AbstractArrow
 """An Arrow of `I` inputs and `O` outputs
 
 Semantics of this model

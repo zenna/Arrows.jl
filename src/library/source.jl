@@ -1,3 +1,4 @@
+# zt: remove auto hash equals
 "Takes no input simple emits a `value::T`"
 @auto_hash_equals struct SourceArrow{T} <: PrimArrow
   value::T

@@ -9,7 +9,7 @@ struct Port{A <: Arrow} <: AbstractPort
   arrow::A
   port_id::Int
 end
-
+# zt: use getmember (or whatever its called)?
 port_id(prt::Port) = prt.port_id
 
 "Port properties of `port`"
@@ -43,13 +43,13 @@ function port(arr::Arrow, i::Integer)::Port
   end
 end
 
-
 "all ports of arrow"
 ports(arr::Arrow)::Vector{Port} = [Port(arr, i) for i = 1:num_ports(arr)]
 
 # FIXME: Deprecate
 "out_ports of `aarr`"
 out_ports(aarr::AbstractArrow)::Vector{Port} = filter(is_out_port, ports(aarr))
+# zt: deprecate these in favour of using the conjucntion stuff
 
 # FIXME: Deprecate
 "`i`th out_port of `arr`"
@@ -68,6 +68,7 @@ in_port(aarr::AbstractArrow, i::Integer)::Port = in_ports(aarr)[i]
 # FIXME: Deprecate
 "How many ports does `aarr` have"
 num_ports(aarr::AbstractArrow) = length(props(aarr))
+# zt: deprecate these in favour of what?
 
 # FIXME: Deprecate
 "How many out ports does `aarr` have"
@@ -94,10 +95,9 @@ port_sym_names(arr::Arrow) = port_sym_name.(ports(arr))
 in_port_sym_names(arr::Arrow) = port_sym_name.(in_ports(arr))
 out_port_sym_names(arr::Arrow) = port_sym_name.(out_ports(arr))
 
-## Label ##
+## Printing ##
 describe(is_in_port::Bool) = is_in_port ? "▹" : "◃"
 
-## Printing ##
 "Describe `prt` (as string) with variable options"
 function describe(prt::Port; show_name=true,
                              show_port_id=true,

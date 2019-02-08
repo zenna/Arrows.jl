@@ -4,14 +4,14 @@ VertexId = Integer
 "A Port"
 struct ProxyPort
   arrname::ArrowName  # Name of arrow it is a port on
-  port_id::Int        # Position on arrow
+  port_id::Int        # Position on arrow # zt: parametric Int
 end
 
 """A Composite Arrow: An `Arrow` composed of multiple `Arrow`s"""
 mutable struct CompArrow <: Arrow
   name::ArrowName
-  edges::LG.DiGraph
-  port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port
+  edges::LG.DiGraph # zt: should be parametric type or `SimpleDiGraph{Int64}`
+  port_to_vtx_id::Dict{ProxyPort, VertexId} # name(sarr) => vtxid of first port # zt Integer! parametric or Int
   vtx_id_to_port::Vector{ProxyPort}         # ProxyPort at vtx_id
   props::Vector{Props}
   sarr_name_to_arrow::Dict{ArrowName, Arrow}
@@ -65,8 +65,9 @@ is_valid(sarr::SubArrow) = name(sarr) ∈ parent(sarr)
 "A `Port` on a `SubArrow`"
 struct SubPort <: AbstractPort
   sub_arrow::SubArrow  # Parent arrow of arrow sport is attached to
-  port_id::Int     # this is ith `port` of parent
+  port_id::Int         # this is ith `port` of parent # zt: make parametric?
   function SubPort(sarr::SubArrow, port_id::Integer)
+    # zt: Make a @pre
     if 0 < port_id <= num_ports(sarr)
       new(sarr, port_id)
     else
@@ -86,6 +87,8 @@ SubPortMap = Dict{SubPort, SubPort}
 "Empty `CompArrow`"
 CompArrow(name::ArrowName) = CompArrow(name, Props[])
 
+# zt: fix type system
+# zt: use keywards to simplify
 "Constructs CompArrow with where all input and output types are `Any`"
 function CompArrow(name::ArrowName, I::Integer, O::Integer)
   # Default is for first I ports to be in_ports then next O oout_ports
@@ -106,7 +109,7 @@ function CompArrow(name::Symbol, inames::Vector{Symbol}, onames::Vector{Symbol})
   CompArrow(name, props)
 end
 
-"Construct `CompArrow` with sane nanes as `iprts` and `oprts`"
+"`CompArrow` with same nanes as `iprts` and `oprts`"
 function CompArrow(name::Symbol, iprts::Vector{Port}, oprts::Vector{Port})
   # TODO: transfer type information from iprts and oprts, not just name
   CompArrow(name, port_sym_name.(iprts), port_sym_name.(oprts))
@@ -118,7 +121,7 @@ props(arr::CompArrow) = arr.props
 "Port Properties of all ports of `sarr`"
 props(sarr::SubArrow) = props(deref(sarr))
 
-# DEPRECATE
+# DEPRECATE # zt: why/how?
 "Make `port` an in_port"
 function set_in_port!(prt::Port{<:CompArrow})
   setprop!(In(), props(prt))

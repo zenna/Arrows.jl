@@ -1,27 +1,4 @@
-"""Learning and inference with a P.L. twist
-
-## Code conventions
-
-- Functions which modify their input are suffixed !, e.g. `link_ports!`
-- Use descriptive function names but appreviate variable names
-
-- Use the following argument names
-
-- `prt`: `Port`
-- `sprt`: `SubPort`
-- `aarr`: `AbstractArrow`
-- `arr`: `Arrow`
-- `carr`: `CompArrow`
-- `sarr`: `SubArrow`
-- `parr`: `PrimArrow`
-
-Some shorthands used throughout
-- `aprx`: Approximate(ly)
-- `inv` : inverse, invert
-
-- θ: parameter
-- ϵ: error
-"""
+"Graph-Based Program Representation for Learning and Inference"
 module Arrows
 
 import InteractiveUtils
@@ -37,6 +14,7 @@ import Spec: @pre, @invariant, @post
 import LinearAlgebra: dot
 import Statistics: var, mean
 
+# zt: use explicit form e.g. Base.union
 import Base: convert, union, first, ndims, print, println, string, show,
   length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
   map, div
@@ -269,6 +247,8 @@ export
   ⬧,
   ⬨
 
+# zt: add SIGNATURES
+# zt: use modules for these subcomponents? 
 # Code structures
 include("util/misc.jl")             # miscelleneous utilities
 include("util/lightgraphs.jl")      # methods that should be in LightGraphs

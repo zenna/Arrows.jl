@@ -1,6 +1,10 @@
 using Arrows
 using Test
 using Spec
+using Pkg
+
+# Add TestArrows
+Pkg.develop(PackageSpec(url = joinpath(dirname(pathof(Arrows)), "..", "TestArrows")))
 
 include("common.jl")
 

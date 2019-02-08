@@ -6,6 +6,8 @@ julia> invvcat([1,2,3,4,5,6], 3)
 ```
 """
 invvcat(xs, i::Integer) = (@pre 0 < i < length(xs); (xs[1:i], xs[i+1:end]))
+@post vcat(res...) == xs
+# zt: incomplete spec
 
 """Split `A` along `dim`, returning size(A)[dim] arrays
 
@@ -31,6 +33,7 @@ function splitdim(A::AbstractArray, dim::Integer)
   @pre dim <= ndims(A)
   [A[(i == dim ? slice : Colon() for i = 1:ndims(A))...] for slice = 1:size(A)[dim]]
 end
+# zt: spec
 
 "function which splats inputs to `f`"
 splat(f) = xs -> f(xs...)
@@ -40,7 +43,7 @@ parens(x::AbstractString) = string("(",x,")")
 square(x::AbstractString) = string("[",x,"]")
 
 "Generate a unique arrow id"
-gen_id()::Symbol = gensym()
+gen_id()::Symbol = gensym() # zt: genid? uid
 
 "All elements in `xs` are the same?"
 function same(xs, eq=(==))::Bool
@@ -56,12 +59,14 @@ function same(xs, eq=(==))::Bool
   end
   return true
 end
+# zt: make more generic, remove type constraint, remove constants
 
 "Like `find` but return elements of A instead of ids"
 function finditems(f, A)
   idxs = find(f, A)
   [A[idx] for idx in idxs]
 end
+# zt: add spec
 
 "Find a unique name `(nn ∉ nms)` - generates `x, x1, x2,..` until ∉ nms"
 function uniquename(x::Symbol, nms::Vector{Symbol})
@@ -74,9 +79,11 @@ function uniquename(x::Symbol, nms::Vector{Symbol})
   end
   nm
 end
+@post res ∉ nms
 
 "Does `xs` contain any element more than once"
 hasduplicates(xs) = length(unique(xs)) != length(xs)
+# zt: spec
 
 "Split a collection `xs` by a predicate"
 function partition(pred, xs::Vector{T}) where T
@@ -85,8 +92,9 @@ function partition(pred, xs::Vector{T}) where T
   foreach(x -> pred(x) ? push!(in, x) : push!(out, x), xs)
   (in, out)
 end
+# zt: add spec
 
-"`f: coll -> Bool`, such that ∀ x in xs, x ∈ coll"
+"`f: coll -> Bool`, which tests x in xs, ∀ x ∈ coll"
 allin_f(xs) = coll -> all((x ∈ coll for x in xs))
 
 "Given a `partition` return a mapping from elements to the cell (integer id)"
@@ -98,6 +106,7 @@ function cell_membership(partition::Vector{Vector{T}})::Dict{T, Int} where T
   end
   element_to_class
 end
+# zt: rename function, add spec
 
 "If (x, y) if p(x) else (y, x)"
 function switch(p, x, y)
@@ -109,6 +118,7 @@ function switch(p, x, y)
     y, x
   end
 end
+# zt: replace asserts with execeptions, add spec
 
 "`l` s.t. `dict[l] == r`. If many `l` map to `r` output is nondeterminsitic"
 function rev(dict::AbstractDict{L, R}, r::R) where {L, R}
@@ -119,6 +129,7 @@ function rev(dict::AbstractDict{L, R}, r::R) where {L, R}
   end
   throw(KeyError(r))
 end
+# zt: rename, its basically f-1, add spec
 
 "fgh(f, g, q) = h(f(x), g(x))"
 fgh(f, g, h) = x -> h(f(x), g(x))
@@ -138,9 +149,10 @@ function conjoin(preds::Vararg{Function})
   end
   pred_conjunct
 end
+# zt: add spec
 
 "`conjoin` ∧"
-∧ = conjoin
+const ∧ = conjoin
 
 """Disjoin predicates
   p = iseven ∨ (x -> x > 0) ∨ (x -> x < 100)
@@ -156,9 +168,10 @@ function disjoin(preds::Vararg{Function})
   end
   pred_disjunct
 end
+# zt: add spec
 
 "`disjoin` \vee"
-∨ = disjoin
+const ∨ = disjoin
 
 product(::Type{Bool}, n::Integer) = product((true, false), n)
 
@@ -166,9 +179,8 @@ product(::Type{Bool}, n::Integer) = product((true, false), n)
 product(xs, n::Integer) = Iterators.product([xs for i = 1:n]...)
 
 "Get type of first param of unary method"
-function firstparam(m::Method)
-  m.sig.parameters[2]
-end
+firstparam(m::Method) = m.sig.parameters[2]
+# zt: rename
 
 """Apply every method in`f` applicable to x:T; acccumulate all results
 # Arguments
@@ -180,3 +192,5 @@ function accumapply(f::Function, x::T) where T
   allmethods = methodswith.(T, f, true)
   results = map(mthd -> invoke(f, Tuple{firstparam(mthd)}, x), allmethods)
 end
+# zt: too restrictive type
+# Also, I probably shouldn't do this!

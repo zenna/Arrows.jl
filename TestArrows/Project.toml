@@ -1,0 +1,7 @@
+name = "TestArrows"
+uuid = "97e65e92-239b-11e9-3d9a-e5b87ad8dc8f"
+authors = ["Zenna Tavares <zennatavares@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Arrows = "9f46791a-63d5-5943-96d9-d69d1d4e99a0"

@@ -1,4 +1,4 @@
-"A value, corresponds to connected component of `Port`s"
+"A value, corresponds to a connected component of `Port`s"
 abstract type Value end
 
 ValueSet{T} = Set{T} where {T <: Value}

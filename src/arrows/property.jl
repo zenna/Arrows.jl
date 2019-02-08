@@ -8,6 +8,10 @@ desiderata:
 """
 abstract type Prop end
 
+# zt: should use type parameters
+# zt: had two both namedprops and labels to account for existential properties
+# and things which take values.  at time favoured this over having existential
+# props map to true or false.  Is there good reason for this?
 "Set of Properties"
 mutable struct Props
   namedprops::NamedTuple  # Properties
@@ -17,11 +21,13 @@ end
 "Empty properties"
 Props() = Props(NamedTuple(), Set{DataType}())
 
+# zt: why is this default constructor?
 function Props(is_in_port::Bool, name::Symbol, typ::Type)
   dir = is_in_port ? In() : Out()
   Props((direction = dir, name = Name(name), typ = Typ(typ)))
 end
 
+# zt: just use props.labels
 labels(prps::Props) = prps.labels
 Props(namedprops::NamedTuple) = Props(namedprops, Set())
 

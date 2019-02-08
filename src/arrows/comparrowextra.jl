@@ -1,11 +1,13 @@
 "All source (projecting) sub_ports"
 src_sub_ports(arr::CompArrow)::Vector{SubPort} = ⬨(arr, is_src)
+# zt: is this function necessary?
 
 "All source (projecting) sub_ports"
 all_src_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_src, all_sub_ports(arr))
 
 "All destination (receiving) sub_ports"
 dst_sub_ports(arr::CompArrow)::Vector{SubPort} = ⬨(arr, is_dst)
+# zt: is this function necessary?
 
 "All source (projecting) sub_ports"
 all_dst_sub_ports(arr::CompArrow)::Vector{SubPort} = filter(is_dst, all_sub_ports(arr))
@@ -15,35 +17,40 @@ function in(sport::SubPort, carr::CompArrow)::Bool
   sarr = sub_arrow(sport)
   (sarr ∈ carr) &&  (0 < sport.port_id <= num_ports(sarr))
 end
+# zt: use Base.in, add spec
 
 "Is `link` one of the links in `arr`?"
 in(link::Link, arr::CompArrow) = link ∈ links(arr)
+# zt: use Base.in. add spec
 
-"Is a name of a `SubArrow`"
+"Is `name` a name of a `SubArrow`"
 in(name::ArrowName, arr::CompArrow)::Bool =
   haskey(arr.sarr_name_to_arrow, name)
+# zt: use Base.in. add spec
 
 "Is `sport` a boundary `SubPort` (i.e. not `SubPort` of inner `SubArrow`)"
 is_boundary(sprt::SubPort) = sprt ∈ ⬨(sub_arrow(sprt))
+# zt: add spec, rename isonboundary
 
 "Is `port` within `arr` but not on boundary"
 function strictly_in(sprt::SubPort, arr::CompArrow)
   (sprt ∈ arr) && !on_boundary(sprt)
 end
+# zt:add spec
 
 "Is `arr` a sub_arrow of composition `c_arr`"
 function in(sarr::SubArrow, carr::CompArrow)::Bool
   (parent(sarr) == carr) && (name(sarr) ∈ carr)
 end
-# Port Properties
+# zt: overpunning of in?
+
+# Port Properties #
 "`PortProp`s of `subport` are `PortProp`s of `Port` it refers to"
 props(subport::SubPort) = props(deref(subport))
 
-"Ensore we find the port"
-must_find(i) = i == 0 ? throw(DomainError()) : i
-
 "Get parent of any `x ∈ xs` and check they all have the same parent"
 function anyparent(xs::Vararg{<:Union{SubArrow, SubPort}})::CompArrow
+  # zt: use pre
   if !same(parent.(xs))
     throw(ArgumentError("Different parents!"))
   end
@@ -52,6 +59,7 @@ end
 
 "Is this `SubArrow` the parent of itself?"
 self_parent(sarr::SubArrow) = parent(sarr) == deref(sarr)
+# zt: use isonvention isselfparent 
 
 ## Graph Modification ##
 
@@ -266,6 +274,8 @@ function should_dst(sport::SubPort)::Bool
   end
 end
 
+# zt: restructure this
+# zt: replace warn with something else 
 "Is `arr` wired up correctly"
 function is_wired_ok(arr::CompArrow)::Bool
   seen = Set{Int}()
@@ -281,7 +291,7 @@ function is_wired_ok(arr::CompArrow)::Bool
                     indeg is $(LG.indegree(arr.edges, vtxid)) (should be 1)
                     outdeg is $(LG.outdegree(arr.edges, vtxid)) (should be 0)
                   """
-        warn(errmsg)
+        @warn(errmsg)
         return false
       end
     end
@@ -290,7 +300,7 @@ function is_wired_ok(arr::CompArrow)::Bool
       if !(LG.outdegree(arr.edges, vtxid) > 0 || LG.indegree(arr.edges) == 1)
         errmsg = """vertex $vtxid Port $(sarr) is source but out degree is
         $(LG.outdegree(arr.edges, vtxid)) (should be >= 1)"""
-        warn(errmsg)
+        @warn(errmsg)
         return false
       end
     end
@@ -299,7 +309,7 @@ function is_wired_ok(arr::CompArrow)::Bool
   if (length(seen) != n) || ((n > 0) && (max(seen...) != n))
     errmsg = """The number of subports is $(length(seen)) but should
     be $(n) or some port has a bigger vertex id $(max(seen...))"""
-    warn(errmsg)
+    @warn(errmsg)
     return false
   end
   true
@@ -357,7 +367,7 @@ hasarrtype(carr::CompArrow, ArrowType::Type) =
 # FIXME: Deprecate
 n▸ = num_in_ports
 n◂ = num_out_ports
-
+# zt: deprecate / make const
 
 ## Printing ##
 function describe(carr::CompArrow; kwargs...)
@@ -365,6 +375,7 @@ function describe(carr::CompArrow; kwargs...)
   """$(func_decl(carr; kwargs...)) [$(num_sub_arrows(carr)), $(f(is_valid(carr)))]"""
 end
 
+# zt: Use Base.stirng/print/show
 string(carr::CompArrow) = describe(carr)
 print(io::IO, carr::CompArrow) = print(io, string(carr))
 show(io::IO, carr::CompArrow) = print(io, carr)
