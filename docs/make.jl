@@ -12,7 +12,8 @@ makedocs(
     "Home"=>"index.md",
     "Selection"=>"select.md",
     "Internals"=>
-      ["Types"=>"types.md",
+      ["Overview" => "overview.md",
+       "Types"=>"types.md",
        "CompArrow API"=>"comparrow.md",
       ]
   ]

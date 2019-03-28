@@ -1,7 +1,7 @@
 name = "TestArrows"
-uuid = "97e65e92-239b-11e9-3d9a-e5b87ad8dc8f"
+uuid = "c9c1a318-eacd-5c45-a4be-210b5b8b4904"
 authors = ["Zenna Tavares <zennatavares@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-Arrows = "9f46791a-63d5-5943-96d9-d69d1d4e99a0"
+Arrows = "9a4e9b5f-b771-5a77-9031-ac584967e5e2"

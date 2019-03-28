@@ -1,5 +1,5 @@
 name = "Arrows"
-uuid = "28615714-cdc1-11e8-145a-3908306c3133"
+uuid = "9a4e9b5f-b771-5a77-9031-ac584967e5e2"
 authors = ["Zenna Tavares <zennatavares@gmail.com>"]
 version = "0.1.0"
 
@@ -11,14 +11,14 @@ LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
-Spec = "526a04b8-654b-11e8-1588-db2a414f95b5"
+Spec = "b8ccf107-3a88-5e0f-823b-b838c6a0f327"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [extras]
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-Spec = "526a04b8-654b-11e8-1588-db2a414f95b5"
+Spec = "b8ccf107-3a88-5e0f-823b-b838c6a0f327"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "InteractiveUtils", "Pkg", "Spec"]
+test = ["InteractiveUtils"]

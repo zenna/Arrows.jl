@@ -1,4 +1,4 @@
-"Graph-Based Program Representation for Learning and Inference"
+"Graph-Based Program Representation"
 module Arrows
 
 import InteractiveUtils
