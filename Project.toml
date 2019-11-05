@@ -11,6 +11,7 @@ LightGraphs = "093fc24a-ae57-5d10-9952-331d41423f4d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Memoize = "c03570c3-d221-55d1-a50c-7939bbd78826"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Spec = "b8ccf107-3a88-5e0f-823b-b838c6a0f327"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 

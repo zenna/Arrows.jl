@@ -43,7 +43,7 @@ function unary_inv(arr::Arrow,
 end
 
 function inv(::GatherNdArrow, sarr::SubArrow, abvals::IdAbVals)
-  Arrows.inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
+  inv_gather(), Dict(1=>5, 2=>2, 3=>3, 4=>1)
 end
 
 function inv(arr::AddArrow, sarr::SubArrow, abvals::IdAbVals)
@@ -251,7 +251,7 @@ end
 #   SourceArrow(true), Dict(1 => 1)
 # end
 
-function inv(arr::Arrows.SqrArrow, sarr::SubArrow,  abvals::IdAbVals)
+function inv(arr::SqrArrow, sarr::SubArrow,  abvals::IdAbVals)
   function inv_sqr()
     carr = CompArrow(:inv_sqr, [:z, :θsqr], [:x])
     z, θsqr, x = ⬨(carr)

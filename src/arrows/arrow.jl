@@ -1,23 +1,56 @@
-"An Arrow of `I` inputs and `O` outputs"
-abstract type AbstractArrow end
+module ArrowMod
+import LightGraphs; const LG = LightGraphs
 
-abstract type Arrow <: AbstractArrow end
+export
+  AbstractArrow,
+  Arrow,
+  AbstractPort,
+  Port,
+  SubPort,
 
-abstract type ArrowRef <: AbstractArrow end
+  CompArrow,
+  PrimArrow,
+  SubArrow,
+  UnknownArrow,
+  Props,
+  link_ports!,
+  ⥅,
+  ⥆,
+  port_id,
+  port_sym_name,
+  add_sub_arr!,
+  replace_sub_arr!,
+  out_sub_port,
+  out_sub_ports,
+  inner_sub_ports,
+  sub_arrow,
+  sub_arrows,
+  sub_port,
+  sub_ports,
+  in_sub_port,
+  in_sub_ports,
+  in_ports,
+  in_port,
+  out_port,
+  out_ports,
+  num_in_ports,
+  num_out_ports,
+  num_ports,
+  port,
+  ports,
+  props,
+  all_names,
+  is_wired_ok,
+  is_valid,
+  deref
 
-## Printing ##
-"String for cartesian product of ports"
-port_prod(prts; kwargs...) = join([describe(prt; kwargs...) for prt in prts], " × ")
+# Core Arrow Data structures #
+include("core.jl")       # Properties
+include("property.jl")       # Properties
+include("port.jl")           # Ports
+include("primarrow.jl")      # Pimritive Arrows
+include("comparrow.jl")      # Composite Arrows
+include("comparrowextra.jl") # functions on CompArrows that dont touch internals
+include("unknown.jl")        # Unknown (uninterpreted) Arrows
 
-function sig(aarr::AbstractArrow; kwargs...)
-  in = port_prod(in_ports(aarr); show_is_in_port = false, show_port_id = false, show_arrow = false, kwargs...)
-  out = port_prod(out_ports(aarr); show_is_in_port = false, show_port_id = false, show_arrow = false, kwargs...)
-  in * " -> " * out
 end
-
-function func_decl(aarr::AbstractArrow; kwargs...)
-   string(string(name(aarr)), " : ", sig(aarr; kwargs...))
-end
-
-string(aarr::AbstractArrow) = func_decl(aarr)
-show(io::IO, aarr::AbstractArrow) = print(io, string(aarr))

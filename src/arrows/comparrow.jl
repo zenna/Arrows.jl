@@ -147,7 +147,7 @@ arrow(arr::CompArrow, n::ArrowName)::Arrow = arr.sarr_name_to_arrow[n]
 ## Naming ##
 
 "globally unique `ArrowName`"
-unique_sub_arrow_name()::ArrowName = gen_id()
+unique_sub_arrow_name()::ArrowName = uid()
 
 "ArrowName of `carr`"
 name(carr::CompArrow)::ArrowName = carr.name
@@ -158,7 +158,6 @@ all_names(arr::CompArrow)::Vector{ArrowName} =
 
 "Names of all `SubArrows` in `arr`, exclusive of `arr`"
 names(arr::CompArrow)::Vector{ArrowName} = setdiff(all_names(arr), [name(arr)])
-
 
 "Rename `arr` to `n`"
 function rename!(carr::CompArrow, n::ArrowName)::CompArrow

@@ -26,16 +26,13 @@ function inv(arr::InverseMD2SBoxArrow, sarr::SubArrow, abvals::IdAbVals)
   unary_inv(arr, const_in(arr, abvals), MD2SBoxArrow)
 end
 
-
-
-
-function md2box(idx::Arrows.AbstractPort)
-  res = Arrows.compose!(vcat(idx), MD2SBoxArrow())[1]
+function md2box(idx::AbstractPort)
+  res = compose!(vcat(idx), MD2SBoxArrow())[1]
 end
 
 
-function inverse_md2box(idx::Arrows.AbstractPort)
-  res = Arrows.compose!(vcat(idx), InverseMD2SBoxArrow())[1]
+function inverse_md2box(idx::AbstractPort)
+  res = compose!(vcat(idx), InverseMD2SBoxArrow())[1]
 end
 
 function md2box(idx)

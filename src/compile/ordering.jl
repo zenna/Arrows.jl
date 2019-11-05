@@ -1,6 +1,3 @@
-import Base: Iterators
-
-
 "Return the order in which the values of `carr` are assigned"
 order_of_assigment(carr::Arrow, ::Set{CompArrow}) = []
 

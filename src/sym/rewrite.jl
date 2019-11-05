@@ -32,7 +32,7 @@ end
 
 function expand_θ(θ, sz::Size)::RefinedSym
   shape = get(sz)
-  symbols = Array{Arrows.SymbolicType, ndims(sz)}(shape...)
+  symbols = Array{SymbolicType, ndims(sz)}(shape...)
   for iter in eachindex(symbols)
     symbols[iter] = θ[iter]
   end
@@ -68,8 +68,8 @@ function find_gather_params!(expr::Expr, θs)
   if expr.head == :call
     if expr.args[1] == :+
       left, right = expr.args[2:end]
-      if Arrows.token_name ∈ (left, right)
-        ref = left == Arrows.token_name ? right : left
+      if token_name ∈ (left, right)
+        ref = left == token_name ? right : left
         push!(θs, ref)
         return ref
       end
@@ -243,7 +243,7 @@ function compute_assigns_by_portn(info::ConstraintInfo)
   end
 end
 
-function length_of(info::Arrows.ConstraintInfo, idx)
+function length_of(info::ConstraintInfo, idx)
   info.inp[idx] |> as_expr |> length |> tuple
 end
 
@@ -379,7 +379,7 @@ function create_inner_special_connector(info::ConstraintInfo,
     sport = generate_function([name_ => ▹(c, 1)],
                       expr)
     sport ⥅ (c, 1)
-    inv_c = Arrows.invert(c)
+    inv_c = invert(c)
     sarr = add_sub_arr!(carr, inv_c)
     gather ⥅ (sarr, 1)
     ◃(sarr, 1)

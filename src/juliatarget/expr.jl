@@ -1,9 +1,7 @@
-## Compilation of Arrows to Exprs ##
-
-import Base: broadcast
+## Compilation of Arrows to Exprs
 
 # This is a hack
-broadcast(x::Symbol) = Symbol(:., x)
+Base.broadcast(x::Symbol) = Symbol(:., x)
 
 # By default use the `name` of `carr` as its julia equivalent
 function call_expr(arr::PrimArrow, args...)

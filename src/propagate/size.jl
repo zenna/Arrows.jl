@@ -13,7 +13,7 @@ Base.get(sz::Size)::Vector{Int} = map(get, sz.dims)
 
 Base.getindex(sz::Size, i::Integer) = sz.dims[i]
 
-ndims(sz::Size) = (@pre !sz.ndims_unknown; length(sz.dims))
+Base.ndims(sz::Size) = (@pre !sz.ndims_unknown; length(sz.dims))
 
 function Size(dims::AbstractVector{<:Integer})
   Size([x<0 ? nothing : x for x in dims])
@@ -84,7 +84,7 @@ function sizeprop(arr::Arrow, props)::IdAbVals
   end
 end
 
-function show(io::IO, sz::Size)
+function Base.show(io::IO, sz::Size)
   ok = (i->isnull(i) ? "?" : get(i)).(sz.dims)
   ok = join(ok, ",")
   print(io, string("Size($ok)"))

@@ -12,7 +12,6 @@ function netpi(fwd::Arrow, nmabv::XAbVals)
   traceprop!(invcarr, nmabv)
 end
 
-
 function isintabv(tabv::TraceAbVals, arr::Arrow)
   [tval in keys(tabv) for tval in in_trace_values(TraceSubArrow(arr))]
 end

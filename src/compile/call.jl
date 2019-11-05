@@ -1,5 +1,5 @@
 "Compiles an arrow to a `target`"
-function compile(arr::Arrow, target::Target) end
+function compile(arr::Arrow, target) end
 
 "Adds arrow `arr` and any CompArrows is contains to global new space"
 compile!(arr::Arrow) = foreach(eval ∘ pol_to_julia, policies(arr))

@@ -1,64 +1,53 @@
 "Graph-Based Program Representation"
 module Arrows
 
-import InteractiveUtils
-import DataStructures: PriorityQueue, peek, dequeue!, DefaultDict
-
-import LightGraphs; const LG = LightGraphs
-import AutoHashEquals: @auto_hash_equals
-using MacroTools
-
+using Reexport
 # using ZenUtils
-import Spec: @pre, @invariant, @post
-
-import LinearAlgebra: dot
-import Statistics: var, mean
+# import Spec: @pre, @invariant, @post
 
 # zt: use explicit form e.g. Base.union
-import Base: convert, union, first, ndims, print, println, string, show,
-  length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
-  map, div
-import Base: getindex, setindex!
-
-import Base: in
-
-import Base:  ^,
-              +,
-              -,
-              *,
-              /,
-              >,
-              >=,
-              <=,
-              <,
-              !=,
-              ==,
-              |,
-              &,
-              ⊻,
-              !,
-              %,
-              div,
-              cos,
-              acos,
-              sin,
-              asin,
-              log,
-              exp,
-              in,
-              sqrt,
-              abs,
-              min,
-              max,
-              parent,
-              >>,
-              <<,
-              identity,
-              zero,
-              one,
-              floor,
-              ceil,
-              getindex
+# import Base: convert, union, first, ndims, print, println, string, show,
+#   length, isequal, eltype, hash, isequal, copy, ∘, inv, reshape,
+#   map, div
+# import Base: getindex, setindex!
+# import Base: in
+# import Base:  ^,
+#               +,
+#               -,
+#               *,
+#               /,
+#               >,
+#               >=,
+#               <=,
+#               <,
+#               !=,
+#               ==,
+#               |,
+#               &,
+#               ⊻,
+#               !,
+#               %,
+#               div,
+#               cos,
+#               acos,
+#               sin,
+#               asin,
+#               log,
+#               exp,
+#               in,
+#               sqrt,
+#               abs,
+#               min,
+#               max,
+#               parent,
+#               >>,
+#               <<,
+#               identity,
+#               zero,
+#               one,
+#               floor,
+#               ceil,
+#               getindex
 
 export
   ifthenelse,
@@ -73,58 +62,6 @@ export
   wrap,
   name,
 
-  Arrow,
-  AbstractPort,
-  Port,
-  SubPort,
-
-  CompArrow,
-  PrimArrow,
-  SubArrow,
-  link_ports!,
-  ⥅,
-  ⥆,
-  port_id,
-  port_sym_name,
-  add_sub_arr!,
-  replace_sub_arr!,
-  rm_partially_loose_sub_arrows!,
-  out_sub_port,
-  out_sub_ports,
-  inner_sub_ports,
-  sub_arrow,
-  sub_arrows,
-  sub_port,
-  sub_ports,
-  in_sub_port,
-  in_sub_ports,
-  in_ports,
-  in_port,
-  out_port,
-  out_ports,
-  num_in_ports,
-  num_out_ports,
-  num_ports,
-  port,
-  ports,
-
-  is_wired_ok,
-  is_valid,
-  interpret,
-  invert,
-  pgf,
-  out_values,
-  aprx_invert,
-  aprx_totalize!,
-  domain_error,
-  domain_error!,
-  dupl,
-  inv_dupl,
-  first_arr,
-  duplify!,
-  assert!,
-  deref,
-
   mean,
   var,
   θp,
@@ -133,45 +70,6 @@ export
   domϵ,
   addprop!,
 
-  SourceArrow,
-  AssertArrow,
-  UnknownArrow,
-
-  MeanArrow,
-  VarArrow,
-
-  AddArrow,
-  MulArrow,
-  CondArrow,
-  EqualArrow,
-  SubtractArrow,
-  DivArrow,
-  IntDivArrow,
-  IntMulArrow,
-  IdentityArrow,
-  ExpArrow,
-  NegArrow,
-  AndArrow,
-  OrArrow,
-  NotArrow,
-  XorArrow,
-  GatherNdArrow,
-  ScatterNdArrow,
-  ASinArrow,
-  ACosArrow,
-  SinArrow,
-  SqrArrow,
-  SqrtArrow,
-  CosArrow,
-  DuplArrow,
-  ModArrow,
-  FloorArrow,
-  CeilArrow,
-  PowArrow,
-  LogArrow,
-  LogBaseArrow,
-  ReduceMean,
-  FirstArrow,
 
   # Compound
   addn,
@@ -187,11 +85,6 @@ export
   # extra arrows
   md2box,
   inverse_md2box,
-
-  # Inverse Arrows
-  InvDuplArrow,
-  inv_add,
-  inv_mul,
 
   # Macros
   arr,
@@ -219,7 +112,6 @@ export
 
   accumapply,
   trace_value,
-  psl,
   traceprop!,
   simpletracewalk,
   trace_values,
@@ -227,7 +119,6 @@ export
   add!,
   link_to_parent!,
   AbVals,
-  gradient,
   source,
   bcast,
   exbcast,
@@ -247,115 +138,52 @@ export
   ⬧,
   ⬨
 
-# zt: add SIGNATURES
-# zt: use modules for these subcomponents? 
-# Code structures
-include("util/misc.jl")             # miscelleneous utilities
-include("util/lightgraphs.jl")      # methods that should be in LightGraphs
+include("util/util.jl")             # miscelleneous utilities
+@reexport using .Util
 
-# Core Arrow Data structures #
-include("arrows/arrow.jl")          # Core Arrow data structures
-include("arrows/property.jl")       # Properties
-include("arrows/port.jl")           # Ports
-include("arrows/primarrow.jl")      # Pimritive Arrows
-include("arrows/comparrow.jl")      # Composite Arrows
-include("arrows/comparrowextra.jl") # functions on CompArrows that dont touch internals
-include("arrows/unknown.jl")        # Unknown (uninterpreted) Arrows
+include("arrows/arrow.jl")          # Core Arrow Data structures
+@reexport using .ArrowMod
 
-include("value/value.jl")           # ValueSet
-include("value/source.jl")          # SrcValue
-include("arrows/trace.jl")          # Arrow Traces
+include("value/value.jl")           # Graph Transformations #
+@reexport using .Values
 
-# Abstract interpretation based propagation
-include("propagate/meet.jl")        # Meeting (intersection) of domains
-include("propagate/propagate.jl")
-include("propagate/size.jl")
-include("propagate/singleton.jl")
-include("propagate/const.jl")           # Const type
+include("trace/trace.jl")
+@reexport using .Trace
 
-# Library #
-include("library/common.jl")
-include("library/distances.jl")
-include("library/sigmoid.jl")
+include("propagate/propagate.jl")   # Abstract interpretation based propagation
+@reexport using .Propagates
 
-include("library/assert.jl")
-include("library/source.jl")
-include("library/broadcast.jl")
+include("library/library.jl")       # Library of arrows
+@reexport using .Library
 
-include("library/arithmetic.jl")
-include("library/inequalities.jl")
-include("library/dupl.jl")
-include("library/control.jl")
-include("library/array.jl")
-include("library/onehot.jl")
-include("library/compound.jl")
-include("library/statistics.jl")
-include("library/boolean.jl")
-include("library/md2.jl")
+include("combinators/combinators.jl")
+@reexport using .Combinators
 
-# Inv Arrows
-include("library/inv_control.jl")
-include("library/inv_array.jl")
-include("library/inv_arithmetic.jl")
-include("library/inv_boolean.jl")
+include("compile/compile.jl")       # Compilation and application of an arrow #
+@reexport using .Compile
 
-# PGF Primitives
-include("library/pgfprim.jl")
+include("transform/transform.jl")    # Graph Transformations #
+@reexport using .Transform
 
-# Arrow combinators: compose Arrows into composite arrows #
-include("combinators/compose.jl")
-include("combinators/portapply.jl")
+include("macros/macros.jl")
+@reexport using .Macros
 
-# Compilation and application of an arrow #
-include("compile/policy.jl")
-include("compile/depend.jl")
-include("compile/detpolicy.jl")
-include("compile/imperative.jl")
-include("apply/interpret.jl")
+include("sym/sym.jl")                # Solving constraints
+@reexport using .Sym
 
-# Graph Transformations #
-include("transform/walk.jl")
-include("transform/tracewalk.jl")
-include("transform/duplify.jl")
-include("transform/remove.jl")
-include("transform/invert.jl")
-include("transform/pgf.jl")
-include("transform/invprim.jl")
-include("transform/compcall.jl")
-include("transform/totalize.jl")
-include("transform/totalizeprim.jl")
-include("transform/domainerror.jl")
-include("transform/domainerrorprim.jl")
+# include("host/host.jl")            # Integration of arrow with julia #
+# @reexport using .Host
 
-# Random generation
-include("rand.jl")
+include("targets/targets.jl")        # Targets
+@reexport using .Targets
 
-# Macros
-include("macros/arr_macro.jl")
+include("juliatarget/JuliaTarget.jl") # Julia Target
+@reexport using .JuliaTarget
 
-# Solving constraints
-include("sym/sym.jl")
-include("sym/symprim.jl")
-include("sym/rewrite.jl")
-include("sym/convenience.jl")
-include("sym/scalar_solver.jl")
-include("sym/graph_solver.jl")
+# Defaults
+Compile.compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
+Compile.interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
 
-# Integration of arrow with julia #
-include("host/overload.jl")
-include("host/filter.jl")
-include("map.jl")
 
-# Targets #
-include("targets/targets.jl")
-include("targets/julia/ordered_sports.jl")
-
-# Compile to Julia by default
-compile(arr::Arrow) = compile(arr, JuliaTarget.JLTarget)
-interpret(arr::Arrow, args) = interpret(arr, args, JuliaTarget.JLTarget)
-
-include("apply/call.jl")
-include("targets/julia/JuliaTarget.jl")
-
-include("homeless.jl")    # Unosrted
+# include("homeless.jl")               # Unosrted
 end

@@ -1,3 +1,9 @@
+module Trace
+
+using Spec
+using ..ArrowMod: CompArrow, SubArrow, ArrowRef, AbstractPort, SubPort, Arrow
+using ..Values: Value
+
 """
 Parent of Trace. `sarrs[1]` is `root` of the trace.
 sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:n
@@ -7,7 +13,6 @@ struct TraceParent
 end
 
 @invariant TraceParent all([sarrs[i] ∈ sub_arrows(sarr[i-1]) for i = 2:length(TraceParent)])
-
 
 "`TraceParent` where `sarr` is the root"
 function TraceParent(sarr::SubArrow)
@@ -41,10 +46,10 @@ function down(tparent::TraceParent, sarr::SubArrow)
   TraceParent(vcat(tparent.sarrs, sarr))
 end
 
-isequal(tparent1::TraceParent, tparent2::TraceParent)::Bool =
+Base.isequal(tparent1::TraceParent, tparent2::TraceParent)::Bool =
   isequal(tparent1.sarrs, tparent2.sarrs)
-hash(tparent::TraceParent, h::UInt) = hash(tparent.sarrs, h)
-(==)(tparent1::TraceParent, tparent2::TraceParent) = isequal(tparent1, tparent2)
+Base.hash(tparent::TraceParent, h::UInt) = hash(tparent.sarrs, h)
+Base.:(==)(tparent1::TraceParent, tparent2::TraceParent) = isequal(tparent1, tparent2)
 
 "A trace within an arrow uniquely defines a trace `sub_arrow`"
 struct TraceSubArrow <: ArrowRef
@@ -110,13 +115,11 @@ function inner_trace_arrows(carr::CompArrow, tparent::TraceParent = TraceParent(
   tarrs
 end
 
-
 "Port of a `TraceSubArrow`"
 struct TraceSubPort <: AbstractPort
   trace_arrow::TraceSubArrow
   port_id::Int
 end
-
 
 "`TraceSubPort` referencing `sprt` where trace is `parent`"
 function TraceSubPort(tparent::TraceParent, sprt::SubPort)
@@ -188,15 +191,14 @@ struct TraceValue <: Value
   TraceValue(tprt::TraceSubPort) = new(rootsrc(tprt))
 end
 
-
 "Parent `TraceArrow`"
 trace_parent(tprt::TraceSubPort)::TraceParent = trace_parent(tprt.trace_arrow)
 trace_parent(tarr::TraceSubArrow)::TraceParent = tarr.parent
 
 "Two trace values are equal if they share the same `rootsrc`"
-isequal(v1::TraceValue, v2::TraceValue)::Bool = isequal(v1.srctprt, v2.srctprt)
-hash(tval::TraceValue, h::UInt) = hash(tval.srctprt, h)
-(==)(v1::TraceValue, v2::TraceValue) = isequal(v1, v2)
+Base.isequal(v1::TraceValue, v2::TraceValue)::Bool = isequal(v1.srctprt, v2.srctprt)
+Base.hash(tval::TraceValue, h::UInt) = hash(tval.srctprt, h)
+Base.:(==)(v1::TraceValue, v2::TraceValue) = isequal(v1, v2)
 
 "`TraceSubPort` referencing `sprt` where trace is `parent`"
 TraceValue(tparent::TraceParent, sprt::SubPort) =
@@ -265,11 +267,11 @@ function SrcValue(tval::TraceValue)::SrcValue
 end
 
 # Printing #
-function string(tparent::TraceParent)
+function Base.string(tparent::TraceParent)
   join([string("  [", i, "]: ", sarr) for (i, sarr) in enumerate(tparent.sarrs)], "\n")
 end
 
-show(io::IO, tparent::TraceParent) = print(io, string(tparent))
+Base.show(io::IO, tparent::TraceParent) = print(io, string(tparent))
 
 function string(tarr::TraceSubArrow)
   sarrsstring = join([string(name(deref(sarr))) for sarr in tarr.parent.sarrs], ", ")
@@ -279,7 +281,7 @@ function string(tarr::TraceSubArrow)
   """
 end
 
-function string(tprt::TraceSubPort)
+function Base.string(tprt::TraceSubPort)
   sarrs = tprt.trace_arrow.parent.sarrs
   sarrsstring = join([string(name(deref(sarr))) for sarr in sarrs], ", ")
 
@@ -287,11 +289,11 @@ function string(tprt::TraceSubPort)
   """
 end
 
-show(io::IO, tprt::TraceSubPort) = print(io, string(tprt))
-show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
-show(io::IO, tval::TraceValue) = print(io, string(tval))
+Base.show(io::IO, tprt::TraceSubPort) = print(io, string(tprt))
+Base.show(io::IO, tarr::TraceSubArrow) = print(io, string(tarr))
+Base.show(io::IO, tval::TraceValue) = print(io, string(tval))
 
-function string(tval::TraceValue)
+function Base.string(tval::TraceValue)
   "tval:$(tval.srctprt)"
 end
 
@@ -353,3 +355,5 @@ end
 #
 # Base.iteratorsize(::Type{<:DFTraceIter}) = Base.IsInfinite()
 # Base.iteratoreltype(::Type{<:DFTraceIter}) = Base.HasEltype()
+
+end

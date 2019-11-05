@@ -43,7 +43,7 @@ parens(x::AbstractString) = string("(",x,")")
 square(x::AbstractString) = string("[",x,"]")
 
 "Generate a unique arrow id"
-gen_id()::Symbol = gensym() # zt: genid? uid
+uid() = gensym()
 
 "All elements in `xs` are the same?"
 function same(xs, eq=(==))::Bool

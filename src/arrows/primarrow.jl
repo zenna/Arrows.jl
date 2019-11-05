@@ -1,5 +1,4 @@
-## Primitive Arrow
-## ===============
+# Primitive Arrow
 
 abstract type PrimArrow <: Arrow end
 props(arr::PrimArrow, port::Port) = props(arr)[port.port_id]

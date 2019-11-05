@@ -3,8 +3,8 @@ struct Singleton{T}
   value::T    # FIXME: rename to element
 end
 
-==(x::Singleton, y::Singleton) = x.value == y.value
-isequal(x::Singleton, y::Singleton) = x.value == y.value
+Base.:(==)(x::Singleton, y::Singleton) = x.value == y.value
+Base.isequal(x::Singleton, y::Singleton) = x.value == y.value
 issingleton(::Singleton) = true
 
 "All arrows can do constant propagation and value propagation"

@@ -57,7 +57,6 @@ domain_bounds(::ACosArrow) = [-1, 1]
 struct SqrtArrow <: PrimArrow end
 name(::SqrtArrow)::Symbol = :sqrt
 
-
 "sqr(x)"
 struct SqrArrow <: PrimArrow end
 name(::SqrArrow)::Symbol = :sqr
@@ -71,7 +70,6 @@ name(::AbsArrow)::Symbol = :abs
 "x^y"
 struct PowArrow <: PrimArrow end
 name(::PowArrow)::Symbol = :^
-props(PowArrow) = bin_arith_props()
 
 "-x"
 struct NegArrow <: PrimArrow end
@@ -97,12 +95,11 @@ name(::IntDivArrow)::Symbol = :div
 struct IntMulArrow <: PrimArrow end
 name(::IntMulArrow)::Symbol = :mul_arr
 
-function mul_arr(x::Arrows.AbstractPort, y::Arrows.AbstractPort)
+function mul_arr(x::AbstractPort, y::AbstractPort)
   IntMulArrow()(x, y)
 end
 
 mul_arr(x::Int, y::Int) = x * y
-
 
 "ceil(x)"
 struct CeilArrow <: PrimArrow end
@@ -111,12 +108,6 @@ name(::CeilArrow)::Symbol = :ceil
 "floor(x)"
 struct FloorArrow <: PrimArrow end
 name(::FloorArrow)::Symbol = :floor
-
-function expander_prop(prop_generator, typ)
-  quote
-    props(::$(typ)) = $(prop_generator())
-  end
-end
 
 # Unions
 ArithArrow = Union{AddArrow,
@@ -143,6 +134,7 @@ ArithArrow = Union{AddArrow,
                   CeilArrow,
                   FloorArrow}
 
+
 abinterprets(::ArithArrow) = [sizeprop]
 isscalar(::Type{<:ArithArrow}) = Val{true}
 isscalar(::ArithArrow) = true
@@ -150,9 +142,20 @@ isscalar(::ArithArrow) = true
 to_unary_functions = [ExpArrow, LogArrow, ASinArrow, SinArrow,
                       CosArrow, ACosArrow, SqrtArrow, SqrArrow,
                       AbsArrow, LogBaseArrow, NegArrow, CeilArrow,
-                      FloorArrow,]
+                      FloorArrow]
 to_binary_functions = [AddArrow, DivArrow, SubtractArrow, IntMulArrow,
-                      MulArrow, MinArrow, MaxArrow, ModArrow]
-codes_unary = map(f -> expander_prop(unary_arith_props, f), to_unary_functions)
-codes_binary = map(f -> expander_prop(bin_arith_props, f), to_binary_functions)
-foreach(eval, vcat(codes_unary, codes_binary))
+                      MulArrow, MinArrow, MaxArrow, ModArrow, PowArrow,
+                      IntDivArrow]
+ArrowMod.props(::Union{to_unary_functions...}) = unary_arith_props()
+ArrowMod.props(::Union{to_binary_functions...}) = bin_arith_props()
+
+# function expander_prop(prop_generator, typ)
+#   quote
+#     props(::$(typ)) = $(prop_generator())
+#   end
+# end
+
+# codes_unary = map(f -> expander_prop(unary_arith_props, f), to_unary_functions)
+# codes_binary = map(f -> expander_prop(bin_arith_props, f), to_binary_functions)
+# foreach(eval, vcat(codes_unary, codes_binary))
+

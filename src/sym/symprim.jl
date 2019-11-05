@@ -106,13 +106,13 @@ function prim_sym_interpret(::InvDuplArrow{N},
   [xs |> first,]
 end
 
-function  prim_sym_interpret(::Arrows.ReshapeArrow,
+function  prim_sym_interpret(::ReshapeArrow,
                               data::Array{SymbolicType,2},
                               shape::Array{SymbolicType,1})
   [reshape(data, shape),]
 end
 
-function  prim_sym_interpret(::Arrows.ReshapeArrow, data::SymbolicType,
+function  prim_sym_interpret(::ReshapeArrow, data::SymbolicType,
                             shape::SymbolicType)
   shape = sym_unsym(shape)
   expr = :(reshape($(data), $(shape)))
